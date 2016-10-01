@@ -1,0 +1,16 @@
+{
+    "version": "1.0.0",
+    "summary": "Behavior-driven testing for elm html applications",
+    "repository": "https://github.com/bwatkinsPivotal/elmer.git",
+    "license": "MIT",
+    "source-directories": [
+        "."
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "elm-community/json-extra": "1.1.0 <= v < 2.0.0",
+        "elm-lang/core": "4.0.5 <= v < 5.0.0",
+        "elm-lang/html": "1.1.0 <= v < 2.0.0"
+    },
+    "elm-version": "0.17.1 <= v < 0.18.0"
+}
