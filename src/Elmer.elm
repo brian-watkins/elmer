@@ -210,20 +210,23 @@ hasText text node =
       if List.member text texts then
         Expect.pass
       else
-        Expect.fail ("Expected node to have text '" ++ text ++ "' but it has text: " ++ (printList texts))
+        Expect.fail ("Expected node to have text '" ++ text ++ "' but it has: " ++ (printList texts))
 
 
 printList : List String -> String
 printList list =
   String.join ", " list
 
-hasClass : String -> HtmlNode -> Bool
+hasClass : String -> HtmlNode -> Expect.Expectation
 hasClass className node =
   case node.classes of
     Just classList ->
-      List.member className classList
+      if List.member className classList then
+        Expect.pass
+      else
+        Expect.fail ("Expected node to have class '" ++ className ++ "' but it has: " ++ (printList classList))
     Nothing ->
-      False
+      Expect.fail ("Expected node to have class '" ++ className ++ "' but it has no classes")
 
 extractText : HtmlElement -> Maybe String
 extractText element =

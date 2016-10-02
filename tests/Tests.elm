@@ -144,14 +144,14 @@ findByClass =
         \() ->
           case ( Elmer.findResult html ".content" ) of
             Elmer.Found a ->
-              Expect.true "Does not contain class 'content'" ( Elmer.hasClass "content" a )
+              Elmer.hasClass "content" a
             Elmer.SearchFailure msg ->
               Expect.fail msg
       , test "it finds a nested element by class" <|
         \() ->
           case ( Elmer.findResult html ".label" ) of
             Elmer.Found a ->
-              Expect.true "Does not contain class 'label'" ( Elmer.hasClass "label" a )
+              Elmer.hasClass "label" a
             Elmer.SearchFailure msg ->
               Expect.fail msg
       ]
@@ -160,7 +160,7 @@ findByClass =
         \() ->
           case ( Elmer.findResult html ".awesome" ) of
             Elmer.Found a ->
-              Expect.true "Does not contain class 'awesome'" ( Elmer.hasClass "awesome" a )
+              Elmer.hasClass "awesome" a
             Elmer.SearchFailure msg ->
               Expect.fail msg
       ]
@@ -169,7 +169,7 @@ findByClass =
         \() ->
           case ( Elmer.findResult html ".root" ) of
             Elmer.Found a ->
-              Expect.true "Does not contain class 'root'" ( Elmer.hasClass "root" a )
+              Elmer.hasClass "root" a
             Elmer.SearchFailure msg ->
               Expect.fail msg
       ]
@@ -200,7 +200,7 @@ nodeWithClass className =
   let
     node = emptyNode "div"
   in
-    { node | classes = Just [className] }
+    { node | classes = Just [className, "funClass"] }
 
 nodeWithMultipleChildren : String -> Elmer.HtmlNode
 nodeWithMultipleChildren text =
@@ -214,34 +214,34 @@ hasText : Test
 hasText =
   describe "hasText"
   [ describe "when the element has no text"
-    [ test "it returns false" <|
+    [ test "it fails with the right message" <|
       \() ->
         Elmer.hasText "Some text" (emptyNode "div")
           |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has no text")
     ]
   , describe "when the element has the wrong text"
-    [ test "it returns false" <|
+    [ test "it fails with the right message" <|
       \() ->
         Elmer.hasText "Some text" (nodeWithText "other text")
-          |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has text: other text")
+          |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has: other text")
     ]
   , describe "when the element has the text"
-    [ test "it returns true" <|
+    [ test "it passes" <|
       \() ->
         Elmer.hasText "Some text" (nodeWithText "Some text")
           |> Expect.equal Expect.pass
     ]
   , describe "when the element has multiple text nodes, one of which has the text"
-    [ test "it returns true" <|
+    [ test "it passes" <|
       \() ->
         Elmer.hasText "Some text" (nodeWithMultipleChildren "Some text")
           |> Expect.equal Expect.pass
     ]
     , describe "when the element has multiple text nodes, none of which has the text"
-      [ test "it returns true" <|
+      [ test "it fails with the right message" <|
         \() ->
           Elmer.hasText "Other stuff" (nodeWithMultipleChildren "Some text")
-            |> Expect.equal (Expect.fail "Expected node to have text 'Other stuff' but it has text: fun stuff, Some text")
+            |> Expect.equal (Expect.fail "Expected node to have text 'Other stuff' but it has: fun stuff, Some text")
       ]
   ]
 
@@ -249,23 +249,23 @@ hasClassTests : Test
 hasClassTests =
   describe "hasClass"
   [ describe "when the element has no classes"
-    [ test "it returns false" <|
+    [ test "it fails with the right message" <|
       \() ->
         Elmer.hasClass "myClass" (emptyNode "div")
-          |> Expect.false "Should not have any class"
+          |> Expect.equal (Expect.fail "Expected node to have class 'myClass' but it has no classes")
     ]
   , describe "when the element has classes"
     [ describe "when the element does not have the specified class"
-      [ test "it returns false" <|
+      [ test "it returns fails with the right message" <|
         \() ->
           Elmer.hasClass "myClass" (nodeWithClass "anotherClass")
-            |> Expect.false "Should not have the class"
+            |> Expect.equal (Expect.fail "Expected node to have class 'myClass' but it has: anotherClass, funClass")
       ]
     , describe "when the element has the specified class"
-      [ test "it returns true" <|
+      [ test "it passes" <|
         \() ->
           Elmer.hasClass "myClass" (nodeWithClass "myClass")
-            |> Expect.true "Should have the class"
+            |> Expect.equal Expect.pass
       ]
     ]
   ]
