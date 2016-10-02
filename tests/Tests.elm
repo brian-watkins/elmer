@@ -217,26 +217,32 @@ hasText =
     [ test "it returns false" <|
       \() ->
         Elmer.hasText "Some text" (emptyNode "div")
-          |> Expect.false "Should not contain text"
+          |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has no text")
     ]
   , describe "when the element has the wrong text"
     [ test "it returns false" <|
       \() ->
         Elmer.hasText "Some text" (nodeWithText "other text")
-          |> Expect.false "Should not contain text"
+          |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has text: other text")
     ]
   , describe "when the element has the text"
     [ test "it returns true" <|
       \() ->
         Elmer.hasText "Some text" (nodeWithText "Some text")
-          |> Expect.true "Should contain the text"
+          |> Expect.equal Expect.pass
     ]
   , describe "when the element has multiple text nodes, one of which has the text"
     [ test "it returns true" <|
       \() ->
         Elmer.hasText "Some text" (nodeWithMultipleChildren "Some text")
-          |> Expect.true "Should contain the text"
+          |> Expect.equal Expect.pass
     ]
+    , describe "when the element has multiple text nodes, none of which has the text"
+      [ test "it returns true" <|
+        \() ->
+          Elmer.hasText "Other stuff" (nodeWithMultipleChildren "Some text")
+            |> Expect.equal (Expect.fail "Expected node to have text 'Other stuff' but it has text: fun stuff, Some text")
+      ]
   ]
 
 hasClassTests : Test
@@ -532,7 +538,7 @@ appFlowTests =
           |> Elmer.find "#clickCount"
           |> Elmer.expectNode (
             \node ->
-              Expect.true "Should show 2 clicks" (Elmer.hasText "2 clicks!" node)
+              Elmer.hasText "2 clicks!" node
           )
           |> Expect.equal (Expect.pass)
     ]

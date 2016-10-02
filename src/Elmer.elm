@@ -199,9 +199,23 @@ findResult html selector =
     Nothing ->
       SearchFailure ("No html node found with selector: " ++ selector)
 
-hasText : String -> HtmlNode -> Bool
+hasText : String -> HtmlNode -> Expect.Expectation
 hasText text node =
-  List.member text (List.filterMap extractText (unwrapElementList node.children))
+  let
+    texts = List.filterMap extractText (unwrapElementList node.children)
+  in
+    if List.length texts == 0 then
+      Expect.fail ("Expected node to have text '" ++ text ++ "' but it has no text")
+    else
+      if List.member text texts then
+        Expect.pass
+      else
+        Expect.fail ("Expected node to have text '" ++ text ++ "' but it has text: " ++ (printList texts))
+
+
+printList : List String -> String
+printList list =
+  String.join ", " list
 
 hasClass : String -> HtmlNode -> Bool
 hasClass className node =
