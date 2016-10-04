@@ -568,31 +568,47 @@ appFlowTests =
                 Elmer.hasText "2 clicks!" node
             )
             |> Expect.equal (Expect.pass)
-    , test "it updates the model with the result of a command" <|
-      \() ->
-        let
-          initialState = Elmer.initialComponentState defaultModel view update
-        in
-          Elmer.find "#numberButton" initialState
-            |> Elmer.click
-            |> Elmer.find "#numberOutput"
-            |> Elmer.expectNode (
-              \node ->
-                Elmer.hasText "Clicked and got number: 3" node
-            )
-            |> Expect.equal Expect.pass
-    , test "it handles a task that fails" <|
-      \() ->
-        let
-          modelWithFailingTask = { defaultModel | numberTaskGenerator = (makeNumberTaskThatSucceeds False) }
-          initialState = Elmer.initialComponentState modelWithFailingTask view update
-        in
-          Elmer.find "#numberButton" initialState
-            |> Elmer.click
-            |> Elmer.find "#numberOutputError"
-            |> Elmer.expectNode (
-              \node ->
-                Elmer.hasText "Got error requesting number: Bad things happened!" node
-            )
-            |> Expect.equal Expect.pass
+    , let
+        initialState = Elmer.initialComponentState defaultModel view update
+        resultState = Elmer.find "#numberButton" initialState
+          |> Elmer.click
+      in
+        describe "command with successful task"
+        [ test "it displays the number" <|
+            \() ->
+              Elmer.find "#numberOutput" resultState
+                |> Elmer.expectNode (
+                  \node ->
+                    Elmer.hasText "Clicked and got number: 3" node
+                )
+        , test "it does not display an error" <|
+            \() ->
+              Elmer.find "#numberOutputError" resultState
+                |> Elmer.expectNode (
+                  \node ->
+                    Elmer.hasText "Got error requesting number: No error" node
+                )
+        ]
+    , let
+        modelWithFailingTask = { defaultModel | numberTaskGenerator = (makeNumberTaskThatSucceeds False) }
+        initialState = Elmer.initialComponentState modelWithFailingTask view update
+        resultState = Elmer.find "#numberButton" initialState
+          |> Elmer.click
+      in
+        describe "command with unsuccessful task"
+        [ test "it does not display a number" <|
+            \() ->
+              Elmer.find "#numberOutput" resultState
+                |> Elmer.expectNode (
+                  \node ->
+                    Elmer.hasText "Clicked and got number: -1" node
+                )
+        , test "it does display an error" <|
+            \() ->
+              Elmer.find "#numberOutputError" resultState
+                |> Elmer.expectNode (
+                  \node ->
+                    Elmer.hasText "Got error requesting number: Bad things happened!" node
+                )
+        ]
     ]
