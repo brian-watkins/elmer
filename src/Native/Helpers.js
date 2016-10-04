@@ -95,9 +95,28 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return _elm_lang$core$Maybe$Nothing;
   }
 
+  var runSimpleTask = function(task) {
+    var errorCallback = task._0.callback
+    var successCallback = task._0.task.callback
+    var rootTask = task._0.task.task
+
+    if (rootTask.ctor == '_Task_succeed') {
+      return successCallback(rootTask.value).value
+    }
+
+    return errorCallback(rootTask.value).value
+  }
+
+  var runCommand = function(command) {
+    if (command.type == 'leaf' && command.home == 'Task') {
+      return runSimpleTask(command.value)
+    }
+  }
+
   return {
       findHtmlNode: F2(findHtmlNode),
       getMessageForEvent: F2(getMessageForEvent),
+      runCommand: runCommand
   };
 
 }();

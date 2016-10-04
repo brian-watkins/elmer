@@ -7,6 +7,7 @@ import Result
 import Json.Decode.Extra as JsonExtra
 import String
 import Expect
+import Task exposing (Task)
 
 type HtmlElement =
   Node HtmlNode |
@@ -170,14 +171,27 @@ click componentStateResult =
           case clickResult (Found node) of
             Message msg ->
               let
-                (updatedModel, command) = componentState.update msg componentState.model
+                updatedState = performUpdate msg componentState
               in
-                CurrentState { componentState | model = updatedModel }
+                CurrentState updatedState
             EventFailure msg ->
               UpstreamFailure msg
         Nothing ->
           UpstreamFailure "No target node specified"
   )
+
+
+performUpdate : msg -> HtmlComponentState model msg -> HtmlComponentState model msg
+performUpdate message componentState =
+  let
+    (updatedModel, command) = componentState.update message componentState.model
+    updatedState = { componentState | model = updatedModel }
+    updatedMessage = Native.Helpers.runCommand command
+  in
+    if command == Cmd.none then
+      updatedState
+    else
+      performUpdate updatedMessage updatedState
 
 componentStateOrFail : ComponentStateResult model msg -> (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg
 componentStateOrFail componentStateResult stateFunction =
@@ -186,8 +200,6 @@ componentStateOrFail componentStateResult stateFunction =
       stateFunction componentState
     UpstreamFailure message ->
       UpstreamFailure message
-
-
 
 
 
