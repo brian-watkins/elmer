@@ -11,16 +11,11 @@ type alias HtmlNode =
   , id: Maybe String
   , classes: Maybe ( List String )
   , children: HtmlElementList
-  , events: Maybe ( HtmlEvents )
+  , events: List HtmlEvent
   }
 
 type HtmlElementList =
   HtmlElementList (List HtmlElement)
-
-type alias HtmlEvents =
-  { click: Maybe HtmlEvent
-  , input: Maybe HtmlEvent
-  }
 
 type alias HtmlEvent =
   { eventType: String

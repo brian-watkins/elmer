@@ -12,10 +12,11 @@ all =
   describe "Event Tests"
     [ clickTests
     , inputTests
+    , customEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentStateResult App.Model App.Msg -> ComponentStateResult App.Model App.Msg) -> Test
-standardEventHandlerBehavior eventHandler =
+standardEventHandlerBehavior : (ComponentStateResult App.Model App.Msg -> ComponentStateResult App.Model App.Msg) -> String -> Test
+standardEventHandlerBehavior eventHandler eventName =
   describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
     [ test "it passes on the error" <|
@@ -35,66 +36,75 @@ standardEventHandlerBehavior eventHandler =
           eventHandler initialState
            |> Expect.equal (UpstreamFailure "No target node specified")
     ]
+  , describe "when the event is not found on the target node"
+    [ test "it returns an event not found error" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Elmer.find ".awesome" initialState
+            |> eventHandler
+            |> Expect.equal (UpstreamFailure ("No " ++ eventName ++ " event found"))
+    ]
   ]
 
 clickTests =
   describe "Click Event Tests"
-  [ standardEventHandlerBehavior Event.click
-  , describe "when there is a target node"
-    [ describe "when the click fails"
-      [ test "it returns a click event not found error" <|
-        \() ->
-          let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
-          in
-            Elmer.find ".awesome" initialState
-              |> Event.click
-              |> Expect.equal (UpstreamFailure "No click event found")
-      ]
+  [ standardEventHandlerBehavior Event.click "click"
+  , describe "when the click succeeds"
+    [ test "it updates the model accordingly" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+          updatedStateResult = Elmer.find ".button" initialState
+                                |> Event.click
+        in
+          case updatedStateResult of
+            CurrentState updatedState ->
+              Expect.equal updatedState.model.clicks 1
+            UpstreamFailure msg ->
+              Expect.fail msg
     ]
-    , describe "when the click succeeds"
-      [ test "it updates the model accordingly" <|
-        \() ->
-          let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
-            updatedStateResult = Elmer.find ".button" initialState
-                                  |> Event.click
-          in
-            case updatedStateResult of
-              CurrentState updatedState ->
-                Expect.equal updatedState.model.clicks 1
-              UpstreamFailure msg ->
-                Expect.fail msg
-      ]
   ]
 
 inputTests =
   describe "input event tests"
-  [ standardEventHandlerBehavior (Event.input "fun stuff")
-  , describe "when there is a target node"
-    [ describe "when the input fails"
-      [ test "it returns an input event not found error" <|
-        \() ->
-          let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
-          in
-            Elmer.find ".awesome" initialState
-              |> Event.input "fun stuff"
-              |> Expect.equal (UpstreamFailure "No input event found")
-      ]
+  [ standardEventHandlerBehavior (Event.input "fun stuff") "input"
+  , describe "when the input succeeds"
+    [ test "it updates the model accordingly" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+          updatedStateResult = Elmer.find ".nameField" initialState
+                                |> Event.input "Mr. Fun Stuff"
+        in
+          case updatedStateResult of
+            CurrentState updatedState ->
+              Expect.equal updatedState.model.name "Mr. Fun Stuff"
+            UpstreamFailure msg ->
+              Expect.fail msg
     ]
-    , describe "when the input succeeds"
+  ]
+
+customEventTests =
+  let
+    keyUpEventJson = "{\"keyCode\":65}"
+  in
+    describe "custom event tests"
+    [ standardEventHandlerBehavior (Event.on "keyup" keyUpEventJson) "keyup"
+    , describe "when the event succeeds"
       [ test "it updates the model accordingly" <|
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
             updatedStateResult = Elmer.find ".nameField" initialState
-                                  |> Event.input "Mr. Fun Stuff"
+                                  |> Event.on "keyup" keyUpEventJson
           in
             case updatedStateResult of
               CurrentState updatedState ->
-                Expect.equal updatedState.model.name "Mr. Fun Stuff"
+                Expect.equal updatedState.model.lastLetter 65
               UpstreamFailure msg ->
                 Expect.fail msg
+
       ]
-  ]
+    ]

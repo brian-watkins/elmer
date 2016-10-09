@@ -5,14 +5,6 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return A2(_elm_lang$core$Native_Json.run, decoder, valueObj)
   }
 
-  var getEvent = function(eventType, html) {
-    if (html.facts.EVENT && html.facts.EVENT[eventType]) {
-      return _elm_lang$core$Maybe$Just(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder));
-    }
-
-    return _elm_lang$core$Maybe$Nothing;
-  }
-
   var getTextChildren = function(html) {
     return html.children.filter(function(n) {
       return (n.type == "text");
@@ -35,14 +27,13 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   }
 
   var getHtmlEvents = function(html) {
-    var clickEvent = getEvent("click", html);
-    var inputEvent = getEvent("input", html);
-
-    if (inputEvent != _elm_lang$core$Maybe$Nothing || clickEvent != _elm_lang$core$Maybe$Nothing) {
-      return _elm_lang$core$Maybe$Just(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvents, clickEvent, inputEvent));
+    var events = []
+    if (html.facts.EVENT) {
+      for (var eventType in html.facts.EVENT) {
+        events.push(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder))
+      }
     }
-
-    return _elm_lang$core$Maybe$Nothing;
+    return _elm_lang$core$Native_List.fromArray(events)
   }
 
   var getChildren = function(html) {

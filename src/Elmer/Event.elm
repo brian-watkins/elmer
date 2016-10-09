@@ -1,15 +1,15 @@
-module Elmer.Event exposing (click, input)
+module Elmer.Event exposing (click, input, on)
 
 import Elmer.Shared exposing (..)
 import Elmer.Types exposing (..)
 
+getEvent : String -> HtmlNode -> Maybe HtmlEvent
+getEvent eventName node =
+  List.head (List.filter (\e -> e.eventType == eventName) node.events)
+
 clickHandler : HtmlNode -> EventResult msg
 clickHandler node =
-  case node.events `Maybe.andThen` .click of
-    Just clickEvent ->
-      eventResult (Native.Helpers.getMessageForEvent clickEvent.decoder "{}")
-    Nothing ->
-      EventFailure "No click event found"
+  genericHandler "click" "{}" node
 
 click : ComponentStateResult model msg -> ComponentStateResult model msg
 click componentStateResult =
@@ -17,18 +17,26 @@ click componentStateResult =
 
 inputHandler : String -> HtmlNode -> EventResult msg
 inputHandler inputString node =
-  case node.events `Maybe.andThen` .input of
-    Just inputEvent ->
-      let
-        eventJson = "{\"target\":{\"value\":\"" ++ inputString ++ "\"}}"
-      in
-        eventResult (Native.Helpers.getMessageForEvent inputEvent.decoder eventJson)
-    Nothing ->
-      EventFailure "No input event found"
+  let
+    eventJson = "{\"target\":{\"value\":\"" ++ inputString ++ "\"}}"
+  in
+    genericHandler "input" eventJson node
 
 input : String -> ComponentStateResult model msg -> ComponentStateResult model msg
 input inputString componentStateResult =
   handleEvent (inputHandler inputString) componentStateResult
+
+genericHandler : String -> String -> HtmlNode -> EventResult msg
+genericHandler eventName eventJson node =
+  case getEvent eventName node of
+    Just customEvent ->
+      eventResult (Native.Helpers.getMessageForEvent customEvent.decoder eventJson)
+    Nothing ->
+      EventFailure ("No " ++ eventName ++ " event found")
+
+on : String -> String -> ComponentStateResult model msg -> ComponentStateResult model msg
+on eventName eventJson componentStateResult =
+  handleEvent (genericHandler eventName eventJson) componentStateResult
 
 -- Private functions
 

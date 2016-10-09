@@ -2,9 +2,9 @@ module Elmer.TestApp exposing (..)
 
 import Html exposing (Html, div, text, input, Attribute, li, ul, p)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, on, keyCode)
 import Task exposing (Task)
-
+import Json.Decode as Json exposing (..)
 
 type alias Model =
   { name: String
@@ -13,6 +13,7 @@ type alias Model =
   , numberFromTask: Int
   , numberTaskError: String
   , numberTaskGenerator: Task String Int
+  , lastLetter : Int
   }
 
 defaultModel : Model
@@ -23,6 +24,7 @@ defaultModel =
   , numberFromTask = -1
   , numberTaskError = "No error"
   , numberTaskGenerator = (makeNumberTaskThatSucceeds True)
+  , lastLetter = -1
   }
 
 onlyText : Html Msg
@@ -35,6 +37,7 @@ type Msg =
   TaskNumber Int |
   HandleNumberTaskError String |
   HandleInput String |
+  HandleKeyUp Int |
   HandleOtherInput String
 
 view : Model -> Html Msg
@@ -49,7 +52,7 @@ view model =
         , div [ class "anotherWithText" ] [ text "my text" ]
         , text "Some more text"
         ]
-      , input [ class "nameField", onInput HandleInput ] []
+      , input [ class "nameField", onInput HandleInput, onKeyUp HandleKeyUp ] []
       , div [ class "button", onClick HandleClick ] [ text "Click Me" ]
       , div [ id "clickCount" ] [ text ((toString model.clicks) ++ " clicks!") ]
       , div [ id "numberButton", onClick ClickForNumber ] [ text "Get a number!" ]
@@ -72,6 +75,12 @@ update msg model =
       ( { model | numberFromTask = number }, Cmd.none )
     HandleNumberTaskError message ->
       ( { model | numberTaskError = message }, Cmd.none )
+    HandleKeyUp key ->
+      ( { model | lastLetter = key }, Cmd.none )
+
+onKeyUp : (Int -> msg) -> Attribute msg
+onKeyUp tagger =
+  on "keyup" (Json.map tagger keyCode)
 
 makeNumberTaskThatSucceeds : Bool -> Task String Int
 makeNumberTaskThatSucceeds shouldSucceed =

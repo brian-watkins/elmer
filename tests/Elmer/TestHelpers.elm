@@ -8,7 +8,7 @@ emptyNode tagName =
   , id = Nothing
   , classes = Nothing
   , children = (HtmlElementList [])
-  , events = Nothing
+  , events = []
   }
 
 nodeWithClass : String -> HtmlNode
