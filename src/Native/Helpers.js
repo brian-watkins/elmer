@@ -7,7 +7,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
 
   var getEvent = function(eventType, html) {
     if (html.facts.EVENT && html.facts.EVENT[eventType]) {
-      return _elm_lang$core$Maybe$Just(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder));
+      return _elm_lang$core$Maybe$Just(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder));
     }
 
     return _elm_lang$core$Maybe$Nothing;
@@ -17,7 +17,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return html.children.filter(function(n) {
       return (n.type == "text");
     }).map(function(n) {
-      return _bwatkinsPivotal$elmer$Elmer$Text(n.text);
+      return _bwatkinsPivotal$elmer$Elmer_Types$Text(n.text);
     });
   }
 
@@ -39,18 +39,18 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     var inputEvent = getEvent("input", html);
 
     if (inputEvent != _elm_lang$core$Maybe$Nothing || clickEvent != _elm_lang$core$Maybe$Nothing) {
-      return _elm_lang$core$Maybe$Just(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvents, clickEvent, inputEvent));
+      return _elm_lang$core$Maybe$Just(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvents, clickEvent, inputEvent));
     }
 
     return _elm_lang$core$Maybe$Nothing;
   }
 
   var getChildren = function(html) {
-    return _bwatkinsPivotal$elmer$Elmer$HtmlElementList(_elm_lang$core$Native_List.fromArray(getTextChildren(html)));
+    return _bwatkinsPivotal$elmer$Elmer_Types$HtmlElementList(_elm_lang$core$Native_List.fromArray(getTextChildren(html)));
   }
 
   var constructHtmlNode = function(html) {
-    return A5(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
+    return A5(_bwatkinsPivotal$elmer$Elmer_Types$HtmlNode,
       html.tag,
       getId(html),
       getClasses(html),
