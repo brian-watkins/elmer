@@ -10,12 +10,9 @@ type alias HtmlNode =
   { tag: String
   , id: Maybe String
   , classes: Maybe ( List String )
-  , children: HtmlElementList
+  , children: List HtmlElement
   , events: List HtmlEvent
   }
-
-type HtmlElementList =
-  HtmlElementList (List HtmlElement)
 
 type alias HtmlEvent =
   { eventType: String

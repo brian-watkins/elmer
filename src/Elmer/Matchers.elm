@@ -7,7 +7,7 @@ import String
 hasText : String -> HtmlNode -> Expect.Expectation
 hasText text node =
   let
-    texts = List.filterMap extractText (unwrapElementList node.children)
+    texts = List.filterMap extractText node.children
   in
     if List.length texts == 0 then
       Expect.fail ("Expected node to have text '" ++ text ++ "' but it has no text")
@@ -41,7 +41,3 @@ extractText element =
 printList : List String -> String
 printList list =
   String.join ", " list
-
-unwrapElementList : HtmlElementList -> List HtmlElement
-unwrapElementList (HtmlElementList nodeList) =
-  nodeList

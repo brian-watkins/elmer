@@ -37,7 +37,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   }
 
   var getChildren = function(html) {
-    return _bwatkinsPivotal$elmer$Elmer_Types$HtmlElementList(_elm_lang$core$Native_List.fromArray(getTextChildren(html)));
+    return _elm_lang$core$Native_List.fromArray(getTextChildren(html))
   }
 
   var constructHtmlNode = function(html) {

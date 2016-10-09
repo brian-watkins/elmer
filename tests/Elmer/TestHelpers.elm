@@ -7,7 +7,7 @@ emptyNode tagName =
   { tag = tagName
   , id = Nothing
   , classes = Nothing
-  , children = (HtmlElementList [])
+  , children = []
   , events = []
   }
 
@@ -27,11 +27,11 @@ nodeWithText text =
   let
     node = emptyNode "div"
   in
-    { node | children = (HtmlElementList [(textNode text)]) }
+    { node | children = [(textNode text)] }
 
 nodeWithMultipleChildren : String -> HtmlNode
 nodeWithMultipleChildren text =
   let
     node = emptyNode "div"
   in
-    { node | children = (HtmlElementList [(textNode "fun stuff"), Node (emptyNode "div"), (textNode text)]) }
+    { node | children = [(textNode "fun stuff"), Node (emptyNode "div"), (textNode text)] }
