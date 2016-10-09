@@ -4,11 +4,16 @@
     "repository": "https://github.com/bwatkinsPivotal/elmer.git",
     "license": "MIT",
     "source-directories": [
-        "."
+        "src"
     ],
-    "exposed-modules": [],
+    "exposed-modules": [
+      "Elmer",
+      "Elmer.Event",
+      "Elmer.Matchers"
+    ],
     "native-modules": true,
     "dependencies": {
+        "elm-community/elm-test": "2.1.0 <= v < 3.0.0",
         "elm-community/json-extra": "1.1.0 <= v < 2.0.0",
         "elm-lang/core": "4.0.5 <= v < 5.0.0",
         "elm-lang/html": "1.1.0 <= v < 2.0.0"
