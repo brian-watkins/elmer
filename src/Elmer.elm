@@ -1,17 +1,11 @@
-module Elmer exposing (componentState, find, findResult, expectNode)
+module Elmer exposing (componentState, find, findNode, expectNode)
 
 import Html exposing (Html)
 import Native.Helpers
-import Json.Decode as Json exposing (..)
-import Result
-import Json.Decode.Extra as JsonExtra
-import String
 import Expect
-import Task exposing (Task)
 
 import Elmer.Shared exposing (..)
 import Elmer.Types exposing(..)
-
 
 componentState : model -> ViewFunction model msg -> UpdateFunction model msg -> ComponentStateResult model msg
 componentState model view update =
@@ -37,17 +31,13 @@ find : String -> ComponentStateResult model msg -> ComponentStateResult model ms
 find selector componentStateResult =
   componentStateOrFail componentStateResult (
     \componentState ->
-      case findResult (componentState.view componentState.model) selector of
-        Found n ->
-          CurrentState { componentState | targetNode = Just n }
-        SearchFailure message ->
-          UpstreamFailure message
+      case findNode (componentState.view componentState.model) selector of
+        Just node ->
+          CurrentState { componentState | targetNode = Just node }
+        Nothing ->
+          UpstreamFailure ("No html node found with selector: " ++ selector)
   )
 
-findResult : Html msg -> String -> SearchResult
-findResult html selector =
-  case Native.Helpers.findHtmlNode selector html of
-    Just node ->
-      Found node
-    Nothing ->
-      SearchFailure ("No html node found with selector: " ++ selector)
+findNode : Html msg -> String -> Maybe HtmlNode
+findNode html selector =
+  Native.Helpers.findHtmlNode selector html

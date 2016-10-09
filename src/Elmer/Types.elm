@@ -29,15 +29,6 @@ type alias HtmlEvent =
 
 type RawValue = RawValue
 
-type SearchResult =
-  Found HtmlNode |
-  SearchFailure String
-
-
-type UpdateResult model msg =
-  UpdateEffect ( model, Cmd msg ) |
-  UpdateFailure String
-
 type EventResult msg =
   Message msg |
   EventFailure String
@@ -47,7 +38,6 @@ type alias ViewFunction model msg =
 
 type alias UpdateFunction model msg =
   msg -> model -> ( model, Cmd msg )
-
 
 type alias HtmlComponentState model msg =
   { model: model

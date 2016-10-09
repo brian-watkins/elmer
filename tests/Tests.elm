@@ -4,8 +4,7 @@ import Test exposing (..)
 
 import Elmer.ElmerTests as ElmerTests
 import Elmer.MatcherTests as MatcherTests
-import Elmer.Event.ClickTests as ClickTests
-import Elmer.Event.InputTests as InputTests
+import Elmer.EventTests as EventTests
 import Elmer.AppTests as AppTests
 
 all : Test
@@ -13,7 +12,6 @@ all =
   describe "Elmer"
     [ ElmerTests.all
     , MatcherTests.all
-    , ClickTests.all
-    , InputTests.all
+    , EventTests.all
     , AppTests.all
     ]

@@ -5,7 +5,7 @@ import Elmer.TestApp as App
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer.Types exposing (..)
-import Elmer.Event.Click as ClickEvent
+import Elmer.Event as Event
 import Elmer
 import Elmer.Matchers as Matchers
 
@@ -22,8 +22,8 @@ appFlowTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Elmer.find ".button" initialState
-            |> ClickEvent.click
-            |> ClickEvent.click
+            |> Event.click
+            |> Event.click
             |> Elmer.find "#clickCount"
             |> Elmer.expectNode (
               \node ->
@@ -33,7 +33,7 @@ appFlowTests =
     , let
         initialState = Elmer.componentState App.defaultModel App.view App.update
         resultState = Elmer.find "#numberButton" initialState
-          |> ClickEvent.click
+          |> Event.click
       in
         describe "command with successful task"
         [ test "it displays the number" <|
@@ -56,7 +56,7 @@ appFlowTests =
         modelWithFailingTask = { defaultModel | numberTaskGenerator = (App.makeNumberTaskThatSucceeds False) }
         initialState = Elmer.componentState modelWithFailingTask App.view App.update
         resultState = Elmer.find "#numberButton" initialState
-          |> ClickEvent.click
+          |> Event.click
       in
         describe "command with unsuccessful task"
         [ test "it does not display a number" <|

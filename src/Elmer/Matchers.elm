@@ -28,6 +28,8 @@ hasClass className node =
     Nothing ->
       Expect.fail ("Expected node to have class '" ++ className ++ "' but it has no classes")
 
+-- Private functions
+
 extractText : HtmlElement -> Maybe String
 extractText element =
   case element of

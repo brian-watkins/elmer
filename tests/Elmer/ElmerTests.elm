@@ -5,7 +5,7 @@ import Elmer.TestApp as App
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer.Types exposing (..)
-import Elmer.Event.Input as InputEvent
+import Elmer.Event as Event
 import Elmer
 import Elmer.Matchers as Matchers
 
@@ -28,7 +28,7 @@ noElementFound =
           let
             html = App.view App.defaultModel
           in
-            Expect.equal ( Elmer.findResult html "#nothing" ) (SearchFailure "No html node found with selector: #nothing")
+            Expect.equal ( Elmer.findNode html "#nothing" ) Nothing
       ]
     , describe "with bad class"
       [ test "it returns nothing" <|
@@ -36,7 +36,7 @@ noElementFound =
           let
             html = App.view App.defaultModel
           in
-            Expect.equal ( Elmer.findResult html ".nothing" ) (SearchFailure "No html node found with selector: .nothing")
+            Expect.equal ( Elmer.findNode html ".nothing" ) Nothing
       ]
     , describe "when there is only text"
       [ test "it returns nothing" <|
@@ -44,7 +44,7 @@ noElementFound =
           let
             html = App.onlyText
           in
-            Expect.equal ( Elmer.findResult html ".anything" ) (SearchFailure "No html node found with selector: .anything")
+            Expect.equal ( Elmer.findNode html ".anything" ) Nothing
       ]
     ]
 
@@ -56,21 +56,21 @@ findById =
                 let
                   html = App.view App.defaultModel
                 in
-                  case (Elmer.findResult html "#root") of
-                    Found a ->
+                  case (Elmer.findNode html "#root") of
+                    Just a ->
                       Expect.equal a.id (Just "root")
-                    SearchFailure msg ->
-                      Expect.fail msg
+                    Nothing ->
+                      Expect.fail "Nothing found"
         , test "finds a nested element by id" <|
             \() ->
                 let
                   html = App.view App.defaultModel
                 in
-                  case (Elmer.findResult html "#userNameLabel") of
-                    Found a ->
+                  case (Elmer.findNode html "#userNameLabel") of
+                    Just a ->
                       Expect.equal a.id (Just "userNameLabel")
-                    SearchFailure msg ->
-                      Expect.fail msg
+                    Nothing ->
+                      Expect.fail "Nothing found"
         ]
 
 findByClass : Test
@@ -82,36 +82,36 @@ findByClass =
     [ describe "when there is one class"
       [ test "it finds the top element by class" <|
         \() ->
-          case ( Elmer.findResult html ".content" ) of
-            Found a ->
+          case ( Elmer.findNode html ".content" ) of
+            Just a ->
               Matchers.hasClass "content" a
-            SearchFailure msg ->
-              Expect.fail msg
+            Nothing ->
+              Expect.fail "Nothing found"
       , test "it finds a nested element by class" <|
         \() ->
-          case ( Elmer.findResult html ".label" ) of
-            Found a ->
+          case ( Elmer.findNode html ".label" ) of
+            Just a ->
               Matchers.hasClass "label" a
-            SearchFailure msg ->
-              Expect.fail msg
+            Nothing ->
+              Expect.fail "Nothing found"
       ]
     , describe "when there is more than one class"
       [ test "it finds the element" <|
         \() ->
-          case ( Elmer.findResult html ".awesome" ) of
-            Found a ->
+          case ( Elmer.findNode html ".awesome" ) of
+            Just a ->
               Matchers.hasClass "awesome" a
-            SearchFailure msg ->
-              Expect.fail msg
+            Nothing ->
+              Expect.fail "Nothing found"
       ]
     , describe "when the class name is the same as an id"
       [ test "it returns the element with the class name" <|
         \() ->
-          case ( Elmer.findResult html ".root" ) of
-            Found a ->
+          case ( Elmer.findNode html ".root" ) of
+            Just a ->
               Matchers.hasClass "root" a
-            SearchFailure msg ->
-              Expect.fail msg
+            Nothing ->
+              Expect.fail "Nothing found"
       ]
     ]
 
