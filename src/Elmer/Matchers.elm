@@ -1,6 +1,6 @@
 module Elmer.Matchers exposing (hasText, hasClass)
 
-import Elmer.Types exposing (..)
+import Elmer exposing (..)
 import Expect
 import String
 

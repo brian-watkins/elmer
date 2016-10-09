@@ -3,9 +3,8 @@ module Elmer.EventTests exposing (all)
 import Test exposing (..)
 import Elmer.TestApp as App
 import Expect
-import Elmer.Types exposing (..)
+import Elmer exposing (..)
 import Elmer.Event as Event
-import Elmer
 
 all : Test
 all =

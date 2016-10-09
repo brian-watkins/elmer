@@ -3,7 +3,7 @@ module Elmer.MatcherTests exposing (all)
 import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
 import Expect
-import Elmer.Types exposing (..)
+import Elmer exposing (..)
 import Elmer.Matchers as Matchers
 
 all : Test

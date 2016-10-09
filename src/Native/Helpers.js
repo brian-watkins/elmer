@@ -9,7 +9,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return html.children.filter(function(n) {
       return (n.type == "text");
     }).map(function(n) {
-      return _bwatkinsPivotal$elmer$Elmer_Types$Text(n.text);
+      return _bwatkinsPivotal$elmer$Elmer$Text(n.text);
     });
   }
 
@@ -30,7 +30,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     var events = []
     if (html.facts.EVENT) {
       for (var eventType in html.facts.EVENT) {
-        events.push(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder))
+        events.push(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder))
       }
     }
     return _elm_lang$core$Native_List.fromArray(events)
@@ -41,7 +41,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   }
 
   var constructHtmlNode = function(html) {
-    return A5(_bwatkinsPivotal$elmer$Elmer_Types$HtmlNode,
+    return A5(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
       html.tag,
       getId(html),
       getClasses(html),

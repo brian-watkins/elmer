@@ -1,13 +1,15 @@
 module Elmer.Event exposing (click, input, on)
 
-import Elmer.Shared exposing (..)
-import Elmer.Types exposing (..)
+import Elmer exposing (..)
+
+type alias EventHandler msg =
+  HtmlNode -> EventResult msg
 
 getEvent : String -> HtmlNode -> Maybe HtmlEvent
 getEvent eventName node =
   List.head (List.filter (\e -> e.eventType == eventName) node.events)
 
-clickHandler : HtmlNode -> EventResult msg
+clickHandler : EventHandler msg
 clickHandler node =
   genericHandler "click" "{}" node
 
@@ -15,7 +17,7 @@ click : ComponentStateResult model msg -> ComponentStateResult model msg
 click componentStateResult =
   handleEvent clickHandler componentStateResult
 
-inputHandler : String -> HtmlNode -> EventResult msg
+inputHandler : String -> EventHandler msg
 inputHandler inputString node =
   let
     eventJson = "{\"target\":{\"value\":\"" ++ inputString ++ "\"}}"
@@ -26,7 +28,7 @@ input : String -> ComponentStateResult model msg -> ComponentStateResult model m
 input inputString componentStateResult =
   handleEvent (inputHandler inputString) componentStateResult
 
-genericHandler : String -> String -> HtmlNode -> EventResult msg
+genericHandler : String -> String -> EventHandler msg
 genericHandler eventName eventJson node =
   case getEvent eventName node of
     Just customEvent ->
@@ -40,12 +42,12 @@ on eventName eventJson componentStateResult =
 
 -- Private functions
 
-handleEvent : (HtmlNode -> EventResult msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
+handleEvent : EventHandler msg -> ComponentStateResult model msg -> ComponentStateResult model msg
 handleEvent eventHandler componentStateResult =
-  componentStateOrFail componentStateResult <|
-    handleNodeEvent eventHandler
+  componentStateResult
+    |> Elmer.map (handleNodeEvent eventHandler)
 
-handleNodeEvent : (HtmlNode -> EventResult msg) -> HtmlComponentState model msg -> ComponentStateResult model msg
+handleNodeEvent : EventHandler msg -> HtmlComponentState model msg -> ComponentStateResult model msg
 handleNodeEvent eventHandler componentState =
   case componentState.targetNode of
     Just node ->
@@ -53,7 +55,7 @@ handleNodeEvent eventHandler componentState =
     Nothing ->
       UpstreamFailure "No target node specified"
 
-updateComponent : HtmlNode -> (HtmlNode -> EventResult msg) -> HtmlComponentState model msg -> ComponentStateResult model msg
+updateComponent : HtmlNode -> EventHandler msg -> HtmlComponentState model msg -> ComponentStateResult model msg
 updateComponent node eventHandler componentState =
   case eventHandler node of
     Message msg ->

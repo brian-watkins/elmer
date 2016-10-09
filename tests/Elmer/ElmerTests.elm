@@ -4,9 +4,8 @@ import Test exposing (..)
 import Elmer.TestApp as App
 import Elmer.TestHelpers exposing (..)
 import Expect
-import Elmer.Types exposing (..)
 import Elmer.Event as Event
-import Elmer
+import Elmer exposing (..)
 import Elmer.Matchers as Matchers
 
 all : Test

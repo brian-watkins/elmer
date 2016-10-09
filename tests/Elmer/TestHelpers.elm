@@ -1,6 +1,6 @@
 module Elmer.TestHelpers exposing (..)
 
-import Elmer.Types exposing (..)
+import Elmer exposing (..)
 
 emptyNode : String -> HtmlNode
 emptyNode tagName =

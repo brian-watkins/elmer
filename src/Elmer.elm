@@ -1,11 +1,61 @@
-module Elmer exposing (componentState, find, findNode, expectNode)
+module Elmer exposing
+  ( componentState
+  , find
+  , findNode
+  , expectNode
+  , map
+  , HtmlElement(..)
+  , HtmlNode
+  , HtmlEvent
+  , EventResult(..)
+  , HtmlComponentState
+  , ComponentStateResult(..)
+  )
 
 import Html exposing (Html)
 import Native.Helpers
 import Expect
 
-import Elmer.Shared exposing (..)
-import Elmer.Types exposing(..)
+type HtmlElement =
+  Node HtmlNode |
+  Text String
+
+type alias HtmlNode =
+  { tag: String
+  , id: Maybe String
+  , classes: Maybe ( List String )
+  , children: List HtmlElement
+  , events: List HtmlEvent
+  }
+
+type alias HtmlEvent =
+  { eventType: String
+  , decoder: RawValue
+  }
+
+type RawValue = RawValue
+
+type EventResult msg =
+  Message msg |
+  EventFailure String
+
+type alias ViewFunction model msg =
+  model -> Html msg
+
+type alias UpdateFunction model msg =
+  msg -> model -> ( model, Cmd msg )
+
+type alias HtmlComponentState model msg =
+  { model: model
+  , view: ViewFunction model msg
+  , update: UpdateFunction model msg
+  , targetNode : Maybe HtmlNode
+  }
+
+type ComponentStateResult model msg =
+  CurrentState (HtmlComponentState model msg) |
+  UpstreamFailure String
+
 
 componentState : model -> ViewFunction model msg -> UpdateFunction model msg -> ComponentStateResult model msg
 componentState model view update =
@@ -14,6 +64,14 @@ componentState model view update =
   , update = update
   , targetNode = Nothing
   }
+
+map : (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
+map mapper componentStateResult =
+  case componentStateResult of
+    CurrentState componentState ->
+      mapper componentState
+    UpstreamFailure message ->
+      UpstreamFailure message
 
 expectNode : (HtmlNode -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectNode expectFunction componentStateResult =
@@ -29,14 +87,16 @@ expectNode expectFunction componentStateResult =
 
 find : String -> ComponentStateResult model msg -> ComponentStateResult model msg
 find selector componentStateResult =
-  componentStateOrFail componentStateResult (
-    \componentState ->
-      case findNode (componentState.view componentState.model) selector of
-        Just node ->
-          CurrentState { componentState | targetNode = Just node }
-        Nothing ->
-          UpstreamFailure ("No html node found with selector: " ++ selector)
-  )
+  componentStateResult
+    |> map (updateTargetNode selector)
+
+updateTargetNode : String -> HtmlComponentState model msg -> ComponentStateResult model msg
+updateTargetNode selector componentState =
+  case findNode (componentState.view componentState.model) selector of
+    Just node ->
+      CurrentState { componentState | targetNode = Just node }
+    Nothing ->
+      UpstreamFailure ("No html node found with selector: " ++ selector)
 
 findNode : Html msg -> String -> Maybe HtmlNode
 findNode html selector =
