@@ -5,9 +5,9 @@ import Elmer exposing (..)
 type alias EventHandler msg =
   HtmlNode -> EventResult msg
 
-getEvent : String -> HtmlNode -> Maybe HtmlEvent
-getEvent eventName node =
-  List.head (List.filter (\e -> e.eventType == eventName) node.events)
+type EventResult msg =
+  Message msg |
+  EventFailure String
 
 clickHandler : EventHandler msg
 clickHandler node =
@@ -42,6 +42,10 @@ on eventName eventJson componentStateResult =
 
 -- Private functions
 
+getEvent : String -> HtmlNode -> Maybe HtmlEvent
+getEvent eventName node =
+  List.head (List.filter (\e -> e.eventType == eventName) node.events)
+
 handleEvent : EventHandler msg -> ComponentStateResult model msg -> ComponentStateResult model msg
 handleEvent eventHandler componentStateResult =
   componentStateResult
@@ -59,10 +63,7 @@ updateComponent : HtmlNode -> EventHandler msg -> HtmlComponentState model msg -
 updateComponent node eventHandler componentState =
   case eventHandler node of
     Message msg ->
-      let
-        updatedState = performUpdate msg componentState
-      in
-        CurrentState updatedState
+      CurrentState (performUpdate msg componentState)
     EventFailure msg ->
       UpstreamFailure msg
 

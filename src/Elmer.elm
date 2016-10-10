@@ -7,7 +7,6 @@ module Elmer exposing
   , HtmlElement(..)
   , HtmlNode
   , HtmlEvent
-  , EventResult(..)
   , HtmlComponentState
   , ComponentStateResult(..)
   )
@@ -34,10 +33,6 @@ type alias HtmlEvent =
   }
 
 type RawValue = RawValue
-
-type EventResult msg =
-  Message msg |
-  EventFailure String
 
 type alias ViewFunction model msg =
   model -> Html msg
