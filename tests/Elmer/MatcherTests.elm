@@ -46,6 +46,12 @@ hasTextTests =
           Matchers.hasText "Other stuff" (nodeWithMultipleChildren "Some text")
             |> Expect.equal (Expect.fail "Expected node to have text 'Other stuff' but it has: fun stuff, Some text")
       ]
+    , describe "when the text is in a child node"
+      [ test "it finds the text" <|
+        \() ->
+          Matchers.hasText "Child Text" (nodeWithNestedChildren "Child Text")
+            |> Expect.equal Expect.pass
+      ]
   ]
 
 hasClassTests : Test

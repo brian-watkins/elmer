@@ -5,12 +5,18 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return A2(_elm_lang$core$Native_Json.run, decoder, valueObj)
   }
 
-  var getTextChildren = function(html) {
-    return html.children.filter(function(n) {
-      return (n.type == "text");
-    }).map(function(n) {
-      return _bwatkinsPivotal$elmer$Elmer$Text(n.text);
-    });
+  var getChildren = function(html) {
+    var children = []
+    for (var i = 0; i < html.children.length; i++) {
+      var element = html.children[i]
+      if (element.type == "text") {
+        children.push(_bwatkinsPivotal$elmer$Elmer$Text(element.text))
+      } else {
+        children.push(_bwatkinsPivotal$elmer$Elmer$Node(constructHtmlNode(element)))
+      }
+    }
+
+    return _elm_lang$core$Native_List.fromArray(children)
   }
 
   var getId = function(html) {
@@ -34,10 +40,6 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       }
     }
     return _elm_lang$core$Native_List.fromArray(events)
-  }
-
-  var getChildren = function(html) {
-    return _elm_lang$core$Native_List.fromArray(getTextChildren(html))
   }
 
   var constructHtmlNode = function(html) {
@@ -74,11 +76,12 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
         return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
       }
       else {
-        var foundNode = html.children.find(function(node) {
-          return (findHtmlNode(selector, node) != _elm_lang$core$Maybe$Nothing);
-        })
-        if (foundNode != undefined) {
-          return _elm_lang$core$Maybe$Just(constructHtmlNode(foundNode))
+        for (var i = 0; i < html.children.length; i++) {
+          var node = html.children[i]
+          var foundNode = findHtmlNode(selector, node)
+          if (foundNode != _elm_lang$core$Maybe$Nothing) {
+            return foundNode
+          }
         }
       }
     }

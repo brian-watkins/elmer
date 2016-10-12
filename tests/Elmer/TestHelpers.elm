@@ -35,3 +35,17 @@ nodeWithMultipleChildren text =
     node = emptyNode "div"
   in
     { node | children = [(textNode "fun stuff"), Node (emptyNode "div"), (textNode text)] }
+
+nodeWithNestedChildren : String -> HtmlNode
+nodeWithNestedChildren text =
+  { tag = "div"
+  , id = Nothing
+  , classes = Nothing
+  , children =
+    [ (textNode "fun stuff")
+    , Node (emptyNode "div")
+    , (textNode "another sibling")
+    , Node (nodeWithText text)
+    ]
+  , events = []
+  }

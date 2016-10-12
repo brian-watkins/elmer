@@ -16,6 +16,7 @@ all =
     , findByClass
     , findTests
     , expectNodeTests
+    , childNodeTests
     ]
 
 noElementFound : Test
@@ -190,4 +191,22 @@ expectNodeTests =
                 )
             |> Expect.equal Expect.pass
     ]
+  ]
+
+childNodeTests =
+  describe "nodes with children"
+  [ describe "when there is a child node with text"
+    [ test "it finds the text" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Elmer.find "#root" initialState
+            |> Elmer.expectNode (
+                  \node ->
+                    Matchers.hasText "my text" node
+                )
+            |> Expect.equal Expect.pass
+    ]
+
   ]

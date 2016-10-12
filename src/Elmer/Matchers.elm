@@ -7,7 +7,7 @@ import String
 hasText : String -> HtmlNode -> Expect.Expectation
 hasText text node =
   let
-    texts = List.filterMap extractText node.children
+    texts = flattenTexts node.children
   in
     if List.length texts == 0 then
       Expect.fail ("Expected node to have text '" ++ text ++ "' but it has no text")
@@ -30,13 +30,16 @@ hasClass className node =
 
 -- Private functions
 
-extractText : HtmlElement -> Maybe String
-extractText element =
-  case element of
-    Node _ ->
-      Nothing
-    Text text ->
-      Just text
+flattenTexts : List HtmlElement -> List String
+flattenTexts children =
+  List.concat (List.map (
+    \child ->
+      case child of
+        Node n ->
+          flattenTexts n.children
+        Text t ->
+          [ t ]
+  ) children)
 
 printList : List String -> String
 printList list =
