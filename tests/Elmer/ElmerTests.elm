@@ -18,6 +18,7 @@ all =
     , expectNodeTests
     , expectNodeExistsTests
     , childNodeTests
+    , notTests
     ]
 
 noElementFound : Test
@@ -241,5 +242,20 @@ childNodeTests =
                 )
             |> Expect.equal Expect.pass
     ]
+  ]
 
+notTests =
+  describe "not"
+  [ describe "when there is a failure"
+    [ test "it passes" <|
+      \() ->
+        Elmer.not (Expect.fail "failure")
+          |> Expect.equal Expect.pass
+    ]
+  , describe "when there is a pass"
+    [ test "it fails" <|
+      \() ->
+        Elmer.not Expect.pass
+          |> Expect.equal (Expect.fail "Expected to fail, but it passed")
+    ]
   ]
