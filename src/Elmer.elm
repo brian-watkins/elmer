@@ -3,6 +3,7 @@ module Elmer exposing
   , find
   , findNode
   , expectNode
+  , expectNodeExists
   , map
   , HtmlElement(..)
   , HtmlNode
@@ -76,9 +77,13 @@ expectNode expectFunction componentStateResult =
         Just node ->
           expectFunction node
         Nothing ->
-          Expect.fail "No target node specified"
+          Expect.fail "Node does not exist"
     UpstreamFailure message ->
       Expect.fail message
+
+expectNodeExists : ComponentStateResult model msg -> Expect.Expectation
+expectNodeExists componentStateResult =
+  expectNode (\_ -> Expect.pass) componentStateResult
 
 find : String -> ComponentStateResult model msg -> ComponentStateResult model msg
 find selector componentStateResult =

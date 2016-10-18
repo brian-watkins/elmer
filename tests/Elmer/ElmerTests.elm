@@ -16,6 +16,7 @@ all =
     , findByClass
     , findTests
     , expectNodeTests
+    , expectNodeExistsTests
     , childNodeTests
     ]
 
@@ -177,7 +178,7 @@ expectNodeTests =
           Elmer.expectNode (
             \node -> Expect.fail "Should not get here"
           ) initialState
-            |> Expect.equal (Expect.fail "No target node specified")
+            |> Expect.equal (Expect.fail "Node does not exist")
     ]
   , describe "when there is a target node"
     [ test "it executes the expectation function" <|
@@ -189,6 +190,38 @@ expectNodeTests =
             |> Elmer.expectNode (
                   \node -> Expect.equal "div" node.tag
                 )
+            |> Expect.equal Expect.pass
+    ]
+  ]
+
+expectNodeExistsTests =
+  describe "expect node exists"
+  [ describe "when there is an upstream failure"
+    [ test "it fails with the upstream error message" <|
+      \() ->
+        let
+          initialState = UpstreamFailure "upstream failure"
+        in
+          Elmer.expectNodeExists initialState
+            |> Expect.equal (Expect.fail "upstream failure")
+    ]
+  , describe "when there is no target node"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Elmer.expectNodeExists initialState
+            |> Expect.equal (Expect.fail "Node does not exist")
+    ]
+  , describe "where there is a target node"
+    [ test "it passes" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Elmer.find ".awesome" initialState
+            |> Elmer.expectNodeExists
             |> Expect.equal Expect.pass
     ]
   ]
