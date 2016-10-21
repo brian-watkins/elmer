@@ -52,38 +52,9 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     );
   }
 
-  var containsClass = function(classNames, selector) {
-    if (classNames == undefined) return false
-
-    var classes = classNames.split(" ").map(function(c) { return "." + c });
-
-    for (var i = 0; i < classes.length; i++) {
-      if (classes[i] == selector) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  var hasId = function(htmlId, selector) {
-    return selector == "#" + htmlId;
-  }
-
-  var findHtmlNode = function(selector, html) {
+  var asHtmlNode = function(html) {
     if (html.type == "node") {
-      if (hasId(html.facts.id, selector) || containsClass(html.facts.className, selector)) {
-        return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
-      }
-      else {
-        for (var i = 0; i < html.children.length; i++) {
-          var node = html.children[i]
-          var foundNode = findHtmlNode(selector, node)
-          if (foundNode != _elm_lang$core$Maybe$Nothing) {
-            return foundNode
-          }
-        }
-      }
+      return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
     }
 
     return _elm_lang$core$Maybe$Nothing;
@@ -108,7 +79,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   }
 
   return {
-      findHtmlNode: F2(findHtmlNode),
+      asHtmlNode: asHtmlNode,
       getMessageForEvent: F2(getMessageForEvent),
       runCommand: runCommand
   };

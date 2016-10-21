@@ -108,4 +108,65 @@ updateTargetNode selector componentState =
 
 findNode : Html msg -> String -> Maybe HtmlNode
 findNode html selector =
-  Native.Helpers.findHtmlNode selector html
+  case Native.Helpers.asHtmlNode html of
+    Just node ->
+      findWithinNode selector node
+    Nothing ->
+      Nothing
+
+findWithinNode : String -> HtmlNode -> Maybe HtmlNode
+findWithinNode selector root =
+  if matchesNode selector root then
+    Just root
+  else
+    findFirstInList (\n -> isSomething (findWithinNode selector n)) (takeNodes root.children)
+
+matchesNode : String -> HtmlNode -> Bool
+matchesNode selector node =
+  (matchesId selector node) || (matchesClass selector node)
+
+matchesId : String -> HtmlNode -> Bool
+matchesId selector node =
+  case node.id of
+    Just id ->
+      selector == "#" ++ id
+    Nothing ->
+      False
+
+matchesClass : String -> HtmlNode -> Bool
+matchesClass selector node =
+  case node.classes of
+    Just classList ->
+      List.member selector (List.map (\c -> "." ++ c) classList)
+    Nothing ->
+      False
+
+takeNodes : List HtmlElement -> List HtmlNode
+takeNodes =
+  List.filterMap (
+    \e ->
+      case e of
+        Node n ->
+          Just n
+        Text _ ->
+          Nothing
+  )
+
+isSomething : Maybe a -> Bool
+isSomething maybeSomething =
+  case maybeSomething of
+    Just _ ->
+      True
+    Nothing ->
+      False
+
+findFirstInList : (a -> Bool) -> List a -> Maybe a
+findFirstInList matcher items =
+  case List.head items of
+    Just item ->
+      if (matcher item) then
+        Just item
+      else
+        findFirstInList matcher (List.drop 1 items)
+    Nothing ->
+      Nothing
