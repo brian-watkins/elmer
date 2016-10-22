@@ -123,7 +123,7 @@ findWithinNode selector root =
 
 matchesNode : String -> HtmlNode -> Bool
 matchesNode selector node =
-  (matchesId selector node) || (matchesClass selector node)
+  (matchesId selector node) || (matchesClass selector node) || (matchesTag selector node)
 
 matchesId : String -> HtmlNode -> Bool
 matchesId selector node =
@@ -140,6 +140,10 @@ matchesClass selector node =
       List.member selector (List.map (\c -> "." ++ c) classList)
     Nothing ->
       False
+
+matchesTag : String -> HtmlNode -> Bool
+matchesTag selector node =
+  node.tag == selector
 
 takeNodes : List HtmlElement -> List HtmlNode
 takeNodes =

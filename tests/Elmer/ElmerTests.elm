@@ -14,6 +14,7 @@ all =
     [ noElementFound
     , findById
     , findByClass
+    , findByTag
     , findTests
     , expectNodeTests
     , expectNodeExistsTests
@@ -116,6 +117,29 @@ findByClass =
               Expect.fail "Nothing found"
       ]
     ]
+
+findByTag =
+  let
+    html = App.view App.defaultModel
+  in
+  describe "find by tag"
+  [ describe "when there is an element with the tag"
+    [ test "it finds the first element" <|
+      \() ->
+        case Elmer.findNode html "div" of
+          Just node ->
+            Expect.equal node.id (Just "root")
+          Nothing ->
+            Expect.fail "Nothing found"
+    , test "it finds a nested element" <|
+      \() ->
+        case Elmer.findNode html "input" of
+          Just node ->
+            Matchers.hasClass "nameField" node
+          Nothing ->
+            Expect.fail "Nothing found"
+    ]
+  ]
 
 findTests =
   describe "find based on component state"
