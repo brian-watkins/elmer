@@ -1,6 +1,6 @@
 module Elmer.TestApp exposing (..)
 
-import Html exposing (Html, div, text, input, Attribute, li, ul, p)
+import Html exposing (Html, div, text, input, Attribute, li, ul, p, a)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, on, keyCode)
 import Task exposing (Task)
@@ -49,7 +49,12 @@ view model =
         []
       , div [ class "withText" ]
         [ text "Some Fun Text"
-        , div [ class "anotherWithText" ] [ text "my text" ]
+        , div [ class "anotherWithText", attribute "data-special-node" "specialStuff" ]
+          [ p [] [ text "my text" ]
+          , p [ class "special", attribute "data-special-node" "differentSpecialStuff" ] [ text "special!" ]
+          , p [ class "specialer", attribute "data-special-node" "moreSpecialStuff" ] [ text "more special!" ]
+          , a [ id "fun-link", href "http://fun.com/fun.html" ] [ text "link to fun!" ]
+          ]
         , text "Some more text"
         ]
       , input [ class "nameField", onInput HandleInput, onKeyUp HandleKeyUp ] []

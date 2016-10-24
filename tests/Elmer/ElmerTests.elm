@@ -15,6 +15,7 @@ all =
     , findById
     , findByClass
     , findByTag
+    , findByAttribute
     , findTests
     , expectNodeTests
     , expectNodeExistsTests
@@ -61,7 +62,7 @@ findById =
                 in
                   case (Elmer.findNode html "#root") of
                     Just a ->
-                      Expect.equal a.id (Just "root")
+                      Expect.equal (Elmer.id a) (Just "root")
                     Nothing ->
                       Expect.fail "Nothing found"
         , test "finds a nested element by id" <|
@@ -71,7 +72,7 @@ findById =
                 in
                   case (Elmer.findNode html "#userNameLabel") of
                     Just a ->
-                      Expect.equal a.id (Just "userNameLabel")
+                      Expect.equal (Elmer.id a) (Just "userNameLabel")
                     Nothing ->
                       Expect.fail "Nothing found"
         ]
@@ -116,6 +117,15 @@ findByClass =
             Nothing ->
               Expect.fail "Nothing found"
       ]
+    , describe "when the node is nested"
+      [ test "it returns the node with the class name" <|
+        \() ->
+          case ( Elmer.findNode html ".anotherWithText" ) of
+            Just a ->
+              Matchers.hasClass "anotherWithText" a
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
     ]
 
 findByTag =
@@ -128,7 +138,7 @@ findByTag =
       \() ->
         case Elmer.findNode html "div" of
           Just node ->
-            Expect.equal node.id (Just "root")
+            Expect.equal (Elmer.id node) (Just "root")
           Nothing ->
             Expect.fail "Nothing found"
     , test "it finds a nested element" <|
@@ -140,6 +150,67 @@ findByTag =
             Expect.fail "Nothing found"
     ]
   ]
+
+findByAttribute =
+  let
+    html = App.view App.defaultModel
+  in
+    describe "find by attribute"
+    [ describe "when nothing is specified"
+      [ test "it fails" <|
+        \() ->
+          case Elmer.findNode html "" of
+            Just node ->
+              Expect.fail "Should not have found anything!"
+            Nothing ->
+              Expect.pass
+      ]
+    , describe "when the selector is not parseable"
+      [ test "it fails" <|
+        \() ->
+          case Elmer.findNode html "[blah='stuff'" of
+            Just node ->
+              Expect.fail "Should not have found anything!"
+            Nothing ->
+              Expect.pass
+      ]
+    , describe "when only an attribute is specified"
+      [ test "it finds the node with the attribute" <|
+        \() ->
+          case Elmer.findNode html "[data-special-node]" of
+            Just node ->
+              Matchers.hasClass "anotherWithText" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when an attribute and value is specified"
+      [ test "it finds the node with the attribute and value" <|
+        \() ->
+          case Elmer.findNode html "[data-special-node='moreSpecialStuff']" of
+            Just node ->
+              Matchers.hasClass "specialer" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag and attribute is specified"
+      [ test "it finds the node with the tag and attribute" <|
+        \() ->
+          case Elmer.findNode html "p[data-special-node]" of
+            Just node ->
+              Matchers.hasClass "special" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag, attribute, and value is specified"
+      [ test "it finds the node with the tag and attribute and value" <|
+        \() ->
+          case Elmer.findNode html "p[data-special-node='moreSpecialStuff']" of
+            Just node ->
+              Matchers.hasClass "specialer" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    ]
 
 findTests =
   describe "find based on component state"

@@ -4,6 +4,9 @@ module Elmer exposing
   , findNode
   , expectNode
   , expectNodeExists
+  , id
+  , classList
+  , customAttributesDict
   , map
   , not
   , HtmlElement(..)
@@ -15,7 +18,12 @@ module Elmer exposing
 
 import Html exposing (Html)
 import Native.Helpers
+import String
+import Dict exposing (Dict)
+import Json.Decode as Json exposing ((:=))
+import Regex exposing (Regex)
 import Expect
+import Maybe.Extra as MaybeEx
 
 type HtmlElement =
   Node HtmlNode |
@@ -23,8 +31,7 @@ type HtmlElement =
 
 type alias HtmlNode =
   { tag: String
-  , id: Maybe String
-  , classes: Maybe ( List String )
+  , facts: String
   , children: List HtmlElement
   , events: List HtmlEvent
   }
@@ -94,9 +101,8 @@ expectNodeExists componentStateResult =
   expectNode (\_ -> Expect.pass) componentStateResult
 
 find : String -> ComponentStateResult model msg -> ComponentStateResult model msg
-find selector componentStateResult =
-  componentStateResult
-    |> map (updateTargetNode selector)
+find selector =
+  map (updateTargetNode selector)
 
 updateTargetNode : String -> HtmlComponentState model msg -> ComponentStateResult model msg
 updateTargetNode selector componentState =
@@ -108,42 +114,125 @@ updateTargetNode selector componentState =
 
 findNode : Html msg -> String -> Maybe HtmlNode
 findNode html selector =
-  case Native.Helpers.asHtmlNode html of
-    Just node ->
-      findWithinNode selector node
-    Nothing ->
-      Nothing
+  Native.Helpers.asHtmlNode html `Maybe.andThen` (findWithinNode selector)
 
 findWithinNode : String -> HtmlNode -> Maybe HtmlNode
 findWithinNode selector root =
   if matchesNode selector root then
     Just root
   else
-    findFirstInList (\n -> isSomething (findWithinNode selector n)) (takeNodes root.children)
+    List.head <|
+      List.filterMap (findWithinNode selector) (takeNodes root.children)
 
 matchesNode : String -> HtmlNode -> Bool
 matchesNode selector node =
-  (matchesId selector node) || (matchesClass selector node) || (matchesTag selector node)
+  case String.uncons selector of
+    Just (selectorType, name) ->
+      case selectorType of
+        '#' ->
+          matchesId name node
+        '.' ->
+          matchesClass name node
+        _ ->
+          matchesTagSelector (tagSelector selector) node
+    Nothing ->
+      False
+
+matchesTagSelector : TagSelector -> HtmlNode -> Bool
+matchesTagSelector tagSelector node =
+  case tagSelector.tag of
+    Just tagName ->
+      if matchesTag tagName node then
+        Maybe.withDefault True <|
+          matchAttributeSelector tagSelector node
+      else
+        False
+    Nothing ->
+      Maybe.withDefault False <|
+        matchAttributeSelector tagSelector node
+
+matchAttributeSelector : TagSelector -> HtmlNode -> Maybe Bool
+matchAttributeSelector tagSelector node =
+  Maybe.map
+    (\attrName -> matchesAttribute attrName tagSelector.attributeValue node)
+    tagSelector.attributeName
+
+type alias TagSelector =
+  { tag: Maybe String
+  , attributeName: Maybe String
+  , attributeValue: Maybe String
+  }
+
+emptyTagSelector : TagSelector
+emptyTagSelector =
+  { tag = Nothing
+  , attributeName = Nothing
+  , attributeValue = Nothing
+  }
+
+tagSelector : String -> TagSelector
+tagSelector selector =
+  let
+    matchMaybe = List.head <|
+      Regex.find (Regex.AtMost 1)
+        (Regex.regex "^([\\w-]*)(?:\\[([\\w-]+)(?:='([\\w-]+)')?\\])?")
+        selector
+  in
+    case matchMaybe of
+      Just match ->
+        { tag = submatch 0 match
+        , attributeName = submatch 1 match
+        , attributeValue = submatch 2 match
+        }
+      Nothing ->
+        emptyTagSelector
+
+submatch : Int -> Regex.Match -> Maybe String
+submatch index match =
+  notEmpty << MaybeEx.join << List.head << List.drop index <| match.submatches
+
+notEmpty : Maybe String -> Maybe String
+notEmpty maybeEmpty =
+  maybeEmpty `Maybe.andThen` (\s -> if String.isEmpty s then Nothing else Just s)
 
 matchesId : String -> HtmlNode -> Bool
 matchesId selector node =
-  case node.id of
-    Just id ->
-      selector == "#" ++ id
-    Nothing ->
-      False
+  Maybe.withDefault False (Maybe.map ((==) selector) (id node))
 
 matchesClass : String -> HtmlNode -> Bool
 matchesClass selector node =
-  case node.classes of
-    Just classList ->
-      List.member selector (List.map (\c -> "." ++ c) classList)
-    Nothing ->
-      False
+  List.member selector (classList node)
 
 matchesTag : String -> HtmlNode -> Bool
 matchesTag selector node =
   node.tag == selector
+
+matchesAttribute : String -> Maybe String -> HtmlNode -> Bool
+matchesAttribute attributeName maybeAttributeValue node =
+  let
+    attributesDict = customAttributesDict node
+  in
+    Maybe.withDefault (Dict.member attributeName attributesDict) <|
+      Maybe.map
+        ((==) (Maybe.withDefault "" (Dict.get attributeName attributesDict)))
+        maybeAttributeValue
+
+id : HtmlNode -> Maybe String
+id node =
+  Result.toMaybe (Json.decodeString ("id" := Json.string) node.facts)
+
+classList : HtmlNode -> List String
+classList node =
+  case Json.decodeString ("className" := Json.string) node.facts of
+    Ok classes ->
+      String.split " " classes
+    Err _ ->
+      []
+
+customAttributesDict : HtmlNode -> Dict String String
+customAttributesDict node =
+  Result.withDefault Dict.empty <|
+    Json.decodeString ("ATTR" := (Json.dict Json.string)) node.facts
 
 takeNodes : List HtmlElement -> List HtmlNode
 takeNodes =
@@ -152,25 +241,6 @@ takeNodes =
       case e of
         Node n ->
           Just n
-        Text _ ->
+        _ ->
           Nothing
   )
-
-isSomething : Maybe a -> Bool
-isSomething maybeSomething =
-  case maybeSomething of
-    Just _ ->
-      True
-    Nothing ->
-      False
-
-findFirstInList : (a -> Bool) -> List a -> Maybe a
-findFirstInList matcher items =
-  case List.head items of
-    Just item ->
-      if (matcher item) then
-        Just item
-      else
-        findFirstInList matcher (List.drop 1 items)
-    Nothing ->
-      Nothing

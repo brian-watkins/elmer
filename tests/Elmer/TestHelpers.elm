@@ -1,12 +1,12 @@
 module Elmer.TestHelpers exposing (..)
 
 import Elmer exposing (..)
+import Dict
 
 emptyNode : String -> HtmlNode
 emptyNode tagName =
   { tag = tagName
-  , id = Nothing
-  , classes = Nothing
+  , facts = "{}"
   , children = []
   , events = []
   }
@@ -16,7 +16,7 @@ nodeWithClass className =
   let
     node = emptyNode "div"
   in
-    { node | classes = Just [className, "funClass"] }
+    { node | facts = "{\"className\":\"" ++ className ++ " funClass\"}"}
 
 textNode : String -> HtmlElement
 textNode text =
@@ -39,8 +39,7 @@ nodeWithMultipleChildren text =
 nodeWithNestedChildren : String -> HtmlNode
 nodeWithNestedChildren text =
   { tag = "div"
-  , id = Nothing
-  , classes = Nothing
+  , facts = "{}"
   , children =
     [ (textNode "fun stuff")
     , Node (emptyNode "div")

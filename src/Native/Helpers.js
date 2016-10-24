@@ -19,19 +19,6 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return _elm_lang$core$Native_List.fromArray(children)
   }
 
-  var getId = function(html) {
-    return (html.facts.id ? _elm_lang$core$Maybe$Just(html.facts.id) : _elm_lang$core$Maybe$Nothing);
-  }
-
-  var getClasses = function(html) {
-    if (html.facts.className) {
-        var classes = html.facts.className.split(" ");
-        return _elm_lang$core$Maybe$Just(_elm_lang$core$Native_List.fromArray(classes));
-    }
-
-    return _elm_lang$core$Maybe$Nothing;
-  }
-
   var getHtmlEvents = function(html) {
     var events = []
     if (html.facts.EVENT) {
@@ -43,10 +30,9 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   }
 
   var constructHtmlNode = function(html) {
-    return A5(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
+    return A4(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
       html.tag,
-      getId(html),
-      getClasses(html),
+      JSON.stringify(html.facts),
       getChildren(html),
       getHtmlEvents(html)
     );

@@ -19,27 +19,30 @@ hasText text node =
 
 hasClass : String -> HtmlNode -> Expect.Expectation
 hasClass className node =
-  case node.classes of
-    Just classList ->
+  let
+    classList = Elmer.classList node
+  in
+    if List.length classList > 0 then
       if List.member className classList then
         Expect.pass
       else
         Expect.fail ("Expected node to have class '" ++ className ++ "' but it has: " ++ (printList classList))
-    Nothing ->
+    else
       Expect.fail ("Expected node to have class '" ++ className ++ "' but it has no classes")
 
 -- Private functions
 
 flattenTexts : List HtmlElement -> List String
 flattenTexts children =
-  List.concat (List.map (
-    \child ->
-      case child of
-        Node n ->
-          flattenTexts n.children
-        Text t ->
-          [ t ]
-  ) children)
+  List.concat <|
+    List.map (
+      \child ->
+        case child of
+          Node n ->
+            flattenTexts n.children
+          Text t ->
+            [ t ]
+    ) children
 
 printList : List String -> String
 printList list =
