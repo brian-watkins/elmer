@@ -10,6 +10,46 @@ Right now, the only way to deploy Elmer is by hand. First, go get the [elm-ops-t
 $ python ./elm-ops-tooling/elm_self_publish.py ./elmer ./my-project/test/
 ```
 
+### Usage
+
+#### Create a `ComponentStateResult`
+
+Elmer functions generally pass around `ComponentStateResult` records. To get started describing some
+behavior with Elmer, you'll need to generate an initial component state with the `Elmer.componentState`
+function. Just pass it your model, view method, and update method.
+
+#### Finding a node
+
+Use `Elmer.find` to find an `HtmlNode` record, which describes a HTML tag in your view. The `find`
+function takes a selector and a `ComponentStateResult` as arguments. The selector can take the following
+formats:
+
++ To find the first node with the class myClass, use `.myClass`
++ To find a node with the id myId, use `#myId`
++ To find the first div tag, use `div`
++ To find the first div tag with the custom data attribute data-node, use `div[data-node]`
++ To find the first div tag with the attribute data-node and the value myData, use `div[data-node='myData']`
+
+#### Taking action on a node
+
+Once you find a node, that node is _targeted_ as the subject of subsequent actions, that is, until
+you find another node. The following functions define actions on nodes:
+
++ Click events: Elmer.Event.click <componentStateResult>
++ Input events: Elmer.Event.input <text> <componentStateResult>
++ Custom events: Elmer.Event.on <eventName> <eventJson> <componentStateResult>
+
+#### Node Matchers
+
+You can make expectations about the targeted node using the `expectNode` function, which takes a
+function that maps an HtmlNode to an Expectation. The following matchers can be used to make
+expectations about an HtmlNode:
+
++ hasText <string> <HtmlNode>
++ hasClass <string> <HtmlNode>
+
+You can also expect that the targeted node exists using the `expectNodeExists` function. 
+
 ### Example
 
 Let's test-drive a simple Elm HTML Application. We want to have a button on the screen that, when clicked, updates a counter. First, we write a test, using [Elm-Test](https://github.com/elm-community/elm-test) and Elmer:
@@ -24,7 +64,7 @@ allTests =
     [ describe "initial state"
       [ test "it shows that no clicks have occurred" <|
         \() ->
-          Elmer.find "#clickCount"
+          Elmer.find "#clickCount" initialState
             |> Elmer.expectNode (
                 \node ->
                   Matchers.hasText "0 clicks!" node
