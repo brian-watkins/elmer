@@ -7,6 +7,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.Event as Event
 import Elmer.Matchers as Matchers
+import Elmer.TestExtra as ElmerTest
 
 all : Test
 all =
@@ -24,11 +25,22 @@ appFlowTests =
             |> Event.click
             |> Event.click
             |> Elmer.find "#clickCount"
+            |> Elmer.expectNode (Matchers.hasText "2 clicks!")
+            |> Expect.equal (Expect.pass)
+    , test "it makes multiple expectations about a node" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Elmer.find ".withText" initialState
             |> Elmer.expectNode (
               \node ->
-                Matchers.hasText "2 clicks!" node
+                Matchers.hasText "Some Fun Text" node
+                  `ElmerTest.andThen`
+                Matchers.hasText "special!" node
+                  `ElmerTest.andThen`
+                Matchers.hasText "link to fun!" node
             )
-            |> Expect.equal (Expect.pass)
     , let
         initialState = Elmer.componentState App.defaultModel App.view App.update
         resultState = Elmer.find "#numberButton" initialState
