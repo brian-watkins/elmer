@@ -8,7 +8,6 @@ module Elmer exposing
   , classList
   , customAttributesDict
   , map
-  , not
   , HtmlElement(..)
   , HtmlNode
   , HtmlEvent
@@ -76,13 +75,6 @@ map mapper componentStateResult =
       mapper componentState
     UpstreamFailure message ->
       UpstreamFailure message
-
-not : Expect.Expectation -> Expect.Expectation
-not expectation =
-  if expectation == Expect.pass then
-    Expect.fail "Expected to fail, but it passed"
-  else
-    Expect.pass
 
 expectNode : (HtmlNode -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectNode expectFunction componentStateResult =

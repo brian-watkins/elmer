@@ -9,7 +9,8 @@
     "exposed-modules": [
         "Elmer",
         "Elmer.Event",
-        "Elmer.Matchers"
+        "Elmer.Matchers",
+        "Elmer.TestExtra"
     ],
     "native-modules": true,
     "dependencies": {
