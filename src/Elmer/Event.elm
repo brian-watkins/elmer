@@ -1,4 +1,4 @@
-module Elmer.Event exposing (click, input, on)
+module Elmer.Event exposing (click, input, on, command)
 
 import Elmer exposing (..)
 
@@ -39,6 +39,11 @@ genericHandler eventName eventJson node =
 on : String -> String -> ComponentStateResult model msg -> ComponentStateResult model msg
 on eventName eventJson componentStateResult =
   handleEvent (genericHandler eventName eventJson) componentStateResult
+
+command : msg -> ComponentStateResult model msg -> ComponentStateResult model msg
+command message componentStateResult =
+  componentStateResult
+    |> Elmer.map (\state -> CurrentState (performUpdate message state))
 
 -- Private functions
 

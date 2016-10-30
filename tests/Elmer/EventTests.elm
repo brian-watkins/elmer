@@ -12,6 +12,7 @@ all =
     [ clickTests
     , inputTests
     , customEventTests
+    , commandEventTests
     ]
 
 standardEventHandlerBehavior : (ComponentStateResult App.Model App.Msg -> ComponentStateResult App.Model App.Msg) -> String -> Test
@@ -107,3 +108,29 @@ customEventTests =
 
       ]
     ]
+
+commandEventTests =
+  describe "command event tests"
+  [ describe "when there is an upstream failure"
+    [ test "it passes on the error" <|
+      \() ->
+        let
+          initialState = UpstreamFailure "upstream failure"
+        in
+          Event.command App.HandleClick initialState
+            |> Expect.equal initialState
+    ]
+  , describe "when there is no upstream failure"
+    [ test "it updates the component state" <|
+        \() ->
+          let
+            initialState = Elmer.componentState App.defaultModel App.view App.update
+            result = Event.command App.HandleClick initialState
+          in
+            case result of
+              CurrentState updatedState ->
+                Expect.equal updatedState.model.clicks 1
+              UpstreamFailure msg ->
+                Expect.fail msg
+    ]
+  ]
