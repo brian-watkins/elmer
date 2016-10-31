@@ -85,9 +85,15 @@ performUpdate message componentState =
   let
     (updatedModel, command) = componentState.update message componentState.model
     updatedState = { componentState | model = updatedModel }
-    updatedMessage = Native.Helpers.runCommand command
   in
     if command == Cmd.none then
       updatedState
     else
-      performUpdate updatedMessage updatedState
+      let
+        maybeUpdatedMessage = Native.Helpers.runCommand command
+      in
+        case maybeUpdatedMessage of
+          Just updatedMessage ->
+            performUpdate updatedMessage updatedState
+          Nothing ->
+            updatedState

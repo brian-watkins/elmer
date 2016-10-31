@@ -7,6 +7,7 @@ import Elmer.MatcherTests as MatcherTests
 import Elmer.EventTests as EventTests
 import Elmer.AppTests as AppTests
 import Elmer.TestExtraTests as TestExtraTests
+import Elmer.BrowserTests as BrowserTests
 
 all : Test
 all =
@@ -16,4 +17,5 @@ all =
     , EventTests.all
     , AppTests.all
     , TestExtraTests.all
+    , BrowserTests.all
     ]

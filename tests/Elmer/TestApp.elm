@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, on, keyCode)
 import Task exposing (Task)
 import Json.Decode as Json exposing (..)
+import Navigation
 
 type alias Model =
   { name: String
@@ -38,7 +39,9 @@ type Msg =
   HandleNumberTaskError String |
   HandleInput String |
   HandleKeyUp Int |
-  HandleOtherInput String
+  HandleOtherInput String |
+  NavigationClick |
+  ModifyNavigationClick
 
 view : Model -> Html Msg
 view model =
@@ -63,6 +66,8 @@ view model =
       , div [ id "numberButton", onClick ClickForNumber ] [ text "Get a number!" ]
       , div [ id "numberOutput" ] [ text ("Clicked and got number: " ++ ((toString model.numberFromTask))) ]
       , div [ id "numberOutputError" ] [ text ("Got error requesting number: " ++ model.numberTaskError)]
+      , div [ id "navigationClick", onClick NavigationClick ] [ text "Click to change the URL" ]
+      , div [ id "modifyNavigationClick", onClick ModifyNavigationClick ] [ text "Click to modify the URL" ]
       ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -82,6 +87,10 @@ update msg model =
       ( { model | numberTaskError = message }, Cmd.none )
     HandleKeyUp key ->
       ( { model | lastLetter = key }, Cmd.none )
+    NavigationClick ->
+      ( model, Navigation.newUrl "http://fun.com/fun.html" )
+    ModifyNavigationClick ->
+      ( model, Navigation.modifyUrl "http://fun.com/evenMoreFun.html" )
 
 onKeyUp : (Int -> msg) -> Attribute msg
 onKeyUp tagger =

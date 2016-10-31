@@ -58,16 +58,24 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return errorCallback(rootTask.value).value
   }
 
+  var browserState = { location: _elm_lang$core$Maybe$Nothing }
+
   var runCommand = function(command) {
     if (command.type == 'leaf' && command.home == 'Task') {
-      return runSimpleTask(command.value)
+      return _elm_lang$core$Maybe$Just(runSimpleTask(command.value))
     }
+    else if (command.type == 'leaf' && command.home == 'Navigation') {
+      browserState.location = _elm_lang$core$Maybe$Just(command.value._0)
+    }
+
+    return _elm_lang$core$Maybe$Nothing;
   }
 
   return {
       asHtmlNode: asHtmlNode,
       getMessageForEvent: F2(getMessageForEvent),
-      runCommand: runCommand
+      runCommand: runCommand,
+      browserState: browserState
   };
 
 }();
