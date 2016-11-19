@@ -6,12 +6,10 @@ import Task
 
 import Elmer exposing (..)
 import Elmer.TestApp as App
--- import Elmer.Runtime as Runtime
 import Elmer.Event as Event
 import Elmer.Matchers as Matchers
 import Elmer.Navigation as ElmerNav
 import Html exposing (Html)
-import Html.App
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
 import Navigation
@@ -34,6 +32,8 @@ type MsgB
 type MsgC
   = MsgAWrapper MsgA
   | Error String
+  | ShowFunRoute
+  | RouteNotFound String
 
 type alias Model =
   { fun: String
@@ -46,7 +46,7 @@ defaultModel =
 
 subTask : Cmd MsgB
 subTask =
-  Task.perform HaveError HaveFun (Task.succeed "bowling")
+  Task.perform HaveFun (Task.succeed "bowling")
 
 update : MsgA -> Model -> (Model, Cmd MsgA)
 update message model =
@@ -104,6 +104,11 @@ parentUpdate message model =
         ( { model | childModel = updatedChildModel }, Cmd.map MsgAWrapper childCommand )
     Error _ ->
       ( model, Cmd.none )
+    ShowFunRoute ->
+      ( { model | route = FunRoute }, Cmd.none )
+    RouteNotFound message ->
+      ( { model | route = NotFound message }, Cmd.none )
+
 
 parentView : ParentModel -> Html MsgC
 parentView model =
@@ -112,7 +117,7 @@ parentView model =
       Html.div [ Attr.id "parent-root"]
         [ Html.p [] [ Html.text "Parent view"]
         , Html.div [ Attr.id "child-view" ]
-          [ Html.App.map MsgAWrapper (view model.childModel) ]
+          [ Html.map MsgAWrapper (view model.childModel) ]
         ]
     FunRoute ->
       Html.div [ Attr.id "fun-stuff" ]
@@ -121,20 +126,12 @@ parentView model =
       Html.div [ Attr.id "not-found-error" ]
         [ Html.p [] [ Html.text ("Page not found" ++ message) ] ]
 
-urlUpdate : Result String Route -> ParentModel -> ( ParentModel, Cmd MsgC )
-urlUpdate navResult model =
-  case navResult of
-    Ok route ->
-      ( { model | route = route }, Cmd.none )
-    Err message ->
-      ( { model | route = NotFound message }, Cmd.none )
-
-parseLocation : Navigation.Location -> Result String Route
+parseLocation : Navigation.Location -> MsgC
 parseLocation location =
   if location.href == "http://fun.com/fun.html" then
-    Ok FunRoute
+    ShowFunRoute
   else
-    Err ("Unknown url: " ++ location.href)
+    RouteNotFound ("Unknown url: " ++ location.href)
 
 
 
@@ -189,8 +186,7 @@ mapCommand =
       [ test "it handles a mapped message from the child view" <|
         \() ->
           let
-            initialState = navigationComponentState defaultParentModel parentView parentUpdate
-                            (Navigation.makeParser parseLocation) urlUpdate
+            initialState = navigationComponentState defaultParentModel parentView parentUpdate parseLocation
           in
             Elmer.find "#change-location" initialState
               |> Event.click

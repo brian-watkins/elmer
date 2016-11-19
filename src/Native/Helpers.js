@@ -20,7 +20,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       for (var eventType in html.facts.EVENT) {
         var decoder = html.facts.EVENT[eventType].decoder
         if (tagger) {
-          decoder = A2(_elm_lang$core$Native_Json.decodeObject1, tagger, decoder)
+          decoder = A2(_elm_lang$core$Native_Json.map1, tagger, decoder)
         }
 
         events.push(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvent, eventType, decoder))
@@ -53,6 +53,10 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   }
 
   var runSimpleTask = function(task) {
+    if (task._0.ctor == '_Task_andThen') {
+      return task._0.callback(task._0.task.value).value
+    }
+
     var errorCallback = task._0.callback
     var successCallback = task._0.task.callback
     var rootTask = task._0.task.task

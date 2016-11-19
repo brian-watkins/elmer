@@ -47,7 +47,10 @@ type Msg =
   HandleKeyUp Int |
   HandleOtherInput String |
   NavigationClick |
-  ModifyNavigationClick
+  ModifyNavigationClick |
+  ViewRoute |
+  RouteNotFound String
+
 
 view : Model -> Html Msg
 view model =
@@ -90,7 +93,7 @@ update msg model =
     HandleOtherInput inputString ->
       ( { model | activity = inputString }, Cmd.none )
     ClickForNumber ->
-      ( model, Task.perform HandleNumberTaskError TaskNumber model.numberTaskGenerator )
+      ( model, Task.attempt processNumberTaskResult model.numberTaskGenerator )
     TaskNumber number ->
       ( { model | numberFromTask = number }, Cmd.none )
     HandleNumberTaskError message ->
@@ -101,25 +104,21 @@ update msg model =
       ( model, Navigation.newUrl "http://fun.com/fun.html" )
     ModifyNavigationClick ->
       ( model, Navigation.modifyUrl "http://fun.com/evenMoreFun.html" )
-
-urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
-urlUpdate navResult model =
-  case navResult of
-    Ok route ->
-      ( { model | route = route }, Cmd.none )
-    Err message ->
+    ViewRoute ->
+      ( { model | route = View }, Cmd.none )
+    RouteNotFound message ->
       ( { model | route = NotFound message }, Cmd.none )
 
-parseLocation : Navigation.Location -> Result String Route
+parseLocation : Navigation.Location -> Msg
 parseLocation location =
   if location.pathname == "/api/view" then
-    Ok View
+    ViewRoute
   else
-    Err ("Unknown path: " ++ location.pathname)
+    RouteNotFound ("Unknown path: " ++ location.pathname)
 
-parseLocationFail : Navigation.Location -> Result String Route
+parseLocationFail : Navigation.Location -> Msg
 parseLocationFail location =
-  Err "Unparseable url!"
+  RouteNotFound "Unparseable url!"
 
 onKeyUp : (Int -> msg) -> Attribute msg
 onKeyUp tagger =
@@ -131,6 +130,14 @@ makeNumberTaskThatSucceeds shouldSucceed =
     Task.succeed 3
   else
     Task.fail "Bad things happened!"
+
+processNumberTaskResult : Result String Int -> Msg
+processNumberTaskResult result =
+  case result of
+    Ok number ->
+      TaskNumber number
+    Err message ->
+      HandleNumberTaskError message
 
 eventView : Model -> Html Msg
 eventView model =

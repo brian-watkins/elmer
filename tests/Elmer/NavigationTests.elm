@@ -85,7 +85,7 @@ expectLocationTests =
 
 setLocationTests =
   let
-    fullState = navigationComponentState App.defaultModel App.view App.update (Navigation.makeParser App.parseLocation) App.urlUpdate
+    fullState = navigationComponentState App.defaultModel App.view App.update App.parseLocation
   in
   describe "set location"
   [ describe "when there is an upstream failure"
@@ -110,22 +110,11 @@ setLocationTests =
             |> Elmer.expectNodeExists
             |> Expect.equal (Expect.fail "setLocation failed because no locationParser was set")
     ]
-  , describe "when no urlUpdate is set"
-    [ test "it fails with a message" <|
-      \() ->
-        let
-          stateWithoutUrlUpdate = Elmer.map (\s -> CurrentState { s | urlUpdate = Nothing }) fullState
-        in
-          ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutUrlUpdate
-            |> Elmer.find ".error"
-            |> Elmer.expectNodeExists
-            |> Expect.equal (Expect.fail "setLocation failed because no urlUpdate was set")
-    ]
-  , describe "when urlUpdate and locationParser is set"
+  , describe "when locationParser is set"
     [ test "it updates the component state with the new location" <|
       \() ->
         let
-          initialState = Elmer.map (\s -> CurrentState { s | locationParser = Just (Navigation.makeParser App.parseLocationFail) }) fullState
+          initialState = Elmer.map (\s -> CurrentState { s | locationParser = Just App.parseLocationFail }) fullState
         in
           ElmerNav.setLocation "http://fun.com/fun.html" initialState
             |> Elmer.find ".error"

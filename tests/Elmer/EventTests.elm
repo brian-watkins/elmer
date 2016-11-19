@@ -16,7 +16,7 @@ all =
     , commandEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentStateResult (Result String App.Route) App.Model App.Msg -> ComponentStateResult (Result String App.Route) App.Model App.Msg) -> String -> Test
+standardEventHandlerBehavior : (ComponentStateResult App.Model App.Msg -> ComponentStateResult App.Model App.Msg) -> String -> Test
 standardEventHandlerBehavior eventHandler eventName =
   describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
@@ -127,7 +127,7 @@ commandEventTests =
           let
             model = App.defaultModel
             initialState = Elmer.componentState model App.view App.update
-            result = Event.sendCommand (Task.perform App.HandleNumberTaskError App.TaskNumber model.numberTaskGenerator) initialState
+            result = Event.sendCommand (Task.attempt taskProcessor model.numberTaskGenerator) initialState
           in
             case result of
               CurrentState updatedState ->
@@ -136,3 +136,11 @@ commandEventTests =
                 Expect.fail msg
     ]
   ]
+
+taskProcessor : Result String Int -> App.Msg
+taskProcessor result =
+  case result of
+    Ok number ->
+      App.TaskNumber number
+    Err message ->
+      App.HandleNumberTaskError message

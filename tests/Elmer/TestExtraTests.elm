@@ -43,7 +43,8 @@ andTests =
     [ test "it returns the second expectation" <|
       \() ->
         let
-          result = Expect.pass `ElmerTest.andThen` (Expect.fail "I failed")
+          result = Expect.pass
+            |> ElmerTest.andThen (Expect.fail "I failed")
         in
           Expect.equal (Expect.fail "I failed") result
     ]
@@ -51,10 +52,10 @@ andTests =
     [ test "it returns any failure along the way" <|
       \() ->
         let
-          result = Expect.pass `ElmerTest.andThen`
-            Expect.pass `ElmerTest.andThen`
-            Expect.fail "Whoops!" `ElmerTest.andThen`
-            Expect.pass
+          result = Expect.pass
+            |> ElmerTest.andThen Expect.pass
+            |> ElmerTest.andThen (Expect.fail "Whoops!")
+            |> ElmerTest.andThen Expect.pass
         in
           Expect.equal (Expect.fail "Whoops!") result
     ]

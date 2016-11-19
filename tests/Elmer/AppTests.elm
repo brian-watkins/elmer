@@ -36,10 +36,8 @@ appFlowTests =
             |> Elmer.expectNode (
               \node ->
                 Matchers.hasText "Some Fun Text" node
-                  `ElmerTest.andThen`
-                Matchers.hasText "special!" node
-                  `ElmerTest.andThen`
-                Matchers.hasText "link to fun!" node
+                  |> ElmerTest.andThen (Matchers.hasText "special!" node)
+                  |> ElmerTest.andThen (Matchers.hasText "link to fun!" node)
             )
     , let
         initialState = Elmer.componentState App.defaultModel App.view App.update
