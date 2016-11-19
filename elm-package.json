@@ -11,7 +11,7 @@
         "Elmer.Event",
         "Elmer.Matchers",
         "Elmer.TestExtra",
-        "Elmer.Browser"
+        "Elmer.Navigation"
     ],
     "native-modules": true,
     "dependencies": {

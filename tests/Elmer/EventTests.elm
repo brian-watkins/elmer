@@ -5,6 +5,7 @@ import Elmer.TestApp as App
 import Expect
 import Elmer exposing (..)
 import Elmer.Event as Event
+import Task
 
 all : Test
 all =
@@ -15,7 +16,7 @@ all =
     , commandEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentStateResult App.Model App.Msg -> ComponentStateResult App.Model App.Msg) -> String -> Test
+standardEventHandlerBehavior : (ComponentStateResult (Result String App.Route) App.Model App.Msg -> ComponentStateResult (Result String App.Route) App.Model App.Msg) -> String -> Test
 standardEventHandlerBehavior eventHandler eventName =
   describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
@@ -117,19 +118,20 @@ commandEventTests =
         let
           initialState = UpstreamFailure "upstream failure"
         in
-          Event.command App.HandleClick initialState
+          Event.sendCommand Cmd.none initialState
             |> Expect.equal initialState
     ]
   , describe "when there is no upstream failure"
-    [ test "it updates the component state" <|
+    [ test "it executes the command and updates the component state" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
-            result = Event.command App.HandleClick initialState
+            model = App.defaultModel
+            initialState = Elmer.componentState model App.view App.update
+            result = Event.sendCommand (Task.perform App.HandleNumberTaskError App.TaskNumber model.numberTaskGenerator) initialState
           in
             case result of
               CurrentState updatedState ->
-                Expect.equal updatedState.model.clicks 1
+                Expect.equal updatedState.model.numberFromTask 3
               UpstreamFailure msg ->
                 Expect.fail msg
     ]

@@ -7,6 +7,10 @@ import Task exposing (Task)
 import Json.Decode as Json exposing (..)
 import Navigation
 
+type Route
+  = View
+  | NotFound String
+
 type alias Model =
   { name: String
   , activity: String
@@ -15,6 +19,7 @@ type alias Model =
   , numberTaskError: String
   , numberTaskGenerator: Task String Int
   , lastLetter : Int
+  , route: Route
   }
 
 defaultModel : Model
@@ -26,6 +31,7 @@ defaultModel =
   , numberTaskError = "No error"
   , numberTaskGenerator = (makeNumberTaskThatSucceeds True)
   , lastLetter = -1
+  , route = View
   }
 
 onlyText : Html Msg
@@ -45,30 +51,34 @@ type Msg =
 
 view : Model -> Html Msg
 view model =
-    div [ id "root", class "content" ]
-      [ div [ id "userNameLabel", class "label" ] []
-      , div
-        [ classList [ ("awesome", True), ("super", True), ("root", True) ] ]
-        []
-      , div [ class "withText" ]
-        [ text "Some Fun Text"
-        , div [ class "anotherWithText", attribute "data-special-node" "specialStuff" ]
-          [ p [] [ text "my text" ]
-          , p [ class "special", attribute "data-special-node" "differentSpecialStuff" ] [ text "special!" ]
-          , p [ class "specialer", attribute "data-special-node" "moreSpecialStuff" ] [ text "more special!" ]
-          , a [ id "fun-link", href "http://fun.com/fun.html" ] [ text "link to fun!" ]
+  case model.route of
+    NotFound message ->
+      div [ id "root", class "error" ] [ text ("Route not found: " ++ message) ]
+    View ->
+      div [ id "root", class "content" ]
+        [ div [ id "userNameLabel", class "label" ] []
+        , div
+          [ classList [ ("awesome", True), ("super", True), ("root", True) ] ]
+          []
+        , div [ class "withText" ]
+          [ text "Some Fun Text"
+          , div [ class "anotherWithText", attribute "data-special-node" "specialStuff" ]
+            [ p [] [ text "my text" ]
+            , p [ class "special", attribute "data-special-node" "differentSpecialStuff" ] [ text "special!" ]
+            , p [ class "specialer", attribute "data-special-node" "moreSpecialStuff" ] [ text "more special!" ]
+            , a [ id "fun-link", href "http://fun.com/fun.html" ] [ text "link to fun!" ]
+            ]
+          , text "Some more text"
           ]
-        , text "Some more text"
+        , input [ class "nameField", onInput HandleInput, onKeyUp HandleKeyUp ] []
+        , div [ class "button", onClick HandleClick ] [ text "Click Me" ]
+        , div [ id "clickCount" ] [ text ((toString model.clicks) ++ " clicks!") ]
+        , div [ id "numberButton", onClick ClickForNumber ] [ text "Get a number!" ]
+        , div [ id "numberOutput" ] [ text ("Clicked and got number: " ++ ((toString model.numberFromTask))) ]
+        , div [ id "numberOutputError" ] [ text ("Got error requesting number: " ++ model.numberTaskError)]
+        , div [ id "navigationClick", onClick NavigationClick ] [ text "Click to change the URL" ]
+        , div [ id "modifyNavigationClick", onClick ModifyNavigationClick ] [ text "Click to modify the URL" ]
         ]
-      , input [ class "nameField", onInput HandleInput, onKeyUp HandleKeyUp ] []
-      , div [ class "button", onClick HandleClick ] [ text "Click Me" ]
-      , div [ id "clickCount" ] [ text ((toString model.clicks) ++ " clicks!") ]
-      , div [ id "numberButton", onClick ClickForNumber ] [ text "Get a number!" ]
-      , div [ id "numberOutput" ] [ text ("Clicked and got number: " ++ ((toString model.numberFromTask))) ]
-      , div [ id "numberOutputError" ] [ text ("Got error requesting number: " ++ model.numberTaskError)]
-      , div [ id "navigationClick", onClick NavigationClick ] [ text "Click to change the URL" ]
-      , div [ id "modifyNavigationClick", onClick ModifyNavigationClick ] [ text "Click to modify the URL" ]
-      ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -91,6 +101,25 @@ update msg model =
       ( model, Navigation.newUrl "http://fun.com/fun.html" )
     ModifyNavigationClick ->
       ( model, Navigation.modifyUrl "http://fun.com/evenMoreFun.html" )
+
+urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
+urlUpdate navResult model =
+  case navResult of
+    Ok route ->
+      ( { model | route = route }, Cmd.none )
+    Err message ->
+      ( { model | route = NotFound message }, Cmd.none )
+
+parseLocation : Navigation.Location -> Result String Route
+parseLocation location =
+  if location.pathname == "/api/view" then
+    Ok View
+  else
+    Err ("Unknown path: " ++ location.pathname)
+
+parseLocationFail : Navigation.Location -> Result String Route
+parseLocationFail location =
+  Err "Unparseable url!"
 
 onKeyUp : (Int -> msg) -> Attribute msg
 onKeyUp tagger =

@@ -1,5 +1,6 @@
 module Elmer exposing
   ( componentState
+  , navigationComponentState
   , find
   , findNode
   , expectNode
@@ -23,21 +24,22 @@ import Json.Decode as Json exposing ((:=))
 import Regex exposing (Regex)
 import Expect
 import Maybe.Extra as MaybeEx
+import Navigation
 
-type HtmlElement =
-  Node HtmlNode |
-  Text String
+type HtmlElement msg
+  = Node (HtmlNode msg)
+  | Text String
 
-type alias HtmlNode =
+type alias HtmlNode msg =
   { tag: String
   , facts: String
-  , children: List HtmlElement
-  , events: List HtmlEvent
+  , children: List (HtmlElement msg)
+  , events: List (HtmlEvent msg)
   }
 
-type alias HtmlEvent =
+type alias HtmlEvent msg =
   { eventType: String
-  , decoder: RawValue
+  , decoder: Json.Decoder msg
   }
 
 type RawValue = RawValue
@@ -48,27 +50,56 @@ type alias ViewFunction model msg =
 type alias UpdateFunction model msg =
   msg -> model -> ( model, Cmd msg )
 
-type alias HtmlComponentState model msg =
+type alias UrlUpdateFunction navData model msg =
+  navData -> model -> (model, Cmd msg)
+
+type alias LocationParserFunction navData =
+  Navigation.Parser navData
+
+type alias HtmlComponentState navData model msg =
   { model: model
   , view: ViewFunction model msg
   , update: UpdateFunction model msg
-  , targetNode : Maybe HtmlNode
+  , targetNode: Maybe (HtmlNode msg)
+  , locationParser: Maybe (LocationParserFunction navData)
+  , urlUpdate: Maybe (UrlUpdateFunction navData model msg)
+  , location: Maybe String
   }
 
-type ComponentStateResult model msg =
-  CurrentState (HtmlComponentState model msg) |
+type ComponentStateResult navData model msg =
+  CurrentState (HtmlComponentState navData model msg) |
   UpstreamFailure String
 
-
-componentState : model -> ViewFunction model msg -> UpdateFunction model msg -> ComponentStateResult model msg
+componentState : model -> ViewFunction model msg -> UpdateFunction model msg -> ComponentStateResult navData model msg
 componentState model view update =
   CurrentState { model = model
   , view = view
   , update = update
   , targetNode = Nothing
+  , locationParser = Nothing
+  , urlUpdate = Nothing
+  , location = Nothing
   }
 
-map : (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
+navigationComponentState :
+  model ->
+  ViewFunction model msg ->
+  UpdateFunction model msg ->
+  LocationParserFunction navData ->
+  UrlUpdateFunction navData model msg ->
+  ComponentStateResult navData model msg
+navigationComponentState model view update parser urlUpdate =
+  CurrentState { model = model
+  , view = view
+  , update = update
+  , targetNode = Nothing
+  , locationParser = Just parser
+  , urlUpdate = Just urlUpdate
+  , location = Nothing
+  }
+
+
+map : (HtmlComponentState navData model msg -> ComponentStateResult navData model msg) -> ComponentStateResult navData model msg -> ComponentStateResult navData model msg
 map mapper componentStateResult =
   case componentStateResult of
     CurrentState componentState ->
@@ -76,7 +107,7 @@ map mapper componentStateResult =
     UpstreamFailure message ->
       UpstreamFailure message
 
-expectNode : (HtmlNode -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+expectNode : (HtmlNode msg -> Expect.Expectation) -> ComponentStateResult navData model msg -> Expect.Expectation
 expectNode expectFunction componentStateResult =
   case componentStateResult of
     CurrentState componentState ->
@@ -88,15 +119,15 @@ expectNode expectFunction componentStateResult =
     UpstreamFailure message ->
       Expect.fail message
 
-expectNodeExists : ComponentStateResult model msg -> Expect.Expectation
+expectNodeExists : ComponentStateResult navData model msg -> Expect.Expectation
 expectNodeExists componentStateResult =
   expectNode (\_ -> Expect.pass) componentStateResult
 
-find : String -> ComponentStateResult model msg -> ComponentStateResult model msg
+find : String -> ComponentStateResult navData model msg -> ComponentStateResult navData model msg
 find selector =
   map (updateTargetNode selector)
 
-updateTargetNode : String -> HtmlComponentState model msg -> ComponentStateResult model msg
+updateTargetNode : String -> HtmlComponentState navData model msg -> ComponentStateResult navData model msg
 updateTargetNode selector componentState =
   case findNode (componentState.view componentState.model) selector of
     Just node ->
@@ -104,11 +135,11 @@ updateTargetNode selector componentState =
     Nothing ->
       UpstreamFailure ("No html node found with selector: " ++ selector)
 
-findNode : Html msg -> String -> Maybe HtmlNode
+findNode : Html msg -> String -> Maybe (HtmlNode msg)
 findNode html selector =
   Native.Helpers.asHtmlNode html `Maybe.andThen` (findWithinNode selector)
 
-findWithinNode : String -> HtmlNode -> Maybe HtmlNode
+findWithinNode : String -> HtmlNode msg -> Maybe (HtmlNode msg)
 findWithinNode selector root =
   if matchesNode selector root then
     Just root
@@ -116,7 +147,7 @@ findWithinNode selector root =
     List.head <|
       List.filterMap (findWithinNode selector) (takeNodes root.children)
 
-matchesNode : String -> HtmlNode -> Bool
+matchesNode : String -> HtmlNode msg -> Bool
 matchesNode selector node =
   case String.uncons selector of
     Just (selectorType, name) ->
@@ -130,7 +161,7 @@ matchesNode selector node =
     Nothing ->
       False
 
-matchesTagSelector : TagSelector -> HtmlNode -> Bool
+matchesTagSelector : TagSelector -> HtmlNode msg -> Bool
 matchesTagSelector tagSelector node =
   case tagSelector.tag of
     Just tagName ->
@@ -143,7 +174,7 @@ matchesTagSelector tagSelector node =
       Maybe.withDefault False <|
         matchAttributeSelector tagSelector node
 
-matchAttributeSelector : TagSelector -> HtmlNode -> Maybe Bool
+matchAttributeSelector : TagSelector -> HtmlNode msg -> Maybe Bool
 matchAttributeSelector tagSelector node =
   Maybe.map
     (\attrName -> matchesAttribute attrName tagSelector.attributeValue node)
@@ -187,19 +218,19 @@ notEmpty : Maybe String -> Maybe String
 notEmpty maybeEmpty =
   maybeEmpty `Maybe.andThen` (\s -> if String.isEmpty s then Nothing else Just s)
 
-matchesId : String -> HtmlNode -> Bool
+matchesId : String -> HtmlNode msg -> Bool
 matchesId selector node =
   Maybe.withDefault False (Maybe.map ((==) selector) (id node))
 
-matchesClass : String -> HtmlNode -> Bool
+matchesClass : String -> HtmlNode msg -> Bool
 matchesClass selector node =
   List.member selector (classList node)
 
-matchesTag : String -> HtmlNode -> Bool
+matchesTag : String -> HtmlNode msg -> Bool
 matchesTag selector node =
   node.tag == selector
 
-matchesAttribute : String -> Maybe String -> HtmlNode -> Bool
+matchesAttribute : String -> Maybe String -> HtmlNode msg -> Bool
 matchesAttribute attributeName maybeAttributeValue node =
   let
     attributesDict = customAttributesDict node
@@ -209,11 +240,11 @@ matchesAttribute attributeName maybeAttributeValue node =
         ((==) (Maybe.withDefault "" (Dict.get attributeName attributesDict)))
         maybeAttributeValue
 
-id : HtmlNode -> Maybe String
+id : HtmlNode msg -> Maybe String
 id node =
   Result.toMaybe (Json.decodeString ("id" := Json.string) node.facts)
 
-classList : HtmlNode -> List String
+classList : HtmlNode msg -> List String
 classList node =
   case Json.decodeString ("className" := Json.string) node.facts of
     Ok classes ->
@@ -221,12 +252,12 @@ classList node =
     Err _ ->
       []
 
-customAttributesDict : HtmlNode -> Dict String String
+customAttributesDict : HtmlNode msg -> Dict String String
 customAttributesDict node =
   Result.withDefault Dict.empty <|
     Json.decodeString ("ATTR" := (Json.dict Json.string)) node.facts
 
-takeNodes : List HtmlElement -> List HtmlNode
+takeNodes : List (HtmlElement msg) -> List (HtmlNode msg)
 takeNodes =
   List.filterMap (
     \e ->

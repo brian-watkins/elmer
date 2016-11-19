@@ -1,49 +1,55 @@
 var _bwatkinsPivotal$elmer$Native_Helpers = function() {
 
-  var getMessageForEvent = function(decoder, value) {
-    var valueObj = JSON.parse(value)
-    return A2(_elm_lang$core$Native_Json.run, decoder, valueObj)
-  }
-
-  var getChildren = function(html) {
+  var getChildren = function(html, tagger) {
     var children = []
     for (var i = 0; i < html.children.length; i++) {
       var element = html.children[i]
       if (element.type == "text") {
         children.push(_bwatkinsPivotal$elmer$Elmer$Text(element.text))
       } else {
-        children.push(_bwatkinsPivotal$elmer$Elmer$Node(constructHtmlNode(element)))
+        children.push(_bwatkinsPivotal$elmer$Elmer$Node(constructHtmlNode(element, tagger)))
       }
     }
 
     return _elm_lang$core$Native_List.fromArray(children)
   }
 
-  var getHtmlEvents = function(html) {
+  var getHtmlEvents = function(html, tagger) {
     var events = []
     if (html.facts.EVENT) {
       for (var eventType in html.facts.EVENT) {
-        events.push(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvent, eventType, html.facts.EVENT[eventType].decoder))
+        var decoder = html.facts.EVENT[eventType].decoder
+        if (tagger) {
+          decoder = A2(_elm_lang$core$Native_Json.decodeObject1, tagger, decoder)
+        }
+
+        events.push(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvent, eventType, decoder))
       }
     }
     return _elm_lang$core$Native_List.fromArray(events)
   }
 
-  var constructHtmlNode = function(html) {
+  var constructHtmlNode = function(html, tagger) {
+    var node = html;
+    if (html.type == "tagger") {
+      node = html.node
+      tagger = html.tagger
+    }
+
     return A4(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
-      html.tag,
-      JSON.stringify(html.facts),
-      getChildren(html),
-      getHtmlEvents(html)
+      node.tag,
+      JSON.stringify(node.facts),
+      getChildren(node, tagger),
+      getHtmlEvents(node, tagger)
     );
   }
 
   var asHtmlNode = function(html) {
-    if (html.type == "node") {
-      return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
+    if (html.type == "text") {
+      return _elm_lang$core$Maybe$Nothing;
     }
 
-    return _elm_lang$core$Maybe$Nothing;
+    return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
   }
 
   var runSimpleTask = function(task) {
@@ -58,24 +64,49 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return errorCallback(rootTask.value).value
   }
 
-  var browserState = { location: _elm_lang$core$Maybe$Nothing }
+  var runTask = function(command) {
+    return runSimpleTask(command.value)
+  }
 
-  var runCommand = function(command) {
-    if (command.type == 'leaf' && command.home == 'Task') {
-      return _elm_lang$core$Maybe$Just(runSimpleTask(command.value))
-    }
-    else if (command.type == 'leaf' && command.home == 'Navigation') {
-      browserState.location = _elm_lang$core$Maybe$Just(command.value._0)
+  var asCommandData = function(command) {
+    if (command.type == "leaf") {
+      return _bwatkinsPivotal$elmer$Elmer_Runtime$LeafCommand(asLeafCommandData(command))
     }
 
-    return _elm_lang$core$Maybe$Nothing;
+    if (command.type == "map") {
+      return _bwatkinsPivotal$elmer$Elmer_Runtime$MapCommand(asMapCommandData(command))
+    }
+
+    return _bwatkinsPivotal$elmer$Elmer_Runtime$NoCommand
+  }
+
+  var asLocationParser = function(parser) {
+    return parser._0;
+  }
+
+  var asLeafCommandData = function(command) {
+    return A3(_bwatkinsPivotal$elmer$Elmer_Runtime$LeafCommandData,
+      command,
+      command.home,
+      JSON.stringify(command.value)
+    );
+  }
+
+  var asMapCommandData = function(command) {
+    var tagger = command.tagger
+    var mappedCommand = command.tree
+
+    return (A2)(_bwatkinsPivotal$elmer$Elmer_Runtime$MapCommandData,
+      mappedCommand,
+      tagger
+    );
   }
 
   return {
       asHtmlNode: asHtmlNode,
-      getMessageForEvent: F2(getMessageForEvent),
-      runCommand: runCommand,
-      browserState: browserState
+      asCommandData: asCommandData,
+      runTask: runTask,
+      asLocationParser: asLocationParser
   };
 
 }();

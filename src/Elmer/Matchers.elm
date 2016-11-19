@@ -4,7 +4,7 @@ import Elmer exposing (..)
 import Expect
 import String
 
-hasText : String -> HtmlNode -> Expect.Expectation
+hasText : String -> HtmlNode msg -> Expect.Expectation
 hasText text node =
   let
     texts = flattenTexts node.children
@@ -17,7 +17,7 @@ hasText text node =
       else
         Expect.fail ("Expected node to have text '" ++ text ++ "' but it has: " ++ (printList texts))
 
-hasClass : String -> HtmlNode -> Expect.Expectation
+hasClass : String -> HtmlNode msg -> Expect.Expectation
 hasClass className node =
   let
     classList = Elmer.classList node
@@ -32,7 +32,7 @@ hasClass className node =
 
 -- Private functions
 
-flattenTexts : List HtmlElement -> List String
+flattenTexts : List (HtmlElement msg) -> List String
 flattenTexts children =
   List.concat <|
     List.map (
