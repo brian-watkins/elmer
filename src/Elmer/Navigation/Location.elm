@@ -38,6 +38,9 @@ findQueryString path =
 
 findPath : String -> String
 findPath url =
+  if String.startsWith "#" url then
+    url
+  else 
     let
         urlComponents =
             String.split "/" (dropProtocol url)

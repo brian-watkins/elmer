@@ -145,6 +145,20 @@ asLocationTests =
           location = Location.asLocation "http://fun.com/fun.html?key=value#some/fun/path"
         in
           Expect.equal location.hash "#some/fun/path"
+    , describe "when the hash is relative"
+      [ test "it finds the hashed value" <|
+        \() ->
+          let
+            location = Location.asLocation "#some/fun/path"
+          in
+            Expect.equal location.hash "#some/fun/path"
+      , test "it finds a single hashed value" <|
+        \() ->
+          let
+            location = Location.asLocation "#hash"
+          in
+            Expect.equal location.hash "#hash"
+      ]
     ]
   , describe "path"
     [ test "it finds the path" <|
