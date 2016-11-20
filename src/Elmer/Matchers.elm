@@ -12,11 +12,11 @@ hasText text node =
             flattenTexts node.children
     in
         if List.length texts == 0 then
-            Expect.fail ("Expected node to have text '" ++ text ++ "' but it has no text")
+            Expect.fail ("Expected node to have text\n\n\t" ++ text ++ "\n\nbut it has no text")
         else if List.member text texts then
             Expect.pass
         else
-            Expect.fail ("Expected node to have text '" ++ text ++ "' but it has: " ++ (printList texts))
+            Expect.fail ("Expected node to have text\n\n\t" ++ text ++ "\n\nbut it has\n\n\t" ++ (printList texts))
 
 
 hasClass : String -> HtmlNode msg -> Expect.Expectation
@@ -29,9 +29,9 @@ hasClass className node =
             if List.member className classList then
                 Expect.pass
             else
-                Expect.fail ("Expected node to have class '" ++ className ++ "' but it has: " ++ (printList classList))
+                Expect.fail ("Expected node to have class\n\n\t" ++ className ++ "\n\nbut it has\n\n\t" ++ (printList classList))
         else
-            Expect.fail ("Expected node to have class '" ++ className ++ "' but it has no classes")
+            Expect.fail ("Expected node to have class\n\n\t" ++ className ++ "\n\nbut it has no classes")
 
 
 

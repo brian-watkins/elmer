@@ -20,13 +20,13 @@ hasTextTests =
     [ test "it fails with the right message" <|
       \() ->
         Matchers.hasText "Some text" (emptyNode "div")
-          |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has no text")
+          |> Expect.equal (Expect.fail "Expected node to have text\n\n\tSome text\n\nbut it has no text")
     ]
   , describe "when the element has the wrong text"
     [ test "it fails with the right message" <|
       \() ->
         Matchers.hasText "Some text" (nodeWithText "other text")
-          |> Expect.equal (Expect.fail "Expected node to have text 'Some text' but it has: other text")
+          |> Expect.equal (Expect.fail "Expected node to have text\n\n\tSome text\n\nbut it has\n\n\tother text")
     ]
   , describe "when the element has the text"
     [ test "it passes" <|
@@ -44,7 +44,7 @@ hasTextTests =
       [ test "it fails with the right message" <|
         \() ->
           Matchers.hasText "Other stuff" (nodeWithMultipleChildren "Some text")
-            |> Expect.equal (Expect.fail "Expected node to have text 'Other stuff' but it has: fun stuff, Some text")
+            |> Expect.equal (Expect.fail "Expected node to have text\n\n\tOther stuff\n\nbut it has\n\n\tfun stuff, Some text")
       ]
     , describe "when the text is in a child node"
       [ test "it finds the text" <|
@@ -61,14 +61,14 @@ hasClassTests =
     [ test "it fails with the right message" <|
       \() ->
         Matchers.hasClass "myClass" (emptyNode "div")
-          |> Expect.equal (Expect.fail "Expected node to have class 'myClass' but it has no classes")
+          |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has no classes")
     ]
   , describe "when the element has classes"
     [ describe "when the element does not have the specified class"
       [ test "it returns fails with the right message" <|
         \() ->
           Matchers.hasClass "myClass" (nodeWithClass "anotherClass")
-            |> Expect.equal (Expect.fail "Expected node to have class 'myClass' but it has: anotherClass, funClass")
+            |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has\n\n\tanotherClass, funClass")
       ]
     , describe "when the element has the specified class"
       [ test "it passes" <|
