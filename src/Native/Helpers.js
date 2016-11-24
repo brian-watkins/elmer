@@ -87,10 +87,6 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return _bwatkinsPivotal$elmer$Elmer_Runtime$NoCommand
   }
 
-  var asLocationParser = function(parser) {
-    return parser._0;
-  }
-
   var asLeafCommandData = function(command) {
     return A3(_bwatkinsPivotal$elmer$Elmer_Runtime$LeafCommandData,
       command,
@@ -109,11 +105,20 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     );
   }
 
+  var asHttpRequest = function(request) {
+    var requestData = request._0
+
+    return A3(_bwatkinsPivotal$elmer$Elmer_Http$HttpRequest,
+      requestData.method,
+      requestData.url,
+      requestData.expect.responseToResult)
+  }
+
   return {
       asHtmlNode: asHtmlNode,
       asCommandData: asCommandData,
       runTask: runTask,
-      asLocationParser: asLocationParser
+      asHttpRequest: asHttpRequest,
   };
 
 }();

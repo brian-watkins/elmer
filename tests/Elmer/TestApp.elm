@@ -6,6 +6,7 @@ import Html.Events exposing (onClick, onInput, on, keyCode)
 import Task exposing (Task)
 import Json.Decode as Json exposing (..)
 import Navigation
+import Http
 
 type Route
   = View
@@ -18,8 +19,10 @@ type alias Model =
   , numberFromTask: Int
   , numberTaskError: String
   , numberTaskGenerator: Task String Int
+  , httpSend: (Result Http.Error String -> Msg) -> Http.Request String -> Cmd Msg
   , lastLetter : Int
   , route: Route
+  , webServiceData: String
   }
 
 defaultModel : Model
@@ -30,26 +33,31 @@ defaultModel =
   , numberFromTask = -1
   , numberTaskError = "No error"
   , numberTaskGenerator = (makeNumberTaskThatSucceeds True)
+  , httpSend = Http.send
   , lastLetter = -1
   , route = View
+  , webServiceData = "Not Requested"
   }
 
 onlyText : Html Msg
 onlyText =
   text "Only Text"
 
-type Msg =
-  HandleClick |
-  ClickForNumber |
-  TaskNumber Int |
-  HandleNumberTaskError String |
-  HandleInput String |
-  HandleKeyUp Int |
-  HandleOtherInput String |
-  NavigationClick |
-  ModifyNavigationClick |
-  ViewRoute |
-  RouteNotFound String
+type Msg
+  = HandleClick
+  | ClickForNumber
+  | TaskNumber Int
+  | HandleNumberTaskError String
+  | HandleInput String
+  | HandleKeyUp Int
+  | HandleOtherInput String
+  | NavigationClick
+  | ModifyNavigationClick
+  | ViewRoute
+  | RouteNotFound String
+  | RequestData
+  | WebServiceResponse (Result Http.Error String)
+
 
 
 view : Model -> Html Msg
@@ -81,6 +89,10 @@ view model =
         , div [ id "numberOutputError" ] [ text ("Got error requesting number: " ++ model.numberTaskError)]
         , div [ id "navigationClick", onClick NavigationClick ] [ text "Click to change the URL" ]
         , div [ id "modifyNavigationClick", onClick ModifyNavigationClick ] [ text "Click to modify the URL" ]
+        , div [ id "webservice-data" ]
+          [ div [ id "request-data-click", onClick RequestData ] [ text "Click me to request data!" ]
+          , div [ id "data-result" ] [ text model.webServiceData ]
+          ]
         ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -108,6 +120,26 @@ update msg model =
       ( { model | route = View }, Cmd.none )
     RouteNotFound message ->
       ( { model | route = NotFound message }, Cmd.none )
+    RequestData ->
+      ( model, fetchData model )
+    WebServiceResponse (Ok name) ->
+      ( { model | webServiceData = ("Name: " ++ name) }, Cmd.none )
+    WebServiceResponse (Err (Http.BadPayload message response)) ->
+      ( { model | webServiceData = ("BadPayload Error: " ++ message) }, Cmd.none )
+    WebServiceResponse (Err (Http.BadStatus response)) ->
+      ( { model | webServiceData = ("BadStatus Error: " ++ (toString response.status.code) ++ " " ++ response.status.message) }, Cmd.none )
+    WebServiceResponse (Err Http.Timeout) ->
+      ( { model | webServiceData = "Timeout Error" }, Cmd.none )
+    WebServiceResponse (Err _) ->
+      ( { model | webServiceData = "Error: Some unknown error" }, Cmd.none )
+
+fetchData : Model -> Cmd Msg
+fetchData model =
+  model.httpSend WebServiceResponse (Http.get "http://fun.com/fun.html" webServiceDecoder)
+
+webServiceDecoder : Json.Decoder String
+webServiceDecoder =
+  Json.field "name" Json.string
 
 parseLocation : Navigation.Location -> Msg
 parseLocation location =
