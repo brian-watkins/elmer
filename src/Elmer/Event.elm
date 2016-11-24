@@ -67,11 +67,21 @@ on eventName eventJson componentStateResult =
 
 sendCommand : Cmd msg -> ComponentStateResult model msg -> ComponentStateResult model msg
 sendCommand command =
-    Elmer.map (\state -> CurrentState (Runtime.performCommand command state))
-
+    Elmer.map (\state ->
+      Runtime.performCommand command state
+        |> asComponentStateResult
+    )
 
 
 -- Private functions
+
+asComponentStateResult : Result String (HtmlComponentState model msg) -> ComponentStateResult model msg
+asComponentStateResult commandResult =
+  case commandResult of
+    Ok updatedComponentState ->
+      CurrentState updatedComponentState
+    Err message ->
+      UpstreamFailure message
 
 
 getEvent : String -> HtmlNode msg -> Maybe (HtmlEvent msg)
@@ -99,7 +109,8 @@ updateComponent : HtmlNode msg -> EventHandler msg -> HtmlComponentState model m
 updateComponent node eventHandler componentState =
     case eventHandler node of
         Message msg ->
-            CurrentState (Runtime.performUpdate msg componentState)
+          Runtime.performUpdate msg componentState
+            |> asComponentStateResult
 
         EventFailure msg ->
             UpstreamFailure msg

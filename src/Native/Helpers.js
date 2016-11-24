@@ -52,9 +52,11 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
   }
 
-  var runSimpleTask = function(task) {
+  var runTask = function(command) {
+    var task = command.value
+
     if (task._0.ctor == '_Task_andThen') {
-      return task._0.callback(task._0.task.value).value
+      return _elm_lang$core$Result$Ok(task._0.callback(task._0.task.value).value)
     }
 
     var errorCallback = task._0.callback
@@ -62,14 +64,15 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     var rootTask = task._0.task.task
 
     if (rootTask.ctor == '_Task_succeed') {
-      return successCallback(rootTask.value).value
+      return _elm_lang$core$Result$Ok(successCallback(rootTask.value).value)
     }
 
-    return errorCallback(rootTask.value).value
-  }
+    var errorValue = rootTask.value
+    if (errorValue.elmerError) {
+        return _elm_lang$core$Result$Err(errorValue.elmerError)
+    }
 
-  var runTask = function(command) {
-    return runSimpleTask(command.value)
+    return _elm_lang$core$Result$Ok(errorCallback(errorValue).value)
   }
 
   var asCommandData = function(command) {

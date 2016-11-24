@@ -8,17 +8,19 @@ import Elmer exposing (..)
 import Elmer.Navigation.Runner as ElmerNav
 import Json.Decode as Json
 
+type CommandResult model msg
+  = CommandSuccess (CommandEffect model msg)
+  | CommandError String
 
-type alias CommandResult model msg =
+type alias CommandEffect model msg =
     { componentState : HtmlComponentState model msg
     , message : Maybe msg
     }
 
-
 type alias CommandRunner model msg =
     { name : String
     , run : LeafCommandData msg -> HtmlComponentState model msg -> CommandResult model msg
-    , update : CommandResult model msg -> ( HtmlComponentState model msg, Cmd msg )
+    , update : CommandEffect model msg -> ( HtmlComponentState model msg, Cmd msg )
     }
 
 
@@ -53,9 +55,16 @@ taskCommandRunner =
     { name = "Task"
     , run =
         \data state ->
-            { componentState = state
-            , message = Just (Native.Helpers.runTask data.command)
-            }
+          let
+            taskResult = Native.Helpers.runTask data.command
+          in
+            case taskResult of
+              Ok msg ->
+                CommandSuccess { componentState = state
+                , message = Just msg
+                }
+              Err errorMessage ->
+                CommandError errorMessage
     , update = updateWithResult
     }
 
@@ -69,7 +78,7 @@ navigationCommandRunner =
                 url =
                     Result.withDefault "" (Json.decodeString (Json.field "_0" Json.string) data.json)
             in
-                { componentState = { state | location = Just url }
+                CommandSuccess { componentState = { state | location = Just url }
                 , message = Nothing
                 }
     , update =
@@ -93,7 +102,7 @@ identityRunner =
     { name = ""
     , run =
         \data state ->
-            { componentState = state
+            CommandSuccess { componentState = state
             , message = Nothing
             }
     , update =
@@ -114,7 +123,7 @@ updateComponentState message componentState =
         ( updatedState, command )
 
 
-performUpdate : msg -> HtmlComponentState model msg -> HtmlComponentState model msg
+performUpdate : msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
 performUpdate message componentState =
     let
         ( updatedComponent, command ) =
@@ -128,39 +137,44 @@ commandRunnerForData commandName =
     Maybe.withDefault identityRunner (List.head (List.filter (\r -> r.name == commandName) commandRunners))
 
 
-performCommand : Cmd msg -> HtmlComponentState model msg -> HtmlComponentState model msg
+performCommand : Cmd msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
 performCommand command componentState =
     let
         commandResult =
             runCommand command componentState
-
-        ( updatedComponentState, updatedCommand ) =
-            processCommandResult command commandResult
     in
-        if updatedCommand == Cmd.none then
-            updatedComponentState
-        else
-            performCommand updatedCommand updatedComponentState
+      case commandResult of
+        CommandSuccess commandEffect ->
+          let
+            ( updatedComponentState, updatedCommand ) =
+                processCommandEffect command commandEffect
+          in
+            if updatedCommand == Cmd.none then
+              Ok updatedComponentState
+            else
+              performCommand updatedCommand updatedComponentState
+        CommandError errorMessage ->
+          Err errorMessage
 
 
-processCommandResult : Cmd msg -> CommandResult model msg -> ( HtmlComponentState model msg, Cmd msg )
-processCommandResult command commandResult =
+processCommandEffect : Cmd msg -> CommandEffect model msg -> ( HtmlComponentState model msg, Cmd msg )
+processCommandEffect command commandEffect =
     case Native.Helpers.asCommandData command of
         LeafCommand data ->
             let
                 runner =
                     commandRunnerForData data.home
             in
-                runner.update commandResult
+                runner.update commandEffect
 
         MapCommand data ->
-            processCommandResult data.tree commandResult
+            processCommandEffect data.tree commandEffect
 
         NoCommand ->
-            ( commandResult.componentState, Cmd.none )
+            ( commandEffect.componentState, Cmd.none )
 
 
-updateWithResult : CommandResult model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateWithResult : CommandEffect model msg -> ( HtmlComponentState model msg, Cmd msg )
 updateWithResult result =
     case result.message of
         Just message ->
@@ -185,22 +199,19 @@ runCommand command componentState =
                 commandResult =
                     runCommand data.tree componentState
             in
-                case commandResult.message of
-                    Just message ->
-                        { commandResult | message = Just (data.tagger message) }
+                case commandResult of
+                  CommandSuccess commandEffect ->
+                    case commandEffect.message of
+                        Just message ->
+                            CommandSuccess { commandEffect | message = Just (data.tagger message) }
 
-                    Nothing ->
-                        commandResult
+                        Nothing ->
+                            CommandSuccess commandEffect
+
+                  CommandError errorMessage ->
+                    CommandError errorMessage
 
         NoCommand ->
-            { componentState = componentState
+            CommandSuccess { componentState = componentState
             , message = Nothing
             }
-
-
-nullLeaf : LeafCommandData msg
-nullLeaf =
-    { command = Cmd.none
-    , home = ""
-    , json = ""
-    }

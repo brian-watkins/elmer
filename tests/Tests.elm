@@ -8,6 +8,7 @@ import Elmer.EventTests as EventTests
 import Elmer.AppTests as AppTests
 import Elmer.TestExtraTests as TestExtraTests
 import Elmer.NavigationTests as NavigationTests
+import Elmer.ComponentTests as ComponentTests
 import Elmer.RuntimeTests as RuntimeTests
 
 all : Test
@@ -19,5 +20,6 @@ all =
     , AppTests.all
     , TestExtraTests.all
     , NavigationTests.all
+    , ComponentTests.all
     , RuntimeTests.all
     ]

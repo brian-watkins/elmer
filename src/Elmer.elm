@@ -10,6 +10,7 @@ module Elmer
         , classList
         , customAttributesDict
         , map
+        , failureCommand
         , HtmlElement(..)
         , HtmlNode
         , HtmlEvent
@@ -26,7 +27,7 @@ import Regex exposing (Regex)
 import Expect
 import Maybe.Extra as MaybeEx
 import Navigation
-
+import Task
 
 type HtmlElement msg
     = Node (HtmlNode msg)
@@ -313,3 +314,25 @@ takeNodes =
                 _ ->
                     Nothing
         )
+
+
+
+type alias TaskFailure =
+  { elmerError: String
+  }
+
+failureCommand : String -> Cmd msg
+failureCommand message =
+  Task.attempt errorTagger (Task.fail (taskFailure message))
+
+errorTagger : Result TaskFailure a -> msg
+errorTagger result =
+  case result of
+    Ok err ->
+      Debug.crash "Died"
+    Err _ ->
+      Debug.crash "Died"
+
+taskFailure : String -> TaskFailure
+taskFailure msg =
+  { elmerError = msg }
