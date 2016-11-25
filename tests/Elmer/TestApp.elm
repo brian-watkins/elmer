@@ -20,9 +20,11 @@ type alias Model =
   , numberTaskError: String
   , numberTaskGenerator: Task String Int
   , httpSend: (Result Http.Error String -> Msg) -> Http.Request String -> Cmd Msg
+  , anotherHttpSend: (Result Http.Error String -> Msg) -> Http.Request String -> Cmd Msg
   , lastLetter : Int
   , route: Route
   , webServiceData: String
+  , anotherWebServiceData: String
   }
 
 defaultModel : Model
@@ -34,9 +36,11 @@ defaultModel =
   , numberTaskError = "No error"
   , numberTaskGenerator = (makeNumberTaskThatSucceeds True)
   , httpSend = Http.send
+  , anotherHttpSend = Http.send
   , lastLetter = -1
   , route = View
   , webServiceData = "Not Requested"
+  , anotherWebServiceData = "Not Requested"
   }
 
 onlyText : Html Msg
@@ -56,7 +60,9 @@ type Msg
   | ViewRoute
   | RouteNotFound String
   | RequestData
+  | AnotherRequestData
   | WebServiceResponse (Result Http.Error String)
+  | AnotherWebServiceResponse (Result Http.Error String)
 
 
 
@@ -93,6 +99,10 @@ view model =
           [ div [ id "request-data-click", onClick RequestData ] [ text "Click me to request data!" ]
           , div [ id "data-result" ] [ text model.webServiceData ]
           ]
+        , div [ id "another-webservice-data" ]
+          [ div [ id "another-request-data-click", onClick AnotherRequestData ] [ text "Click me to request more data!" ]
+          , div [ id "another-data-result" ] [ text model.anotherWebServiceData ]
+          ]
         ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -122,6 +132,8 @@ update msg model =
       ( { model | route = NotFound message }, Cmd.none )
     RequestData ->
       ( model, fetchData model )
+    AnotherRequestData ->
+      ( model, fetchMoreData model )
     WebServiceResponse (Ok name) ->
       ( { model | webServiceData = ("Name: " ++ name) }, Cmd.none )
     WebServiceResponse (Err (Http.BadPayload message response)) ->
@@ -132,14 +144,26 @@ update msg model =
       ( { model | webServiceData = "Timeout Error" }, Cmd.none )
     WebServiceResponse (Err _) ->
       ( { model | webServiceData = "Error: Some unknown error" }, Cmd.none )
+    AnotherWebServiceResponse (Ok data) ->
+      ( { model | anotherWebServiceData = data }, Cmd.none )
+    AnotherWebServiceResponse (Err _) ->
+      ( { model | anotherWebServiceData = "Error" }, Cmd.none )
 
 fetchData : Model -> Cmd Msg
 fetchData model =
   model.httpSend WebServiceResponse (Http.get "http://fun.com/fun.html" webServiceDecoder)
 
+fetchMoreData : Model -> Cmd Msg
+fetchMoreData model =
+  model.anotherHttpSend AnotherWebServiceResponse (Http.get "http://awesome.com/awesome.html" anotherWebServiceDecoder)
+
 webServiceDecoder : Json.Decoder String
 webServiceDecoder =
   Json.field "name" Json.string
+
+anotherWebServiceDecoder : Json.Decoder String
+anotherWebServiceDecoder =
+  Json.field "data" Json.string
 
 parseLocation : Navigation.Location -> Msg
 parseLocation location =

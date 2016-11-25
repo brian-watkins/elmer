@@ -27,6 +27,7 @@ type alias CommandRunner model msg =
 type CommandData msg a
     = LeafCommand (LeafCommandData msg)
     | MapCommand (MapCommandData msg a)
+    | BatchCommand (List (Cmd msg))
     | NoCommand
 
 
@@ -170,6 +171,9 @@ processCommandEffect command commandEffect =
         MapCommand data ->
             processCommandEffect data.tree commandEffect
 
+        BatchCommand commands ->
+            ( commandEffect.componentState, Cmd.none )
+
         NoCommand ->
             ( commandEffect.componentState, Cmd.none )
 
@@ -211,7 +215,25 @@ runCommand command componentState =
                   CommandError errorMessage ->
                     CommandError errorMessage
 
+        BatchCommand commands ->
+          let
+            initialCommandResult = CommandSuccess { componentState = componentState, message = Nothing }
+          in
+            List.foldl performBatchedCommand initialCommandResult commands
+
         NoCommand ->
             CommandSuccess { componentState = componentState
             , message = Nothing
             }
+
+performBatchedCommand : Cmd msg -> CommandResult model msg -> CommandResult model msg
+performBatchedCommand cmd currentResult =
+  case currentResult of
+    CommandSuccess commandEffect ->
+      case performCommand cmd commandEffect.componentState of
+        Ok updatedComponentState ->
+          CommandSuccess { componentState = updatedComponentState, message = Nothing }
+        Err errorMessage ->
+          CommandError errorMessage
+    CommandError errorMessage ->
+      CommandError errorMessage

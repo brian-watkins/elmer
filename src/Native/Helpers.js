@@ -84,6 +84,10 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       return _bwatkinsPivotal$elmer$Elmer_Runtime$MapCommand(asMapCommandData(command))
     }
 
+    if (command.type == "node") {
+      return _bwatkinsPivotal$elmer$Elmer_Runtime$BatchCommand(asBatchCommandData(command))
+    }
+
     return _bwatkinsPivotal$elmer$Elmer_Runtime$NoCommand
   }
 
@@ -103,6 +107,11 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       mappedCommand,
       tagger
     );
+  }
+
+  var asBatchCommandData = function(command) {
+    var commands = _elm_lang$core$Native_List.toArray(command.branches)
+    return _elm_lang$core$Native_List.fromArray(commands)
   }
 
   var asHttpRequest = function(request) {
