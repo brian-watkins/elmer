@@ -7,33 +7,30 @@ module Elmer.Runtime
 import Elmer exposing (..)
 import Elmer.Navigation.Runner as ElmerNav
 import Json.Decode as Json
+import Dict exposing (Dict)
 
 type CommandResult model msg
   = CommandSuccess (CommandEffect model msg)
   | CommandError String
 
 type alias CommandEffect model msg =
-    { componentState : HtmlComponentState model msg
-    , message : Maybe msg
-    }
+  HtmlComponentState model msg -> (HtmlComponentState model msg, Cmd msg)
 
-type alias CommandRunner model msg =
+type alias CommandRunner model subMsg msg =
     { name : String
-    , run : LeafCommandData msg -> HtmlComponentState model msg -> CommandResult model msg
-    , update : CommandEffect model msg -> ( HtmlComponentState model msg, Cmd msg )
+    , run : LeafCommandData subMsg -> (subMsg -> msg) -> CommandResult model msg
     }
 
-
-type CommandData msg a
+type CommandData msg subMsg
     = LeafCommand (LeafCommandData msg)
-    | MapCommand (MapCommandData msg a)
+    | MapCommand (MapCommandData subMsg msg)
     | BatchCommand (List (Cmd msg))
     | NoCommand
 
 
-type alias MapCommandData msg a =
-    { tree : Cmd msg
-    , tagger : msg -> a
+type alias MapCommandData subMsg msg =
+    { tree : Cmd subMsg
+    , tagger : subMsg -> msg
     }
 
 
@@ -44,72 +41,67 @@ type alias LeafCommandData msg =
     }
 
 
-commandRunners : List (CommandRunner model msg)
+commandRunners : List (CommandRunner model subMsg msg)
 commandRunners =
     [ taskCommandRunner
     , navigationCommandRunner
     ]
 
 
-taskCommandRunner : CommandRunner model msg
+taskCommandRunner : CommandRunner model subMsg msg
 taskCommandRunner =
     { name = "Task"
     , run =
-        \data state ->
+        \data tagger ->
           let
             taskResult = Native.Helpers.runTask data.command
           in
             case taskResult of
               Ok msg ->
-                CommandSuccess { componentState = state
-                , message = Just msg
-                }
+                CommandSuccess (updateComponentState (tagger msg))
               Err errorMessage ->
                 CommandError errorMessage
-    , update = updateWithResult
     }
 
 
-navigationCommandRunner : CommandRunner model msg
+navigationCommandRunner : CommandRunner model subMsg msg
 navigationCommandRunner =
     { name = "Navigation"
     , run =
-        \data state ->
+        \data _ ->
             let
                 url =
                     Result.withDefault "" (Json.decodeString (Json.field "_0" Json.string) data.json)
             in
-                CommandSuccess { componentState = { state | location = Just url }
-                , message = Nothing
-                }
-    , update =
-        \result ->
-            let
-                url = Maybe.withDefault "" result.componentState.location
-            in
-                case result.componentState.locationParser of
-                    Just locationParser ->
-                      let
-                          message = ElmerNav.handleLocationUpdate url locationParser
-                      in
-                          updateComponentState message result.componentState
-                    Nothing ->
-                        ( result.componentState, Cmd.none )
+                CommandSuccess (updateComponentStateWithLocation url)
     }
 
+updateComponentStateWithLocation : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateComponentStateWithLocation url componentState =
+  let
+      updatedComponentState = { componentState | location = Just url }
+  in
+      case updatedComponentState.locationParser of
+          Just locationParser ->
+            let
+                message = ElmerNav.handleLocationUpdate url locationParser
+            in
+                updateComponentState message updatedComponentState
+          Nothing ->
+              ( updatedComponentState, Cmd.none )
 
-identityRunner : CommandRunner model msg
+
+identityRunner : CommandRunner model subMsg msg
 identityRunner =
     { name = ""
     , run =
-        \data state ->
-            CommandSuccess { componentState = state
-            , message = Nothing
-            }
-    , update =
-        \result ->
-            ( result.componentState, Cmd.none )
+        \_ _ ->
+            CommandSuccess (\componentState -> ( componentState, Cmd.none ))
     }
+
+identityTagger : msg -> msg
+identityTagger msg =
+  msg
 
 
 updateComponentState : msg -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
@@ -133,7 +125,7 @@ performUpdate message componentState =
         performCommand command updatedComponent
 
 
-commandRunnerForData : String -> CommandRunner model msg
+commandRunnerForData : String -> CommandRunner model subMsg msg
 commandRunnerForData commandName =
     Maybe.withDefault identityRunner (List.head (List.filter (\r -> r.name == commandName) commandRunners))
 
@@ -141,14 +133,19 @@ commandRunnerForData commandName =
 performCommand : Cmd msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
 performCommand command componentState =
     let
-        commandResult =
-            runCommand command componentState
+        commandResults =
+            runCommand identityTagger command
     in
+      List.foldl reduceCommandResults (Ok componentState) commandResults
+
+reduceCommandResults : CommandResult model msg -> Result String (HtmlComponentState model msg) -> Result String (HtmlComponentState model msg)
+reduceCommandResults commandResult currentResult =
+  case currentResult of
+    Ok componentState ->
       case commandResult of
         CommandSuccess commandEffect ->
           let
-            ( updatedComponentState, updatedCommand ) =
-                processCommandEffect command commandEffect
+            ( updatedComponentState, updatedCommand ) = processCommandEffect commandEffect componentState
           in
             if updatedCommand == Cmd.none then
               Ok updatedComponentState
@@ -156,84 +153,42 @@ performCommand command componentState =
               performCommand updatedCommand updatedComponentState
         CommandError errorMessage ->
           Err errorMessage
+    Err errorMessage ->
+      Err errorMessage
 
 
-processCommandEffect : Cmd msg -> CommandEffect model msg -> ( HtmlComponentState model msg, Cmd msg )
-processCommandEffect command commandEffect =
+processCommandEffect : CommandEffect model msg -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+processCommandEffect commandEffect componentState =
+    commandEffect componentState
+
+
+runCommand : (subMsg -> msg) -> Cmd subMsg -> List (CommandResult model msg)
+runCommand tagger command =
     case Native.Helpers.asCommandData command of
         LeafCommand data ->
             let
                 runner =
                     commandRunnerForData data.home
+                commandResult = runner.run data tagger
             in
-                runner.update commandEffect
+                [ commandResult ]
 
         MapCommand data ->
-            processCommandEffect data.tree commandEffect
-
-        BatchCommand commands ->
-            ( commandEffect.componentState, Cmd.none )
-
-        NoCommand ->
-            ( commandEffect.componentState, Cmd.none )
-
-
-updateWithResult : CommandEffect model msg -> ( HtmlComponentState model msg, Cmd msg )
-updateWithResult result =
-    case result.message of
-        Just message ->
-            updateComponentState message result.componentState
-
-        Nothing ->
-            ( result.componentState, Cmd.none )
-
-
-runCommand : Cmd msg -> HtmlComponentState model msg -> CommandResult model msg
-runCommand command componentState =
-    case Native.Helpers.asCommandData command of
-        LeafCommand data ->
-            let
-                runner =
-                    commandRunnerForData data.home
-            in
-                runner.run data componentState
-
-        MapCommand data ->
-            let
-                commandResult =
-                    runCommand data.tree componentState
-            in
-                case commandResult of
-                  CommandSuccess commandEffect ->
-                    case commandEffect.message of
-                        Just message ->
-                            CommandSuccess { commandEffect | message = Just (data.tagger message) }
-
-                        Nothing ->
-                            CommandSuccess commandEffect
-
-                  CommandError errorMessage ->
-                    CommandError errorMessage
-
-        BatchCommand commands ->
           let
-            initialCommandResult = CommandSuccess { componentState = componentState, message = Nothing }
+            composedTagger = composeFunctions tagger data.tagger
           in
-            List.foldl performBatchedCommand initialCommandResult commands
+            runCommand (composedTagger) data.tree
+
+        BatchCommand commands ->
+          List.concat (List.map (\c -> runCommand tagger c) commands)
 
         NoCommand ->
-            CommandSuccess { componentState = componentState
-            , message = Nothing
-            }
+          let
+            commandResult = CommandSuccess (\componentState -> ( componentState, Cmd.none ))
+          in
+            [ commandResult ]
 
-performBatchedCommand : Cmd msg -> CommandResult model msg -> CommandResult model msg
-performBatchedCommand cmd currentResult =
-  case currentResult of
-    CommandSuccess commandEffect ->
-      case performCommand cmd commandEffect.componentState of
-        Ok updatedComponentState ->
-          CommandSuccess { componentState = updatedComponentState, message = Nothing }
-        Err errorMessage ->
-          CommandError errorMessage
-    CommandError errorMessage ->
-      CommandError errorMessage
+
+composeFunctions : (msg -> parentMsg) -> (subMsg -> msg) -> (subMsg -> parentMsg)
+composeFunctions f g =
+  f << g

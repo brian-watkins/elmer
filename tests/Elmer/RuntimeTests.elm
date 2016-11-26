@@ -3,6 +3,7 @@ module Elmer.RuntimeTests exposing (all)
 import Test exposing (..)
 import Expect
 
+import Html exposing (Html)
 import Elmer exposing (..)
 import Elmer.Event as Event
 import Elmer.TestApp as App
@@ -19,6 +20,7 @@ all =
   [ elmerFailureTaskTest
   , batchCommandTest
   , batchCommandFailureTest
+  , mappedBatchCommandTest
   ]
 
 elmerFailureTaskTest : Test
@@ -95,3 +97,56 @@ batchCommandFailureTest =
       \() ->
           Expect.equal (UpstreamFailure "It failed!") result
     ]
+
+mappedBatchCommandTest : Test
+mappedBatchCommandTest =
+  let
+    defaultModel = App.defaultModel
+    stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+      |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
+    anotherStub = HttpStub.get "http://awesome.com/awesome.html"
+      |> HttpStub.withBody "{\"data\":\"some webservice data\"}"
+    testAppModel =
+      { defaultModel
+      | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse)
+      , anotherHttpSend = (ElmerHttp.fakeHttpSend anotherStub)
+      }
+    testModel = { appModel = testAppModel }
+    initialState = Elmer.componentState testModel parentView parentUpdate
+    batchCommand = Cmd.batch
+      [ App.fetchData testAppModel
+      , App.fetchMoreData testAppModel
+      ]
+    result = Event.sendCommand (Cmd.map AppMsg batchCommand) initialState
+  in
+    describe "when a batched command is mapped"
+    [ test "it maps the first command" <|
+      \() ->
+          Elmer.find "#webservice-data" result
+            |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+    , test "it maps the second command" <|
+      \() ->
+          Elmer.find "#another-webservice-data" result
+            |> Elmer.expectNode (Matchers.hasText "some webservice data")
+    ]
+
+type ParentMsg
+  = AppMsg App.Msg
+
+type alias ParentModel =
+  { appModel : App.Model }
+
+parentView : ParentModel -> Html ParentMsg
+parentView parentModel =
+  Html.map AppMsg (App.view parentModel.appModel)
+
+parentUpdate : ParentMsg -> ParentModel -> ( ParentModel, Cmd ParentMsg )
+parentUpdate parentMsg model =
+  case parentMsg of
+    AppMsg appMsg ->
+      let
+        ( updatedAppModel, updatedAppCmd ) = App.update appMsg model.appModel
+        updatedModel = { model | appModel = updatedAppModel }
+        updatedCmd = Cmd.map AppMsg updatedAppCmd
+      in
+        ( updatedModel, updatedCmd )
