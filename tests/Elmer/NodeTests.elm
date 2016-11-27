@@ -28,7 +28,7 @@ toStringTests =
               expected = "- div { className = 'myClass', id = 'title' } \n"
                   ++ "  - p { className = 'button' } [ click ]\n"
                   ++ "    - Some text\n"
-                  ++ "  - p  \n"
+                  ++ "  - p { data-fun-stuff = 'bowling', className = 'description' } \n"
                   ++ "    - More text"
             in
             Expect.equal (Node.toString node) expected
@@ -43,5 +43,5 @@ html : Html Msg
 html =
   Html.div [ Attr.id "title", Attr.class "myClass" ]
   [ Html.p [ Attr.class "button", Events.onClick Click ] [ Html.text "Some text" ]
-  , Html.p [] [ Html.text "More text" ]
+  , Html.p [ Attr.class "description", Attr.attribute "data-fun-stuff" "bowling" ] [ Html.text "More text" ]
   ]

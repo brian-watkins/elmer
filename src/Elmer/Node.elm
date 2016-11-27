@@ -16,9 +16,13 @@ printElement indentation element =
     Node node ->
       let
         childIndentation = indentation ++ "  "
+        facts = printFacts node
+        events = printEvents node
+        children = List.map (printElement childIndentation) node.children
+          |> String.join "\n"
       in
-        indentation ++ "- " ++ node.tag ++ " " ++ (printFacts node) ++ " " ++ (printEvents node) ++ "\n"
-          ++ (String.join ("\n") (List.map (printElement childIndentation) node.children))
+        indentation ++ "- " ++ node.tag ++ " " ++ facts ++ " " ++ events ++ "\n"
+          ++ children
     Text text ->
       indentation ++ "- " ++ text
 
@@ -27,14 +31,49 @@ printEvents node =
   if List.isEmpty node.events then
     ""
   else
-    "[ " ++ (String.join ", " (List.map .eventType node.events)) ++ " ]"
+    let
+      eventString = List.map .eventType node.events
+        |> String.join ", "
+    in
+      "[ " ++ eventString ++ " ]"
 
 printFacts : HtmlNode msg -> String
 printFacts node =
   let
-    facts = Result.withDefault Dict.empty (Json.decodeString (Json.dict Json.string) node.facts)
+    facts = Json.decodeString (Json.dict factsDecoder) node.facts
+      |> Result.withDefault Dict.empty
+      |> Dict.toList
   in
-    if Dict.isEmpty facts then
+    if List.isEmpty facts then
       ""
     else
-      "{ " ++ (String.join ", " (List.map (\(k, v) -> k ++ " = '" ++ v ++ "'") (Dict.toList facts))) ++ " }"
+      let
+        factString = List.map factToString facts
+          |> String.join ", "
+      in
+        "{ " ++ factString ++ " }"
+
+type HtmlFact
+  = StringValue String
+  | DictValue (Dict String String)
+
+factsDecoder : Json.Decoder HtmlFact
+factsDecoder =
+  Json.oneOf
+    [ Json.map StringValue Json.string
+    , Json.map DictValue (Json.dict Json.string)
+    ]
+
+factToString : (String, HtmlFact) -> String
+factToString (key, fact) =
+  case fact of
+    StringValue value ->
+      stringFactToString (key, value)
+    DictValue value ->
+      Dict.toList value
+        |> List.map stringFactToString
+        |> String.join ", "
+
+stringFactToString : (String, String) -> String
+stringFactToString (key, value) =
+  key ++ " = '" ++ value ++ "'"
