@@ -97,7 +97,7 @@ httpSendTests =
         ]
       , describe "when the response status is in the 200 range"
         [ describe "when the response body cannot be processed"
-          [ test "it sends a BadPayload message" <|
+          [ test "it fails with a message" <|
             \() ->
               let
                 defaultModel = App.defaultModel
@@ -109,7 +109,8 @@ httpSendTests =
                 Elmer.find "#request-data-click" initialState
                   |> Event.click
                   |> Elmer.find "#data-result"
-                  |> Elmer.expectNode (Matchers.hasText "BadPayload Error: Expecting an object with a field named `name` but instead got: {}")
+                  |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+                  |> Expect.equal (Expect.fail "Parsing a stubbed response\n\n\tGET http://fun.com/fun.html\n\n\t{}\n\nfailed with error\n\n\tExpecting an object with a field named `name` but instead got: {}\n\nIf you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response.")
           ]
         , describe "when the response body can be processed"
           [ test "it decodes the response" <|

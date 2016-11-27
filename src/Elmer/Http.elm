@@ -85,8 +85,19 @@ processResponse httpRequest tagger responseResult =
   handleResponseError responseResult
     |> Result.andThen handleResponseStatus
     |> Result.andThen (handleResponse httpRequest)
-    |> Result.mapError (\e -> Task.attempt tagger (Task.fail e))
+    |> Result.mapError (mapResponseError httpRequest tagger)
     |> Result.map (\d -> Task.attempt tagger (Task.succeed d))
+
+mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
+mapResponseError httpRequest tagger error =
+  case error of
+    Http.BadPayload msg response ->
+      Elmer.failureCommand ("Parsing a stubbed response\n\n\t" ++ httpRequest.method ++ " " ++ httpRequest.url ++
+        "\n\n\t" ++ response.body ++ "\n\nfailed with error\n\n\t" ++ msg ++
+        "\n\nIf you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+      )
+    _ ->
+      Task.attempt tagger (Task.fail error)
 
 
 handleResponseError : HttpResponseResult -> Result Http.Error (Http.Response String)
