@@ -1,9 +1,13 @@
-module Elmer.Matchers exposing (hasText, hasClass)
+module Elmer.Matchers exposing
+  ( hasText
+  , hasClass
+  , hasProperty
+  )
 
 import Elmer exposing (..)
 import Expect
 import String
-
+import Json.Decode as Json
 
 hasText : String -> HtmlNode msg -> Expect.Expectation
 hasText text node =
@@ -34,9 +38,24 @@ hasClass className node =
             Expect.fail ("Expected node to have class\n\n\t" ++ className ++ "\n\nbut it has no classes")
 
 
+hasProperty : (String, String) -> HtmlNode msg -> Expect.Expectation
+hasProperty (name, value) node =
+  let
+    propertyValueResult = Json.decodeString (Json.field name Json.string) node.facts
+  in
+    case propertyValueResult of
+      Ok propertyValue ->
+        if value == propertyValue then
+          Expect.pass
+        else
+          Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
+            "\n\nbut it has\n\n\t" ++ name ++ " = " ++ propertyValue)
+      Err _ ->
+        Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
+          "\n\nbut it has no property with that name")
+
 
 -- Private functions
-
 
 flattenTexts : List (HtmlElement msg) -> List String
 flattenTexts children =

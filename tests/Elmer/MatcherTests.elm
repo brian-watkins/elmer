@@ -11,6 +11,7 @@ all =
   describe "Matcher Tests"
     [ hasTextTests
     , hasClassTests
+    , hasPropertyTests
     ]
 
 hasTextTests : Test
@@ -65,7 +66,7 @@ hasClassTests =
     ]
   , describe "when the element has classes"
     [ describe "when the element does not have the specified class"
-      [ test "it returns fails with the right message" <|
+      [ test "it fails with the right message" <|
         \() ->
           Matchers.hasClass "myClass" (nodeWithClass "anotherClass")
             |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has\n\n\tanotherClass, funClass")
@@ -75,6 +76,39 @@ hasClassTests =
         \() ->
           Matchers.hasClass "myClass" (nodeWithClass "myClass")
             |> Expect.equal Expect.pass
+      ]
+    ]
+  ]
+
+hasPropertyTests : Test
+hasPropertyTests =
+  describe "hasProperty"
+  [ describe "when the node has no properties"
+    [ test "it fails with the right message" <|
+      \() ->
+        Matchers.hasProperty ("innerHTML", "some <i>html</i>") (emptyNode "div")
+          |> Expect.equal (Expect.fail "Expected node to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
+    ]
+  , describe "when the node has properties"
+    [ describe "when the node does not have the specified property"
+      [ test "it fails with the right message" <|
+        \() ->
+          Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
+            |> Expect.equal (Expect.fail "Expected node to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
+      ]
+    , describe "when the node has the specified property"
+      [ describe "when the value is incorrect"
+        [ test "it fails" <|
+          \() ->
+            Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "blah"))
+              |> Expect.equal (Expect.fail "Expected node to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has\n\n\tinnerHTML = blah")
+        ]
+      , describe "when the value is correct"
+        [ test "it passes" <|
+          \() ->
+            Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "some <i>html</i>"))
+              |> Expect.equal Expect.pass
+        ]
       ]
     ]
   ]

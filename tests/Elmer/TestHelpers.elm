@@ -48,3 +48,10 @@ nodeWithNestedChildren text =
     ]
   , events = []
   }
+
+nodeWithProperty : (String, String) -> HtmlNode msg
+nodeWithProperty (name, value) =
+  let
+    node = emptyNode "div"
+  in
+    { node | facts = "{\"" ++ name ++ "\":\"" ++ value ++ "\"}" }
