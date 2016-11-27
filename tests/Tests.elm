@@ -12,6 +12,7 @@ import Elmer.ComponentTests as ComponentTests
 import Elmer.HttpTests as HttpTests
 import Elmer.HttpStubTests as HttpStubTests
 import Elmer.RuntimeTests as RuntimeTests
+import Elmer.NodeTests as NodeTests
 
 all : Test
 all =
@@ -26,4 +27,5 @@ all =
     , HttpTests.all
     , HttpStubTests.all
     , RuntimeTests.all
+    , NodeTests.all
     ]

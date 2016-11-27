@@ -29,6 +29,12 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return _elm_lang$core$Native_List.fromArray(events)
   }
 
+  var getFacts = function(facts) {
+    var clonedFacts = JSON.parse(JSON.stringify(facts))
+    delete clonedFacts.EVENT
+    return clonedFacts
+  }
+
   var constructHtmlNode = function(html, tagger) {
     var node = html;
     if (html.type == "tagger") {
@@ -38,7 +44,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
 
     return A4(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
       node.tag,
-      JSON.stringify(node.facts),
+      JSON.stringify(getFacts(node.facts)),
       getChildren(node, tagger),
       getHtmlEvents(node, tagger)
     );
