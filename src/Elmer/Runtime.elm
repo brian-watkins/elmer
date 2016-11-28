@@ -4,7 +4,7 @@ module Elmer.Runtime
         , performCommand
         )
 
-import Elmer exposing (..)
+import Elmer.Types exposing (..)
 import Elmer.Navigation.Runner as ElmerNav
 import Json.Decode as Json
 import Dict exposing (Dict)

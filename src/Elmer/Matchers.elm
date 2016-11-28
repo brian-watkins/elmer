@@ -2,9 +2,11 @@ module Elmer.Matchers exposing
   ( hasText
   , hasClass
   , hasProperty
+  , hasId
   )
 
-import Elmer exposing (..)
+import Elmer.Types exposing (..)
+import Elmer.Node as Node
 import Expect
 import String
 import Json.Decode as Json
@@ -27,7 +29,7 @@ hasClass : String -> HtmlNode msg -> Expect.Expectation
 hasClass className node =
     let
         classList =
-            Elmer.classList node
+            Node.classList node
     in
         if List.length classList > 0 then
             if List.member className classList then
@@ -40,20 +42,27 @@ hasClass className node =
 
 hasProperty : (String, String) -> HtmlNode msg -> Expect.Expectation
 hasProperty (name, value) node =
-  let
-    propertyValueResult = Json.decodeString (Json.field name Json.string) node.facts
-  in
-    case propertyValueResult of
-      Ok propertyValue ->
-        if value == propertyValue then
-          Expect.pass
-        else
-          Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
-            "\n\nbut it has\n\n\t" ++ name ++ " = " ++ propertyValue)
-      Err _ ->
+  case Node.property name node of
+    Just propertyValue ->
+      if value == propertyValue then
+        Expect.pass
+      else
         Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
-          "\n\nbut it has no property with that name")
+          "\n\nbut it has\n\n\t" ++ name ++ " = " ++ propertyValue)
+    Nothing ->
+      Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
+        "\n\nbut it has no property with that name")
 
+hasId : String -> HtmlNode msg -> Expect.Expectation
+hasId expectedId node =
+  case Node.id node of
+    Just nodeId ->
+      if nodeId == expectedId then
+        Expect.pass
+      else
+        Expect.fail ("Expected node to have id\n\n\t" ++ expectedId ++ "\n\nbut it has id\n\n\t" ++ nodeId)
+    Nothing ->
+      Expect.fail ("Expected node to have id\n\n\t" ++ expectedId ++ "\n\nbut it has no id")
 
 -- Private functions
 

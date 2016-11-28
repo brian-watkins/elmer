@@ -12,6 +12,7 @@ all =
     [ hasTextTests
     , hasClassTests
     , hasPropertyTests
+    , hasIdTests
     ]
 
 hasTextTests : Test
@@ -109,6 +110,31 @@ hasPropertyTests =
             Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "some <i>html</i>"))
               |> Expect.equal Expect.pass
         ]
+      ]
+    ]
+  ]
+
+hasIdTests : Test
+hasIdTests =
+  describe "hasId"
+  [ describe "when the node has no id"
+    [ test "it fails with the right message" <|
+      \() ->
+        Matchers.hasId "root" (emptyNode "div")
+          |> Expect.equal (Expect.fail "Expected node to have id\n\n\troot\n\nbut it has no id")
+    ]
+  , describe "when the node has an id"
+    [ describe "when the id does not match"
+      [ test "it fails" <|
+        \() ->
+          Matchers.hasId "root" (nodeWithId "blah")
+            |> Expect.equal (Expect.fail "Expected node to have id\n\n\troot\n\nbut it has id\n\n\tblah")
+      ]
+    , describe "when the id matches"
+      [ test "it passes" <|
+        \() ->
+          Matchers.hasId "root" (nodeWithId "root")
+            |> Expect.equal (Expect.pass)
       ]
     ]
   ]

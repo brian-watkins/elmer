@@ -5,9 +5,9 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     for (var i = 0; i < html.children.length; i++) {
       var element = html.children[i]
       if (element.type == "text") {
-        children.push(_bwatkinsPivotal$elmer$Elmer$Text(element.text))
+        children.push(_bwatkinsPivotal$elmer$Elmer_Types$Text(element.text))
       } else {
-        children.push(_bwatkinsPivotal$elmer$Elmer$Node(constructHtmlNode(element, tagger)))
+        children.push(_bwatkinsPivotal$elmer$Elmer_Types$Node(constructHtmlNode(element, tagger)))
       }
     }
 
@@ -23,7 +23,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
           decoder = A2(_elm_lang$core$Native_Json.map1, tagger, decoder)
         }
 
-        events.push(A2(_bwatkinsPivotal$elmer$Elmer$HtmlEvent, eventType, decoder))
+        events.push(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvent, eventType, decoder))
       }
     }
     return _elm_lang$core$Native_List.fromArray(events)
@@ -42,7 +42,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       tagger = html.tagger
     }
 
-    return A4(_bwatkinsPivotal$elmer$Elmer$HtmlNode,
+    return A4(_bwatkinsPivotal$elmer$Elmer_Types$HtmlNode,
       node.tag,
       JSON.stringify(getFacts(node.facts)),
       getChildren(node, tagger),

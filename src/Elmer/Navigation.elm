@@ -6,7 +6,8 @@ module Elmer.Navigation
 
 import Navigation
 import Elmer.Event as Event
-import Elmer exposing (..)
+import Elmer.Types exposing (..)
+import Elmer
 import Expect
 
 
@@ -29,7 +30,7 @@ expectLocation expectedURL componentStateResult =
 setLocation : String -> ComponentStateResult model msg -> ComponentStateResult model msg
 setLocation location componentStateResult =
     componentStateResult
-        |> map
+        |> Elmer.map
             (\componentState ->
                 case componentState.locationParser of
                     Just locationParser ->

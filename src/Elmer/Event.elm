@@ -8,7 +8,8 @@ module Elmer.Event
 
 import Navigation exposing (..)
 import Json.Decode as Json
-import Elmer exposing (..)
+import Elmer.Types exposing (..)
+import Elmer
 import Elmer.Runtime as Runtime
 import Dict
 

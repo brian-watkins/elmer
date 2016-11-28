@@ -1,6 +1,6 @@
 module Elmer.TestHelpers exposing (..)
 
-import Elmer exposing (..)
+import Elmer.Types exposing (..)
 import Dict
 
 emptyNode : String -> HtmlNode msg
@@ -17,6 +17,13 @@ nodeWithClass className =
     node = emptyNode "div"
   in
     { node | facts = "{\"className\":\"" ++ className ++ " funClass\"}"}
+
+nodeWithId : String -> HtmlNode msg
+nodeWithId id =
+  let
+    node = emptyNode "div"
+  in
+    { node | facts = "{\"id\":\"" ++ id ++ "\"}" }
 
 textNode : String -> HtmlElement msg
 textNode text =

@@ -5,6 +5,7 @@ import Expect
 
 import Html exposing (Html)
 import Elmer exposing (..)
+import Elmer.Types exposing (..)
 import Elmer.Event as Event
 import Elmer.TestApp as App
 import Elmer.Runtime as Runtime

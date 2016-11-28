@@ -8,6 +8,8 @@
     ],
     "exposed-modules": [
         "Elmer",
+        "Elmer.Types",
+        "Elmer.Node",
         "Elmer.Event",
         "Elmer.Matchers",
         "Elmer.TestExtra",

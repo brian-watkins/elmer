@@ -4,6 +4,7 @@ import Test exposing (..)
 import Elmer.TestApp as App
 import Expect
 import Elmer exposing (..)
+import Elmer.Types exposing (..)
 import Elmer.Event as Event
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
