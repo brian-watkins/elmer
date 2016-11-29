@@ -12,7 +12,6 @@
         "Elmer.Node",
         "Elmer.Event",
         "Elmer.Matchers",
-        "Elmer.TestExtra",
         "Elmer.Navigation",
         "Elmer.Http",
         "Elmer.Http.Stub"

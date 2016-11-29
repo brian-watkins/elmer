@@ -25,6 +25,14 @@ nodeWithId id =
   in
     { node | facts = "{\"id\":\"" ++ id ++ "\"}" }
 
+nodeWithClassAndId : String -> String -> HtmlNode msg
+nodeWithClassAndId className id =
+  let
+    node = emptyNode "div"
+  in
+    { node | facts = "{\"className\":\"" ++ className ++ " funClass\", \"id\":\"" ++ id ++ "\"}"}
+
+
 textNode : String -> HtmlElement msg
 textNode text =
   Text text

@@ -3,6 +3,7 @@ module Elmer.Matchers exposing
   , hasClass
   , hasProperty
   , hasId
+  , (<&&>)
   )
 
 import Elmer.Types exposing (..)
@@ -10,6 +11,19 @@ import Elmer.Node as Node
 import Expect
 import String
 import Json.Decode as Json
+
+(<&&>) : (HtmlNode msg -> Expect.Expectation) -> (HtmlNode msg -> Expect.Expectation) -> (HtmlNode msg -> Expect.Expectation)
+(<&&>) leftFunction rightFunction =
+  (\node ->
+    let
+      leftResult = leftFunction node
+      rightResult = rightFunction node
+    in
+      if leftResult == Expect.pass then
+        rightResult
+      else
+        leftResult
+  )
 
 hasText : String -> HtmlNode msg -> Expect.Expectation
 hasText text node =

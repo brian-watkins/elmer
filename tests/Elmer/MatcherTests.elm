@@ -4,7 +4,7 @@ import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
-import Elmer.Matchers as Matchers
+import Elmer.Matchers as Matchers exposing ((<&&>))
 
 all : Test
 all =
@@ -13,6 +13,7 @@ all =
     , hasClassTests
     , hasPropertyTests
     , hasIdTests
+    , andThenTests
     ]
 
 hasTextTests : Test
@@ -136,5 +137,34 @@ hasIdTests =
           Matchers.hasId "root" (nodeWithId "root")
             |> Expect.equal (Expect.pass)
       ]
+    ]
+  ]
+
+andThenTests : Test
+andThenTests =
+  describe "andThen"
+  [ describe "when all matchers pass"
+    [ test "it passes" <|
+      \() ->
+        (nodeWithClassAndId "myClass" "myId") |>
+          Matchers.hasId "myId"
+            <&&> Matchers.hasClass "myClass"
+            <&&> Matchers.hasClass "funClass"
+    ]
+  , describe "when the first matcher fails"
+    [ test "it fails with the first failure" <|
+      \() ->
+        (nodeWithClass "myClass")
+          |> (Matchers.hasId "root"
+                <&&> Matchers.hasClass "myClass")
+          |> Expect.equal (Expect.fail "Expected node to have id\n\n\troot\n\nbut it has no id")
+    ]
+  , describe "when the second matcher fails"
+    [ test "it fails with the second failure" <|
+      \() ->
+        (nodeWithId "root")
+          |> (Matchers.hasId "root"
+                <&&> Matchers.hasClass "myClass")
+          |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has no classes")
     ]
   ]

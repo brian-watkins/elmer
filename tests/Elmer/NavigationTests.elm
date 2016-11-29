@@ -8,8 +8,7 @@ import Elmer.Types exposing (..)
 import Elmer.Event as Event
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
-import Elmer.Matchers as Matchers
-import Elmer.TestExtra as ElmerTest
+import Elmer.Matchers as Matchers exposing (..)
 import Navigation
 
 all : Test
@@ -126,8 +125,7 @@ setLocationTests =
         ElmerNav.setLocation "http://fun.com/api/view" fullState
           |> Elmer.find ".error"
           |> Elmer.expectNodeExists
-          |> ElmerTest.not
-          |> Expect.equal Expect.pass
+          |> Expect.notEqual Expect.pass
     ]
   ]
 

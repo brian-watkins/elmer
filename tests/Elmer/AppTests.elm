@@ -6,8 +6,7 @@ import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
 import Elmer.Event as Event
-import Elmer.Matchers as Matchers
-import Elmer.TestExtra as ElmerTest
+import Elmer.Matchers as Matchers exposing ((<&&>))
 
 all : Test
 all =
@@ -33,12 +32,10 @@ appFlowTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Elmer.find ".withText" initialState
-            |> Elmer.expectNode (
-              \node ->
-                Matchers.hasText "Some Fun Text" node
-                  |> ElmerTest.andThen (Matchers.hasText "special!" node)
-                  |> ElmerTest.andThen (Matchers.hasText "link to fun!" node)
-            )
+            |> Elmer.expectNode (Matchers.hasText "Some Fun Text"
+              <&&> Matchers.hasText "special!"
+              <&&> Matchers.hasText "link to fun!"
+              )
     , let
         initialState = Elmer.componentState App.defaultModel App.view App.update
         resultState = Elmer.find "#numberButton" initialState
