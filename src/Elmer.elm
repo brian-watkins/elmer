@@ -85,13 +85,28 @@ find selector =
 
 updateTargetNode : String -> HtmlComponentState model msg -> ComponentStateResult model msg
 updateTargetNode selector componentState =
-    case Node.findNode (componentState.view componentState.model) selector of
+  let
+    currentView = componentState.view componentState.model
+  in
+    case Node.findNode currentView selector of
         Just node ->
             CurrentState { componentState | targetNode = Just node }
 
         Nothing ->
-            UpstreamFailure ("No html node found with selector: " ++ selector)
+          let
+            failure = "No html node found with selector: " ++ selector ++ "\n\nThe current view is:\n\n"
+              ++ (htmlToString currentView)
+          in
+            UpstreamFailure failure
 
+
+htmlToString : Html msg -> String
+htmlToString htmlMsg =
+  case Native.Helpers.asHtmlNode htmlMsg of
+    Just node ->
+      Node.toString node
+    Nothing ->
+      "<No Nodes>"
 
 
 

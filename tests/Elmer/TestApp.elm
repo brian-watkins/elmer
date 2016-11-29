@@ -64,7 +64,13 @@ type Msg
   | WebServiceResponse (Result Http.Error String)
   | AnotherWebServiceResponse (Result Http.Error String)
 
+simpleView : Model -> Html Msg
+simpleView model =
+  div [ id "root" ] [ text "Some text" ]
 
+textView : Model -> Html Msg
+textView model =
+  text "Some text"
 
 view : Model -> Html Msg
 view model =

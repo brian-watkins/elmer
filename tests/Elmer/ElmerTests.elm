@@ -32,13 +32,24 @@ findTests =
             |> Expect.equal initialState
     ]
   , describe "when no element is found"
-    [ test "it returns the failure message" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-        in
-          Elmer.find ".blah" initialState
-            |> Expect.equal (UpstreamFailure "No html node found with selector: .blah")
+    [ describe "when there is a node" <|
+      [ test "it returns the failure message and prints the view" <|
+        \() ->
+          let
+            initialState = Elmer.componentState App.defaultModel App.simpleView App.update
+          in
+            Elmer.find ".blah" initialState
+              |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n- div { id = 'root' } \n  - Some text")
+      ]
+    , describe "when there is only text" <|
+      [ test "it returns the failure message and prints that there are no nodes" <|
+        \() ->
+          let
+            initialState = Elmer.componentState App.defaultModel App.textView App.update
+          in
+            Elmer.find ".blah" initialState
+              |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n<No Nodes>")
+      ]
     ]
   , describe "when the element is found"
     [ test "it updates the state with the targetnode" <|
