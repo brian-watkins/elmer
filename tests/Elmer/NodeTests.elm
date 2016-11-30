@@ -19,6 +19,7 @@ all =
   , findByClass
   , findByTag
   , findByAttribute
+  , findByProperty
   , classListTests
   , idTests
   , propertyTests
@@ -212,6 +213,67 @@ findByAttribute =
           case Node.findNode html "p[data-special-node='moreSpecialStuff']" of
             Just node ->
               Matchers.hasClass "specialer" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    ]
+
+type alias FormModel =
+  { name: String
+  , telephone: String
+  }
+
+initialFormModel : FormModel
+initialFormModel =
+  { name = "Person"
+  , telephone = "919-999-9999"
+  }
+
+formView : FormModel -> Html msg
+formView model =
+  Html.div [ Attr.id "my-form" ]
+  [ Html.input [ Attr.id "name-field", Attr.name "name" ] []
+  , Html.input [ Attr.id "telephone-field", Attr.name "telephone" ] []
+  ]
+
+findByProperty =
+  let
+    html = formView initialFormModel
+  in
+    describe "find by property"
+    [ describe "when only a property is specified"
+      [ test "it finds the node with the property" <|
+        \() ->
+          case Node.findNode html "[name]" of
+            Just node ->
+              Matchers.hasId "name-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a property and value is specified"
+      [ test "it finds the node with the property and value" <|
+        \() ->
+          case Node.findNode html "[name='telephone']" of
+            Just node ->
+              Matchers.hasId "telephone-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag and attribute is specified"
+      [ test "it finds the node with the tag and attribute" <|
+        \() ->
+          case Node.findNode html "input[name]" of
+            Just node ->
+              Matchers.hasId "name-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag, attribute, and value is specified"
+      [ test "it finds the node with the tag and attribute and value" <|
+        \() ->
+          case Node.findNode html "input[name='telephone']" of
+            Just node ->
+              Matchers.hasId "telephone-field" node
             Nothing ->
               Expect.fail "Nothing found"
       ]

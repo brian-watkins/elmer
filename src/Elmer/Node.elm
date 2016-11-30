@@ -74,34 +74,34 @@ matchesTagSelector tagSelector node =
         Just tagName ->
             if matchesTag tagName node then
                 Maybe.withDefault True <|
-                    matchAttributeSelector tagSelector node
+                    matchCharacteristicSelector tagSelector node
             else
                 False
 
         Nothing ->
             Maybe.withDefault False <|
-                matchAttributeSelector tagSelector node
+                matchCharacteristicSelector tagSelector node
 
 
-matchAttributeSelector : TagSelector -> HtmlNode msg -> Maybe Bool
-matchAttributeSelector tagSelector node =
+matchCharacteristicSelector : TagSelector -> HtmlNode msg -> Maybe Bool
+matchCharacteristicSelector tagSelector node =
     Maybe.map
-        (\attrName -> matchesAttribute attrName tagSelector.attributeValue node)
-        tagSelector.attributeName
+        (\charName -> matchesCharacteristic charName tagSelector.characteristicValue node)
+        tagSelector.characteristicName
 
 
 type alias TagSelector =
     { tag : Maybe String
-    , attributeName : Maybe String
-    , attributeValue : Maybe String
+    , characteristicName : Maybe String
+    , characteristicValue : Maybe String
     }
 
 
 emptyTagSelector : TagSelector
 emptyTagSelector =
     { tag = Nothing
-    , attributeName = Nothing
-    , attributeValue = Nothing
+    , characteristicName = Nothing
+    , characteristicValue = Nothing
     }
 
 
@@ -117,8 +117,8 @@ tagSelector selector =
         case matchMaybe of
             Just match ->
                 { tag = submatch 0 match
-                , attributeName = submatch 1 match
-                , attributeValue = submatch 2 match
+                , characteristicName = submatch 1 match
+                , characteristicValue = submatch 2 match
                 }
 
             Nothing ->
@@ -157,22 +157,36 @@ matchesTag selector node =
     node.tag == selector
 
 
-matchesAttribute : String -> Maybe String -> HtmlNode msg -> Bool
-matchesAttribute attributeName maybeAttributeValue node =
+matchesCharacteristic : String -> Maybe String -> HtmlNode msg -> Bool
+matchesCharacteristic charName maybeCharValue node =
     let
-        attributesDict =
-            customAttributesDict node
+        characteristics = allCharacteristics node
     in
-        Maybe.withDefault (Dict.member attributeName attributesDict) <|
+        Maybe.withDefault (Dict.member charName characteristics) <|
             Maybe.map
-                ((==) (Maybe.withDefault "" (Dict.get attributeName attributesDict)))
-                maybeAttributeValue
+                ((==) (Maybe.withDefault "" (Dict.get charName characteristics)))
+                maybeCharValue
 
 
+allCharacteristics : HtmlNode msg -> Dict String String
+allCharacteristics node =
+  Dict.union (attributes node) (properties node)
 
+properties : HtmlNode msg -> Dict String String
+properties node =
+  facts node
+    |> Dict.toList
+    |> List.filterMap (\(key, fact) ->
+      case fact of
+        StringValue value ->
+          Just (key, value)
+        DictValue _ ->
+          Nothing
+      )
+    |> Dict.fromList
 
-customAttributesDict : HtmlNode msg -> Dict String String
-customAttributesDict node =
+attributes : HtmlNode msg -> Dict String String
+attributes node =
     Result.withDefault Dict.empty <|
         Json.decodeString (Json.field "ATTR" (Json.dict Json.string)) node.facts
 
@@ -217,18 +231,22 @@ printEvents node =
     in
       "[ " ++ eventString ++ " ]"
 
+facts : HtmlNode msg -> Dict String HtmlFact
+facts node =
+  Json.decodeString (Json.dict factsDecoder) node.facts
+    |> Result.withDefault Dict.empty
+
 printFacts : HtmlNode msg -> String
 printFacts node =
   let
-    facts = Json.decodeString (Json.dict factsDecoder) node.facts
-      |> Result.withDefault Dict.empty
+    factsList = facts node
       |> Dict.toList
   in
-    if List.isEmpty facts then
+    if List.isEmpty factsList then
       ""
     else
       let
-        factString = List.map factToString facts
+        factString = List.map factToString factsList
           |> String.join ", "
       in
         "{ " ++ factString ++ " }"
