@@ -74,10 +74,6 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     }
 
     var errorValue = rootTask.value
-    if (errorValue.elmerError) {
-        return _elm_lang$core$Result$Err(errorValue.elmerError)
-    }
-
     return _elm_lang$core$Result$Ok(errorCallback(errorValue).value)
   }
 
@@ -129,11 +125,16 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       requestData.expect.responseToResult)
   }
 
+  var toCmd = function(home, data) {
+    return _elm_lang$core$Native_Platform.leaf(home)(data)
+  }
+
   return {
       asHtmlNode: asHtmlNode,
       asCommandData: asCommandData,
       runTask: runTask,
       asHttpRequest: asHttpRequest,
+      toCmd: F2(toCmd)
   };
 
 }();

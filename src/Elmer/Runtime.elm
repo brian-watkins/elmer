@@ -45,7 +45,21 @@ commandRunners : List (CommandRunner model subMsg msg)
 commandRunners =
     [ taskCommandRunner
     , navigationCommandRunner
+    , elmerFailureCommandRunner
     ]
+
+
+elmerFailureCommandRunner : CommandRunner model subMsg msg
+elmerFailureCommandRunner =
+  { name = "Elmer_Failure"
+  , run =
+      \data _ ->
+        let
+          message = Json.decodeString Json.string data.json
+            |> Result.withDefault "Failure!"
+        in
+          CommandError message
+  }
 
 
 taskCommandRunner : CommandRunner model subMsg msg

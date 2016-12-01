@@ -9,6 +9,7 @@ import Http
 import Dict
 import Task exposing (Task)
 import Elmer
+import Elmer.Command as Command
 import Expect exposing (Expectation)
 
 type alias HttpRequest a =
@@ -64,7 +65,7 @@ matchRequestUrl httpRequest responseStub =
   if httpRequest.url == responseStub.url then
     Ok responseStub
   else
-    Err (Elmer.failureCommand ("Received a request for\n\n\t" ++ httpRequest.url ++ "\n\nbut it has not been stubbed. The stubbed request is\n\n\t" ++ responseStub.url))
+    Err (Command.failureCommand ("Received a request for\n\n\t" ++ httpRequest.url ++ "\n\nbut it has not been stubbed. The stubbed request is\n\n\t" ++ responseStub.url))
 
 
 matchRequestMethod : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
@@ -72,7 +73,7 @@ matchRequestMethod httpRequest responseStub =
   if httpRequest.method == responseStub.method then
     Ok responseStub
   else
-    Err (Elmer.failureCommand ("A response has been stubbed for\n\n\t" ++ httpRequest.url ++ "\n\nbut it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method))
+    Err (Command.failureCommand ("A response has been stubbed for\n\n\t" ++ httpRequest.url ++ "\n\nbut it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method))
 
 
 generateResponse : HttpResponseStub -> Result (Cmd msg) (HttpResponseResult)
@@ -92,7 +93,7 @@ mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -
 mapResponseError httpRequest tagger error =
   case error of
     Http.BadPayload msg response ->
-      Elmer.failureCommand ("Parsing a stubbed response\n\n\t" ++ httpRequest.method ++ " " ++ httpRequest.url ++
+      Command.failureCommand ("Parsing a stubbed response\n\n\t" ++ httpRequest.method ++ " " ++ httpRequest.url ++
         "\n\n\t" ++ response.body ++ "\n\nfailed with error\n\n\t" ++ msg ++
         "\n\nIf you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
       )

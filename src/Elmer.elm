@@ -6,7 +6,6 @@ module Elmer
         , expectNode
         , expectNodeExists
         , map
-        , failureCommand
         )
 
 import Html exposing (Html)
@@ -107,25 +106,3 @@ htmlToString htmlMsg =
       Node.toString node
     Nothing ->
       "<No Nodes>"
-
-
-
-type alias TaskFailure =
-  { elmerError: String
-  }
-
-failureCommand : String -> Cmd msg
-failureCommand message =
-  Task.attempt errorTagger (Task.fail (taskFailure message))
-
-errorTagger : Result TaskFailure a -> msg
-errorTagger result =
-  case result of
-    Ok err ->
-      Debug.crash "Died"
-    Err _ ->
-      Debug.crash "Died"
-
-taskFailure : String -> TaskFailure
-taskFailure msg =
-  { elmerError = msg }
