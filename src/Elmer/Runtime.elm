@@ -46,6 +46,7 @@ commandRunners =
     [ taskCommandRunner
     , navigationCommandRunner
     , elmerFailureCommandRunner
+    , httpCommandRunner
     ]
 
 
@@ -61,6 +62,31 @@ elmerFailureCommandRunner =
           CommandError message
   }
 
+httpCommandRunner : CommandRunner model subMsg msg
+httpCommandRunner =
+  { name = "Elmer_Http"
+  , run =
+      \data tagger ->
+        let
+          requestDataDecoder = Json.decodeString <|
+            Json.map3 HttpRequestData
+              (Json.field "method" Json.string)
+              (Json.field "url" Json.string)
+              (Json.field "body" (Json.maybe Json.string))
+        in
+          case requestDataDecoder data.json of
+            Ok requestData ->
+              CommandSuccess (updateComponentStateWithRequest requestData)
+            Err message ->
+              CommandError message
+  }
+
+updateComponentStateWithRequest : HttpRequestData -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateComponentStateWithRequest requestData componentState =
+  let
+    updatedComponentState = { componentState | httpRequests = requestData :: componentState.httpRequests }
+  in
+    ( updatedComponentState, Cmd.none )
 
 taskCommandRunner : CommandRunner model subMsg msg
 taskCommandRunner =

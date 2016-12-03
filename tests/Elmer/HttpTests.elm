@@ -5,10 +5,12 @@ import Expect
 import Http
 import Dict
 import Elmer
+import Elmer.Types exposing (..)
 import Elmer.Event as Event
 import Elmer.Matchers as Matchers
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
+import Elmer.Http.Matchers exposing (..)
 
 import Elmer.TestApp as App
 
@@ -18,6 +20,7 @@ all =
   [ httpSendTests
   , requestRecordTests
   , errorResponseTests
+  , expectPostTests
   ]
 
 requestRecordTests : Test
@@ -148,4 +151,98 @@ errorResponseTests =
           |> Event.click
           |> Elmer.find "#data-result"
           |> Elmer.expectNode (Matchers.hasText "Timeout Error")
+  ]
+
+
+
+expectPostTests : Test
+expectPostTests =
+  describe "expectPost"
+  [ describe "when there is an upstream error"
+    [ test "it fails with the upstream error" <|
+      \() ->
+        ElmerHttp.expectPOST "http://fun.com/fun" hasAnyBody (UpstreamFailure "Failed!")
+          |> Expect.equal (Expect.fail "Failed!")
+    ]
+  , describe "when no requests have been recorded"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          ElmerHttp.expectPOST "http://fun.com/fun" hasAnyBody initialState
+            |> Expect.equal (Expect.fail "Expected request for\n\n\tPOST http://fun.com/fun\n\nbut no requests have been made")
+    ]
+  , describe "when requests have been recorded"
+    [ describe "when the url does not match any requests"
+      [ test "it fails" <|
+        \() ->
+          let
+            defaultModel = App.defaultModel
+            stubbedGet = HttpStub.get "http://awesome.com/awesome.html"
+              |> HttpStub.withBody "{\"data\":\"Super Fun Person\"}"
+            stubbedResponse = HttpStub.post "http://fun.com/fun"
+              |> HttpStub.withBody "{\"name\":\"cool dude\"}"
+            testModel = { defaultModel | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse)
+              , anotherHttpSend = (ElmerHttp.fakeHttpSend stubbedGet)
+              }
+            initialState = Elmer.componentState testModel App.view App.update
+          in
+            Elmer.find "#another-request-data-click" initialState
+              |> Event.click
+              |> Elmer.find "#create-stuff-click"
+              |> Event.click
+              |> ElmerHttp.expectPOST "http://fun.com/awesome" hasAnyBody
+              |> Expect.equal (Expect.fail "Expected request for\n\n\tPOST http://fun.com/awesome\n\nbut only found these requests\n\n\tPOST http://fun.com/fun\n\n\tGET http://awesome.com/awesome.html")
+
+      ]
+    , describe "when the url matches but not the method"
+      [ test "it fails" <|
+        \() ->
+          let
+            defaultModel = App.defaultModel
+            stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+              |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
+            testModel = { defaultModel | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse) }
+            initialState = Elmer.componentState testModel App.view App.update
+          in
+            Elmer.find "#request-data-click" initialState
+              |> Event.click
+              |> ElmerHttp.expectPOST "http://fun.com/fun.html" hasAnyBody
+              |> Expect.equal (Expect.fail "Expected request for\n\n\tPOST http://fun.com/fun.html\n\nbut only found these requests\n\n\tGET http://fun.com/fun.html")
+      ]
+    , describe "when a matching request occurs"
+      [ describe "when the request expectations fail"
+        [ test "it fails" <|
+          \() ->
+            let
+              defaultModel = App.defaultModel
+              stubbedResponse = HttpStub.post "http://fun.com/fun"
+                |> HttpStub.withBody "{\"name\":\"cool dude\"}"
+              testModel = { defaultModel | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse) }
+              initialState = Elmer.componentState testModel App.view App.update
+              failRequest = (\_ -> Expect.fail "It failed!")
+            in
+              Elmer.find "#create-stuff-click" initialState
+                |> Event.click
+                |> ElmerHttp.expectPOST "http://fun.com/fun" failRequest
+                |> Expect.equal (Expect.fail "It failed!")
+        ]
+      , describe "when the request expectations pass"
+        [ test "it passes" <|
+          \() ->
+            let
+              defaultModel = App.defaultModel
+              stubbedResponse = HttpStub.post "http://fun.com/fun"
+                |> HttpStub.withBody "{\"name\":\"cool dude\"}"
+              testModel = { defaultModel | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse) }
+              initialState = Elmer.componentState testModel App.view App.update
+            in
+              Elmer.find "#create-stuff-click" initialState
+                |> Event.click
+                |> ElmerHttp.expectPOST "http://fun.com/fun" hasAnyBody
+                |> Expect.equal (Expect.pass)
+        ]
+      ]
+    ]
   ]

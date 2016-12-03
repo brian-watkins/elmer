@@ -1,20 +1,26 @@
 module Elmer.Http exposing
-  ( HttpResponseResult(..)
-  , HttpResponseStub
+  ( HttpResponseStub
+  , HttpResponseResult(..)
+  , HttpRequest
   , asHttpRequest
   , fakeHttpSend
+  , expectPOST
   )
 
 import Http
 import Dict
 import Task exposing (Task)
+import Json.Encode as Encode
 import Elmer
+import Elmer.Types exposing (..)
 import Elmer.Command as Command
 import Expect exposing (Expectation)
+
 
 type alias HttpRequest a =
   { method: String
   , url: String
+  , body: Maybe String
   , responseHandler: (Http.Response String -> Result String a)
   }
 
@@ -42,17 +48,61 @@ fakeHttpSend responseStub tagger request =
     matchRequest responseStub httpRequest
       |> Result.andThen generateResponse
       |> Result.andThen (processResponse httpRequest tagger)
-      |> asHttpCommand
+      |> collapseToCommand
+      |> toHttpCommand httpRequest
 
 
-asHttpCommand : Result (Cmd msg) (Cmd msg) -> Cmd msg
-asHttpCommand responseResult =
+collapseToCommand : Result (Cmd msg) (Cmd msg) -> Cmd msg
+collapseToCommand responseResult =
   case responseResult of
     Ok command ->
       command
     Err errorCommand ->
       errorCommand
 
+
+toHttpCommand : HttpRequest a -> Cmd msg -> Cmd msg
+toHttpCommand request command =
+  let
+    httpCommand = Native.Helpers.toCmd "Elmer_Http" (requestAsJson request)
+  in
+    Cmd.batch [ httpCommand, command ]
+
+requestAsJson : HttpRequest a -> Encode.Value
+requestAsJson request =
+  Encode.object
+    [ ("method", Encode.string request.method )
+    , ("url", Encode.string request.url)
+    , ("body", nullOrString request.body)
+    ]
+
+nullOrString : Maybe String -> Encode.Value
+nullOrString maybeString =
+  Maybe.map (\s -> Encode.string s) maybeString
+    |> Maybe.withDefault Encode.null
+
+
+expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+expectPOST url requestMatcher =
+  Elmer.mapToExpectation <|
+    \componentState ->
+      case hasRequest componentState.httpRequests "POST" url of
+        Just request ->
+          requestMatcher request
+        Nothing ->
+          if List.isEmpty componentState.httpRequests then
+            Expect.fail ("Expected request for\n\n\tPOST " ++ url ++ "\n\nbut no requests have been made")
+          else
+            let
+              requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
+            in
+            Expect.fail ("Expected request for\n\n\tPOST " ++ url ++ "\n\nbut only found these requests\n\n\t" ++ requests)
+
+
+hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
+hasRequest requests method url =
+  List.filter (\r -> r.method == method && r.url == url) requests
+    |> List.head
 
 matchRequest : HttpResponseStub -> HttpRequest a -> Result (Cmd msg) HttpResponseStub
 matchRequest responseStub httpRequest =

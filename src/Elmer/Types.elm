@@ -34,6 +34,11 @@ type alias UpdateFunction model msg =
 type alias LocationParserFunction msg =
     Navigation.Location -> msg
 
+type alias HttpRequestData =
+  { method: String
+  , url: String
+  , body: Maybe String
+  }
 
 type alias HtmlComponentState model msg =
     { model : model
@@ -42,6 +47,7 @@ type alias HtmlComponentState model msg =
     , targetNode : Maybe (HtmlNode msg)
     , locationParser : Maybe (LocationParserFunction msg)
     , location : Maybe String
+    , httpRequests : List HttpRequestData
     }
 
 

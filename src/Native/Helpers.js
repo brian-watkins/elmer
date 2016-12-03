@@ -116,12 +116,22 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     return _elm_lang$core$Native_List.fromArray(commands)
   }
 
+  var getHttpRequestBody = function(requestData) {
+    var bodyType = requestData.body.ctor
+    if (bodyType == "StringBody") {
+      return _elm_lang$core$Maybe$Just(requestData.body._1)
+    }
+
+    return _elm_lang$core$Maybe$Nothing
+  }
+
   var asHttpRequest = function(request) {
     var requestData = request._0
 
-    return A3(_bwatkinsPivotal$elmer$Elmer_Http$HttpRequest,
+    return A4(_bwatkinsPivotal$elmer$Elmer_Http$HttpRequest,
       requestData.method,
       requestData.url,
+      getHttpRequestBody(requestData),
       requestData.expect.responseToResult)
   }
 

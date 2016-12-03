@@ -6,6 +6,7 @@ module Elmer
         , expectNode
         , expectNodeExists
         , map
+        , mapToExpectation
         )
 
 import Html exposing (Html)
@@ -27,6 +28,7 @@ componentState model view update =
         , targetNode = Nothing
         , locationParser = Nothing
         , location = Nothing
+        , httpRequests = []
         }
 
 
@@ -44,6 +46,7 @@ navigationComponentState model view update parser =
         , targetNode = Nothing
         , locationParser = Just parser
         , location = Nothing
+        , httpRequests = []
         }
 
 

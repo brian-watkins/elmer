@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, on, keyCode)
 import Task exposing (Task)
 import Json.Decode as Json exposing (..)
+import Json.Encode as Encode
 import Navigation
 import Http
 
@@ -61,8 +62,10 @@ type Msg
   | RouteNotFound String
   | RequestData
   | AnotherRequestData
+  | CreateStuff
   | WebServiceResponse (Result Http.Error String)
   | AnotherWebServiceResponse (Result Http.Error String)
+  | CreateStuffResponse (Result Http.Error String)
 
 simpleView : Model -> Html Msg
 simpleView model =
@@ -109,6 +112,9 @@ view model =
           [ div [ id "another-request-data-click", onClick AnotherRequestData ] [ text "Click me to request more data!" ]
           , div [ id "another-data-result" ] [ text model.anotherWebServiceData ]
           ]
+        , div [ id "create-stuff" ]
+          [ div [ id "create-stuff-click", onClick CreateStuff ] [ text "Click me to create stuff!" ]
+          ]
         ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -138,6 +144,8 @@ update msg model =
       ( { model | route = NotFound message }, Cmd.none )
     RequestData ->
       ( model, fetchData model )
+    CreateStuff ->
+      ( model, postData model )
     AnotherRequestData ->
       ( model, fetchMoreData model )
     WebServiceResponse (Ok name) ->
@@ -154,6 +162,8 @@ update msg model =
       ( { model | anotherWebServiceData = data }, Cmd.none )
     AnotherWebServiceResponse (Err _) ->
       ( { model | anotherWebServiceData = "Error" }, Cmd.none )
+    CreateStuffResponse _ ->
+      ( model, Cmd.none )
 
 fetchData : Model -> Cmd Msg
 fetchData model =
@@ -162,6 +172,14 @@ fetchData model =
 fetchMoreData : Model -> Cmd Msg
 fetchMoreData model =
   model.anotherHttpSend AnotherWebServiceResponse (Http.get "http://awesome.com/awesome.html" anotherWebServiceDecoder)
+
+requestBody : Encode.Value
+requestBody =
+  Encode.object [ ("name", Encode.string "me") ]
+
+postData : Model -> Cmd Msg
+postData model =
+  model.httpSend CreateStuffResponse (Http.post "http://fun.com/fun" (Http.jsonBody requestBody) webServiceDecoder)
 
 webServiceDecoder : Json.Decoder String
 webServiceDecoder =
