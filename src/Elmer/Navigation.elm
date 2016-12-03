@@ -12,19 +12,16 @@ import Expect
 
 
 expectLocation : String -> ComponentStateResult model msg -> Expect.Expectation
-expectLocation expectedURL componentStateResult =
-    case componentStateResult of
-        CurrentState componentState ->
-            case componentState.location of
-                Just location ->
-                    Expect.equal location expectedURL
-                        |> Expect.onFail ("Expected to be at location:\n\n\t" ++ expectedURL ++ "\n\nbut location is:\n\n\t" ++ location)
+expectLocation expectedURL =
+  Elmer.mapToExpectation <|
+      \componentState ->
+          case componentState.location of
+              Just location ->
+                  Expect.equal location expectedURL
+                      |> Expect.onFail ("Expected to be at location:\n\n\t" ++ expectedURL ++ "\n\nbut location is:\n\n\t" ++ location)
 
-                Nothing ->
-                    Expect.fail ("Expected to be at location:\n\n\t" ++ expectedURL ++ "\n\nbut no location has been set")
-
-        UpstreamFailure msg ->
-            Expect.fail msg
+              Nothing ->
+                  Expect.fail ("Expected to be at location:\n\n\t" ++ expectedURL ++ "\n\nbut no location has been set")
 
 
 setLocation : String -> ComponentStateResult model msg -> ComponentStateResult model msg

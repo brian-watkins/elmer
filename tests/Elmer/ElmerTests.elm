@@ -17,6 +17,7 @@ all =
     , expectNodeTests
     , expectNodeExistsTests
     , childNodeTests
+    , mapToExpectationTests
     ]
 
 
@@ -155,5 +156,35 @@ childNodeTests =
                     Matchers.hasText "my text" node
                 )
             |> Expect.equal Expect.pass
+    ]
+  ]
+
+mapToExpectationTests =
+  describe "mapToExpectaion"
+  [ describe "when there is an upstream error"
+    [ test "it fails with the upstream error" <|
+      \() ->
+        Elmer.mapToExpectation (\_ -> Expect.pass) (UpstreamFailure "Failed!")
+          |> Expect.equal (Expect.fail "Failed!")
+    ]
+  , describe "when there is no upstream failure"
+    [ describe "when the mapper fails"
+      [ test "it fails" <|
+        \() ->
+          let
+            initialState = Elmer.componentState App.defaultModel App.view App.update
+          in
+            Elmer.mapToExpectation (\_ -> Expect.fail "I failed!") initialState
+              |> Expect.equal (Expect.fail "I failed!")
+      ]
+    , describe "when the mapper passes"
+      [ test "it passes" <|
+        \() ->
+          let
+            initialState = Elmer.componentState App.defaultModel App.view App.update
+          in
+            Elmer.mapToExpectation (\componentState -> Expect.equal Nothing componentState.targetNode) initialState
+              |> Expect.equal (Expect.pass)
+      ]
     ]
   ]

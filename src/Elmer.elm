@@ -56,20 +56,23 @@ map mapper componentStateResult =
         UpstreamFailure message ->
             UpstreamFailure message
 
+mapToExpectation : (HtmlComponentState model msg -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+mapToExpectation mapper componentStateResult =
+  case componentStateResult of
+    CurrentState componentState ->
+      mapper componentState
+    UpstreamFailure message ->
+      Expect.fail message
 
 expectNode : (HtmlNode msg -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
-expectNode expectFunction componentStateResult =
-    case componentStateResult of
-        CurrentState componentState ->
-            case componentState.targetNode of
-                Just node ->
-                    expectFunction node
-
-                Nothing ->
-                    Expect.fail "Node does not exist"
-
-        UpstreamFailure message ->
-            Expect.fail message
+expectNode expectFunction =
+  mapToExpectation <|
+    \componentState ->
+      case componentState.targetNode of
+        Just node ->
+          expectFunction node
+        Nothing ->
+          Expect.fail "Node does not exist"
 
 
 expectNodeExists : ComponentStateResult model msg -> Expect.Expectation
