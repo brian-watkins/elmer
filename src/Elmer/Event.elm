@@ -6,7 +6,6 @@ module Elmer.Event
         , sendCommand
         )
 
-import Navigation exposing (..)
 import Json.Decode as Json
 import Elmer.Types exposing (..)
 import Elmer

@@ -37,11 +37,13 @@ type MsgC
 
 type alias Model =
   { fun: String
+  , navigateToUrl: (String -> Cmd MsgA)
   }
 
 defaultModel : Model
 defaultModel =
   { fun = "Reading"
+  , navigateToUrl = ElmerNav.fakeNavigateCommand
   }
 
 subTask : Cmd MsgB
@@ -62,7 +64,7 @@ update message model =
     DoClick ->
       ( { model | fun = "click" }, Cmd.none )
     DoChangeLocation location ->
-      ( model, Navigation.newUrl location )
+      ( model, model.navigateToUrl location )
 
 view : Model -> Html MsgA
 view model =

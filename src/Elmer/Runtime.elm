@@ -44,8 +44,8 @@ type alias LeafCommandData msg =
 commandRunners : List (CommandRunner model subMsg msg)
 commandRunners =
     [ taskCommandRunner
-    , navigationCommandRunner
     , elmerFailureCommandRunner
+    , navigationCommandRunner
     , httpCommandRunner
     ]
 
@@ -106,15 +106,19 @@ taskCommandRunner =
 
 navigationCommandRunner : CommandRunner model subMsg msg
 navigationCommandRunner =
-    { name = "Navigation"
-    , run =
-        \data _ ->
-            let
-                url =
-                    Result.withDefault "" (Json.decodeString (Json.field "_0" Json.string) data.json)
-            in
-                CommandSuccess (updateComponentStateWithLocation url)
-    }
+  { name = "Elmer_Navigation"
+  , run =
+      \data tagger ->
+        let
+          navigationDataDecoder = Json.decodeString <|
+            Json.field "url" Json.string
+        in
+          case navigationDataDecoder data.json of
+            Ok url ->
+              CommandSuccess (updateComponentStateWithLocation url)
+            Err message ->
+              CommandError message
+  }
 
 updateComponentStateWithLocation : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
 updateComponentStateWithLocation url componentState =

@@ -26,6 +26,8 @@ type alias Model =
   , route: Route
   , webServiceData: String
   , anotherWebServiceData: String
+  , navigateToUrl: (String -> Cmd Msg)
+  , modifyUrl: (String -> Cmd Msg)
   }
 
 defaultModel : Model
@@ -42,6 +44,8 @@ defaultModel =
   , route = View
   , webServiceData = "Not Requested"
   , anotherWebServiceData = "Not Requested"
+  , navigateToUrl = Navigation.newUrl
+  , modifyUrl = Navigation.modifyUrl
   }
 
 onlyText : Html Msg
@@ -135,9 +139,9 @@ update msg model =
     HandleKeyUp key ->
       ( { model | lastLetter = key }, Cmd.none )
     NavigationClick ->
-      ( model, Navigation.newUrl "http://fun.com/fun.html" )
+      ( model, model.navigateToUrl "http://fun.com/fun.html" )
     ModifyNavigationClick ->
-      ( model, Navigation.modifyUrl "http://fun.com/evenMoreFun.html" )
+      ( model, model.modifyUrl "http://fun.com/evenMoreFun.html" )
     ViewRoute ->
       ( { model | route = View }, Cmd.none )
     RouteNotFound message ->

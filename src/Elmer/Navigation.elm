@@ -2,14 +2,25 @@ module Elmer.Navigation
     exposing
         ( setLocation
         , expectLocation
+        , fakeNavigateCommand
         )
 
-import Navigation
 import Elmer.Event as Event
 import Elmer.Types exposing (..)
 import Elmer
 import Expect
+import Json.Encode as Encode
 
+
+fakeNavigateCommand : String -> Cmd msg
+fakeNavigateCommand url =
+  Native.Helpers.toCmd "Elmer_Navigation" (navigationCommandData url)
+
+navigationCommandData : String -> Encode.Value
+navigationCommandData url =
+  Encode.object
+    [ ("url", Encode.string url )
+    ]
 
 expectLocation : String -> ComponentStateResult model msg -> Expect.Expectation
 expectLocation expectedURL =
@@ -32,7 +43,7 @@ setLocation location componentStateResult =
                 case componentState.locationParser of
                     Just locationParser ->
                       let
-                          command = Navigation.newUrl location
+                          command = fakeNavigateCommand location
                       in
                           Event.sendCommand command componentStateResult
                     Nothing ->
