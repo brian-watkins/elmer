@@ -5,6 +5,7 @@ module Elmer.Http exposing
   , asHttpRequest
   , fakeHttpSend
   , expectPOST
+  , expectGET
   )
 
 import Http
@@ -83,21 +84,28 @@ nullOrString maybeString =
 
 
 expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
-expectPOST url requestMatcher =
+expectPOST =
+  expectRequest "POST"
+
+expectGET : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+expectGET =
+  expectRequest "GET"
+
+expectRequest : String -> String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+expectRequest method url requestMatcher =
   Elmer.mapToExpectation <|
     \componentState ->
-      case hasRequest componentState.httpRequests "POST" url of
+      case hasRequest componentState.httpRequests method url of
         Just request ->
           requestMatcher request
         Nothing ->
           if List.isEmpty componentState.httpRequests then
-            Expect.fail ("Expected request for\n\n\tPOST " ++ url ++ "\n\nbut no requests have been made")
+            Expect.fail ("Expected request for\n\n\t" ++ method ++ " " ++ url ++ "\n\nbut no requests have been made")
           else
             let
               requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
             in
-            Expect.fail ("Expected request for\n\n\tPOST " ++ url ++ "\n\nbut only found these requests\n\n\t" ++ requests)
-
+            Expect.fail ("Expected request for\n\n\t" ++ method ++ " " ++ url ++ "\n\nbut only found these requests\n\n\t" ++ requests)
 
 hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
 hasRequest requests method url =

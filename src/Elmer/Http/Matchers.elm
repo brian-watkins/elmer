@@ -1,11 +1,16 @@
 module Elmer.Http.Matchers exposing
   ( hasAnyBody
   , hasBody
+  , exists
   )
 
 import Expect
 import Elmer.Types exposing (..)
 import Elmer.Http exposing (..)
+
+exists : HttpRequestData -> Expect.Expectation
+exists request =
+  Expect.pass
 
 hasAnyBody : HttpRequestData -> Expect.Expectation
 hasAnyBody request =

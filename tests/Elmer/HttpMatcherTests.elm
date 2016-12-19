@@ -10,6 +10,7 @@ all =
   describe "http matcher tests"
   [ hasAnyBodyTests
   , hasBodyTests
+  , existsTests
   ]
 
 requestWithBody : String -> HttpRequestData
@@ -65,5 +66,16 @@ hasBodyTests =
           Matchers.hasBody "{}" (requestWithBody "{}")
             |> Expect.equal Expect.pass
       ]
+    ]
+  ]
+
+existsTests : Test
+existsTests =
+  describe "exists"
+  [ describe "when the request has been made"
+    [ test "it passes" <|
+      \() ->
+        Matchers.exists requestWithNoBody
+          |> Expect.equal Expect.pass
     ]
   ]
