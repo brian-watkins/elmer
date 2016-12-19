@@ -15,6 +15,7 @@ import Json.Encode as Encode
 import Elmer
 import Elmer.Types exposing (..)
 import Elmer.Command as Command
+import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
 
@@ -100,12 +101,12 @@ expectRequest method url requestMatcher =
           requestMatcher request
         Nothing ->
           if List.isEmpty componentState.httpRequests then
-            Expect.fail ("Expected request for\n\n\t" ++ method ++ " " ++ url ++ "\n\nbut no requests have been made")
+            Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), description "but no requests have been made" ])
           else
             let
               requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
             in
-            Expect.fail ("Expected request for\n\n\t" ++ method ++ " " ++ url ++ "\n\nbut only found these requests\n\n\t" ++ requests)
+            Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), message "but only found these requests" requests ])
 
 hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
 hasRequest requests method url =
@@ -123,7 +124,7 @@ matchRequestUrl httpRequest responseStub =
   if httpRequest.url == responseStub.url then
     Ok responseStub
   else
-    Err (Command.failureCommand ("Received a request for\n\n\t" ++ httpRequest.url ++ "\n\nbut it has not been stubbed. The stubbed request is\n\n\t" ++ responseStub.url))
+    Err (Command.failureCommand (format [message "Received a request for" httpRequest.url, message "but it has not been stubbed. The stubbed request is" responseStub.url ]))
 
 
 matchRequestMethod : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
@@ -131,7 +132,7 @@ matchRequestMethod httpRequest responseStub =
   if httpRequest.method == responseStub.method then
     Ok responseStub
   else
-    Err (Command.failureCommand ("A response has been stubbed for\n\n\t" ++ httpRequest.url ++ "\n\nbut it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method))
+    Err (Command.failureCommand (format [message "A response has been stubbed for" httpRequest.url, description ("but it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method) ]))
 
 
 generateResponse : HttpResponseStub -> Result (Cmd msg) (HttpResponseResult)
@@ -151,9 +152,12 @@ mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -
 mapResponseError httpRequest tagger error =
   case error of
     Http.BadPayload msg response ->
-      Command.failureCommand ("Parsing a stubbed response\n\n\t" ++ httpRequest.method ++ " " ++ httpRequest.url ++
-        "\n\n\t" ++ response.body ++ "\n\nfailed with error\n\n\t" ++ msg ++
-        "\n\nIf you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+      Command.failureCommand (format
+        [ message "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
+        , description ("\t" ++ response.body)
+        , message "failed with error" msg
+        , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+        ]
       )
     _ ->
       Task.attempt tagger (Task.fail error)

@@ -10,6 +10,7 @@ import Elmer.Types exposing (..)
 import Elmer
 import Expect
 import Json.Encode as Encode
+import Elmer.Printer exposing (..)
 
 
 fakeNavigateCommand : String -> Cmd msg
@@ -29,10 +30,10 @@ expectLocation expectedURL =
           case componentState.location of
               Just location ->
                   Expect.equal location expectedURL
-                      |> Expect.onFail ("Expected to be at location:\n\n\t" ++ expectedURL ++ "\n\nbut location is:\n\n\t" ++ location)
+                      |> Expect.onFail (format [message "Expected to be at location:" expectedURL, message "but location is:" location])
 
               Nothing ->
-                  Expect.fail ("Expected to be at location:\n\n\t" ++ expectedURL ++ "\n\nbut no location has been set")
+                  Expect.fail (format [message "Expected to be at location:" expectedURL, description "but no location has been set"])
 
 
 setLocation : String -> ComponentStateResult model msg -> ComponentStateResult model msg

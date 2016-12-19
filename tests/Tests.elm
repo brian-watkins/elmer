@@ -14,6 +14,7 @@ import Elmer.HttpMatcherTests as HttpMatcherTests
 import Elmer.RuntimeTests as RuntimeTests
 import Elmer.NodeTests as NodeTests
 import Elmer.CommandTests as CommandTests
+import Elmer.PrinterTests as PrinterTests
 
 all : Test
 all =
@@ -30,4 +31,5 @@ all =
     , RuntimeTests.all
     , CommandTests.all
     , NodeTests.all
+    , PrinterTests.all
     ]

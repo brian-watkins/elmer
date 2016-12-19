@@ -7,6 +7,7 @@ module Elmer.Http.Matchers exposing
 import Expect
 import Elmer.Types exposing (..)
 import Elmer.Http exposing (..)
+import Elmer.Printer exposing (..)
 
 exists : HttpRequestData -> Expect.Expectation
 exists request =
@@ -18,7 +19,7 @@ hasAnyBody request =
     Just _ ->
       Expect.pass
     Nothing ->
-      Expect.fail "Expected request to have a body but it does not"
+      Expect.fail (formatMessage (description "Expected request to have a body but it does not"))
 
 hasBody : String -> HttpRequestData -> Expect.Expectation
 hasBody expectedBody request =
@@ -27,6 +28,6 @@ hasBody expectedBody request =
       if body == expectedBody then
         Expect.pass
       else
-        Expect.fail ("Expected request to have body\n\n\t" ++ expectedBody ++ "\n\nbut it has\n\n\t" ++ body)
+        Expect.fail (format [ message "Expected request to have body" expectedBody, message "but it has" body ])
     Nothing ->
-      Expect.fail ("Expected request to have body\n\n\t" ++ expectedBody ++ "\n\nbut it has no body")
+      Expect.fail (format [ message "Expected request to have body" expectedBody, description "but it has no body" ])

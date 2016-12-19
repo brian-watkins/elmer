@@ -8,6 +8,7 @@ module Elmer.Matchers exposing
 
 import Elmer.Types exposing (..)
 import Elmer.Node as Node
+import Elmer.Printer exposing (..)
 import Expect
 import String
 import Json.Decode as Json
@@ -32,11 +33,11 @@ hasText text node =
             flattenTexts node.children
     in
         if List.length texts == 0 then
-            Expect.fail ("Expected node to have text\n\n\t" ++ text ++ "\n\nbut it has no text")
+            Expect.fail (format [ message "Expected node to have text" text, description "but it has no text" ])
         else if List.member text texts then
             Expect.pass
         else
-            Expect.fail ("Expected node to have text\n\n\t" ++ text ++ "\n\nbut it has\n\n\t" ++ (printList texts))
+            Expect.fail (format [ message "Expected node to have text" text, message "but it has" (printList texts) ])
 
 
 hasClass : String -> HtmlNode msg -> Expect.Expectation
@@ -49,9 +50,9 @@ hasClass className node =
             if List.member className classList then
                 Expect.pass
             else
-                Expect.fail ("Expected node to have class\n\n\t" ++ className ++ "\n\nbut it has\n\n\t" ++ (printList classList))
+                Expect.fail (format [message "Expected node to have class" className, message "but it has" (printList classList) ])
         else
-            Expect.fail ("Expected node to have class\n\n\t" ++ className ++ "\n\nbut it has no classes")
+            Expect.fail (format [message "Expected node to have class" className, description "but it has no classes" ])
 
 
 hasProperty : (String, String) -> HtmlNode msg -> Expect.Expectation
@@ -61,11 +62,11 @@ hasProperty (name, value) node =
       if value == propertyValue then
         Expect.pass
       else
-        Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
-          "\n\nbut it has\n\n\t" ++ name ++ " = " ++ propertyValue)
+        Expect.fail (format [message "Expected node to have property" (name ++ " = " ++ value),
+          message "but it has" (name ++ " = " ++ propertyValue) ])
     Nothing ->
-      Expect.fail ("Expected node to have property\n\n\t" ++ name ++ " = " ++ value ++
-        "\n\nbut it has no property with that name")
+      Expect.fail (format [message "Expected node to have property" (name ++ " = " ++ value),
+          description "but it has no property with that name" ])
 
 hasId : String -> HtmlNode msg -> Expect.Expectation
 hasId expectedId node =
@@ -74,9 +75,9 @@ hasId expectedId node =
       if nodeId == expectedId then
         Expect.pass
       else
-        Expect.fail ("Expected node to have id\n\n\t" ++ expectedId ++ "\n\nbut it has id\n\n\t" ++ nodeId)
+        Expect.fail (format [message "Expected node to have id" expectedId, message "but it has id" nodeId ])
     Nothing ->
-      Expect.fail ("Expected node to have id\n\n\t" ++ expectedId ++ "\n\nbut it has no id")
+      Expect.fail (format [message "Expected node to have id" expectedId, description "but it has no id" ])
 
 -- Private functions
 
