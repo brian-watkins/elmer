@@ -1,13 +1,13 @@
-var _bwatkinsPivotal$elmer$Native_Helpers = function() {
+var _jbwatkins$elmer$Native_Helpers = function() {
 
   var getChildren = function(html, tagger) {
     var children = []
     for (var i = 0; i < html.children.length; i++) {
       var element = html.children[i]
       if (element.type == "text") {
-        children.push(_bwatkinsPivotal$elmer$Elmer_Types$Text(element.text))
+        children.push(_jbwatkins$elmer$Elmer_Types$Text(element.text))
       } else {
-        children.push(_bwatkinsPivotal$elmer$Elmer_Types$Node(constructHtmlNode(element, tagger)))
+        children.push(_jbwatkins$elmer$Elmer_Types$Node(constructHtmlNode(element, tagger)))
       }
     }
 
@@ -23,7 +23,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
           decoder = A2(_elm_lang$core$Native_Json.map1, tagger, decoder)
         }
 
-        events.push(A2(_bwatkinsPivotal$elmer$Elmer_Types$HtmlEvent, eventType, decoder))
+        events.push(A2(_jbwatkins$elmer$Elmer_Types$HtmlEvent, eventType, decoder))
       }
     }
     return _elm_lang$core$Native_List.fromArray(events)
@@ -42,7 +42,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
       tagger = html.tagger
     }
 
-    return A4(_bwatkinsPivotal$elmer$Elmer_Types$HtmlNode,
+    return A4(_jbwatkins$elmer$Elmer_Types$HtmlNode,
       node.tag,
       JSON.stringify(getFacts(node.facts)),
       getChildren(node, tagger),
@@ -79,22 +79,22 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
 
   var asCommandData = function(command) {
     if (command.type == "leaf") {
-      return _bwatkinsPivotal$elmer$Elmer_Runtime$LeafCommand(asLeafCommandData(command))
+      return _jbwatkins$elmer$Elmer_Runtime$LeafCommand(asLeafCommandData(command))
     }
 
     if (command.type == "map") {
-      return _bwatkinsPivotal$elmer$Elmer_Runtime$MapCommand(asMapCommandData(command))
+      return _jbwatkins$elmer$Elmer_Runtime$MapCommand(asMapCommandData(command))
     }
 
     if (command.type == "node") {
-      return _bwatkinsPivotal$elmer$Elmer_Runtime$BatchCommand(asBatchCommandData(command))
+      return _jbwatkins$elmer$Elmer_Runtime$BatchCommand(asBatchCommandData(command))
     }
 
-    return _bwatkinsPivotal$elmer$Elmer_Runtime$NoCommand
+    return _jbwatkins$elmer$Elmer_Runtime$NoCommand
   }
 
   var asLeafCommandData = function(command) {
-    return A3(_bwatkinsPivotal$elmer$Elmer_Runtime$LeafCommandData,
+    return A3(_jbwatkins$elmer$Elmer_Runtime$LeafCommandData,
       command,
       command.home,
       JSON.stringify(command.value)
@@ -105,7 +105,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
     var tagger = command.tagger
     var mappedCommand = command.tree
 
-    return (A2)(_bwatkinsPivotal$elmer$Elmer_Runtime$MapCommandData,
+    return (A2)(_jbwatkins$elmer$Elmer_Runtime$MapCommandData,
       mappedCommand,
       tagger
     );
@@ -128,7 +128,7 @@ var _bwatkinsPivotal$elmer$Native_Helpers = function() {
   var asHttpRequest = function(request) {
     var requestData = request._0
 
-    return A4(_bwatkinsPivotal$elmer$Elmer_Http$HttpRequest,
+    return A4(_jbwatkins$elmer$Elmer_Http$HttpRequest,
       requestData.method,
       requestData.url,
       getHttpRequestBody(requestData),
