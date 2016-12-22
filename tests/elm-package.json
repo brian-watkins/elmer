@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Elmer Tests",
-    "repository": "https://github.com/jbwatkins/elmer.git",
+    "repository": "https://github.com/brian-watkins/elmer.git",
     "license": "MIT",
     "source-directories": [
         ".",
