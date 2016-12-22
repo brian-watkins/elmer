@@ -252,7 +252,7 @@ expectGetTests =
   [ describe "when there is an upstream error"
     [ test "it fails with the upstream error" <|
       \() ->
-        ElmerHttp.expectGET "http://fun.com/fun" exists (UpstreamFailure "Failed!")
+        ElmerHttp.expectGET "http://fun.com/fun" hasBeenRequested (UpstreamFailure "Failed!")
           |> Expect.equal (Expect.fail "Failed!")
     ]
   , describe "when no requests have been recorded"
@@ -261,7 +261,7 @@ expectGetTests =
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
-          ElmerHttp.expectGET "http://fun.com/fun" exists initialState
+          ElmerHttp.expectGET "http://fun.com/fun" hasBeenRequested initialState
             |> Expect.equal (Expect.fail "Expected request for\n\n\tGET http://fun.com/fun\n\nbut no requests have been made")
     ]
   , describe "when requests have been recorded"
@@ -283,7 +283,7 @@ expectGetTests =
               |> Event.click
               |> Elmer.find "#create-stuff-click"
               |> Event.click
-              |> ElmerHttp.expectGET "http://fun.com/awesome" exists
+              |> ElmerHttp.expectGET "http://fun.com/awesome" hasBeenRequested
               |> Expect.equal (Expect.fail "Expected request for\n\n\tGET http://fun.com/awesome\n\nbut only found these requests\n\n\tPOST http://fun.com/fun\n\n\tGET http://awesome.com/awesome.html")
       ]
     , describe "when the url matches but not the method"
@@ -298,7 +298,7 @@ expectGetTests =
           in
             Elmer.find "#create-stuff-click" initialState
               |> Event.click
-              |> ElmerHttp.expectGET "http://fun.com/fun" exists
+              |> ElmerHttp.expectGET "http://fun.com/fun" hasBeenRequested
               |> Expect.equal (Expect.fail "Expected request for\n\n\tGET http://fun.com/fun\n\nbut only found these requests\n\n\tPOST http://fun.com/fun")
       ]
     , describe "when a matching request occurs"
@@ -330,7 +330,7 @@ expectGetTests =
             in
               Elmer.find "#request-data-click" initialState
                 |> Event.click
-                |> ElmerHttp.expectGET "http://fun.com/fun.html" exists
+                |> ElmerHttp.expectGET "http://fun.com/fun.html" hasBeenRequested
                 |> Expect.equal (Expect.pass)
         ]
       ]
