@@ -47,7 +47,8 @@ fakeHttpSend responseStub tagger request =
   let
     httpRequest = asHttpRequest request
   in
-    matchRequest responseStub httpRequest
+    responseStubIsValid responseStub
+      |> Result.andThen (matchRequest httpRequest)
       |> Result.andThen generateResponse
       |> Result.andThen (processResponse httpRequest tagger)
       |> collapseToCommand
@@ -96,36 +97,54 @@ expectRequest : String -> String -> (HttpRequestData -> Expect.Expectation) -> C
 expectRequest method url requestMatcher =
   Elmer.mapToExpectation <|
     \componentState ->
-      case hasRequest componentState.httpRequests method url of
-        Just request ->
-          requestMatcher request
-        Nothing ->
-          if List.isEmpty componentState.httpRequests then
-            Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), description "but no requests have been made" ])
-          else
-            let
-              requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
-            in
-            Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), message "but only found these requests" requests ])
+      if String.contains "?" url then
+        Expect.fail ( format
+          [ message "The expected route contains a query string" url
+          , description "Use the hasQueryParam matcher instead"
+          ]
+        )
+      else
+        case hasRequest componentState.httpRequests method url of
+          Just request ->
+            requestMatcher request
+          Nothing ->
+            if List.isEmpty componentState.httpRequests then
+              Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), description "but no requests have been made" ])
+            else
+              let
+                requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
+              in
+              Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), message "but only found these requests" requests ])
 
 hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
 hasRequest requests method url =
-  List.filter (\r -> r.method == method && r.url == url) requests
+  List.filter (\r -> r.method == method && (route r.url) == url) requests
     |> List.head
 
-matchRequest : HttpResponseStub -> HttpRequest a -> Result (Cmd msg) HttpResponseStub
-matchRequest responseStub httpRequest =
+responseStubIsValid : HttpResponseStub -> Result (Cmd msg) HttpResponseStub
+responseStubIsValid responseStub =
+  if String.contains "?" responseStub.url then
+    Err (Command.failureCommand (format [message "Sent a request where a stubbed route contains a query string" responseStub.url, description "Stubbed routes may not contain a query string"]))
+  else
+    Ok responseStub
+
+matchRequest : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
+matchRequest httpRequest responseStub =
   matchRequestUrl httpRequest responseStub
     |> Result.andThen (matchRequestMethod httpRequest)
 
-
 matchRequestUrl : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
 matchRequestUrl httpRequest responseStub =
-  if httpRequest.url == responseStub.url then
+  if (route httpRequest.url) == responseStub.url then
     Ok responseStub
   else
     Err (Command.failureCommand (format [message "Received a request for" httpRequest.url, message "but it has not been stubbed. The stubbed request is" responseStub.url ]))
 
+route : String -> String
+route url =
+  String.split "?" url
+    |> List.head
+    |> Maybe.withDefault ""
 
 matchRequestMethod : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
 matchRequestMethod httpRequest responseStub =

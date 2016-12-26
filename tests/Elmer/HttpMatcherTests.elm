@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer.Types exposing (..)
 import Elmer.Http.Matchers as Matchers
+import Elmer.Printer exposing (..)
 
 all : Test
 all =
@@ -11,6 +12,7 @@ all =
   [ hasAnyBodyTests
   , hasBodyTests
   , hasBeenRequestedTests
+  , hasQueryParamTests
   ]
 
 requestWithBody : String -> HttpRequestData
@@ -51,14 +53,14 @@ hasBodyTests =
     [ test "it fails" <|
       \() ->
         Matchers.hasBody "{}" requestWithNoBody
-          |> Expect.equal (Expect.fail "Expected request to have body\n\n\t{}\n\nbut it has no body")
+          |> Expect.equal (Expect.fail (format [message "Expected request to have body" "{}", description "but it has no body"]))
     ]
   , describe "when there is a body"
     [ describe "when the body does not match"
       [ test "it fails" <|
         \() ->
           Matchers.hasBody "{\"name\":\"cool\"}" (requestWithBody "{}")
-            |> Expect.equal (Expect.fail "Expected request to have body\n\n\t{\"name\":\"cool\"}\n\nbut it has\n\n\t{}")
+            |> Expect.equal (Expect.fail (format [message "Expected request to have body" "{\"name\":\"cool\"}", message "but it has" "{}"]))
       ]
     , describe "when the body matches"
       [ test "it passes" <|
@@ -77,5 +79,41 @@ hasBeenRequestedTests =
       \() ->
         Matchers.hasBeenRequested requestWithNoBody
           |> Expect.equal Expect.pass
+    ]
+  ]
+
+getWithQuery : Maybe String -> HttpRequestData
+getWithQuery maybeQuery =
+  { method = "GET"
+  , url = "http://fun.com/fun" ++ (Maybe.withDefault "" maybeQuery)
+  , body = Nothing
+  }
+
+hasQueryParamTests : Test
+hasQueryParamTests =
+  describe "hasQueryParam"
+  [ describe "when there is no query string"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery Nothing)
+          |> Expect.equal (Expect.fail (format [ message "Expected request to have query param" "name = fun person", description "but it has no query string" ]))
+    ]
+  , describe "when there is a query string"
+    [ describe "when the param is not present"
+      [ test "it fails" <|
+        \() ->
+          Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery (Just "?something=else"))
+            |> Expect.equal (Expect.fail (format [ message "Expected request to have query param" "name = fun person", message "but it has" "something=else" ]))
+      , test "it fails" <|
+        \() ->
+          Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery (Just "?name=fun%20persons"))
+            |> Expect.equal (Expect.fail (format [ message "Expected request to have query param" "name = fun person", message "but it has" "name=fun%20persons" ]))
+      ]
+    , describe "when the param is present"
+      [ test "it passes" <|
+        \() ->
+          Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery (Just "?name=fun%20person"))
+            |> Expect.equal Expect.pass
+      ]
     ]
   ]
