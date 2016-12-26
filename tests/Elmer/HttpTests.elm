@@ -15,6 +15,7 @@ import Elmer.Http.Matchers exposing (..)
 import Elmer.Printer exposing (..)
 
 import Elmer.TestApps.HttpTestApp as App
+import Elmer.TestApps.EmptyTestApp as EmptyApp
 
 all : Test
 all =
@@ -190,19 +191,14 @@ errorResponseTests =
           |> Elmer.expectNode (Matchers.hasText "Timeout Error")
   ]
 
-type alias TestModel =
-  { name: String }
 
-type TestMsg
-  = TestMsg
-
-componentStateWithRequests : List HttpRequestData -> ComponentStateResult TestModel TestMsg
+componentStateWithRequests : List HttpRequestData -> ComponentStateResult EmptyApp.Model EmptyApp.Msg
 componentStateWithRequests requestData =
   let
     state =
-      { model = { name = "test" }
-      , view = (\model -> Html.div [] [])
-      , update = (\msg model -> (model, Cmd.none))
+      { model = EmptyApp.defaultModel
+      , view = EmptyApp.view
+      , update = EmptyApp.update
       , targetNode = Nothing
       , locationParser = Nothing
       , location = Nothing
@@ -218,7 +214,7 @@ testRequest method url =
   , body = Nothing
   }
 
-expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult TestModel TestMsg -> Expect.Expectation) -> Test
+expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult EmptyApp.Model EmptyApp.Msg -> Expect.Expectation) -> Test
 expectRequestTests method func =
   describe ("expect" ++ method)
   [ describe "when there is an upstream error"

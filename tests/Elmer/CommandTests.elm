@@ -5,7 +5,7 @@ import Expect
 import Elmer.Command
 import Elmer
 import Elmer.Types exposing (..)
-import Elmer.TestApp as App
+import Elmer.TestApps.EmptyTestApp as App
 import Elmer.Event as Event
 
 all : Test
@@ -20,8 +20,7 @@ elmerFailureCommandTest =
   [ test "it causes an upstream failure" <|
     \() ->
       let
-        model = App.defaultModel
-        initialState = Elmer.componentState model App.view App.update
+        initialState = Elmer.componentState App.defaultModel App.view App.update
         result = Event.sendCommand (Elmer.Command.failureCommand "You failed!") initialState
       in
         Expect.equal (UpstreamFailure "You failed!") result
