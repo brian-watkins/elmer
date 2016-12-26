@@ -7,7 +7,7 @@ import Html exposing (Html)
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
 import Elmer.Event as Event
-import Elmer.TestApp as App
+import Elmer.TestApps.TaskTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Matchers as Matchers
 import Elmer.Http as ElmerHttp
@@ -28,52 +28,32 @@ all =
 batchCommandTest : Test
 batchCommandTest =
   let
-    defaultModel = App.defaultModel
-    stubbedResponse = HttpStub.get "http://fun.com/fun.html"
-      |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-    anotherStub = HttpStub.get "http://awesome.com/awesome.html"
-      |> HttpStub.withBody "{\"data\":\"some webservice data\"}"
-    testModel =
-      { defaultModel
-      | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse)
-      , anotherHttpSend = (ElmerHttp.fakeHttpSend anotherStub)
-      }
-    initialState = Elmer.componentState testModel App.view App.update
+    initialState = Elmer.componentState App.defaultModel App.view App.update
     batchCommand = Cmd.batch
-      [ App.fetchData testModel
-      , App.fetchMoreData testModel
+      [ App.sendFirstTask "Cool stuff!"
+      , App.sendSecondTask "Fun stuff!"
       ]
     result = Event.sendCommand batchCommand initialState
   in
     describe "when a batch command is sent"
     [ test "it processes the first command" <|
       \() ->
-          Elmer.find "#webservice-data" result
-            |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+          Elmer.find "#first-task-result" result
+            |> Elmer.expectNode (Matchers.hasText "Cool stuff!")
     , test "it processes the second command" <|
       \() ->
-          Elmer.find "#another-webservice-data" result
-            |> Elmer.expectNode (Matchers.hasText "some webservice data")
+          Elmer.find "#second-task-result" result
+            |> Elmer.expectNode (Matchers.hasText "Fun stuff!")
     ]
 
 batchCommandFailureTest : Test
 batchCommandFailureTest =
   let
-    defaultModel = App.defaultModel
-    stubbedResponse = HttpStub.get "http://fun.com/fun.html"
-      |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-    anotherStub = HttpStub.get "http://awesome.com/awesome.html"
-      |> HttpStub.withBody "{\"data\":\"some webservice data\"}"
-    testModel =
-      { defaultModel
-      | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse)
-      , anotherHttpSend = (ElmerHttp.fakeHttpSend anotherStub)
-      }
-    initialState = Elmer.componentState testModel App.view App.update
+    initialState = Elmer.componentState App.defaultModel App.view App.update
     batchCommand = Cmd.batch
-      [ App.fetchData testModel
+      [ App.sendFirstTask "Cool stuff!"
       , Command.failureCommand "It failed!"
-      , App.fetchMoreData testModel
+      , App.sendSecondTask "Fun stuff!"
       ]
     result = Event.sendCommand batchCommand initialState
   in
@@ -86,33 +66,23 @@ batchCommandFailureTest =
 mappedBatchCommandTest : Test
 mappedBatchCommandTest =
   let
-    defaultModel = App.defaultModel
-    stubbedResponse = HttpStub.get "http://fun.com/fun.html"
-      |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-    anotherStub = HttpStub.get "http://awesome.com/awesome.html"
-      |> HttpStub.withBody "{\"data\":\"some webservice data\"}"
-    testAppModel =
-      { defaultModel
-      | httpSend = (ElmerHttp.fakeHttpSend stubbedResponse)
-      , anotherHttpSend = (ElmerHttp.fakeHttpSend anotherStub)
-      }
-    testModel = { appModel = testAppModel }
+    testModel = { appModel = App.defaultModel }
     initialState = Elmer.componentState testModel parentView parentUpdate
     batchCommand = Cmd.batch
-      [ App.fetchData testAppModel
-      , App.fetchMoreData testAppModel
+      [ App.sendFirstTask "Cool stuff!"
+      , App.sendSecondTask "Fun stuff!"
       ]
     result = Event.sendCommand (Cmd.map AppMsg batchCommand) initialState
   in
     describe "when a batched command is mapped"
     [ test "it maps the first command" <|
       \() ->
-          Elmer.find "#webservice-data" result
-            |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+          Elmer.find "#first-task-result" result
+            |> Elmer.expectNode (Matchers.hasText "Cool stuff!")
     , test "it maps the second command" <|
       \() ->
-          Elmer.find "#another-webservice-data" result
-            |> Elmer.expectNode (Matchers.hasText "some webservice data")
+          Elmer.find "#second-task-result" result
+            |> Elmer.expectNode (Matchers.hasText "Fun stuff!")
     ]
 
 type ParentMsg
