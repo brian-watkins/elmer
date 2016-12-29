@@ -15,7 +15,7 @@ import Elmer.Http.Matchers exposing (..)
 import Elmer.Printer exposing (..)
 
 import Elmer.TestApps.HttpTestApp as App
-import Elmer.TestApps.EmptyTestApp as EmptyApp
+import Elmer.TestApps.SimpleTestApp as SimpleApp
 
 all : Test
 all =
@@ -192,13 +192,13 @@ errorResponseTests =
   ]
 
 
-componentStateWithRequests : List HttpRequestData -> ComponentStateResult EmptyApp.Model EmptyApp.Msg
+componentStateWithRequests : List HttpRequestData -> ComponentStateResult SimpleApp.Model SimpleApp.Msg
 componentStateWithRequests requestData =
   let
     state =
-      { model = EmptyApp.defaultModel
-      , view = EmptyApp.view
-      , update = EmptyApp.update
+      { model = SimpleApp.defaultModel
+      , view = SimpleApp.view
+      , update = SimpleApp.update
       , targetNode = Nothing
       , locationParser = Nothing
       , location = Nothing
@@ -214,7 +214,7 @@ testRequest method url =
   , body = Nothing
   }
 
-expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult EmptyApp.Model EmptyApp.Msg -> Expect.Expectation) -> Test
+expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
 expectRequestTests method func =
   describe ("expect" ++ method)
   [ describe "when there is an upstream error"

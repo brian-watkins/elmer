@@ -5,7 +5,7 @@ import Expect
 import Elmer.Command
 import Elmer
 import Elmer.Types exposing (..)
-import Elmer.TestApps.EmptyTestApp as App
+import Elmer.TestApps.SimpleTestApp as App
 import Elmer.Event as Event
 
 all : Test

@@ -1,7 +1,7 @@
 module Elmer.ElmerTests exposing (all)
 
 import Test exposing (..)
-import Elmer.TestApp as App
+import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer.Event as Event
@@ -37,16 +37,16 @@ findTests =
       [ test "it returns the failure message and prints the view" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.simpleView App.update
+            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
             Elmer.find ".blah" initialState
-              |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n- div { id = 'root' } \n  - Some text")
+              |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled', id = 'root' } \n  - Some text")
       ]
     , describe "when there is only text" <|
       [ test "it returns the failure message and prints that there are no nodes" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.textView App.update
+            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.textView SimpleApp.update
           in
             Elmer.find ".blah" initialState
               |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n<No Nodes>")
@@ -56,8 +56,8 @@ findTests =
     [ test "it updates the state with the targetnode" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-          stateResult = Elmer.find ".button" initialState
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+          stateResult = Elmer.find ".styled" initialState
         in
           case stateResult of
             CurrentState state ->
@@ -89,7 +89,7 @@ expectNodeTests =
     [ test "it fails with an error" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           Elmer.expectNode (
             \node -> Expect.fail "Should not get here"
@@ -100,9 +100,9 @@ expectNodeTests =
     [ test "it executes the expectation function" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
-          Elmer.find ".awesome" initialState
+          Elmer.find ".styled" initialState
             |> Elmer.expectNode (
                   \node -> Expect.equal "div" node.tag
                 )
@@ -125,7 +125,7 @@ expectNodeExistsTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           Elmer.expectNodeExists initialState
             |> Expect.equal (Expect.fail "Node does not exist")
@@ -134,9 +134,9 @@ expectNodeExistsTests =
     [ test "it passes" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
-          Elmer.find ".awesome" initialState
+          Elmer.find "#root" initialState
             |> Elmer.expectNodeExists
             |> Expect.equal Expect.pass
     ]
@@ -148,12 +148,12 @@ childNodeTests =
     [ test "it finds the text" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.viewWithChildren SimpleApp.update
         in
           Elmer.find "#root" initialState
             |> Elmer.expectNode (
                   \node ->
-                    Matchers.hasText "my text" node
+                    Matchers.hasText "Child text" node
                 )
             |> Expect.equal Expect.pass
     ]
@@ -172,7 +172,7 @@ mapToExpectationTests =
       [ test "it fails" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
             Elmer.mapToExpectation (\_ -> Expect.fail "I failed!") initialState
               |> Expect.equal (Expect.fail "I failed!")
@@ -181,9 +181,12 @@ mapToExpectationTests =
       [ test "it passes" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
-            Elmer.mapToExpectation (\componentState -> Expect.equal Nothing componentState.targetNode) initialState
+            Elmer.mapToExpectation (
+              \componentState ->
+                Expect.equal Nothing componentState.targetNode
+            ) initialState
               |> Expect.equal (Expect.pass)
       ]
     ]
