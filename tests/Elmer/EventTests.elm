@@ -1,7 +1,9 @@
 module Elmer.EventTests exposing (all)
 
 import Test exposing (..)
-import Elmer.TestApp as App
+import Elmer.TestApps.ClickTestApp as ClickApp
+import Elmer.TestApps.InputTestApp as InputApp
+import Elmer.TestApps.TaskTestApp as TaskApp
 import Expect
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
@@ -17,7 +19,7 @@ all =
     , commandEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentStateResult App.Model App.Msg -> ComponentStateResult App.Model App.Msg) -> String -> Test
+standardEventHandlerBehavior : (ComponentStateResult ClickApp.Model ClickApp.Msg -> ComponentStateResult ClickApp.Model ClickApp.Msg) -> String -> Test
 standardEventHandlerBehavior eventHandler eventName =
   describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
@@ -33,7 +35,7 @@ standardEventHandlerBehavior eventHandler eventName =
     [ test "it returns an upstream failure" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
         in
           eventHandler initialState
            |> Expect.equal (UpstreamFailure "No target node specified")
@@ -42,9 +44,9 @@ standardEventHandlerBehavior eventHandler eventName =
     [ test "it returns an event not found error" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
         in
-          Elmer.find ".awesome" initialState
+          Elmer.find ".noEvents" initialState
             |> eventHandler
             |> Expect.equal (UpstreamFailure ("No " ++ eventName ++ " event found"))
     ]
@@ -57,7 +59,7 @@ clickTests =
     [ test "it updates the model accordingly" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
           updatedStateResult = Elmer.find ".button" initialState
                                 |> Event.click
         in
@@ -76,7 +78,7 @@ inputTests =
     [ test "it updates the model accordingly" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
           updatedStateResult = Elmer.find ".nameField" initialState
                                 |> Event.input "Mr. Fun Stuff"
         in
@@ -98,7 +100,7 @@ customEventTests =
       [ test "it updates the model accordingly" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
             updatedStateResult = Elmer.find ".nameField" initialState
                                   |> Event.on "keyup" keyUpEventJson
           in
@@ -107,7 +109,6 @@ customEventTests =
                 Expect.equal updatedState.model.lastLetter 65
               UpstreamFailure msg ->
                 Expect.fail msg
-
       ]
     ]
 
@@ -126,22 +127,13 @@ commandEventTests =
     [ test "it executes the command and updates the component state" <|
         \() ->
           let
-            model = App.defaultModel
-            initialState = Elmer.componentState model App.view App.update
-            result = Event.sendCommand (Task.attempt taskProcessor model.numberTaskGenerator) initialState
+            initialState = Elmer.componentState TaskApp.defaultModel TaskApp.view TaskApp.update
+            result = Event.sendCommand (TaskApp.sendFirstTask "Did it!") initialState
           in
             case result of
               CurrentState updatedState ->
-                Expect.equal updatedState.model.numberFromTask 3
+                Expect.equal updatedState.model.firstTask "Did it!"
               UpstreamFailure msg ->
                 Expect.fail msg
     ]
   ]
-
-taskProcessor : Result String Int -> App.Msg
-taskProcessor result =
-  case result of
-    Ok number ->
-      App.TaskNumber number
-    Err message ->
-      App.HandleNumberTaskError message
