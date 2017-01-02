@@ -1,7 +1,7 @@
 module Elmer.NavigationTests exposing (all)
 
 import Test exposing (..)
-import Elmer.TestApp as App
+import Elmer.TestApps.NavigationTestApp as App
 import Expect
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
@@ -9,6 +9,7 @@ import Elmer.Event as Event
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
 import Elmer.Matchers as Matchers exposing (..)
+import Elmer.Printer exposing (..)
 import Navigation
 
 all : Test
@@ -20,15 +21,10 @@ all =
     , fakeNavigateCommandTests
     ]
 
-testAppModel : App.Model
-testAppModel =
-  let
-    defaultModel = App.defaultModel
-  in
-    { defaultModel
-    | navigateToUrl = ElmerNav.fakeNavigateCommand
-    , modifyUrl = ElmerNav.fakeNavigateCommand
-    }
+testUpdate : App.Msg -> App.Model -> (App.Model, Cmd App.Msg)
+testUpdate =
+  App.updateWithDependencies ElmerNav.fakeNavigateCommand
+
 
 expectLocationTests =
   describe "location tests"
@@ -45,10 +41,9 @@ expectLocationTests =
     [ test "it explains the failure" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.componentState App.defaultModel App.view testUpdate
         in
-          Elmer.find "#navigationClick" initialState
-            |> ElmerNav.expectLocation "http://badplace.com"
+          ElmerNav.expectLocation "http://badplace.com" initialState
             |> Expect.equal
               (Expect.fail "Expected to be at location:\n\n\thttp://badplace.com\n\nbut no location has been set")
     ]
@@ -57,9 +52,9 @@ expectLocationTests =
       [ test "it passes" <|
           \() ->
             let
-              initialState = Elmer.componentState testAppModel App.view App.update
+              initialState = Elmer.componentState App.defaultModel App.view testUpdate
             in
-              Elmer.find "#navigationClick" initialState
+              Elmer.find "#navigateButton" initialState
                 |> Event.click
                 |> ElmerNav.expectLocation "http://fun.com/fun.html"
                 |> Expect.equal Expect.pass
@@ -69,34 +64,21 @@ expectLocationTests =
         [ test "it explains the failure" <|
           \() ->
             let
-              initialState = Elmer.componentState testAppModel App.view App.update
+              initialState = Elmer.componentState App.defaultModel App.view testUpdate
             in
-              Elmer.find "#navigationClick" initialState
+              Elmer.find "#navigateButton" initialState
                 |> Event.click
                 |> ElmerNav.expectLocation "http://badplace.com"
                 |> Expect.equal
-                  (Expect.fail "Expected to be at location:\n\n\thttp://badplace.com\n\nbut location is:\n\n\thttp://fun.com/fun.html")
+                  (Expect.fail (format [message "Expected to be at location:" "http://badplace.com", message "but location is:" "http://fun.com/fun.html"]))
         ]
-      ]
-    ]
-  , describe "when a modifyUrl command is sent"
-    [ describe "when the correct url is expected"
-      [ test "it passes" <|
-        \() ->
-          let
-            initialState = Elmer.componentState testAppModel App.view App.update
-          in
-            Elmer.find "#modifyNavigationClick" initialState
-              |> Event.click
-              |> ElmerNav.expectLocation "http://fun.com/evenMoreFun.html"
-              |> Expect.equal Expect.pass
       ]
     ]
   ]
 
 setLocationTests =
   let
-    fullState = navigationComponentState testAppModel App.view App.update App.parseLocation
+    fullState = navigationComponentState App.defaultModel App.view testUpdate App.parseLocation
   in
   describe "set location"
   [ describe "when there is an upstream failure"
@@ -124,19 +106,14 @@ setLocationTests =
   , describe "when locationParser is set"
     [ test "it updates the component state with the new location" <|
       \() ->
-        let
-          initialState = Elmer.map (\s -> CurrentState { s | locationParser = Just App.parseLocationFail }) fullState
-        in
-          ElmerNav.setLocation "http://fun.com/fun.html" initialState
+          ElmerNav.setLocation "http://fun.com/fun.html" fullState
             |> Elmer.find ".error"
-            |> Elmer.expectNode (Matchers.hasText "Route not found: Unparseable url!")
-            -- |> Expect.equal Expect.pass
+            |> Elmer.expectNode (Matchers.hasText "Unknown path: /fun.html")
     , test "it updates the component state with another location" <|
       \() ->
         ElmerNav.setLocation "http://fun.com/api/view" fullState
           |> Elmer.find ".error"
-          |> Elmer.expectNodeExists
-          |> Expect.notEqual Expect.pass
+          |> Elmer.expectNode (Matchers.hasText "No error")
     ]
   ]
 
@@ -228,7 +205,7 @@ fakeNavigateCommandTests =
   [ test "it generates a command that sets the location" <|
     \() ->
       let
-        initialState = navigationComponentState App.defaultModel App.view App.update App.parseLocation
+        initialState = navigationComponentState App.defaultModel App.view testUpdate App.parseLocation
         command = ElmerNav.fakeNavigateCommand "http://fun.com/fun.html"
       in
         Event.sendCommand command initialState
