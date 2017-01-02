@@ -58,25 +58,6 @@ var _brian_watkins$elmer$Native_Helpers = function() {
     return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
   }
 
-  var runTask = function(command) {
-    var task = command.value
-
-    if (task._0.ctor == '_Task_andThen') {
-      return _elm_lang$core$Result$Ok(task._0.callback(task._0.task.value).value)
-    }
-
-    var errorCallback = task._0.callback
-    var successCallback = task._0.task.callback
-    var rootTask = task._0.task.task
-
-    if (rootTask.ctor == '_Task_succeed') {
-      return _elm_lang$core$Result$Ok(successCallback(rootTask.value).value)
-    }
-
-    var errorValue = rootTask.value
-    return _elm_lang$core$Result$Ok(errorCallback(errorValue).value)
-  }
-
   var asCommandData = function(command) {
     if (command.type == "leaf") {
       return _brian_watkins$elmer$Elmer_Runtime$LeafCommand(asLeafCommandData(command))
@@ -94,10 +75,9 @@ var _brian_watkins$elmer$Native_Helpers = function() {
   }
 
   var asLeafCommandData = function(command) {
-    return A3(_brian_watkins$elmer$Elmer_Runtime$LeafCommandData,
+    return A2(_brian_watkins$elmer$Elmer_Runtime$LeafCommandData,
       command,
-      command.home,
-      JSON.stringify(command.value)
+      command.home
     );
   }
 
@@ -114,6 +94,10 @@ var _brian_watkins$elmer$Native_Helpers = function() {
   var asBatchCommandData = function(command) {
     var commands = _elm_lang$core$Native_List.toArray(command.branches)
     return _elm_lang$core$Native_List.fromArray(commands)
+  }
+
+  var commandValue = function(command) {
+    return command.value
   }
 
   var getHttpRequestBody = function(requestData) {
@@ -142,7 +126,7 @@ var _brian_watkins$elmer$Native_Helpers = function() {
   return {
       asHtmlNode: asHtmlNode,
       asCommandData: asCommandData,
-      runTask: runTask,
+      commandValue: commandValue,
       asHttpRequest: asHttpRequest,
       toCmd: F2(toCmd)
   };

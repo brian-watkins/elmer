@@ -9,19 +9,12 @@ import Elmer.Event as Event
 import Elmer.Types exposing (..)
 import Elmer
 import Expect
-import Json.Encode as Encode
 import Elmer.Printer exposing (..)
 
 
 fakeNavigateCommand : String -> Cmd msg
 fakeNavigateCommand url =
-  Native.Helpers.toCmd "Elmer_Navigation" (navigationCommandData url)
-
-navigationCommandData : String -> Encode.Value
-navigationCommandData url =
-  Encode.object
-    [ ("url", Encode.string url )
-    ]
+  Native.Helpers.toCmd "Elmer_Navigation" url
 
 expectLocation : String -> ComponentStateResult model msg -> Expect.Expectation
 expectLocation expectedURL =

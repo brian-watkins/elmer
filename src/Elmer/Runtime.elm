@@ -6,7 +6,6 @@ module Elmer.Runtime
 
 import Elmer.Types exposing (..)
 import Elmer.Navigation.Runner as ElmerNav
-import Json.Decode as Json
 import Dict exposing (Dict)
 
 type CommandResult model msg
@@ -37,16 +36,15 @@ type alias MapCommandData subMsg msg =
 type alias LeafCommandData msg =
     { command : Cmd msg
     , home : String
-    , json : String
     }
 
 
 commandRunners : List (CommandRunner model subMsg msg)
 commandRunners =
-    [ taskCommandRunner
-    , elmerFailureCommandRunner
+    [ elmerFailureCommandRunner
     , navigationCommandRunner
     , httpCommandRunner
+    , elmerMessageCommandRunner
     ]
 
 
@@ -56,29 +54,31 @@ elmerFailureCommandRunner =
   , run =
       \data _ ->
         let
-          message = Json.decodeString Json.string data.json
-            |> Result.withDefault "Failure!"
+          message = Native.Helpers.commandValue data.command
         in
           CommandError message
+  }
+
+elmerMessageCommandRunner : CommandRunner model subMsg msg
+elmerMessageCommandRunner =
+  { name = "Elmer_Message"
+  , run =
+    \data tagger ->
+      let
+        msg = Native.Helpers.commandValue data.command
+      in
+        CommandSuccess (updateComponentState (tagger msg))
   }
 
 httpCommandRunner : CommandRunner model subMsg msg
 httpCommandRunner =
   { name = "Elmer_Http"
   , run =
-      \data tagger ->
+      \data _ ->
         let
-          requestDataDecoder = Json.decodeString <|
-            Json.map3 HttpRequestData
-              (Json.field "method" Json.string)
-              (Json.field "url" Json.string)
-              (Json.field "body" (Json.maybe Json.string))
+          requestData = Native.Helpers.commandValue data.command
         in
-          case requestDataDecoder data.json of
-            Ok requestData ->
-              CommandSuccess (updateComponentStateWithRequest requestData)
-            Err message ->
-              CommandError message
+          CommandSuccess (updateComponentStateWithRequest requestData)
   }
 
 updateComponentStateWithRequest : HttpRequestData -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
@@ -88,36 +88,15 @@ updateComponentStateWithRequest requestData componentState =
   in
     ( updatedComponentState, Cmd.none )
 
-taskCommandRunner : CommandRunner model subMsg msg
-taskCommandRunner =
-    { name = "Task"
-    , run =
-        \data tagger ->
-          let
-            taskResult = Native.Helpers.runTask data.command
-          in
-            case taskResult of
-              Ok msg ->
-                CommandSuccess (updateComponentState (tagger msg))
-              Err errorMessage ->
-                CommandError errorMessage
-    }
-
-
 navigationCommandRunner : CommandRunner model subMsg msg
 navigationCommandRunner =
   { name = "Elmer_Navigation"
   , run =
-      \data tagger ->
+      \data _ ->
         let
-          navigationDataDecoder = Json.decodeString <|
-            Json.field "url" Json.string
+          url = Native.Helpers.commandValue data.command
         in
-          case navigationDataDecoder data.json of
-            Ok url ->
-              CommandSuccess (updateComponentStateWithLocation url)
-            Err message ->
-              CommandError message
+          CommandSuccess (updateComponentStateWithLocation url)
   }
 
 updateComponentStateWithLocation : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
@@ -211,9 +190,8 @@ runCommand tagger command =
     case Native.Helpers.asCommandData command of
         LeafCommand data ->
             let
-                runner =
-                    commandRunnerForData data.home
-                commandResult = runner.run data tagger
+              runner = commandRunnerForData data.home
+              commandResult = runner.run data tagger
             in
                 [ commandResult ]
 

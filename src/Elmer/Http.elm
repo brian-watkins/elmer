@@ -11,8 +11,6 @@ module Elmer.Http exposing
 
 import Http
 import Dict
-import Task exposing (Task)
-import Json.Encode as Encode
 import Elmer
 import Elmer.Types exposing (..)
 import Elmer.Command as Command
@@ -72,22 +70,14 @@ collapseToCommand responseResult =
 toHttpCommand : HttpRequest a -> Cmd msg -> Cmd msg
 toHttpCommand request command =
   let
-    httpCommand = Native.Helpers.toCmd "Elmer_Http" (requestAsJson request)
+    requestData =
+      { method = request.method
+      , url = request.url
+      , body = request.body
+      }
+    httpCommand = Native.Helpers.toCmd "Elmer_Http" requestData
   in
     Cmd.batch [ httpCommand, command ]
-
-requestAsJson : HttpRequest a -> Encode.Value
-requestAsJson request =
-  Encode.object
-    [ ("method", Encode.string request.method )
-    , ("url", Encode.string request.url)
-    , ("body", nullOrString request.body)
-    ]
-
-nullOrString : Maybe String -> Encode.Value
-nullOrString maybeString =
-  Maybe.map (\s -> Encode.string s) maybeString
-    |> Maybe.withDefault Encode.null
 
 
 expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
@@ -170,7 +160,7 @@ processResponse httpRequest tagger responseResult =
     |> Result.andThen handleResponseStatus
     |> Result.andThen (handleResponse httpRequest)
     |> Result.mapError (mapResponseError httpRequest tagger)
-    |> Result.map (\d -> Task.attempt tagger (Task.succeed d))
+    |> Result.map (\d -> Command.messageCommand (tagger (Ok d)))
 
 mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
 mapResponseError httpRequest tagger error =
@@ -184,7 +174,7 @@ mapResponseError httpRequest tagger error =
         ]
       )
     _ ->
-      Task.attempt tagger (Task.fail error)
+      Command.messageCommand (tagger (Err error))
 
 
 handleResponseError : HttpResponseResult -> Result Http.Error (Http.Response String)

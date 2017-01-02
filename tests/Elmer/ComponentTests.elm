@@ -6,6 +6,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.Event as Event
 import Elmer.Matchers as Matchers
+import Elmer.Command as Command
 
 import Elmer.TestApps.ComponentTestApp as App exposing (..)
 
@@ -13,6 +14,11 @@ all =
   describe "Component tests"
   [ mapCommand
   ]
+
+
+subTask : Cmd App.MsgB
+subTask =
+  Command.messageCommand (HaveFun "bowling")
 
 
 mapCommand =

@@ -3,7 +3,6 @@ module Elmer.Navigation.Runner
         ( handleLocationUpdate
         )
 
-import Elmer exposing (..)
 import Elmer.Navigation.Location as Location
 import Navigation
 

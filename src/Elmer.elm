@@ -13,7 +13,6 @@ import Html exposing (Html)
 import Native.Helpers
 
 import Expect
-import Task
 import Elmer.Node as Node
 import Elmer.Types exposing (..)
 

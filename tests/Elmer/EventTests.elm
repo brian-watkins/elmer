@@ -3,12 +3,12 @@ module Elmer.EventTests exposing (all)
 import Test exposing (..)
 import Elmer.TestApps.ClickTestApp as ClickApp
 import Elmer.TestApps.InputTestApp as InputApp
-import Elmer.TestApps.TaskTestApp as TaskApp
+import Elmer.TestApps.MessageTestApp as MessageApp
 import Expect
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
 import Elmer.Event as Event
-import Task
+import Elmer.Command as Command
 
 all : Test
 all =
@@ -127,12 +127,12 @@ commandEventTests =
     [ test "it executes the command and updates the component state" <|
         \() ->
           let
-            initialState = Elmer.componentState TaskApp.defaultModel TaskApp.view TaskApp.update
-            result = Event.sendCommand (TaskApp.sendFirstTask "Did it!") initialState
+            initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
+            result = Event.sendCommand (Command.messageCommand (MessageApp.RenderFirstMessage "Did it!")) initialState
           in
             case result of
               CurrentState updatedState ->
-                Expect.equal updatedState.model.firstTask "Did it!"
+                Expect.equal updatedState.model.firstMessage "Did it!"
               UpstreamFailure msg ->
                 Expect.fail msg
     ]

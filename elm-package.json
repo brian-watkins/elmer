@@ -15,7 +15,8 @@
         "Elmer.Navigation",
         "Elmer.Http",
         "Elmer.Http.Stub",
-        "Elmer.Http.Matchers"
+        "Elmer.Http.Matchers",
+        "Elmer.Command"
     ],
     "native-modules": true,
     "dependencies": {

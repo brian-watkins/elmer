@@ -4,7 +4,6 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
 import Navigation
-import Task
 import Elmer.Navigation as ElmerNav
 
 type MsgA
@@ -33,10 +32,6 @@ defaultModel =
   { fun = "Reading"
   , navigateToUrl = ElmerNav.fakeNavigateCommand
   }
-
-subTask : Cmd MsgB
-subTask =
-  Task.perform HaveFun (Task.succeed "bowling")
 
 update : MsgA -> Model -> (Model, Cmd MsgA)
 update message model =
