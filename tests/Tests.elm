@@ -5,7 +5,7 @@ import Test exposing (..)
 import Elmer.ElmerTests as ElmerTests
 import Elmer.MatcherTests as MatcherTests
 import Elmer.EventTests as EventTests
-import Elmer.AppTests as AppTests
+import Elmer.DemoAppTests as DemoAppTests
 import Elmer.NavigationTests as NavigationTests
 import Elmer.ComponentTests as ComponentTests
 import Elmer.HttpTests as HttpTests
@@ -22,7 +22,7 @@ all =
     [ ElmerTests.all
     , MatcherTests.all
     , EventTests.all
-    , AppTests.all
+    , DemoAppTests.all
     , NavigationTests.all
     , ComponentTests.all
     , HttpTests.all

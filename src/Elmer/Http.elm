@@ -1,6 +1,7 @@
 module Elmer.Http exposing
   ( HttpResponseStub
   , HttpResponseResult(..)
+  , HttpRequestFunction
   , HttpRequest
   , asHttpRequest
   , fakeHttpSend
@@ -18,6 +19,9 @@ import Elmer.Command as Command
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
+
+type alias HttpRequestFunction a b =
+  (Result Http.Error a -> b) -> Http.Request a -> Cmd b
 
 type alias HttpRequest a =
   { method: String
@@ -42,7 +46,8 @@ asHttpRequest request =
   Native.Helpers.asHttpRequest request
 
 
-fakeHttpSend : HttpResponseStub -> (Result Http.Error a -> msg) -> Http.Request a -> Cmd msg
+-- fakeHttpSend : HttpResponseStub -> (Result Http.Error a -> msg) -> Http.Request a -> Cmd msg
+fakeHttpSend : HttpResponseStub -> HttpRequestFunction a msg
 fakeHttpSend responseStub tagger request =
   let
     httpRequest = asHttpRequest request
