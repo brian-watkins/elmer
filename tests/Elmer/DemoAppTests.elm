@@ -2,6 +2,7 @@ module Elmer.DemoAppTests exposing (all)
 
 import Test exposing (..)
 import Elmer.TestApps.DemoTestApp as App
+import Elmer.TestApps.TimeTestApp as TimeApp
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
@@ -10,11 +11,17 @@ import Elmer.Matchers as Matchers exposing ((<&&>))
 import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
+import Elmer.Command as Command
+
+import Time exposing (Time)
+import Task exposing (Task)
 
 all : Test
 all =
   describe "App Flow tests"
-    [ appFlowTests ]
+    [ appFlowTests
+    , timeAppTests
+    ]
 
 testUpdate : Elmer.Http.HttpResponseStub -> (App.Msg -> App.Model -> (App.Model, Cmd App.Msg))
 testUpdate stub =
@@ -94,3 +101,22 @@ appFlowTests =
                 )
         ]
     ]
+
+fakeTimeTask : Time -> (Time -> TimeApp.Msg) -> Task Never Time -> Cmd TimeApp.Msg
+fakeTimeTask time tagger task =
+  Command.messageCommand (tagger time)
+
+timeAppTests : Test
+timeAppTests =
+  describe "time demo app"
+  [ test "it displays the time" <|
+    \() ->
+      let
+        testUpdate = TimeApp.updateWithDependencies (fakeTimeTask (3 * Time.second))
+        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view testUpdate
+      in
+        Elmer.find ".button" initialState
+          |> Event.click
+          |> Elmer.find "#currentTime"
+          |> Elmer.expectNode (Matchers.hasText "Time: 3000")
+  ]

@@ -44,7 +44,6 @@ asHttpRequest request =
   Native.Helpers.asHttpRequest request
 
 
--- fakeHttpSend : HttpResponseStub -> (Result Http.Error a -> msg) -> Http.Request a -> Cmd msg
 fakeHttpSend : HttpResponseStub -> HttpRequestFunction a msg
 fakeHttpSend responseStub tagger request =
   let
