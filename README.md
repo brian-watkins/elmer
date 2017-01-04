@@ -35,10 +35,10 @@ formats:
 Once you find a node, that node is _targeted_ as the subject of subsequent actions, that is, until
 you find another node. The following functions define actions on nodes:
 
-+ Click events: Elmer.Event.click &lt;componentStateResult&gt;
-+ Input events: Elmer.Event.input &lt;text&gt; &lt;componentStateResult&gt;
-+ Custom events: Elmer.Event.on &lt;eventName&gt; &lt;eventJson&gt; &lt;componentStateResult&gt;
-+ Sending a command: Elmer.Event.sendCommand &lt;Cmd&gt; &lt;componentStateResult&gt;
++ Click events: `Elmer.Event.click <componentStateResult>`
++ Input events: `Elmer.Event.input <text> <componentStateResult>`
++ Custom events: `Elmer.Event.on <eventName> <eventJson> <componentStateResult>`
++ Sending a command: `Elmer.Event.sendCommand <Cmd> <componentStateResult>`
 + More to come ...
 
 #### Node Matchers
@@ -47,10 +47,10 @@ You can make expectations about the targeted node using the `expectNode` functio
 function that maps an HtmlNode to an Expectation. The following matchers can be used to make
 expectations about an HtmlNode:
 
-+ hasId &lt;string&gt; &lt;HtmlNode&gt;
-+ hasClass &lt;string&gt; &lt;HtmlNode&gt;
-+ hasText &lt;string&gt; &lt;HtmlNode&gt;
-+ hasProperty (&lt;string&gt;, &lt;string&gt;) &lt;HtmlNode&gt;
++ `hasId <string> <HtmlNode>`
++ `hasClass <string> <HtmlNode>`
++ `hasText <string> <HtmlNode>`
++ `hasProperty (<string>, <string>) <HtmlNode>`
 + More to come ...
 
 You can also expect that the targeted node exists using the `expectNodeExists` function. You can combine
