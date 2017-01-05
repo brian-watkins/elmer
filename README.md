@@ -165,7 +165,105 @@ to specify the effect of this command in our tests, we will inject into our comp
 with the same signature: `fakeF : a -> b -> Cmd msg`. This function will generate a special command
 that specifies the intended effect, and Elmer will process the result as if the original command were actually performed.
 
-Here's a more concrete example. Let's say that we have a simple app that displays the time:
+For a more concrete example, let's test drive a simple app that displays the time.
+
+We'd like to be able to click a button and then see the current time display. We'll begin with a test that describes
+the behavior we want:
+
+```
+timeAppTests : Test
+timeAppTests =
+  describe "time demo app"
+  [ test "it displays the time" <|
+    \() ->
+      let
+        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
+      in
+        Elmer.find ".button" initialState
+          |> Event.click
+          |> Elmer.find "#currentTime"
+          |> Elmer.expectNode (Matchers.hasText "Time: ???")
+  ]
+```
+
+To make this pass, we can create the following app:
+
+```
+type alias Model =
+  { }
+
+type Msg
+  = Msg
+
+defaultModel : Model
+defaultModel =
+  { }
+
+view : Model -> Html Msg
+view model =
+  Html.div []
+    [ Html.div [ id "currentTime" ] [ Html.text ("Time: ???") ]
+    , Html.div [ class "button" ] [ Html.text "Click me for the time!" ]
+    ]
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  (model, Cmd.none)
+```
+
+Of course, this doesn't really do what we want yet. When the button is clicked,
+we'll need our app to actually perform a task, provided by the `Time` module,
+that fetches the current time and wraps it with a message, like so:
+
+```
+Task.perform NewTime Time.now
+```
+
+We want to improve our test so that it drives our this implementation. To do so, we'll need to provide a fake version of this function, since Elmer doesn't actually know how to process a task that will return the time. We can use `Elmer.Command.messageCommand`, which lets us create a command whose effect is the message we provide, to specify exactly what time we want for
+our test. First, we create a fake version of `Task.perform` in our test module:
+
+```
+fakeTimeTask : Time -> (Time -> Msg) -> Task Never Time -> Cmd Msg
+fakeTimeTask time tagger task =
+  Command.messageCommand (tagger time)
+```
+
+Then we restructure our app so that we can inject this function into the update method:
+
+```
+update : Msg -> Model -> ( Model, Cmd Msg )
+update =
+  updateWithDependencies Task.perform
+
+type alias SendTimeTask =
+  (Time -> Msg) -> Task Never Time -> Cmd Msg
+
+updateWithDependencies : SendTimeTask -> Msg -> Model -> ( Model, Cmd Msg )
+updateWithDependencies sendTimeTask msg model =
+  (model, Cmd.none)
+```
+
+Now we can update our test to expect that a specific time is displayed:
+
+```
+timeAppTests : Test
+timeAppTests =
+  describe "time demo app"
+  [ test "it displays the time" <|
+    \() ->
+      let
+        testUpdate = TimeApp.updateWithDependencies (fakeTimeTask (3 * Time.second))
+        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view testUpdate
+      in
+        Elmer.find ".button" initialState
+          |> Event.click
+          |> Elmer.find "#currentTime"
+          |> Elmer.expectNode (Matchers.hasText "Time: 3000")
+  ]
+```
+
+Our test should compile but still fail. To make it pass, we'll need to update the rest of our app
+so that it requests the current time, stores it in the model, and displays it in the view.
 
 ```
 type alias Model =
@@ -186,28 +284,6 @@ view model =
     , Html.div [ class "button", onClick GetTime ] [ Html.text "Click me for the time!" ]
     ]
 
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
-  case msg of
-    GetTime ->
-      ( model, Task.perform NewTime Time.now )
-    NewTime time ->
-      ( { model | time = time }, Cmd.none )
-```
-
-Elmer doesn't actually know how to process a task that will return the time. But, by injecting
-a function that uses `Elmer.Command.messageCommand`, which lets us create a command whose effect is the message we provide, we can specify exactly what time we want for
-our tests. First, we create a fake version of `Task.perform` in our test module:
-
-```
-fakeTimeTask : Time -> (Time -> Msg) -> Task Never Time -> Cmd Msg
-fakeTimeTask time tagger task =
-  Command.messageCommand (tagger time)
-```
-
-Then we restructure our app so that we can inject this function into the update method:
-
-```
 update : Msg -> Model -> ( Model, Cmd Msg )
 update =
   updateWithDependencies Task.perform
@@ -222,44 +298,81 @@ updateWithDependencies sendTimeTask msg model =
       ( model, sendTimeTask NewTime Time.now )
     NewTime time ->
       ( { model | time = time }, Cmd.none )
-```
-
-Now, we can write a test that describes the behavior we expect, given that the time task
-will return a specific time when processed by Elmer:
 
 ```
-timeAppTests : Test
-timeAppTests =
-  describe "time demo app"
-  [ test "it displays the time" <|
-    \() ->
-      let
-        testUpdate = TimeApp.updateWithDependencies (fakeTimeTask (3 * Time.second))
-        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view testUpdate
-      in
-        Elmer.find ".button" initialState
-          |> Event.click
-          |> Elmer.find "#currentTime"
-          |> Elmer.expectNode (Matchers.hasText "Time: 3000")
-  ]
-```
 
-Using this strategy, we can manage the effects that enter our system while it is under test
-and thereby describe the behavior of that system as it processes commands.
+And now our test should pass.
 
-Notice that we were able to fake out the time task in our test while still avoiding knowledge of the particular messages used to tag the time values. This is important if we want to be able to write tests that describe the behavior of our system while still allowing us the flexibility to refactor our code.  
+Notice that we were able to fake out the time task in our test while still avoiding knowledge of the particular messages used to tag the time values as well as other implementation details.
+In this way, Elmer allows us to write tests that describe the behavior of our
+system while still allowing us the flexibility to refactor our code.  
 
 For the full example, see `tests/Elmer/TestApps/TimeTestApp.elm` and the associated tests in `tests/Elmer/DemoAppTests.elm`.
+
+Note that while Elmer does not provide support for process any specific commands, it does support
+the general operations on commands in the core `Platform.Cmd`, namely, `batch` and `map`. So, you
+can use these functions as expected in your components and Elmer should do the right thing.
 
 Elmer provides additional support for HTTP request commands and navigation commands.
 
 #### Elmer.Http
 
-More to come ...
+Modern web apps often need to make HTTP requests to some backend server. Elmer makes it easy to stub HTTP
+responses and write expectations about the requests made. The `Elmer.Http.Stub` module contains methods
+for constructing an `HttpResponseStub` record that describes how to respond to some request. For example:
+
+```
+let
+  stubbedResponse = HttpStub.get "http://something.com/some/thing"
+    |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
+in
+```
+
+In this case, a GET request to the given route will result in a response with the given body.
+See `Elmer.Http.Stub` for the full list of builder functions. (With more on the way ...)
+
+Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.fakeHttpSend`
+method to create a function that can be injected into a component (following the strategy
+described above) as a fake for the `send` function in [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/).
+
+Elmer also allows you to write tests that expect some HTTP request to have been made, in a
+manner similar to how you can write expectations about some node in an HTML document. For
+example, this test inputs search terms into a field, clicks a search button, and then expects
+that a request is made to a specific route with the search terms in the query string:
+
+```
+Elmer.find "input[name='query']" initialComponentState
+      |> Elmer.Event.input "Fun Stuff"
+      |> Elmer.find "#search-button"
+      |> Elmer.Event.click
+      |> Elmer.Http.expectGET "http://fake.com/search" (
+            Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
+         )
+```
+
+See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 
 #### Elmer.Navigation
 
-More to come ...
+Elmer provides support for functions in the [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/2.0.1/)
+module that allow you to handle navigation for single-page web applications.
+
+To simulate location updates, you must construct a `ComponentStateResult` using
+`Elmer.navigationComponentState`. This function is just like `Elmer.componentState`
+except that it also takes the location parser function (`Navigation.Location -> msg`)
+that you provide to `Navigation.program` when you initialize your app. This provides
+Elmer with the information it needs to process location updates as they occur in a test.
+
+You can send a command to update the location manually with the `Elmer.Navigation.setLocation` function.
+If your component produces commands to update the location using `Navigation.newUrl` or
+`Navigation.modifyUrl`, your tests should inject
+`Elmer.Navigation.fakeNavigateCommand` as a fake replacement so that Elmer will be able to
+process the command and update the location.
+
+You can write an expectation about the current location with `Elmer.Navigation.expectLocation`.
+
+See `tests/Elmer/TestApps/NavigationTestApp.elm` and `tests/Elmer/NavigationTests.elm` for
+examples.
 
 #### Sending Arbitrary Commands
 
