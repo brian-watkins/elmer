@@ -2,12 +2,25 @@
 
 Describe the behavior of Elm HTML applications.
 
-### Deployment
+### Install
 
-Right now, the only way to deploy Elmer is by hand. First, go get the [elm-ops-tooling](https://github.com/NoRedInk/elm-ops-tooling). Next, you'll want to set up your project with [elm-test](https://github.com/elm-community/elm-test). Create a test and run it once to make sure that elm-test has downloaded its dependencies. Then, add Elmer like so:
+Elmer requires Elm 0.18.
+
+Right now, Elmer can only be installed manually. First, install [elm-ops-tooling](https://github.com/NoRedInk/elm-ops-tooling); you'll use this to install Elmer. Next, you'll want to set up your project with [elm-test](https://github.com/elm-community/elm-test). Since you'll be deploying Elmer manually, you'll have to make sure its dependencies are available in your tests. So, check the `dependencies` section of `elm-package.json` in your tests directory to be sure that it contains the following:
 
 ```
-$ python ./elm-ops-tooling/elm_self_publish.py ./elmer ./my-project/test/
+  "elm-lang/html": "2.0.0 <= v < 3.0.0",
+  "elm-lang/http": "1.0.0 <= v < 2.0.0",
+  "elm-lang/navigation": "2.0.1 <= v < 3.0.0"
+```
+
+You'll probably need these in any case if you're building an elm html application that does much at all.
+
+Next, create a test and run it once to make sure that elm-test has downloaded its dependencies. Clone the Elmer repo into some local directory. Finally, run
+the following command to install Elmer:
+
+```
+$ python ./elm-ops-tooling/elm_self_publish.py <path to elmer> <path to your project>/tests
 ```
 
 ### Usage
