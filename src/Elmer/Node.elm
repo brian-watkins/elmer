@@ -10,7 +10,6 @@ import Elmer.Types exposing (..)
 import Json.Decode as Json
 import Dict exposing (Dict)
 import Regex exposing (Regex)
-import Maybe.Extra as MaybeEx
 import Html exposing (Html)
 
 
@@ -127,7 +126,15 @@ tagSelector selector =
 
 submatch : Int -> Regex.Match -> Maybe String
 submatch index match =
-    notEmpty << MaybeEx.join << List.head << List.drop index <| match.submatches
+    notEmpty << flatten << List.head << List.drop index <| match.submatches
+
+flatten : Maybe ( Maybe a ) -> Maybe a
+flatten outerMaybe =
+  case outerMaybe of
+    Just innerMaybe ->
+      innerMaybe
+    Nothing ->
+      Nothing
 
 
 notEmpty : Maybe String -> Maybe String
