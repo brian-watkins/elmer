@@ -7,6 +7,7 @@ module Elmer
         , expectNodeExists
         , map
         , mapToExpectation
+        , (<&&>)
         )
 
 import Html exposing (Html)
@@ -48,6 +49,18 @@ navigationComponentState model view update parser =
         , httpRequests = []
         }
 
+(<&&>) : Matcher a -> Matcher a -> Matcher a
+(<&&>) leftFunction rightFunction =
+  (\node ->
+    let
+      leftResult = leftFunction node
+      rightResult = rightFunction node
+    in
+      if leftResult == Expect.pass then
+        rightResult
+      else
+        leftResult
+  )
 
 map : (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
 map mapper componentStateResult =

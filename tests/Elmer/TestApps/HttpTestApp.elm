@@ -51,7 +51,15 @@ update fakeHttpSend msg model =
 
 fetchDataRequest : Model -> Http.Request String
 fetchDataRequest model =
-  Http.get ("http://fun.com/fun.html" ++ model.query) webServiceDecoder
+  Http.request
+    { method = "GET"
+    , headers = [ Http.header "x-fun" "fun", Http.header "x-awesome" "awesome" ]
+    , url = ("http://fun.com/fun.html" ++ model.query)
+    , body = Http.emptyBody
+    , expect = Http.expectJson webServiceDecoder
+    , timeout = Nothing
+    , withCredentials = False
+    }
 
 webServiceDecoder : Json.Decoder String
 webServiceDecoder =

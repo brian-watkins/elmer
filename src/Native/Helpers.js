@@ -109,12 +109,30 @@ var _brian_watkins$elmer$Native_Helpers = function() {
     return _elm_lang$core$Maybe$Nothing
   }
 
+  var asHttpHeader = function(headerData) {
+    return A2(_brian_watkins$elmer$Elmer_Types$HttpHeader,
+      headerData._0,
+      headerData._1)
+  }
+
+  var getHttpHeaders = function(requestData) {
+    var headerData = _elm_lang$core$Native_List.toArray(requestData.headers)
+    var headers = []
+
+    headerData.forEach(function(data) {
+      headers.push(asHttpHeader(data))
+    })
+
+    return _elm_lang$core$Native_List.fromArray(headers)
+  }
+
   var asHttpRequest = function(request) {
     var requestData = request._0
 
-    return A4(_brian_watkins$elmer$Elmer_Http$HttpRequest,
+    return A5(_brian_watkins$elmer$Elmer_Http$HttpRequest,
       requestData.method,
       requestData.url,
+      getHttpHeaders(requestData),
       getHttpRequestBody(requestData),
       requestData.expect.responseToResult)
   }

@@ -3,7 +3,6 @@ module Elmer.Matchers exposing
   , hasClass
   , hasProperty
   , hasId
-  , (<&&>)
   )
 
 import Elmer.Types exposing (..)
@@ -13,20 +12,7 @@ import Expect
 import String
 import Json.Decode as Json
 
-(<&&>) : (HtmlNode msg -> Expect.Expectation) -> (HtmlNode msg -> Expect.Expectation) -> (HtmlNode msg -> Expect.Expectation)
-(<&&>) leftFunction rightFunction =
-  (\node ->
-    let
-      leftResult = leftFunction node
-      rightResult = rightFunction node
-    in
-      if leftResult == Expect.pass then
-        rightResult
-      else
-        leftResult
-  )
-
-hasText : String -> HtmlNode msg -> Expect.Expectation
+hasText : String -> Matcher (HtmlNode msg)
 hasText text node =
     let
         texts =
@@ -40,7 +26,7 @@ hasText text node =
             Expect.fail (format [ message "Expected node to have text" text, message "but it has" (printList texts) ])
 
 
-hasClass : String -> HtmlNode msg -> Expect.Expectation
+hasClass : String -> Matcher (HtmlNode msg)
 hasClass className node =
     let
         classList =
@@ -55,7 +41,7 @@ hasClass className node =
             Expect.fail (format [message "Expected node to have class" className, description "but it has no classes" ])
 
 
-hasProperty : (String, String) -> HtmlNode msg -> Expect.Expectation
+hasProperty : (String, String) -> Matcher (HtmlNode msg)
 hasProperty (name, value) node =
   case Node.property name node of
     Just propertyValue ->
@@ -68,7 +54,7 @@ hasProperty (name, value) node =
       Expect.fail (format [message "Expected node to have property" (name ++ " = " ++ value),
           description "but it has no property with that name" ])
 
-hasId : String -> HtmlNode msg -> Expect.Expectation
+hasId : String -> Matcher (HtmlNode msg)
 hasId expectedId node =
   case Node.id node of
     Just nodeId ->

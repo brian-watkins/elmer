@@ -3,6 +3,7 @@ module Elmer.Http.Matchers exposing
   , hasBody
   , hasBeenRequested
   , hasQueryParam
+  , hasHeader
   )
 
 import Expect
@@ -11,11 +12,11 @@ import Elmer.Types exposing (..)
 import Elmer.Http exposing (..)
 import Elmer.Printer exposing (..)
 
-hasBeenRequested : HttpRequestData -> Expect.Expectation
+hasBeenRequested : Matcher HttpRequestData
 hasBeenRequested request =
   Expect.pass
 
-hasAnyBody : HttpRequestData -> Expect.Expectation
+hasAnyBody : Matcher HttpRequestData
 hasAnyBody request =
   case request.body of
     Just _ ->
@@ -23,7 +24,7 @@ hasAnyBody request =
     Nothing ->
       Expect.fail (formatMessage (description "Expected request to have a body but it does not"))
 
-hasBody : String -> HttpRequestData -> Expect.Expectation
+hasBody : String -> Matcher HttpRequestData
 hasBody expectedBody request =
   case request.body of
     Just body ->
@@ -34,7 +35,7 @@ hasBody expectedBody request =
     Nothing ->
       Expect.fail (format [ message "Expected request to have body" expectedBody, description "but it has no body" ])
 
-hasQueryParam : ( String, String ) -> HttpRequestData -> Expect.Expectation
+hasQueryParam : ( String, String ) -> Matcher HttpRequestData
 hasQueryParam ( key, value ) request =
   let
     query = queryString request
@@ -54,3 +55,19 @@ queryString request =
     |> List.drop 1
     |> List.head
     |> Maybe.withDefault ""
+
+hasHeader : ( String, String ) -> Matcher HttpRequestData
+hasHeader ( key, value ) request =
+  if List.isEmpty request.headers then
+    Expect.fail (format [ message "Expected request to have header" (key ++ " = " ++ value), description "but no headers have been set" ])
+  else
+    let
+      filteredHeaders = List.filter (\h -> h.key == key && h.value == value) request.headers
+    in
+      if List.isEmpty filteredHeaders then
+        let
+          headers = String.join "\n" (List.map (\h -> h.key ++ " = " ++ h.value) request.headers)
+        in
+          Expect.fail (format [ message "Expected request to have header" (key ++ " = " ++ value), message "but it has" headers])
+      else
+        Expect.pass

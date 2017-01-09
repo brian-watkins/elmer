@@ -3,6 +3,7 @@ module Elmer.Types exposing (..)
 import Html exposing (Html)
 import Navigation
 import Json.Decode as Json
+import Expect
 
 type HtmlElement msg
     = Node (HtmlNode msg)
@@ -34,10 +35,16 @@ type alias UpdateFunction model msg =
 type alias LocationParserFunction msg =
     Navigation.Location -> msg
 
+type alias HttpHeader =
+  { key: String
+  , value: String
+  }
+
 type alias HttpRequestData =
   { method: String
   , url: String
   , body: Maybe String
+  , headers: List HttpHeader
   }
 
 type alias HtmlComponentState model msg =
@@ -54,3 +61,6 @@ type alias HtmlComponentState model msg =
 type ComponentStateResult model msg
     = CurrentState (HtmlComponentState model msg)
     | UpstreamFailure String
+
+type alias Matcher a =
+  (a -> Expect.Expectation)

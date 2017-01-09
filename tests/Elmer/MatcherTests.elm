@@ -4,7 +4,7 @@ import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
-import Elmer.Matchers as Matchers exposing ((<&&>))
+import Elmer.Matchers as Matchers
 
 all : Test
 all =

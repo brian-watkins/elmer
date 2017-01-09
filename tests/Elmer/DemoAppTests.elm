@@ -7,7 +7,7 @@ import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
 import Elmer.Event as Event
-import Elmer.Matchers as Matchers exposing ((<&&>))
+import Elmer.Matchers as Matchers
 import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub

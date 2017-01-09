@@ -24,6 +24,7 @@ type alias HttpRequestFunction a b =
 type alias HttpRequest a =
   { method: String
   , url: String
+  , headers: List HttpHeader
   , body: Maybe String
   , responseHandler: (Http.Response String -> Result String a)
   }
@@ -73,6 +74,7 @@ toHttpCommand request command =
       { method = request.method
       , url = request.url
       , body = request.body
+      , headers = request.headers
       }
     httpCommand = Native.Helpers.toCmd "Elmer_Http" requestData
   in

@@ -6,6 +6,7 @@ import Http
 import Dict
 import Elmer
 import Html
+import Elmer exposing ((<&&>))
 import Elmer.Types exposing (..)
 import Elmer.Event as Event
 import Elmer.Matchers as Matchers
@@ -22,9 +23,11 @@ all =
   describe "Http Tests"
   [ httpSendTests
   , requestRecordTests
+  , noBodyRequestTests
   , errorResponseTests
   , expectRequestTests "GET" ElmerHttp.expectGET
   , expectRequestTests "POST" ElmerHttp.expectPOST
+  , expectRequestDataTests
   ]
 
 requestRecordTests : Test
@@ -32,9 +35,9 @@ requestRecordTests =
   let
     request = Http.request
       { method = "GET"
-      , headers = [ Http.header "x-fun" "fun" ]
+      , headers = [ Http.header "x-fun" "fun", Http.header "x-awesome" "awesome" ]
       , url = "http://myapp.com/fun.html"
-      , body = Http.emptyBody
+      , body = Http.stringBody "application/json" "{\"name\":\"cool person\"}"
       , expect = Http.expectString
       , timeout = Nothing
       , withCredentials = False
@@ -48,8 +51,37 @@ requestRecordTests =
     , test "it has the url" <|
       \() ->
         Expect.equal httpRequest.url "http://myapp.com/fun.html"
+    , test "it has the body" <|
+      \() ->
+        Expect.equal httpRequest.body (Just "{\"name\":\"cool person\"}")
+    , test "it has the headers" <|
+      \() ->
+        let
+          funHeader = { key = "x-fun", value = "fun" }
+          awesomeHeader = { key = "x-awesome", value = "awesome" }
+        in
+          Expect.equal httpRequest.headers [funHeader, awesomeHeader]
     ]
 
+noBodyRequestTests : Test
+noBodyRequestTests =
+  let
+    request = Http.request
+      { method = "GET"
+      , headers = [ Http.header "x-fun" "fun", Http.header "x-awesome" "awesome" ]
+      , url = "http://myapp.com/fun.html"
+      , body = Http.emptyBody
+      , expect = Http.expectString
+      , timeout = Nothing
+      , withCredentials = False
+      }
+    httpRequest = ElmerHttp.asHttpRequest request
+  in
+    describe "No Body RequestRecord"
+    [ test "it has Nothing for the body" <|
+      \() ->
+        Expect.equal httpRequest.body Nothing
+    ]
 
 httpSendTests : Test
 httpSendTests =
@@ -212,6 +244,7 @@ testRequest method url =
   { method = method
   , url = url
   , body = Nothing
+  , headers = []
   }
 
 expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
@@ -297,4 +330,23 @@ expectRequestTests method func =
         ]
       ]
     ]
+  ]
+
+expectRequestDataTests : Test
+expectRequestDataTests =
+  describe "Request Data Tests"
+  [ test "it finds the headers" <|
+    \() ->
+      let
+        stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+          |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
+        fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
+        initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+      in
+        Elmer.find "#request-data-click" initialState
+          |> Event.click
+          |> ElmerHttp.expectGET "http://fun.com/fun.html" (
+            hasHeader ("x-fun", "fun") <&&>
+            hasHeader ("x-awesome", "awesome")
+          )
   ]

@@ -13,6 +13,7 @@ all =
   , hasBodyTests
   , hasBeenRequestedTests
   , hasQueryParamTests
+  , hasHeaderTests
   ]
 
 requestWithBody : String -> HttpRequestData
@@ -20,6 +21,7 @@ requestWithBody body =
   { method = "POST"
   , url = "http://fun.com/fun"
   , body = Just body
+  , headers = []
   }
 
 requestWithNoBody : HttpRequestData
@@ -27,6 +29,7 @@ requestWithNoBody =
   { method = "POST"
   , url = "http://fun.com/fun"
   , body = Nothing
+  , headers = []
   }
 
 hasAnyBodyTests : Test
@@ -87,6 +90,7 @@ getWithQuery maybeQuery =
   { method = "GET"
   , url = "http://fun.com/fun" ++ (Maybe.withDefault "" maybeQuery)
   , body = Nothing
+  , headers = []
   }
 
 hasQueryParamTests : Test
@@ -115,5 +119,49 @@ hasQueryParamTests =
           Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery (Just "?name=fun%20person"))
             |> Expect.equal Expect.pass
       ]
+    ]
+  ]
+
+getWithHeader : Maybe HttpHeader -> HttpRequestData
+getWithHeader header =
+  let
+    headers = case header of
+      Just header ->
+        [ header ]
+      Nothing ->
+        []
+  in
+  { method = "GET"
+  , url = "http://fun.com/fun.html"
+  , body = Nothing
+  , headers = headers
+  }
+
+hasHeaderTests : Test
+hasHeaderTests =
+  describe "hasHeader"
+  [ describe "when there are no headers"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader Nothing)
+          |> Expect.equal (Expect.fail (format [ message "Expected request to have header" "my-header = my-header-value", description "but no headers have been set" ]))
+    ]
+  , describe "when there is no header with the key"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { key = "some-header", value = "some-header-value" }))
+          |> Expect.equal (Expect.fail (format [ message "Expected request to have header" "my-header = my-header-value", message "but it has" "some-header = some-header-value" ]))
+    ]
+  , describe "where there is a header with the key but a different value"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { key = "my-header", value = "some-header-value" }))
+          |> Expect.equal (Expect.fail (format [ message "Expected request to have header" "my-header = my-header-value", message "but it has" "my-header = some-header-value" ]))
+    ]
+  , describe "when a header key and value matches"
+    [ test "it passes" <|
+      \() ->
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { key = "my-header", value = "my-header-value" }))
+          |> Expect.equal Expect.pass
     ]
   ]
