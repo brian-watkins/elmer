@@ -33,6 +33,7 @@ type alias HttpResponseStub =
   { url: String
   , method: String
   , response: HttpResponseResult
+  , deferResponse: Bool
   }
 
 type HttpResponseResult
@@ -44,7 +45,6 @@ asHttpRequest : Http.Request a -> HttpRequest a
 asHttpRequest request =
   Native.Helpers.asHttpRequest request
 
-
 fakeHttpSend : HttpResponseStub -> HttpRequestFunction a msg
 fakeHttpSend responseStub tagger request =
   let
@@ -55,8 +55,7 @@ fakeHttpSend responseStub tagger request =
       |> Result.andThen generateResponse
       |> Result.andThen (processResponse httpRequest tagger)
       |> collapseToCommand
-      |> toHttpCommand httpRequest
-
+      |> toHttpCommand responseStub.deferResponse httpRequest
 
 collapseToCommand : Result (Cmd msg) (Cmd msg) -> Cmd msg
 collapseToCommand responseResult =
@@ -67,8 +66,8 @@ collapseToCommand responseResult =
       errorCommand
 
 
-toHttpCommand : HttpRequest a -> Cmd msg -> Cmd msg
-toHttpCommand request command =
+toHttpCommand : Bool -> HttpRequest a -> Cmd msg -> Cmd msg
+toHttpCommand shouldDeferResponse request command =
   let
     requestData =
       { method = request.method
@@ -78,8 +77,10 @@ toHttpCommand request command =
       }
     httpCommand = Native.Helpers.toCmd "Elmer_Http" requestData
   in
-    Cmd.batch [ httpCommand, command ]
-
+    if shouldDeferResponse then
+      Cmd.batch [ httpCommand, Command.deferredCommand command ]
+    else
+      Cmd.batch [ httpCommand, command ]
 
 expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectPOST =

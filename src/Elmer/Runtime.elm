@@ -45,6 +45,7 @@ commandRunners =
     , navigationCommandRunner
     , httpCommandRunner
     , elmerMessageCommandRunner
+    , elmerDeferredCommandRunner
     ]
 
 
@@ -69,6 +70,25 @@ elmerMessageCommandRunner =
       in
         CommandSuccess (updateComponentState (tagger msg))
   }
+
+elmerDeferredCommandRunner : CommandRunner model subMsg msg
+elmerDeferredCommandRunner =
+  { name = "Elmer_Deferred"
+  , run =
+    \data tagger ->
+      let
+        command = Native.Helpers.commandValue data.command
+      in
+        CommandSuccess (updateComponentStateWithDeferredCommand command)
+  }
+
+updateComponentStateWithDeferredCommand : Cmd msg -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateComponentStateWithDeferredCommand command componentState =
+  let
+    updatedComponentState = { componentState | deferredCommands = command :: componentState.deferredCommands }
+  in
+    ( updatedComponentState, Cmd.none )
+
 
 httpCommandRunner : CommandRunner model subMsg msg
 httpCommandRunner =

@@ -19,6 +19,7 @@ view model =
   Html.div [Attr.id "root"]
     [ Html.div [ Attr.class "noEvents" ] []
     , Html.div [ Attr.class "button", onClick DoClick ] [ Html.text "Click me!" ]
+    , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
     ]
 
 

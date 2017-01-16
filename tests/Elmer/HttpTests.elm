@@ -14,6 +14,7 @@ import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Http.Matchers exposing (..)
 import Elmer.Printer exposing (..)
+import Elmer.Command
 
 import Elmer.TestApps.HttpTestApp as App
 import Elmer.TestApps.SimpleTestApp as SimpleApp
@@ -28,6 +29,7 @@ all =
   , expectRequestTests "GET" ElmerHttp.expectGET
   , expectRequestTests "POST" ElmerHttp.expectPOST
   , expectRequestDataTests
+  , resolveTests
   ]
 
 requestRecordTests : Test
@@ -235,6 +237,7 @@ componentStateWithRequests requestData =
       , locationParser = Nothing
       , location = Nothing
       , httpRequests = requestData
+      , deferredCommands = []
       }
   in
     CurrentState state
@@ -350,3 +353,33 @@ expectRequestDataTests =
             hasHeader ("x-awesome", "awesome")
           )
   ]
+
+resolveTests : Test
+resolveTests =
+  let
+    stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+      |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
+      |> HttpStub.deferResponse
+    fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
+    initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+    requestedState = Elmer.find "#request-data-click" initialState
+          |> Event.click
+  in
+    describe "when there is no upstream failure"
+    [ describe "before resolve is called"
+      [ test "it records the request" <|
+        \() ->
+          ElmerHttp.expectGET "http://fun.com/fun.html" hasBeenRequested requestedState
+      , test "it does not yet resolve the response" <|
+        \() ->
+          Elmer.find "#data-result" requestedState
+            |> Elmer.expectNode (Matchers.hasText "")
+      ]
+    , describe "when resolve is called"
+      [ test "it resolves the response" <|
+        \() ->
+          Elmer.Command.resolveDeferred requestedState
+            |> Elmer.find "#data-result"
+            |> Elmer.expectNode (Matchers.hasText "Cool Dude")
+      ]
+    ]

@@ -6,6 +6,7 @@ module Elmer.Http.Stub exposing
   , withError
   , withStatus
   , withBody
+  , deferResponse
   )
 
 import Elmer.Http exposing (..)
@@ -41,6 +42,7 @@ defaultResponse method url =
     , headers = Dict.empty
     , body = ""
     }
+  , deferResponse = False
   }
 
 withError : Http.Error -> HttpResponseStub -> HttpResponseStub
@@ -54,6 +56,10 @@ withStatus newStatus =
 withBody : String -> HttpResponseStub -> HttpResponseStub
 withBody newBody =
   mapResponse (\r -> { r | body = newBody })
+
+deferResponse : HttpResponseStub -> HttpResponseStub
+deferResponse response =
+  { response | deferResponse = True }
 
 mapResponse : (Http.Response String -> Http.Response String) -> HttpResponseStub -> HttpResponseStub
 mapResponse mapper responseStub =

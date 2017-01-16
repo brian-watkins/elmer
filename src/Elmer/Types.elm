@@ -55,6 +55,7 @@ type alias HtmlComponentState model msg =
     , locationParser : Maybe (LocationParserFunction msg)
     , location : Maybe String
     , httpRequests : List HttpRequestData
+    , deferredCommands : List (Cmd msg)
     }
 
 

@@ -98,6 +98,17 @@ responseBuilderTests =
                 Expect.fail "Should have a response"
       ]
     ]
+  , describe "deferResponse"
+    [ test "by default it does not defer the response" <|
+      \() ->
+        Expect.equal False defaultResponseStub.deferResponse
+    , test "it sets the response to be deferred" <|
+      \() ->
+        let
+          updatedResponse = defaultResponseStub |> HttpStub.deferResponse
+        in
+          Expect.equal True updatedResponse.deferResponse
+    ]
   ]
 
 testDoesNotUpdateResponseStatus : (ElmerHttp.HttpResponseStub -> ElmerHttp.HttpResponseStub) -> Test
@@ -121,6 +132,7 @@ defaultResponseStub =
     , headers = Dict.empty
     , body = ""
     }
+  , deferResponse = False
   }
 
 defaultErrorResponseStub : ElmerHttp.HttpResponseStub
@@ -128,4 +140,5 @@ defaultErrorResponseStub =
   { url = "http://fake.com"
   , method = "GET"
   , response = ElmerHttp.HttpError Http.Timeout
+  , deferResponse = False
   }

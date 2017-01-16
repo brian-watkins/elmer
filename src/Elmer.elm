@@ -29,6 +29,7 @@ componentState model view update =
         , locationParser = Nothing
         , location = Nothing
         , httpRequests = []
+        , deferredCommands = []
         }
 
 
@@ -47,6 +48,7 @@ navigationComponentState model view update parser =
         , locationParser = Just parser
         , location = Nothing
         , httpRequests = []
+        , deferredCommands = []
         }
 
 (<&&>) : Matcher a -> Matcher a -> Matcher a
