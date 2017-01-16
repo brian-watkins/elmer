@@ -51,7 +51,6 @@ you find another node. The following functions define actions on nodes:
 + Click events: `Elmer.Event.click <componentStateResult>`
 + Input events: `Elmer.Event.input <text> <componentStateResult>`
 + Custom events: `Elmer.Event.on <eventName> <eventJson> <componentStateResult>`
-+ Sending a command: `Elmer.Event.sendCommand <Cmd> <componentStateResult>`
 + More to come ...
 
 #### Node Matchers
@@ -390,8 +389,19 @@ examples.
 #### Sending Arbitrary Commands
 
 Sometimes, a component may be sent a command, either from its parent or as part of initialization.
-You can use the `Elmer.Event.sendCommand` function to simulate this.
+You can use the `Elmer.Command.send` function to simulate this.
 
+#### Deferred Command Processing
+
+It's often necessary to test the state of a component while some command is running. For example,
+one might want to show a progress indicator while an HTTP request is in process. Elmer provides
+general support for deferred commands. Use `Elmer.Command.deferredCommand` to create a command that
+will not be processed until `Elmer.Command.resolveDeferred` is called. Note that all currently
+deferred commands will be resolved when this function is called.
+
+`Elmer.Http` allows you to specify when the processing of a stubbed response should be deferred.
+When you create your `HttpResponseStub` just use the `Elmer.Http.Stub.deferResponse` builder function
+to indicate that this response should be deferred until `Elmer.Command.resolveDeferred` is called.
 
 ### Development
 
