@@ -3,6 +3,7 @@ module Elmer.Command exposing
   , messageCommand
   , deferredCommand
   , resolveDeferred
+  , send
   )
 
 import Elmer
@@ -34,6 +35,14 @@ resolveDeferred =
         Runtime.performCommand deferredCommands updatedComponentState
           |> asComponentStateResult
   )
+
+send : Cmd msg -> ComponentStateResult model msg -> ComponentStateResult model msg
+send command =
+    Elmer.map (\state ->
+      Runtime.performCommand command state
+        |> asComponentStateResult
+    )
+
 
 asComponentStateResult : Result String (HtmlComponentState model msg) -> ComponentStateResult model msg
 asComponentStateResult commandResult =

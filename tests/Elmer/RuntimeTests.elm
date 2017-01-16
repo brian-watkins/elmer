@@ -6,7 +6,6 @@ import Expect
 import Html exposing (Html)
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
-import Elmer.Event as Event
 import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Matchers as Matchers
@@ -38,7 +37,7 @@ batchCommandTest =
       [ sendFirstMessage "Cool stuff!"
       , sendSecondMessage "Fun stuff!"
       ]
-    result = Event.sendCommand batchCommand initialState
+    result = Command.send batchCommand initialState
   in
     describe "when a batch command is sent"
     [ test "it processes the first command" <|
@@ -60,7 +59,7 @@ batchCommandFailureTest =
       , Command.failureCommand "It failed!"
       , sendSecondMessage "Fun stuff!"
       ]
-    result = Event.sendCommand batchCommand initialState
+    result = Command.send batchCommand initialState
   in
     describe "when a batched command fails"
     [ test "it reports the failure" <|
@@ -77,7 +76,7 @@ mappedBatchCommandTest =
       [ sendFirstMessage "Cool stuff!"
       , sendSecondMessage "Fun stuff!"
       ]
-    result = Event.sendCommand (Cmd.map AppMsg batchCommand) initialState
+    result = Command.send (Cmd.map AppMsg batchCommand) initialState
   in
     describe "when a batched command is mapped"
     [ test "it maps the first command" <|

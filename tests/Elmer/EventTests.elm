@@ -16,7 +16,6 @@ all =
     [ clickTests
     , inputTests
     , customEventTests
-    , commandEventTests
     ]
 
 standardEventHandlerBehavior : (ComponentStateResult ClickApp.Model ClickApp.Msg -> ComponentStateResult ClickApp.Model ClickApp.Msg) -> String -> Test
@@ -111,29 +110,3 @@ customEventTests =
                 Expect.fail msg
       ]
     ]
-
-commandEventTests =
-  describe "command event tests"
-  [ describe "when there is an upstream failure"
-    [ test "it passes on the error" <|
-      \() ->
-        let
-          initialState = UpstreamFailure "upstream failure"
-        in
-          Event.sendCommand Cmd.none initialState
-            |> Expect.equal initialState
-    ]
-  , describe "when there is no upstream failure"
-    [ test "it executes the command and updates the component state" <|
-        \() ->
-          let
-            initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
-            result = Event.sendCommand (Command.messageCommand (MessageApp.RenderFirstMessage "Did it!")) initialState
-          in
-            case result of
-              CurrentState updatedState ->
-                Expect.equal updatedState.model.firstMessage "Did it!"
-              UpstreamFailure msg ->
-                Expect.fail msg
-    ]
-  ]

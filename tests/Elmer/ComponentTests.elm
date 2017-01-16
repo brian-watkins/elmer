@@ -5,6 +5,7 @@ import Expect
 
 import Elmer exposing (..)
 import Elmer.Event as Event
+import Elmer.Command as Command
 import Elmer.Matchers as Matchers
 import Elmer.Command as Command
 
@@ -30,7 +31,7 @@ mapCommand =
           initialState = Elmer.componentState App.defaultModel App.view App.update
           mapCommand = Cmd.map DoFun subTask
         in
-          Event.sendCommand mapCommand initialState
+          Command.send mapCommand initialState
             |> Elmer.find "#root"
             |> Elmer.expectNode (Matchers.hasText "Fun: bowling")
     , test "it handles a click event" <|
@@ -39,7 +40,7 @@ mapCommand =
           initialState = Elmer.componentState App.defaultModel App.view App.update
           mapCommand = Cmd.map DoFun subTask
         in
-          Event.sendCommand mapCommand initialState
+          Command.send mapCommand initialState
             |> Elmer.find "#click-display"
             |> Event.click
             |> Elmer.find "#root"
@@ -53,7 +54,7 @@ mapCommand =
           mapCommand = Cmd.map DoFun subTask
           parentMapCommand = Cmd.map MsgAWrapper mapCommand
         in
-          Event.sendCommand parentMapCommand initialState
+          Command.send parentMapCommand initialState
             |> Elmer.find "#child-view"
             |> Elmer.expectNode (Matchers.hasText "Fun: bowling")
     , test "it handles a mapped message from the child view" <|
@@ -63,7 +64,7 @@ mapCommand =
           mapCommand = Cmd.map DoFun subTask
           parentMapCommand = Cmd.map MsgAWrapper mapCommand
         in
-          Event.sendCommand parentMapCommand initialState
+          Command.send parentMapCommand initialState
             |> Elmer.find "#click-display"
             |> Event.click
             |> Elmer.find "#child-view"

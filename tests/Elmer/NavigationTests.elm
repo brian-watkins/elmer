@@ -6,6 +6,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
 import Elmer.Event as Event
+import Elmer.Command as Command
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
 import Elmer.Matchers as Matchers exposing (..)
@@ -208,6 +209,6 @@ fakeNavigateCommandTests =
         initialState = navigationComponentState App.defaultModel App.view testUpdate App.parseLocation
         command = ElmerNav.fakeNavigateCommand "http://fun.com/fun.html"
       in
-        Event.sendCommand command initialState
+        Command.send command initialState
           |> ElmerNav.expectLocation "http://fun.com/fun.html"
   ]

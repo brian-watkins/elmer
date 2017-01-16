@@ -2,13 +2,12 @@ module Elmer.CommandTests exposing (all)
 
 import Test exposing (..)
 import Expect
-import Elmer.Command
+import Elmer.Command as Command
 import Elmer
 import Elmer.Types exposing (..)
 import Elmer.TestApps.SimpleTestApp as App
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Elmer.TestApps.ClickTestApp as ClickApp
-import Elmer.Event as Event
 import Elmer.Matchers as Matchers
 
 all : Test
@@ -17,6 +16,7 @@ all =
   [ elmerFailureCommandTest
   , elmerMessageCommandTest
   , resolveDeferredCommandsTest
+  , sendCommandTest
   ]
 
 elmerFailureCommandTest : Test
@@ -26,7 +26,7 @@ elmerFailureCommandTest =
     \() ->
       let
         initialState = Elmer.componentState App.defaultModel App.view App.update
-        result = Event.sendCommand (Elmer.Command.failureCommand "You failed!") initialState
+        result = Command.send (Command.failureCommand "You failed!") initialState
       in
         Expect.equal (UpstreamFailure "You failed!") result
   ]
@@ -40,7 +40,7 @@ elmerMessageCommandTest =
         initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
         msg = MessageApp.RenderFirstMessage "Hey this is the message!"
       in
-        Event.sendCommand (Elmer.Command.messageCommand msg) initialState
+        Command.send (Command.messageCommand msg) initialState
           |> Elmer.find "#first-message"
           |> Elmer.expectNode (Matchers.hasText "Hey this is the message!")
   ]
@@ -53,7 +53,7 @@ resolveDeferredCommandsTest =
       \() ->
         let
           initialState = UpstreamFailure "You failed!"
-          state = Elmer.Command.resolveDeferred initialState
+          state = Command.resolveDeferred initialState
         in
           Expect.equal (UpstreamFailure "You failed!") state
     ]
@@ -63,16 +63,16 @@ resolveDeferredCommandsTest =
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
-          Elmer.Command.resolveDeferred initialState
+          Command.resolveDeferred initialState
             |> Expect.equal (UpstreamFailure "No deferred commands found")
     ]
   , let
       initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-      deferredClickCommand = Elmer.Command.messageCommand ClickApp.DoClick
-                              |> Elmer.Command.deferredCommand
-      state = Event.sendCommand deferredClickCommand initialState
-                |> Event.sendCommand deferredClickCommand
-                |> Event.sendCommand deferredClickCommand
+      deferredClickCommand = Command.messageCommand ClickApp.DoClick
+                              |> Command.deferredCommand
+      state = Command.send deferredClickCommand initialState
+                |> Command.send deferredClickCommand
+                |> Command.send deferredClickCommand
     in
       describe "when there are deferred commands"
         [ test "it doesn't process deferred commands immediately" <|
@@ -80,7 +80,7 @@ resolveDeferredCommandsTest =
             Elmer.find "#click-counter" state
               |> Elmer.expectNode (Matchers.hasText "0 clicks!")
         , let
-            resolvedCommandsState = Elmer.Command.resolveDeferred state
+            resolvedCommandsState = Command.resolveDeferred state
           in
             describe "when the deferred commands are resolved"
             [ test "it processes the deferred commands" <|
@@ -89,8 +89,34 @@ resolveDeferredCommandsTest =
                   |> Elmer.expectNode (Matchers.hasText "3 clicks!")
             , test "it clears the deferred commands" <|
               \() ->
-                Elmer.Command.resolveDeferred resolvedCommandsState
+                Command.resolveDeferred resolvedCommandsState
                   |> Expect.equal (UpstreamFailure "No deferred commands found")
             ]
         ]
+  ]
+
+sendCommandTest =
+  describe "send"
+  [ describe "when there is an upstream failure"
+    [ test "it passes on the error" <|
+      \() ->
+        let
+          initialState = UpstreamFailure "upstream failure"
+        in
+          Command.send Cmd.none initialState
+            |> Expect.equal initialState
+    ]
+  , describe "when there is no upstream failure"
+    [ test "it executes the command and updates the component state" <|
+        \() ->
+          let
+            initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
+            result = Command.send (Command.messageCommand (MessageApp.RenderFirstMessage "Did it!")) initialState
+          in
+            case result of
+              CurrentState updatedState ->
+                Expect.equal updatedState.model.firstMessage "Did it!"
+              UpstreamFailure msg ->
+                Expect.fail msg
+    ]
   ]

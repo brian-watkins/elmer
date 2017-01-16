@@ -3,7 +3,6 @@ module Elmer.Event
         ( click
         , input
         , on
-        , sendCommand
         )
 
 import Json.Decode as Json
@@ -65,23 +64,7 @@ on eventName eventJson componentStateResult =
     handleEvent (genericHandler eventName eventJson) componentStateResult
 
 
-sendCommand : Cmd msg -> ComponentStateResult model msg -> ComponentStateResult model msg
-sendCommand command =
-    Elmer.map (\state ->
-      Runtime.performCommand command state
-        |> asComponentStateResult
-    )
-
-
 -- Private functions
-
-asComponentStateResult : Result String (HtmlComponentState model msg) -> ComponentStateResult model msg
-asComponentStateResult commandResult =
-  case commandResult of
-    Ok updatedComponentState ->
-      CurrentState updatedComponentState
-    Err message ->
-      UpstreamFailure message
 
 
 getEvent : String -> HtmlNode msg -> Maybe (HtmlEvent msg)
@@ -114,6 +97,15 @@ updateComponent node eventHandler componentState =
 
         EventFailure msg ->
             UpstreamFailure msg
+
+
+asComponentStateResult : Result String (HtmlComponentState model msg) -> ComponentStateResult model msg
+asComponentStateResult commandResult =
+  case commandResult of
+    Ok updatedComponentState ->
+      CurrentState updatedComponentState
+    Err message ->
+      UpstreamFailure message
 
 
 eventResult : Result String msg -> HtmlEvent msg -> EventResult msg

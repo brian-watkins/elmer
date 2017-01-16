@@ -5,7 +5,7 @@ module Elmer.Navigation
         , fakeNavigateCommand
         )
 
-import Elmer.Event as Event
+import Elmer.Command as Command
 import Elmer.Types exposing (..)
 import Elmer
 import Expect
@@ -39,7 +39,7 @@ setLocation location componentStateResult =
                       let
                           command = fakeNavigateCommand location
                       in
-                          Event.sendCommand command componentStateResult
+                          Command.send command componentStateResult
                     Nothing ->
                         UpstreamFailure "setLocation failed because no locationParser was set"
             )
