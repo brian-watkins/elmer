@@ -19,6 +19,7 @@ requestBuilderTests =
   describe "request builders"
   [ describeRequestMethod "GET" HttpStub.get
   , describeRequestMethod "POST" HttpStub.post
+  , describeRequestMethod "DELETE" HttpStub.delete
   ]
 
 describeRequestMethod : String -> (String -> ElmerHttp.HttpResponseStub) -> Test

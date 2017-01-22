@@ -7,6 +7,7 @@ module Elmer.Http exposing
   , fakeHttpSend
   , expectPOST
   , expectGET
+  , expectDELETE
   )
 
 import Http
@@ -89,6 +90,10 @@ expectPOST =
 expectGET : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectGET =
   expectRequest "GET"
+
+expectDELETE : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+expectDELETE =
+  expectRequest "DELETE"
 
 expectRequest : String -> String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectRequest method url requestMatcher =

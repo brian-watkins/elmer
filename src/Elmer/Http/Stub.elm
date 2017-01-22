@@ -3,6 +3,7 @@ module Elmer.Http.Stub exposing
   , httpStatus
   , get
   , post
+  , delete
   , withError
   , withStatus
   , withBody
@@ -31,6 +32,10 @@ get url =
 post : String -> HttpResponseStub
 post url =
   defaultResponse "POST" url
+
+delete : String -> HttpResponseStub
+delete url =
+  defaultResponse "DELETE" url
 
 defaultResponse : String -> String -> HttpResponseStub
 defaultResponse method url =
