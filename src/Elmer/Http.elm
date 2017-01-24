@@ -8,6 +8,7 @@ module Elmer.Http exposing
   , expectPOST
   , expectGET
   , expectDELETE
+  , clearRequestHistory
   )
 
 import Http
@@ -82,6 +83,15 @@ toHttpCommand shouldDeferResponse request command =
       Cmd.batch [ httpCommand, Command.deferredCommand command ]
     else
       Cmd.batch [ httpCommand, command ]
+
+clearRequestHistory : ComponentStateResult model msg -> ComponentStateResult model msg
+clearRequestHistory =
+  Elmer.map (\componentState ->
+    if List.isEmpty componentState.httpRequests then
+      UpstreamFailure "No HTTP requests to clear"
+    else
+      CurrentState { componentState | httpRequests = [] }
+  )
 
 expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectPOST =

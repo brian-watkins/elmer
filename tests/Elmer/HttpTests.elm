@@ -31,6 +31,7 @@ all =
   , expectRequestTests "DELETE" ElmerHttp.expectDELETE
   , expectRequestDataTests
   , resolveTests
+  , clearRequestsTests
   ]
 
 requestRecordTests : Test
@@ -384,3 +385,39 @@ resolveTests =
             |> Elmer.expectNode (Matchers.hasText "Cool Dude")
       ]
     ]
+
+clearRequestsTests : Test
+clearRequestsTests =
+  describe "clear"
+  [ describe "when there is an upstream failure"
+    [ test "it shows the failure" <|
+      \() ->
+        let
+          result = ElmerHttp.clearRequestHistory (UpstreamFailure "You Failed!")
+        in
+          Expect.equal (UpstreamFailure "You Failed!") result
+    ]
+  , describe "when there are no requests to clear"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = componentStateWithRequests []
+        in
+          ElmerHttp.clearRequestHistory initialState
+            |> Expect.equal (UpstreamFailure "No HTTP requests to clear")
+    ]
+  , describe "when there are requests to clear"
+    [ test "it clears the requests" <|
+      \() ->
+        let
+          request1 = testRequest "POST" "http://fun.com/fun"
+          request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+          initialState = componentStateWithRequests [ request1, request2 ]
+        in
+          case ElmerHttp.clearRequestHistory initialState of
+            CurrentState state ->
+              Expect.equal True (List.isEmpty state.httpRequests)
+            UpstreamFailure _ ->
+              Expect.fail "Should find a component state!"
+    ]
+  ]
