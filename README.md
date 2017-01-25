@@ -56,8 +56,8 @@ you find another node. The following functions define actions on nodes:
 #### Node Matchers
 
 You can make expectations about the targeted node using the `expectNode` function, which takes a
-function that maps an HtmlNode to an Expectation. The following matchers can be used to make
-expectations about an HtmlNode:
+function that maps an HtmlNode to an Expectation and a `ComponentStateResult`. The following
+matchers can be used to make expectations about an HtmlNode:
 
 + `hasId <string> <HtmlNode>`
 + `hasClass <string> <HtmlNode>`
@@ -72,7 +72,17 @@ multiple matchers using the `<&&>` operator like so:
 Elmer.expectNode (
   Matchers.hasText "Text one" <&&>
   Matchers.hasText "Text two"
-)
+) componentStateResult
+```
+
+Find the children of a node and make expectations about them like so:
+
+```
+Elmer.expectNode (\node ->
+  Elmer.Node.findChildren "li" node
+    |> List.length
+    |> Expect.equal 3
+) componentStateResult
 ```
 
 ### Example
@@ -402,6 +412,15 @@ deferred commands will be resolved when this function is called.
 `Elmer.Http` allows you to specify when the processing of a stubbed response should be deferred.
 When you create your `HttpResponseStub` just use the `Elmer.Http.Stub.deferResponse` builder function
 to indicate that this response should be deferred until `Elmer.Command.resolveDeferred` is called.
+
+#### Mock Commands
+
+You might want to write a test that expects a command to be sent, but doesn't care to describe the
+behavior that results from processing that command -- perhaps that is tested somewhere else. In
+that case, you could use `Elmer.Command.mockCommand <identifier>` to create a mock command.
+When Elmer processes a mock command, it simply records the fact that the command was sent; it
+does not feed any message back into the system. In your test, use `Elmer.command.expectMock <indentifier>`
+to expect that the command was sent.
 
 ### Development
 
