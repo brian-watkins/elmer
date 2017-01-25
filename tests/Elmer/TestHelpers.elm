@@ -44,6 +44,18 @@ nodeWithText text =
   in
     { node | children = [(textNode text)] }
 
+nodeWithList : HtmlNode msg
+nodeWithList =
+  let
+    ul = emptyNode "ul"
+  in
+    { ul | children =
+      [ Node (emptyNode "li")
+      , Node (emptyNode "li")
+      , Node (emptyNode "li")
+      ]
+    }
+
 nodeWithMultipleChildren : String -> HtmlNode msg
 nodeWithMultipleChildren text =
   let

@@ -1,5 +1,6 @@
 module Elmer.Node exposing
   ( findNode
+  , findChildren
   , toString
   , classList
   , id
@@ -38,6 +39,10 @@ property : String -> HtmlNode msg -> Maybe String
 property name node =
   Json.decodeString (Json.field name Json.string) node.facts
     |> Result.toMaybe
+
+findChildren : String -> HtmlNode msg -> List (HtmlNode msg)
+findChildren selector node =
+  List.filterMap (findWithinNode selector) (takeNodes node.children)
 
 
 findWithinNode : String -> HtmlNode msg -> Maybe (HtmlNode msg)

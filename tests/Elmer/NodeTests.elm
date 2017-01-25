@@ -5,6 +5,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.Node as Node
 import Elmer.Matchers as Matchers
+import Elmer.Types exposing (..)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
@@ -23,6 +24,7 @@ all =
   , idTests
   , propertyTests
   , toStringTests
+  , findChildrenTests
   ]
 
 noElementFound : Test
@@ -378,4 +380,21 @@ sampleHtml =
   Html.div [ Attr.id "title", Attr.class "myClass" ]
   [ Html.p [ Attr.class "button", Events.onClick Click ] [ Html.text "Some text" ]
   , Html.p [ Attr.class "description", Attr.attribute "data-fun-stuff" "bowling" ] [ Html.text "More text" ]
+  ]
+
+findChildrenTests : Test
+findChildrenTests =
+  describe "findChildren"
+  [ describe "when the node has no matching children"
+    [ test "it fails" <|
+      \() ->
+        Node.findChildren ".some-class" (emptyNode "div")
+          |> Expect.equal []
+    ]
+  , describe "when the node has matching children"
+    [ test "it finds the children" <|
+      \() ->
+        Node.findChildren "li" nodeWithList
+          |> Expect.equal [(emptyNode "li"), (emptyNode "li"), (emptyNode "li")]
+    ]
   ]
