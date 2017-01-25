@@ -46,6 +46,7 @@ commandRunners =
     , httpCommandRunner
     , elmerMessageCommandRunner
     , elmerDeferredCommandRunner
+    , mockCommandRunner
     ]
 
 
@@ -86,6 +87,24 @@ updateComponentStateWithDeferredCommand : Cmd msg -> HtmlComponentState model ms
 updateComponentStateWithDeferredCommand command componentState =
   let
     updatedComponentState = { componentState | deferredCommands = command :: componentState.deferredCommands }
+  in
+    ( updatedComponentState, Cmd.none )
+
+mockCommandRunner : CommandRunner model subMsg msg
+mockCommandRunner =
+  { name = "Elmer_Mock"
+  , run =
+    \data tagger ->
+      let
+        identifier = Native.Helpers.commandValue data.command
+      in
+        CommandSuccess (updateComponentStateWithMockCommand identifier)
+  }
+
+updateComponentStateWithMockCommand : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateComponentStateWithMockCommand identifier componentState =
+  let
+    updatedComponentState = { componentState | mockCommands = identifier :: componentState.mockCommands }
   in
     ( updatedComponentState, Cmd.none )
 

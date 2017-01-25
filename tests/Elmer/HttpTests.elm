@@ -240,6 +240,7 @@ componentStateWithRequests requestData =
       , location = Nothing
       , httpRequests = requestData
       , deferredCommands = []
+      , mockCommands = []
       }
   in
     CurrentState state

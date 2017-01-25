@@ -9,6 +9,7 @@ import Elmer.TestApps.SimpleTestApp as App
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Elmer.TestApps.ClickTestApp as ClickApp
 import Elmer.Matchers as Matchers
+import Elmer.Printer exposing (..)
 
 all : Test
 all =
@@ -17,6 +18,7 @@ all =
   , elmerMessageCommandTest
   , resolveDeferredCommandsTest
   , sendCommandTest
+  , mockCommandTest
   ]
 
 elmerFailureCommandTest : Test
@@ -118,5 +120,42 @@ sendCommandTest =
                 Expect.equal updatedState.model.firstMessage "Did it!"
               UpstreamFailure msg ->
                 Expect.fail msg
+    ]
+  ]
+
+
+mockCommandTest : Test
+mockCommandTest =
+  describe "expectMock"
+  [ describe "when there is an upstream failure"
+    [ test "it shows the failure" <|
+      \() ->
+        let
+          state = UpstreamFailure "You Failed!"
+          result = Command.expectMock "someCommand" state
+        in
+          Expect.equal (Expect.fail "You Failed!") result
+    ]
+  , describe "when no mock commands with the identifier are found"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+          mockCommand = Command.mockCommand "someCommand"
+        in
+          Command.send mockCommand initialState
+            |> Command.expectMock "fakeCommand"
+            |> Expect.equal (Expect.fail (format [message "No mock commands sent with identifier" "fakeCommand"]))
+    ]
+  , describe "when mock commands with the identifier are found"
+    [ test "it passes" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+          mockCommand = Command.mockCommand "fakeCommand"
+        in
+          Command.send mockCommand initialState
+            |> Command.expectMock "fakeCommand"
+            |> Expect.equal Expect.pass
     ]
   ]
