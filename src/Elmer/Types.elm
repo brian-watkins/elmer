@@ -59,7 +59,6 @@ type alias HtmlComponentState model msg =
     , dummyCommands : List String
     }
 
-
 type ComponentStateResult model msg
     = CurrentState (HtmlComponentState model msg)
     | UpstreamFailure String

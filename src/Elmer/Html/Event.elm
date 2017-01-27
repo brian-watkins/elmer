@@ -1,4 +1,4 @@
-module Elmer.Event
+module Elmer.Html.Event
     exposing
         ( click
         , input

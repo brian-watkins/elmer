@@ -33,7 +33,7 @@ function. Just pass it your model, view method, and update method.
 
 #### Finding a node
 
-Use `Elmer.find` to find an `HtmlNode` record, which describes a HTML tag in your view. The `find`
+Use `Elmer.Html.find` to find an `HtmlNode` record, which describes a HTML tag in your view. The `find`
 function takes a selector and a `ComponentStateResult` as arguments. The selector can take the following
 formats:
 
@@ -48,9 +48,9 @@ formats:
 Once you find a node, that node is _targeted_ as the subject of subsequent actions, that is, until
 you find another node. The following functions define actions on nodes:
 
-+ Click events: `Elmer.Event.click <componentStateResult>`
-+ Input events: `Elmer.Event.input <text> <componentStateResult>`
-+ Custom events: `Elmer.Event.on <eventName> <eventJson> <componentStateResult>`
++ Click events: `Elmer.Html.Event.click <componentStateResult>`
++ Input events: `Elmer.Html.Event.input <text> <componentStateResult>`
++ Custom events: `Elmer.Html.Event.on <eventName> <eventJson> <componentStateResult>`
 + More to come ...
 
 #### Node Matchers
@@ -69,7 +69,7 @@ You can also expect that the targeted node exists using the `expectNodeExists` f
 multiple matchers using the `<&&>` operator like so:
 
 ```
-Elmer.expectNode (
+Elmer.Html.expectNode (
   Matchers.hasText "Text one" <&&>
   Matchers.hasText "Text two"
 ) componentStateResult
@@ -78,8 +78,8 @@ Elmer.expectNode (
 Find the children of a node and make expectations about them like so:
 
 ```
-Elmer.expectNode (\node ->
-  Elmer.Node.findChildren "li" node
+Elmer.Html.expectNode (\node ->
+  Elmer.Html.Node.findChildren "li" node
     |> List.length
     |> Expect.equal 3
 ) componentStateResult
@@ -99,8 +99,8 @@ allTests =
     [ describe "initial state"
       [ test "it shows that no clicks have occurred" <|
         \() ->
-          Elmer.find "#clickCount" initialState
-            |> Elmer.expectNode (
+          Elmer.Html.find "#clickCount" initialState
+            |> Elmer.Html.expectNode (
                   Matchers.hasText "0 clicks!"
             )      
       ]
@@ -137,11 +137,11 @@ Now, let's add a new test that describes what we expect to happen when a button 
   describe "when the button is clicked"
   [ test "it updates the counter" <|
     \() ->
-      Elmer.find ".button" initialState
+      Elmer.Html.find ".button" initialState
         |> Event.click
         |> Event.click
-        |> Elmer.find "#clickCount"
-        |> Elmer.expectNode (
+        |> Elmer.Html.find "#clickCount"
+        |> Elmer.Html.expectNode (
             Matchers.hasText "2 clicks!"
         )
   ]
@@ -201,10 +201,10 @@ timeAppTests =
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
       in
-        Elmer.find ".button" initialState
+        Elmer.Html.find ".button" initialState
           |> Event.click
-          |> Elmer.find "#currentTime"
-          |> Elmer.expectNode (Matchers.hasText "Time: ???")
+          |> Elmer.Html.find "#currentTime"
+          |> Elmer.Html.expectNode (Matchers.hasText "Time: ???")
   ]
 ```
 
@@ -277,10 +277,10 @@ timeAppTests =
         testUpdate = TimeApp.updateWithDependencies (fakeTimeTask (3 * Time.second))
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view testUpdate
       in
-        Elmer.find ".button" initialState
+        Elmer.Html.find ".button" initialState
           |> Event.click
-          |> Elmer.find "#currentTime"
-          |> Elmer.expectNode (Matchers.hasText "Time: 3000")
+          |> Elmer.Html.find "#currentTime"
+          |> Elmer.Html.expectNode (Matchers.hasText "Time: 3000")
   ]
 ```
 
@@ -363,10 +363,10 @@ example, this test inputs search terms into a field, clicks a search button, and
 that a request is made to a specific route with the search terms in the query string:
 
 ```
-Elmer.find "input[name='query']" initialComponentState
-      |> Elmer.Event.input "Fun Stuff"
-      |> Elmer.find "#search-button"
-      |> Elmer.Event.click
+Elmer.Html.find "input[name='query']" initialComponentState
+      |> Elmer.Html.Event.input "Fun Stuff"
+      |> Elmer.Html.find "#search-button"
+      |> Elmer.Html.Event.click
       |> Elmer.Http.expectGET "http://fake.com/search" (
             Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
          )

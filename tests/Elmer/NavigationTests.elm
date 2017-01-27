@@ -5,12 +5,13 @@ import Elmer.TestApps.NavigationTestApp as App
 import Expect
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
-import Elmer.Event as Event
+import Elmer.Html.Event as Event
 import Elmer.Command as Command
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
-import Elmer.Matchers as Matchers exposing (..)
+import Elmer.Html.Matchers as Matchers exposing (..)
 import Elmer.Printer exposing (..)
+import Elmer.Html as Markup
 import Navigation
 
 all : Test
@@ -55,7 +56,7 @@ expectLocationTests =
             let
               initialState = Elmer.componentState App.defaultModel App.view testUpdate
             in
-              Elmer.find "#navigateButton" initialState
+              Markup.find "#navigateButton" initialState
                 |> Event.click
                 |> ElmerNav.expectLocation "http://fun.com/fun.html"
                 |> Expect.equal Expect.pass
@@ -67,7 +68,7 @@ expectLocationTests =
             let
               initialState = Elmer.componentState App.defaultModel App.view testUpdate
             in
-              Elmer.find "#navigateButton" initialState
+              Markup.find "#navigateButton" initialState
                 |> Event.click
                 |> ElmerNav.expectLocation "http://badplace.com"
                 |> Expect.equal
@@ -89,8 +90,8 @@ setLocationTests =
           failureState = UpstreamFailure "failed"
         in
           ElmerNav.setLocation "http://fun.com/fun.html" failureState
-            |> Elmer.find ".error"
-            |> Elmer.expectNodeExists
+            |> Markup.find ".error"
+            |> Markup.expectNodeExists
             |> Expect.equal (Expect.fail "failed")
     ]
   , describe "when no parser is set"
@@ -100,21 +101,21 @@ setLocationTests =
           stateWithoutParser = Elmer.map (\s -> CurrentState { s | locationParser = Nothing }) fullState
         in
           ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutParser
-            |> Elmer.find ".error"
-            |> Elmer.expectNodeExists
+            |> Markup.find ".error"
+            |> Markup.expectNodeExists
             |> Expect.equal (Expect.fail "setLocation failed because no locationParser was set")
     ]
   , describe "when locationParser is set"
     [ test "it updates the component state with the new location" <|
       \() ->
           ElmerNav.setLocation "http://fun.com/fun.html" fullState
-            |> Elmer.find ".error"
-            |> Elmer.expectNode (Matchers.hasText "Unknown path: /fun.html")
+            |> Markup.find ".error"
+            |> Markup.expectNode (Matchers.hasText "Unknown path: /fun.html")
     , test "it updates the component state with another location" <|
       \() ->
         ElmerNav.setLocation "http://fun.com/api/view" fullState
-          |> Elmer.find ".error"
-          |> Elmer.expectNode (Matchers.hasText "No error")
+          |> Markup.find ".error"
+          |> Markup.expectNode (Matchers.hasText "No error")
     ]
   ]
 

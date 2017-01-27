@@ -7,8 +7,9 @@ import Elmer.TestApps.MessageTestApp as MessageApp
 import Expect
 import Elmer exposing (..)
 import Elmer.Types exposing (..)
-import Elmer.Event as Event
+import Elmer.Html.Event as Event
 import Elmer.Command as Command
+import Elmer.Html as Markup
 
 all : Test
 all =
@@ -45,7 +46,7 @@ standardEventHandlerBehavior eventHandler eventName =
         let
           initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
         in
-          Elmer.find ".noEvents" initialState
+          Markup.find ".noEvents" initialState
             |> eventHandler
             |> Expect.equal (UpstreamFailure ("No " ++ eventName ++ " event found"))
     ]
@@ -59,7 +60,7 @@ clickTests =
       \() ->
         let
           initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-          updatedStateResult = Elmer.find ".button" initialState
+          updatedStateResult = Markup.find ".button" initialState
                                 |> Event.click
         in
           case updatedStateResult of
@@ -78,7 +79,7 @@ inputTests =
       \() ->
         let
           initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
-          updatedStateResult = Elmer.find ".nameField" initialState
+          updatedStateResult = Markup.find ".nameField" initialState
                                 |> Event.input "Mr. Fun Stuff"
         in
           case updatedStateResult of
@@ -100,7 +101,7 @@ customEventTests =
         \() ->
           let
             initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
-            updatedStateResult = Elmer.find ".nameField" initialState
+            updatedStateResult = Markup.find ".nameField" initialState
                                   |> Event.on "keyup" keyUpEventJson
           in
             case updatedStateResult of

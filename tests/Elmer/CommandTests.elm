@@ -8,8 +8,9 @@ import Elmer.Types exposing (..)
 import Elmer.TestApps.SimpleTestApp as App
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Elmer.TestApps.ClickTestApp as ClickApp
-import Elmer.Matchers as Matchers
+import Elmer.Html.Matchers as Matchers
 import Elmer.Printer exposing (..)
+import Elmer.Html as Markup
 
 all : Test
 all =
@@ -43,8 +44,8 @@ elmerStubbedCommandTest =
         msg = MessageApp.RenderFirstMessage "Hey this is the message!"
       in
         Command.send (Command.stubbedCommand msg) initialState
-          |> Elmer.find "#first-message"
-          |> Elmer.expectNode (Matchers.hasText "Hey this is the message!")
+          |> Markup.find "#first-message"
+          |> Markup.expectNode (Matchers.hasText "Hey this is the message!")
   ]
 
 resolveDeferredCommandsTest : Test
@@ -79,16 +80,16 @@ resolveDeferredCommandsTest =
       describe "when there are deferred commands"
         [ test "it doesn't process deferred commands immediately" <|
           \() ->
-            Elmer.find "#click-counter" state
-              |> Elmer.expectNode (Matchers.hasText "0 clicks!")
+            Markup.find "#click-counter" state
+              |> Markup.expectNode (Matchers.hasText "0 clicks!")
         , let
             resolvedCommandsState = Command.resolveDeferred state
           in
             describe "when the deferred commands are resolved"
             [ test "it processes the deferred commands" <|
               \() ->
-                Elmer.find "#click-counter" resolvedCommandsState
-                  |> Elmer.expectNode (Matchers.hasText "3 clicks!")
+                Markup.find "#click-counter" resolvedCommandsState
+                  |> Markup.expectNode (Matchers.hasText "3 clicks!")
             , test "it clears the deferred commands" <|
               \() ->
                 Command.resolveDeferred resolvedCommandsState

@@ -8,10 +8,11 @@ import Elmer exposing (..)
 import Elmer.Types exposing (..)
 import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
-import Elmer.Matchers as Matchers
+import Elmer.Html.Matchers as Matchers
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Command as Command
+import Elmer.Html as Markup
 
 all : Test
 all =
@@ -42,12 +43,12 @@ batchCommandTest =
     describe "when a batch command is sent"
     [ test "it processes the first command" <|
       \() ->
-          Elmer.find "#first-message" result
-            |> Elmer.expectNode (Matchers.hasText "Cool stuff!")
+          Markup.find "#first-message" result
+            |> Markup.expectNode (Matchers.hasText "Cool stuff!")
     , test "it processes the second command" <|
       \() ->
-          Elmer.find "#second-message" result
-            |> Elmer.expectNode (Matchers.hasText "Fun stuff!")
+          Markup.find "#second-message" result
+            |> Markup.expectNode (Matchers.hasText "Fun stuff!")
     ]
 
 batchCommandFailureTest : Test
@@ -81,12 +82,12 @@ mappedBatchCommandTest =
     describe "when a batched command is mapped"
     [ test "it maps the first command" <|
       \() ->
-          Elmer.find "#first-message" result
-            |> Elmer.expectNode (Matchers.hasText "Cool stuff!")
+          Markup.find "#first-message" result
+            |> Markup.expectNode (Matchers.hasText "Cool stuff!")
     , test "it maps the second command" <|
       \() ->
-          Elmer.find "#second-message" result
-            |> Elmer.expectNode (Matchers.hasText "Fun stuff!")
+          Markup.find "#second-message" result
+            |> Markup.expectNode (Matchers.hasText "Fun stuff!")
     ]
 
 type ParentMsg

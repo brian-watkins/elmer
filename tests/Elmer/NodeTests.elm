@@ -3,8 +3,8 @@ module Elmer.NodeTests exposing (all)
 import Test exposing (..)
 import Expect
 import Elmer exposing (..)
-import Elmer.Node as Node
-import Elmer.Matchers as Matchers
+import Elmer.Html.Node as Node
+import Elmer.Html.Matchers as Matchers
 import Elmer.Types exposing (..)
 import Html exposing (Html)
 import Html.Attributes as Attr

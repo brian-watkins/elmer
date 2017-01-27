@@ -1,4 +1,4 @@
-module Elmer.Node exposing
+module Elmer.Html.Node exposing
   ( findNode
   , findChildren
   , toString

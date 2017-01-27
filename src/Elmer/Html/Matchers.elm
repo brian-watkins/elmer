@@ -1,4 +1,4 @@
-module Elmer.Matchers exposing
+module Elmer.Html.Matchers exposing
   ( hasText
   , hasClass
   , hasProperty
@@ -6,7 +6,7 @@ module Elmer.Matchers exposing
   )
 
 import Elmer.Types exposing (..)
-import Elmer.Node as Node
+import Elmer.Html.Node as Node
 import Elmer.Printer exposing (..)
 import Expect
 import String

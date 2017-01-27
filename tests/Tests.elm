@@ -3,6 +3,7 @@ module Tests exposing (..)
 import Test exposing (..)
 
 import Elmer.ElmerTests as ElmerTests
+import Elmer.HtmlTests as HtmlTests
 import Elmer.MatcherTests as MatcherTests
 import Elmer.EventTests as EventTests
 import Elmer.DemoAppTests as DemoAppTests
@@ -20,6 +21,7 @@ all : Test
 all =
   describe "Elmer"
     [ ElmerTests.all
+    , HtmlTests.all
     , MatcherTests.all
     , EventTests.all
     , DemoAppTests.all

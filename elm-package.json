@@ -9,9 +9,10 @@
     "exposed-modules": [
         "Elmer",
         "Elmer.Types",
-        "Elmer.Node",
-        "Elmer.Event",
-        "Elmer.Matchers",
+        "Elmer.Html",
+        "Elmer.Html.Node",
+        "Elmer.Html.Event",
+        "Elmer.Html.Matchers",
         "Elmer.Navigation",
         "Elmer.Http",
         "Elmer.Http.Stub",

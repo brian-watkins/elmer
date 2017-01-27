@@ -4,10 +4,11 @@ import Test exposing (..)
 import Expect
 
 import Elmer exposing (..)
-import Elmer.Event as Event
+import Elmer.Html.Event as Event
 import Elmer.Command as Command
-import Elmer.Matchers as Matchers
+import Elmer.Html.Matchers as Matchers
 import Elmer.Command as Command
+import Elmer.Html as Markup
 
 import Elmer.TestApps.ComponentTestApp as App exposing (..)
 
@@ -32,8 +33,8 @@ mapCommand =
           mapCommand = Cmd.map DoFun subTask
         in
           Command.send mapCommand initialState
-            |> Elmer.find "#root"
-            |> Elmer.expectNode (Matchers.hasText "Fun: bowling")
+            |> Markup.find "#root"
+            |> Markup.expectNode (Matchers.hasText "Fun: bowling")
     , test "it handles a click event" <|
       \() ->
         let
@@ -41,10 +42,10 @@ mapCommand =
           mapCommand = Cmd.map DoFun subTask
         in
           Command.send mapCommand initialState
-            |> Elmer.find "#click-display"
+            |> Markup.find "#click-display"
             |> Event.click
-            |> Elmer.find "#root"
-            |> Elmer.expectNode (Matchers.hasText "Fun: click")
+            |> Markup.find "#root"
+            |> Markup.expectNode (Matchers.hasText "Fun: click")
     ]
   , describe "when a child component is used by the parent"
     [ test "it handles a mapped map command" <|
@@ -55,8 +56,8 @@ mapCommand =
           parentMapCommand = Cmd.map MsgAWrapper mapCommand
         in
           Command.send parentMapCommand initialState
-            |> Elmer.find "#child-view"
-            |> Elmer.expectNode (Matchers.hasText "Fun: bowling")
+            |> Markup.find "#child-view"
+            |> Markup.expectNode (Matchers.hasText "Fun: bowling")
     , test "it handles a mapped message from the child view" <|
       \() ->
         let
@@ -65,20 +66,20 @@ mapCommand =
           parentMapCommand = Cmd.map MsgAWrapper mapCommand
         in
           Command.send parentMapCommand initialState
-            |> Elmer.find "#click-display"
+            |> Markup.find "#click-display"
             |> Event.click
-            |> Elmer.find "#child-view"
-            |> Elmer.expectNode (Matchers.hasText "Fun: click")
+            |> Markup.find "#child-view"
+            |> Markup.expectNode (Matchers.hasText "Fun: click")
     , describe "when the mapped command has a custom update method"
       [ test "it handles a mapped message from the child view" <|
         \() ->
           let
             initialState = navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
           in
-            Elmer.find "#change-location" initialState
+            Markup.find "#change-location" initialState
               |> Event.click
-              |> Elmer.find "#fun-stuff"
-              |> Elmer.expectNode (Matchers.hasText "Fun things!")
+              |> Markup.find "#fun-stuff"
+              |> Markup.expectNode (Matchers.hasText "Fun things!")
       ]
     ]
   ]

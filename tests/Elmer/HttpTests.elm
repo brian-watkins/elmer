@@ -8,13 +8,14 @@ import Elmer
 import Html
 import Elmer exposing ((<&&>))
 import Elmer.Types exposing (..)
-import Elmer.Event as Event
-import Elmer.Matchers as Matchers
+import Elmer.Html.Event as Event
+import Elmer.Html.Matchers as Matchers
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Http.Matchers exposing (..)
 import Elmer.Printer exposing (..)
 import Elmer.Command
+import Elmer.Html as Markup
 
 import Elmer.TestApps.HttpTestApp as App
 import Elmer.TestApps.SimpleTestApp as SimpleApp
@@ -99,10 +100,10 @@ httpSendTests =
           fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
           initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
         in
-          Elmer.find "#request-data-click" initialState
+          Markup.find "#request-data-click" initialState
             |> Event.click
-            |> Elmer.find "#data-result"
-            |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+            |> Markup.find "#data-result"
+            |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format [message "Received a request for" "http://fun.com/fun.html", message "but it has not been stubbed. The stubbed request is" "http://wrongUrl.com"]))
     ]
   , describe "when the stubbed route contains a query string"
@@ -114,10 +115,10 @@ httpSendTests =
           fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
           initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
         in
-          Elmer.find "#request-data-click" initialState
+          Markup.find "#request-data-click" initialState
             |> Event.click
-            |> Elmer.find "#data-result"
-            |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+            |> Markup.find "#data-result"
+            |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format [message "Sent a request where a stubbed route contains a query string" "http://wrongUrl.com?type=fun", description "Stubbed routes may not contain a query string"]))
     ]
   , describe "when the requested url matches the stubbed response"
@@ -130,10 +131,10 @@ httpSendTests =
             fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
             initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
           in
-            Elmer.find "#request-data-click" initialState
+            Markup.find "#request-data-click" initialState
               |> Event.click
-              |> Elmer.find "#data-result"
-              |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+              |> Markup.find "#data-result"
+              |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
               |> Expect.equal (Expect.fail (format [message "A response has been stubbed for" "http://fun.com/fun.html", description "but it expects a POST not a GET"]))
       ]
     , describe "when the method matches"
@@ -146,10 +147,10 @@ httpSendTests =
               fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
               initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
             in
-              Elmer.find "#request-data-click" initialState
+              Markup.find "#request-data-click" initialState
                 |> Event.click
-                |> Elmer.find "#data-result"
-                |> Elmer.expectNode (Matchers.hasText "BadStatus Error: 404 Not Found")
+                |> Markup.find "#data-result"
+                |> Markup.expectNode (Matchers.hasText "BadStatus Error: 404 Not Found")
         ]
       , describe "when the response status is in the 200 range"
         [ describe "when the response body cannot be processed"
@@ -161,10 +162,10 @@ httpSendTests =
                 fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
                 initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
               in
-                Elmer.find "#request-data-click" initialState
+                Markup.find "#request-data-click" initialState
                   |> Event.click
-                  |> Elmer.find "#data-result"
-                  |> Elmer.expectNode (Matchers.hasText "Name: Super Fun Person")
+                  |> Markup.find "#data-result"
+                  |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
                   |> Expect.equal (Expect.fail (format
                     [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
                     , description ("\t{}")
@@ -184,10 +185,10 @@ httpSendTests =
                 testModel = { defaultModel | query = "?type=awesome" }
                 initialState = Elmer.componentState testModel App.view (App.update fakeHttpSend)
               in
-                Elmer.find "#request-data-click" initialState
+                Markup.find "#request-data-click" initialState
                   |> Event.click
-                  |> Elmer.find "#data-result"
-                  |> Elmer.expectNode (Matchers.hasText "awesome things")
+                  |> Markup.find "#data-result"
+                  |> Markup.expectNode (Matchers.hasText "awesome things")
                   |> Expect.equal Expect.pass
           ]
         , describe "when the response body can be processed"
@@ -199,10 +200,10 @@ httpSendTests =
                 fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
                 initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
               in
-                Elmer.find "#request-data-click" initialState
+                Markup.find "#request-data-click" initialState
                   |> Event.click
-                  |> Elmer.find "#data-result"
-                  |> Elmer.expectNode (Matchers.hasText "Super Fun Person")
+                  |> Markup.find "#data-result"
+                  |> Markup.expectNode (Matchers.hasText "Super Fun Person")
                   |> Expect.equal Expect.pass
           ]
         ]
@@ -221,10 +222,10 @@ errorResponseTests =
         fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
         initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
       in
-        Elmer.find "#request-data-click" initialState
+        Markup.find "#request-data-click" initialState
           |> Event.click
-          |> Elmer.find "#data-result"
-          |> Elmer.expectNode (Matchers.hasText "Timeout Error")
+          |> Markup.find "#data-result"
+          |> Markup.expectNode (Matchers.hasText "Timeout Error")
   ]
 
 
@@ -340,7 +341,7 @@ expectRequestDataTests =
         fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
         initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
       in
-        Elmer.find "#request-data-click" initialState
+        Markup.find "#request-data-click" initialState
           |> Event.click
           |> ElmerHttp.expectGET "http://fun.com/fun.html" (
             hasHeader ("x-fun", "fun") <&&>
@@ -356,7 +357,7 @@ resolveTests =
       |> HttpStub.deferResponse
     fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
     initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
-    requestedState = Elmer.find "#request-data-click" initialState
+    requestedState = Markup.find "#request-data-click" initialState
           |> Event.click
   in
     describe "when there is no upstream failure"
@@ -366,15 +367,15 @@ resolveTests =
           ElmerHttp.expectGET "http://fun.com/fun.html" hasBeenRequested requestedState
       , test "it does not yet resolve the response" <|
         \() ->
-          Elmer.find "#data-result" requestedState
-            |> Elmer.expectNode (Matchers.hasText "")
+          Markup.find "#data-result" requestedState
+            |> Markup.expectNode (Matchers.hasText "")
       ]
     , describe "when resolve is called"
       [ test "it resolves the response" <|
         \() ->
           Elmer.Command.resolveDeferred requestedState
-            |> Elmer.find "#data-result"
-            |> Elmer.expectNode (Matchers.hasText "Cool Dude")
+            |> Markup.find "#data-result"
+            |> Markup.expectNode (Matchers.hasText "Cool Dude")
       ]
     ]
 
