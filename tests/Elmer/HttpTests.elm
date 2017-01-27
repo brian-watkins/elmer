@@ -231,19 +231,10 @@ errorResponseTests =
 componentStateWithRequests : List HttpRequestData -> ComponentStateResult SimpleApp.Model SimpleApp.Msg
 componentStateWithRequests requestData =
   let
-    state =
-      { model = SimpleApp.defaultModel
-      , view = SimpleApp.view
-      , update = SimpleApp.update
-      , targetNode = Nothing
-      , locationParser = Nothing
-      , location = Nothing
-      , httpRequests = requestData
-      , deferredCommands = []
-      , mockCommands = []
-      }
+    defaultState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
   in
-    CurrentState state
+    defaultState
+      |> Elmer.map (\state -> CurrentState { state | httpRequests = requestData })
 
 testRequest : String -> String -> HttpRequestData
 testRequest method url =

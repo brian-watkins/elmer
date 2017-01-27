@@ -241,13 +241,13 @@ that fetches the current time and wraps it with a message, like so:
 Task.perform NewTime Time.now
 ```
 
-We want to improve our test so that it drives our this implementation. To do so, we'll need to provide a fake version of this function, since Elmer doesn't actually know how to process a task that will return the time. We can use `Elmer.Command.messageCommand`, which lets us create a command whose effect is the message we provide, to specify exactly what time we want for
+We want to improve our test so that it drives our this implementation. To do so, we'll need to provide a fake version of this function, since Elmer doesn't actually know how to process a task that will return the time. We can use `Elmer.Command.stubbedCommand`, which lets us create a command whose effect is the message we provide, to specify exactly what time we want for
 our test. First, we create a fake version of `Task.perform` in our test module:
 
 ```
 fakeTimeTask : Time -> (Time -> Msg) -> Task Never Time -> Cmd Msg
 fakeTimeTask time tagger task =
-  Command.messageCommand (tagger time)
+  Command.stubbedCommand (tagger time)
 ```
 
 Then we restructure our app so that we can inject this function into the update method:
@@ -413,13 +413,13 @@ deferred commands will be resolved when this function is called.
 When you create your `HttpResponseStub` just use the `Elmer.Http.Stub.deferResponse` builder function
 to indicate that this response should be deferred until `Elmer.Command.resolveDeferred` is called.
 
-#### Mock Commands
+#### Dummy Commands
 
 You might want to write a test that expects a command to be sent, but doesn't care to describe the
 behavior that results from processing that command -- perhaps that is tested somewhere else. In
-that case, you could use `Elmer.Command.mockCommand <identifier>` to create a mock command.
-When Elmer processes a mock command, it simply records the fact that the command was sent; it
-does not feed any message back into the system. In your test, use `Elmer.command.expectMock <indentifier>`
+that case, you could use `Elmer.Command.dummyCommand <identifier>` to create a dummy command.
+When Elmer processes a dummy command, it simply records the fact that the command was sent; otherwise
+it treats the command just like `Cmd.none`. In your test, use `Elmer.command.expectDummy <identifier>`
 to expect that the command was sent.
 
 ### Development

@@ -104,7 +104,7 @@ appFlowTests =
 
 fakeTimeTask : Time -> (Time -> TimeApp.Msg) -> Task Never Time -> Cmd TimeApp.Msg
 fakeTimeTask time tagger task =
-  Command.messageCommand (tagger time)
+  Command.stubbedCommand (tagger time)
 
 timeAppTests : Test
 timeAppTests =

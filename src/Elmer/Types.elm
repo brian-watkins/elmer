@@ -56,7 +56,7 @@ type alias HtmlComponentState model msg =
     , location : Maybe String
     , httpRequests : List HttpRequestData
     , deferredCommands : List (Cmd msg)
-    , mockCommands : List String
+    , dummyCommands : List String
     }
 
 

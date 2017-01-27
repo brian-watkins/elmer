@@ -44,9 +44,9 @@ commandRunners =
     [ elmerFailureCommandRunner
     , navigationCommandRunner
     , httpCommandRunner
-    , elmerMessageCommandRunner
+    , elmerstubbedCommandRunner
     , elmerDeferredCommandRunner
-    , mockCommandRunner
+    , dummyCommandRunner
     ]
 
 
@@ -61,8 +61,8 @@ elmerFailureCommandRunner =
           CommandError message
   }
 
-elmerMessageCommandRunner : CommandRunner model subMsg msg
-elmerMessageCommandRunner =
+elmerstubbedCommandRunner : CommandRunner model subMsg msg
+elmerstubbedCommandRunner =
   { name = "Elmer_Message"
   , run =
     \data tagger ->
@@ -90,21 +90,21 @@ updateComponentStateWithDeferredCommand command componentState =
   in
     ( updatedComponentState, Cmd.none )
 
-mockCommandRunner : CommandRunner model subMsg msg
-mockCommandRunner =
-  { name = "Elmer_Mock"
+dummyCommandRunner : CommandRunner model subMsg msg
+dummyCommandRunner =
+  { name = "Elmer_Dummy"
   , run =
     \data tagger ->
       let
         identifier = Native.Helpers.commandValue data.command
       in
-        CommandSuccess (updateComponentStateWithMockCommand identifier)
+        CommandSuccess (updateComponentStateWithDummyCommand identifier)
   }
 
-updateComponentStateWithMockCommand : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
-updateComponentStateWithMockCommand identifier componentState =
+updateComponentStateWithDummyCommand : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateComponentStateWithDummyCommand identifier componentState =
   let
-    updatedComponentState = { componentState | mockCommands = identifier :: componentState.mockCommands }
+    updatedComponentState = { componentState | dummyCommands = identifier :: componentState.dummyCommands }
   in
     ( updatedComponentState, Cmd.none )
 

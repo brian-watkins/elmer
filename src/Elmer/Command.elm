@@ -1,9 +1,9 @@
 module Elmer.Command exposing
   ( failureCommand
-  , messageCommand
+  , stubbedCommand
   , deferredCommand
-  , mockCommand
-  , expectMock
+  , dummyCommand
+  , expectDummy
   , resolveDeferred
   , send
   )
@@ -18,22 +18,22 @@ failureCommand : String -> Cmd msg
 failureCommand message =
   Native.Helpers.toCmd "Elmer_Failure" message
 
-messageCommand : msg -> Cmd msg
-messageCommand message =
+stubbedCommand : msg -> Cmd msg
+stubbedCommand message =
   Native.Helpers.toCmd "Elmer_Message" message
 
-mockCommand : String -> Cmd msg
-mockCommand identifier =
-  Native.Helpers.toCmd "Elmer_Mock" identifier
+dummyCommand : String -> Cmd msg
+dummyCommand identifier =
+  Native.Helpers.toCmd "Elmer_Dummy" identifier
 
-expectMock : String -> ComponentStateResult model msg -> Expect.Expectation
-expectMock expectedIdentifier =
+expectDummy : String -> ComponentStateResult model msg -> Expect.Expectation
+expectDummy expectedIdentifier =
   Elmer.mapToExpectation (\componentState ->
     let
-      mockCommands = List.filter (\identifier -> identifier == expectedIdentifier) componentState.mockCommands
+      dummyCommands = List.filter (\identifier -> identifier == expectedIdentifier) componentState.dummyCommands
     in
-      if List.isEmpty mockCommands then
-        Expect.fail (format [message "No mock commands sent with identifier" expectedIdentifier])
+      if List.isEmpty dummyCommands then
+        Expect.fail (format [message "No dummy commands sent with identifier" expectedIdentifier])
       else
         Expect.pass
   )

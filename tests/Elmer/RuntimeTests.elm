@@ -23,11 +23,11 @@ all =
 
 sendFirstMessage : String -> Cmd App.Msg
 sendFirstMessage str =
-  Command.messageCommand (App.RenderFirstMessage str)
+  Command.stubbedCommand (App.RenderFirstMessage str)
 
 sendSecondMessage : String -> Cmd App.Msg
 sendSecondMessage str =
-  Command.messageCommand (App.RenderSecondMessage str)
+  Command.stubbedCommand (App.RenderSecondMessage str)
 
 batchCommandTest : Test
 batchCommandTest =

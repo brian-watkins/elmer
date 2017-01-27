@@ -30,7 +30,7 @@ componentState model view update =
         , location = Nothing
         , httpRequests = []
         , deferredCommands = []
-        , mockCommands = []
+        , dummyCommands = []
         }
 
 
@@ -50,7 +50,7 @@ navigationComponentState model view update parser =
         , location = Nothing
         , httpRequests = []
         , deferredCommands = []
-        , mockCommands = []
+        , dummyCommands = []
         }
 
 (<&&>) : Matcher a -> Matcher a -> Matcher a

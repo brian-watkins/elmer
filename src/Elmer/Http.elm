@@ -177,7 +177,7 @@ processResponse httpRequest tagger responseResult =
     |> Result.andThen handleResponseStatus
     |> Result.andThen (handleResponse httpRequest)
     |> Result.mapError (mapResponseError httpRequest tagger)
-    |> Result.map (\d -> Command.messageCommand (tagger (Ok d)))
+    |> Result.map (\d -> Command.stubbedCommand (tagger (Ok d)))
 
 mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
 mapResponseError httpRequest tagger error =
@@ -191,7 +191,7 @@ mapResponseError httpRequest tagger error =
         ]
       )
     _ ->
-      Command.messageCommand (tagger (Err error))
+      Command.stubbedCommand (tagger (Err error))
 
 
 handleResponseError : HttpResponseResult -> Result Http.Error (Http.Response String)

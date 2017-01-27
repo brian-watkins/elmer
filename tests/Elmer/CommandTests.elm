@@ -15,10 +15,10 @@ all : Test
 all =
   describe "Command Tests"
   [ elmerFailureCommandTest
-  , elmerMessageCommandTest
+  , elmerStubbedCommandTest
   , resolveDeferredCommandsTest
   , sendCommandTest
-  , mockCommandTest
+  , dummyCommandTests
   ]
 
 elmerFailureCommandTest : Test
@@ -33,16 +33,16 @@ elmerFailureCommandTest =
         Expect.equal (UpstreamFailure "You failed!") result
   ]
 
-elmerMessageCommandTest : Test
-elmerMessageCommandTest =
-  describe "when the message command is processed"
+elmerStubbedCommandTest : Test
+elmerStubbedCommandTest =
+  describe "when the stubbed command is processed"
   [ test "it sends the message" <|
     \() ->
       let
         initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
         msg = MessageApp.RenderFirstMessage "Hey this is the message!"
       in
-        Command.send (Command.messageCommand msg) initialState
+        Command.send (Command.stubbedCommand msg) initialState
           |> Elmer.find "#first-message"
           |> Elmer.expectNode (Matchers.hasText "Hey this is the message!")
   ]
@@ -70,7 +70,7 @@ resolveDeferredCommandsTest =
     ]
   , let
       initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-      deferredClickCommand = Command.messageCommand ClickApp.DoClick
+      deferredClickCommand = Command.stubbedCommand ClickApp.DoClick
                               |> Command.deferredCommand
       state = Command.send deferredClickCommand initialState
                 |> Command.send deferredClickCommand
@@ -113,7 +113,7 @@ sendCommandTest =
         \() ->
           let
             initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
-            result = Command.send (Command.messageCommand (MessageApp.RenderFirstMessage "Did it!")) initialState
+            result = Command.send (Command.stubbedCommand (MessageApp.RenderFirstMessage "Did it!")) initialState
           in
             case result of
               CurrentState updatedState ->
@@ -124,38 +124,38 @@ sendCommandTest =
   ]
 
 
-mockCommandTest : Test
-mockCommandTest =
-  describe "expectMock"
+dummyCommandTests : Test
+dummyCommandTests =
+  describe "expectDummy"
   [ describe "when there is an upstream failure"
     [ test "it shows the failure" <|
       \() ->
         let
           state = UpstreamFailure "You Failed!"
-          result = Command.expectMock "someCommand" state
+          result = Command.expectDummy "someCommand" state
         in
           Expect.equal (Expect.fail "You Failed!") result
     ]
-  , describe "when no mock commands with the identifier are found"
+  , describe "when no dummy commands with the identifier are found"
     [ test "it fails" <|
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          mockCommand = Command.mockCommand "someCommand"
+          dummyCommand = Command.dummyCommand "someCommand"
         in
-          Command.send mockCommand initialState
-            |> Command.expectMock "fakeCommand"
-            |> Expect.equal (Expect.fail (format [message "No mock commands sent with identifier" "fakeCommand"]))
+          Command.send dummyCommand initialState
+            |> Command.expectDummy "fakeCommand"
+            |> Expect.equal (Expect.fail (format [message "No dummy commands sent with identifier" "fakeCommand"]))
     ]
-  , describe "when mock commands with the identifier are found"
+  , describe "when dummy commands with the identifier are found"
     [ test "it passes" <|
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          mockCommand = Command.mockCommand "fakeCommand"
+          dummyCommand = Command.dummyCommand "fakeCommand"
         in
-          Command.send mockCommand initialState
-            |> Command.expectMock "fakeCommand"
+          Command.send dummyCommand initialState
+            |> Command.expectDummy "fakeCommand"
             |> Expect.equal Expect.pass
     ]
   ]
