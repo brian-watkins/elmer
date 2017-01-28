@@ -15,9 +15,7 @@ type alias CommandEffect model msg =
   HtmlComponentState model msg -> (HtmlComponentState model msg, Cmd msg)
 
 type alias CommandRunner model subMsg msg =
-    { name : String
-    , run : LeafCommandData subMsg -> (subMsg -> msg) -> CommandResult model msg
-    }
+  LeafCommandData subMsg -> (subMsg -> msg) -> CommandResult model msg
 
 type CommandData msg subMsg
     = LeafCommand (LeafCommandData msg)
@@ -25,87 +23,70 @@ type CommandData msg subMsg
     | BatchCommand (List (Cmd msg))
     | NoCommand
 
-
 type alias MapCommandData subMsg msg =
     { tree : Cmd subMsg
     , tagger : subMsg -> msg
     }
-
 
 type alias LeafCommandData msg =
     { command : Cmd msg
     , home : String
     }
 
-
-commandRunners : List (CommandRunner model subMsg msg)
+commandRunners : Dict String (CommandRunner model subMsg msg)
 commandRunners =
-    [ elmerFailureCommandRunner
-    , elmerstubbedCommandRunner
-    , mapStateCommandRunner
-    , generateCommandRunner
+  Dict.fromList <|
+    [ ( "Elmer_Failure", elmerFailureCommandRunner )
+    , ( "Elmer_Message", elmerStubbedCommandRunner )
+    , ( "Elmer_Generate", generateCommandRunner )
+    , ( "Elmer_MapState", mapStateCommandRunner )
     ]
 
+
 mapStateCommandRunner : CommandRunner model subMsg msg
-mapStateCommandRunner =
-  { name = "Elmer_MapState"
-  , run =
-    \data tagger ->
-      let
-        componentStateMapper = Native.Helpers.commandValue data.command
-      in
-        CommandSuccess (mapComponentState componentStateMapper)
-  }
+mapStateCommandRunner data _ =
+  let
+    componentStateMapper = Native.Helpers.commandValue data.command
+  in
+    CommandSuccess (mapComponentState componentStateMapper)
 
 mapComponentState : (HtmlComponentState model msg -> HtmlComponentState model msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
 mapComponentState mapper componentState =
   ( mapper componentState, Cmd.none )
 
+
 generateCommandRunner : CommandRunner model subMsg msg
-generateCommandRunner =
-  { name = "Elmer_Generate"
-  , run =
-    \data tagger ->
-      let
-        generator = Native.Helpers.commandValue data.command
-      in
-        CommandSuccess (generateCommand generator)
-  }
+generateCommandRunner data _ =
+  let
+    generator = Native.Helpers.commandValue data.command
+  in
+    CommandSuccess (generateCommand generator)
 
 generateCommand : (HtmlComponentState model msg -> Cmd msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
 generateCommand generator componentState =
   ( componentState, generator componentState )
 
-elmerFailureCommandRunner : CommandRunner model subMsg msg
-elmerFailureCommandRunner =
-  { name = "Elmer_Failure"
-  , run =
-      \data _ ->
-        let
-          message = Native.Helpers.commandValue data.command
-        in
-          CommandError message
-  }
 
-elmerstubbedCommandRunner : CommandRunner model subMsg msg
-elmerstubbedCommandRunner =
-  { name = "Elmer_Message"
-  , run =
-    \data tagger ->
-      let
-        msg = Native.Helpers.commandValue data.command
-      in
-        CommandSuccess (updateComponentState (tagger msg))
-  }
+elmerFailureCommandRunner : CommandRunner model subMsg msg
+elmerFailureCommandRunner data _ =
+  let
+    message = Native.Helpers.commandValue data.command
+  in
+    CommandError message
+
+
+elmerStubbedCommandRunner : CommandRunner model subMsg msg
+elmerStubbedCommandRunner data tagger =
+  let
+    msg = Native.Helpers.commandValue data.command
+  in
+    CommandSuccess (updateComponentState (tagger msg))
 
 
 identityRunner : CommandRunner model subMsg msg
-identityRunner =
-    { name = ""
-    , run =
-        \_ _ ->
-            CommandSuccess (\componentState -> ( componentState, Cmd.none ))
-    }
+identityRunner _ _ =
+  CommandSuccess (\componentState -> ( componentState, Cmd.none ))
+
 
 identityTagger : msg -> msg
 identityTagger msg =
@@ -135,7 +116,8 @@ performUpdate message componentState =
 
 commandRunnerForData : String -> CommandRunner model subMsg msg
 commandRunnerForData commandName =
-    Maybe.withDefault identityRunner (List.head (List.filter (\r -> r.name == commandName) commandRunners))
+  Dict.get commandName commandRunners
+    |> Maybe.withDefault identityRunner
 
 
 performCommand : Cmd msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
@@ -176,7 +158,7 @@ runCommand tagger command =
         LeafCommand data ->
             let
               runner = commandRunnerForData data.home
-              commandResult = runner.run data tagger
+              commandResult = runner data tagger
             in
                 [ commandResult ]
 
