@@ -5,6 +5,7 @@ module Elmer.Runtime
         )
 
 import Elmer.Types exposing (..)
+import Elmer.Printer exposing (..)
 import Dict exposing (Dict)
 
 type CommandResult model msg
@@ -83,9 +84,13 @@ elmerStubbedCommandRunner data tagger =
     CommandSuccess (updateComponentState (tagger msg))
 
 
-identityRunner : CommandRunner model subMsg msg
-identityRunner _ _ =
-  CommandSuccess (\componentState -> ( componentState, Cmd.none ))
+unknownCommandRunner : CommandRunner model subMsg msg
+unknownCommandRunner data _ =
+  CommandError <|
+    format <|
+      [ message "Elmer encountered a command it does not know how to run" data.home
+      , description "Try sending a stubbed or dummy command instead"
+      ]
 
 
 identityTagger : msg -> msg
@@ -117,7 +122,7 @@ performUpdate message componentState =
 commandRunnerForData : String -> CommandRunner model subMsg msg
 commandRunnerForData commandName =
   Dict.get commandName commandRunners
-    |> Maybe.withDefault identityRunner
+    |> Maybe.withDefault unknownCommandRunner
 
 
 performCommand : Cmd msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)

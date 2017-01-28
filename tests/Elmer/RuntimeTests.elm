@@ -13,6 +13,8 @@ import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Command as Command
 import Elmer.Html as Markup
+import Elmer.Printer exposing (..)
+import Task
 
 all : Test
 all =
@@ -20,6 +22,7 @@ all =
   [ batchCommandTest
   , batchCommandFailureTest
   , mappedBatchCommandTest
+  , unknownCommandTest
   ]
 
 sendFirstMessage : String -> Cmd App.Msg
@@ -110,3 +113,21 @@ parentUpdate parentMsg model =
         updatedCmd = Cmd.map AppMsg updatedAppCmd
       in
         ( updatedModel, updatedCmd )
+
+
+unknownCommandTest : Test
+unknownCommandTest =
+  describe "when the runtime receives an unknown command"
+  [ test "it fails" <|
+    \() ->
+      let
+        initialState = Elmer.componentState App.defaultModel App.view App.update
+        unknownCommand = Task.perform App.RenderFirstMessage (Task.succeed "hello")
+      in
+        Command.send unknownCommand initialState
+          |> Expect.equal (UpstreamFailure ( format
+            [ message "Elmer encountered a command it does not know how to run" "Task"
+            , description "Try sending a stubbed or dummy command instead"
+            ]
+          ))
+  ]
