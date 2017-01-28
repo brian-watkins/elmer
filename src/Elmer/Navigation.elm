@@ -6,15 +6,42 @@ module Elmer.Navigation
         )
 
 import Elmer.Command as Command
+import Elmer.Command.Internal as InternalCommand
 import Elmer.Types exposing (..)
 import Elmer
 import Expect
 import Elmer.Printer exposing (..)
+import Elmer.Navigation.Location as Location
+import Navigation
 
 
 fakeNavigateCommand : String -> Cmd msg
 fakeNavigateCommand url =
-  Native.Helpers.toCmd "Elmer_Navigation" url
+  let
+    parseCommand = InternalCommand.generate <| generateCommandForLocation url
+    stateCommand = InternalCommand.mapState <| storeLocation url
+  in
+    Cmd.batch [ stateCommand, parseCommand ]
+
+generateCommandForLocation : String -> HtmlComponentState model msg -> Cmd msg
+generateCommandForLocation url componentState =
+  case componentState.locationParser of
+    Just locationParser ->
+      let
+        message = handleLocationUpdate url locationParser
+      in
+        Command.stubbedCommand message
+    Nothing ->
+      Cmd.none
+
+handleLocationUpdate : String -> (Navigation.Location -> msg) -> msg
+handleLocationUpdate url parser =
+    (parser (Location.asLocation url))
+
+storeLocation : String -> HtmlComponentState model msg -> HtmlComponentState model msg
+storeLocation url componentState =
+  { componentState | location = Just url }
+
 
 expectLocation : String -> ComponentStateResult model msg -> Expect.Expectation
 expectLocation expectedURL =

@@ -5,7 +5,6 @@ module Elmer.Runtime
         )
 
 import Elmer.Types exposing (..)
-import Elmer.Navigation.Runner as ElmerNav
 import Dict exposing (Dict)
 
 type CommandResult model msg
@@ -42,9 +41,9 @@ type alias LeafCommandData msg =
 commandRunners : List (CommandRunner model subMsg msg)
 commandRunners =
     [ elmerFailureCommandRunner
-    , navigationCommandRunner
     , elmerstubbedCommandRunner
     , mapStateCommandRunner
+    , generateCommandRunner
     ]
 
 mapStateCommandRunner : CommandRunner model subMsg msg
@@ -61,6 +60,21 @@ mapStateCommandRunner =
 mapComponentState : (HtmlComponentState model msg -> HtmlComponentState model msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
 mapComponentState mapper componentState =
   ( mapper componentState, Cmd.none )
+
+generateCommandRunner : CommandRunner model subMsg msg
+generateCommandRunner =
+  { name = "Elmer_Generate"
+  , run =
+    \data tagger ->
+      let
+        generator = Native.Helpers.commandValue data.command
+      in
+        CommandSuccess (generateCommand generator)
+  }
+
+generateCommand : (HtmlComponentState model msg -> Cmd msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+generateCommand generator componentState =
+  ( componentState, generator componentState )
 
 elmerFailureCommandRunner : CommandRunner model subMsg msg
 elmerFailureCommandRunner =
@@ -83,31 +97,6 @@ elmerstubbedCommandRunner =
       in
         CommandSuccess (updateComponentState (tagger msg))
   }
-
-navigationCommandRunner : CommandRunner model subMsg msg
-navigationCommandRunner =
-  { name = "Elmer_Navigation"
-  , run =
-      \data _ ->
-        let
-          url = Native.Helpers.commandValue data.command
-        in
-          CommandSuccess (updateComponentStateWithLocation url)
-  }
-
-updateComponentStateWithLocation : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
-updateComponentStateWithLocation url componentState =
-  let
-      updatedComponentState = { componentState | location = Just url }
-  in
-      case updatedComponentState.locationParser of
-          Just locationParser ->
-            let
-                message = ElmerNav.handleLocationUpdate url locationParser
-            in
-                updateComponentState message updatedComponentState
-          Nothing ->
-              ( updatedComponentState, Cmd.none )
 
 
 identityRunner : CommandRunner model subMsg msg
