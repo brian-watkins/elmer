@@ -36,7 +36,7 @@ type alias LeafCommandData msg =
 commandRunners : Dict String (CommandRunner model subMsg msg)
 commandRunners =
   Dict.fromList <|
-    [ ( "Elmer_Failure", elmerFailureCommandRunner )
+    [ ( "Elmer_Fail", elmerFailureCommandRunner )
     , ( "Elmer_Stub", elmerStubbedCommandRunner )
     , ( "Elmer_Generate", generateCommandRunner )
     , ( "Elmer_MapState", mapStateCommandRunner )

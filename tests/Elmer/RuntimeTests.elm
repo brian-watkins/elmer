@@ -57,7 +57,7 @@ batchCommandFailureTest =
     initialState = Elmer.componentState App.defaultModel App.view App.update
     batchCommand = Cmd.batch
       [ sendFirstMessage "Cool stuff!"
-      , Command.failureCommand "It failed!"
+      , Command.fail "It failed!"
       , sendSecondMessage "Fun stuff!"
       ]
     result = Command.send batchCommand initialState

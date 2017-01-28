@@ -29,7 +29,7 @@ elmerFailureCommandTest =
     \() ->
       let
         initialState = Elmer.componentState App.defaultModel App.view App.update
-        result = Command.send (Command.failureCommand "You failed!") initialState
+        result = Command.send (Command.fail "You failed!") initialState
       in
         Expect.equal (UpstreamFailure "You failed!") result
   ]

@@ -1,5 +1,5 @@
 module Elmer.Command exposing
-  ( failureCommand
+  ( fail
   , stub
   , defer
   , resolveDeferred
@@ -15,9 +15,9 @@ import Elmer.Printer exposing (..)
 import Elmer.Command.Internal as InternalCommand
 import Expect
 
-failureCommand : String -> Cmd msg
-failureCommand message =
-  Native.Helpers.toCmd "Elmer_Failure" message
+fail : String -> Cmd msg
+fail message =
+  Native.Helpers.toCmd "Elmer_Fail" message
 
 stub : msg -> Cmd msg
 stub message =
