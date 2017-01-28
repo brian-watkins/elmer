@@ -115,23 +115,28 @@ expectRequest method url requestMatcher =
   Elmer.mapToExpectation <|
     \componentState ->
       if String.contains "?" url then
-        Expect.fail ( format
+        Expect.fail <| format
           [ message "The expected route contains a query string" url
           , description "Use the hasQueryParam matcher instead"
           ]
-        )
       else
         case hasRequest componentState.httpRequests method url of
           Just request ->
             requestMatcher request
           Nothing ->
             if List.isEmpty componentState.httpRequests then
-              Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), description "but no requests have been made" ])
+              Expect.fail <| format
+                [ message "Expected request for" (method ++ " " ++ url)
+                , description "but no requests have been made"
+                ]
             else
               let
                 requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
               in
-              Expect.fail (format [ message "Expected request for" (method ++ " " ++ url), message "but only found these requests" requests ])
+                Expect.fail <| format
+                  [ message "Expected request for" (method ++ " " ++ url)
+                  , message "but only found these requests" requests
+                  ]
 
 hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
 hasRequest requests method url =
@@ -141,7 +146,10 @@ hasRequest requests method url =
 responseStubIsValid : HttpResponseStub -> Result (Cmd msg) HttpResponseStub
 responseStubIsValid responseStub =
   if String.contains "?" responseStub.url then
-    Err (Command.fail (format [message "Sent a request where a stubbed route contains a query string" responseStub.url, description "Stubbed routes may not contain a query string"]))
+    Err <| Command.fail <| format
+      [ message "Sent a request where a stubbed route contains a query string" responseStub.url
+      , description "Stubbed routes may not contain a query string"
+      ]
   else
     Ok responseStub
 
@@ -155,7 +163,10 @@ matchRequestUrl httpRequest responseStub =
   if (route httpRequest.url) == responseStub.url then
     Ok responseStub
   else
-    Err (Command.fail (format [message "Received a request for" httpRequest.url, message "but it has not been stubbed. The stubbed request is" responseStub.url ]))
+    Err <| Command.fail <| format
+      [ message "Received a request for" httpRequest.url
+      , message "but it has not been stubbed. The stubbed request is" responseStub.url
+      ]
 
 route : String -> String
 route url =
@@ -168,7 +179,10 @@ matchRequestMethod httpRequest responseStub =
   if httpRequest.method == responseStub.method then
     Ok responseStub
   else
-    Err (Command.fail (format [message "A response has been stubbed for" httpRequest.url, description ("but it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method) ]))
+    Err <| Command.fail <| format
+      [ message "A response has been stubbed for" httpRequest.url
+      , description ("but it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method)
+      ]
 
 
 generateResponse : HttpResponseStub -> Result (Cmd msg) (HttpResponseResult)
@@ -188,13 +202,12 @@ mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -
 mapResponseError httpRequest tagger error =
   case error of
     Http.BadPayload msg response ->
-      Command.fail (format
+      Command.fail <| format
         [ message "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
         , description ("\t" ++ response.body)
         , message "failed with error" msg
         , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
         ]
-      )
     _ ->
       Command.stub (tagger (Err error))
 

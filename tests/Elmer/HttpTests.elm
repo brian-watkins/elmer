@@ -104,7 +104,11 @@ httpSendTests =
             |> Event.click
             |> Markup.find "#data-result"
             |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
-            |> Expect.equal (Expect.fail (format [message "Received a request for" "http://fun.com/fun.html", message "but it has not been stubbed. The stubbed request is" "http://wrongUrl.com"]))
+            |> Expect.equal (Expect.fail (format
+              [ message "Received a request for" "http://fun.com/fun.html"
+              , message "but it has not been stubbed. The stubbed request is" "http://wrongUrl.com"
+              ]
+            ))
     ]
   , describe "when the stubbed route contains a query string"
     [ test "it fails with a message" <|
@@ -119,7 +123,11 @@ httpSendTests =
             |> Event.click
             |> Markup.find "#data-result"
             |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
-            |> Expect.equal (Expect.fail (format [message "Sent a request where a stubbed route contains a query string" "http://wrongUrl.com?type=fun", description "Stubbed routes may not contain a query string"]))
+            |> Expect.equal (Expect.fail (format
+              [ message "Sent a request where a stubbed route contains a query string" "http://wrongUrl.com?type=fun"
+              , description "Stubbed routes may not contain a query string"
+              ]
+            ))
     ]
   , describe "when the requested url matches the stubbed response"
     [ describe "when the method does not match"
@@ -135,7 +143,11 @@ httpSendTests =
               |> Event.click
               |> Markup.find "#data-result"
               |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
-              |> Expect.equal (Expect.fail (format [message "A response has been stubbed for" "http://fun.com/fun.html", description "but it expects a POST not a GET"]))
+              |> Expect.equal (Expect.fail (format
+                [ message "A response has been stubbed for" "http://fun.com/fun.html"
+                , description "but it expects a POST not a GET"
+                ]
+              ))
       ]
     , describe "when the method matches"
       [ describe "when the response status is outside the 200 range"
@@ -261,7 +273,11 @@ expectRequestTests method func =
           initialState = componentStateWithRequests []
         in
           func "http://fun.com/fun?type=amazing" hasBeenRequested initialState
-            |> Expect.equal (Expect.fail (format [message "The expected route contains a query string" "http://fun.com/fun?type=amazing", description "Use the hasQueryParam matcher instead"]))
+            |> Expect.equal (Expect.fail (format
+              [ message "The expected route contains a query string" "http://fun.com/fun?type=amazing"
+              , description "Use the hasQueryParam matcher instead"
+              ]
+            ))
     ]
   , describe "when no requests have been recorded"
     [ test "it fails" <|
@@ -270,7 +286,11 @@ expectRequestTests method func =
           initialState = componentStateWithRequests []
         in
           func "http://fun.com/fun" hasBeenRequested initialState
-            |> Expect.equal (Expect.fail (format [message "Expected request for" (method ++ " http://fun.com/fun"), description "but no requests have been made"]))
+            |> Expect.equal (Expect.fail (format
+              [ message "Expected request for" (method ++ " http://fun.com/fun")
+              , description "but no requests have been made"
+              ]
+            ))
     ]
   , describe "when requests have been recorded"
     [ describe "when the url does not match any requests"
@@ -282,7 +302,11 @@ expectRequestTests method func =
             initialState = componentStateWithRequests [ request1, request2 ]
           in
             func "http://fun.com/awesome" hasBeenRequested initialState
-              |> Expect.equal (Expect.fail (format [message "Expected request for" (method ++ " http://fun.com/awesome"), message "but only found these requests" "POST http://fun.com/fun\n\n\tGET http://awesome.com/awesome.html?stuff=fun"]))
+              |> Expect.equal (Expect.fail (format
+                [ message "Expected request for" (method ++ " http://fun.com/awesome")
+                , message "but only found these requests" "POST http://fun.com/fun\n\n\tGET http://awesome.com/awesome.html?stuff=fun"
+                ]
+              ))
       ]
     , describe "when the url matches but not the method"
       [ test "it fails" <|
@@ -292,7 +316,11 @@ expectRequestTests method func =
             initialState = componentStateWithRequests [ request1 ]
           in
             func "http://fun.com/fun" hasBeenRequested initialState
-              |> Expect.equal (Expect.fail (format [message "Expected request for" (method ++ " http://fun.com/fun"), message "but only found these requests" "OTHER_METHOD http://fun.com/fun"]))
+              |> Expect.equal (Expect.fail (format
+                [ message "Expected request for" (method ++ " http://fun.com/fun")
+                , message "but only found these requests" "OTHER_METHOD http://fun.com/fun"
+                ]
+              ))
       ]
     , describe "when a matching request occurs"
       [ describe "when the request expectations fail"
