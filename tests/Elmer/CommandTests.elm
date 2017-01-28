@@ -72,7 +72,7 @@ resolveDeferredCommandsTest =
   , let
       initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
       deferredClickCommand = Command.stubbedCommand ClickApp.DoClick
-                              |> Command.deferredCommand
+                              |> Command.defer
       state = Command.send deferredClickCommand initialState
                 |> Command.send deferredClickCommand
                 |> Command.send deferredClickCommand
@@ -142,7 +142,7 @@ dummyCommandTests =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          dummyCommand = Command.dummyCommand "someCommand"
+          dummyCommand = Command.dummy "someCommand"
         in
           Command.send dummyCommand initialState
             |> Command.expectDummy "fakeCommand"
@@ -153,7 +153,7 @@ dummyCommandTests =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          dummyCommand = Command.dummyCommand "fakeCommand"
+          dummyCommand = Command.dummy "fakeCommand"
         in
           Command.send dummyCommand initialState
             |> Command.expectDummy "fakeCommand"

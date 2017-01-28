@@ -16,6 +16,7 @@ import Dict
 import Elmer
 import Elmer.Types exposing (..)
 import Elmer.Command as Command
+import Elmer.Command.Internal as InternalCommand
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
@@ -77,12 +78,16 @@ toHttpCommand shouldDeferResponse request command =
       , body = request.body
       , headers = request.headers
       }
-    httpCommand = Native.Helpers.toCmd "Elmer_Http" requestData
+    httpCommand = InternalCommand.mapState <| updateComponentState requestData
   in
     if shouldDeferResponse then
-      Cmd.batch [ httpCommand, Command.deferredCommand command ]
+      Cmd.batch [ httpCommand, Command.defer command ]
     else
       Cmd.batch [ httpCommand, command ]
+
+updateComponentState : HttpRequestData -> HtmlComponentState model msg -> HtmlComponentState model msg
+updateComponentState requestData componentState =
+  { componentState | httpRequests = requestData :: componentState.httpRequests }
 
 clearRequestHistory : ComponentStateResult model msg -> ComponentStateResult model msg
 clearRequestHistory =

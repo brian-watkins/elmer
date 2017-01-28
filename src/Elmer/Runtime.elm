@@ -43,12 +43,24 @@ commandRunners : List (CommandRunner model subMsg msg)
 commandRunners =
     [ elmerFailureCommandRunner
     , navigationCommandRunner
-    , httpCommandRunner
     , elmerstubbedCommandRunner
-    , elmerDeferredCommandRunner
-    , dummyCommandRunner
+    , mapStateCommandRunner
     ]
 
+mapStateCommandRunner : CommandRunner model subMsg msg
+mapStateCommandRunner =
+  { name = "Elmer_MapState"
+  , run =
+    \data tagger ->
+      let
+        componentStateMapper = Native.Helpers.commandValue data.command
+      in
+        CommandSuccess (mapComponentState componentStateMapper)
+  }
+
+mapComponentState : (HtmlComponentState model msg -> HtmlComponentState model msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+mapComponentState mapper componentState =
+  ( mapper componentState, Cmd.none )
 
 elmerFailureCommandRunner : CommandRunner model subMsg msg
 elmerFailureCommandRunner =
@@ -71,61 +83,6 @@ elmerstubbedCommandRunner =
       in
         CommandSuccess (updateComponentState (tagger msg))
   }
-
-elmerDeferredCommandRunner : CommandRunner model subMsg msg
-elmerDeferredCommandRunner =
-  { name = "Elmer_Deferred"
-  , run =
-    \data tagger ->
-      let
-        command = Native.Helpers.commandValue data.command
-      in
-        CommandSuccess (updateComponentStateWithDeferredCommand command)
-  }
-
-updateComponentStateWithDeferredCommand : Cmd msg -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
-updateComponentStateWithDeferredCommand command componentState =
-  let
-    updatedComponentState = { componentState | deferredCommands = command :: componentState.deferredCommands }
-  in
-    ( updatedComponentState, Cmd.none )
-
-dummyCommandRunner : CommandRunner model subMsg msg
-dummyCommandRunner =
-  { name = "Elmer_Dummy"
-  , run =
-    \data tagger ->
-      let
-        identifier = Native.Helpers.commandValue data.command
-      in
-        CommandSuccess (updateComponentStateWithDummyCommand identifier)
-  }
-
-updateComponentStateWithDummyCommand : String -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
-updateComponentStateWithDummyCommand identifier componentState =
-  let
-    updatedComponentState = { componentState | dummyCommands = identifier :: componentState.dummyCommands }
-  in
-    ( updatedComponentState, Cmd.none )
-
-
-httpCommandRunner : CommandRunner model subMsg msg
-httpCommandRunner =
-  { name = "Elmer_Http"
-  , run =
-      \data _ ->
-        let
-          requestData = Native.Helpers.commandValue data.command
-        in
-          CommandSuccess (updateComponentStateWithRequest requestData)
-  }
-
-updateComponentStateWithRequest : HttpRequestData -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
-updateComponentStateWithRequest requestData componentState =
-  let
-    updatedComponentState = { componentState | httpRequests = requestData :: componentState.httpRequests }
-  in
-    ( updatedComponentState, Cmd.none )
 
 navigationCommandRunner : CommandRunner model subMsg msg
 navigationCommandRunner =

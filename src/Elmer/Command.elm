@@ -1,10 +1,10 @@
 module Elmer.Command exposing
   ( failureCommand
   , stubbedCommand
-  , deferredCommand
-  , dummyCommand
-  , expectDummy
+  , defer
   , resolveDeferred
+  , dummy
+  , expectDummy
   , send
   )
 
@@ -12,6 +12,7 @@ import Elmer
 import Elmer.Types exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
+import Elmer.Command.Internal as InternalCommand
 import Expect
 
 failureCommand : String -> Cmd msg
@@ -22,9 +23,14 @@ stubbedCommand : msg -> Cmd msg
 stubbedCommand message =
   Native.Helpers.toCmd "Elmer_Message" message
 
-dummyCommand : String -> Cmd msg
-dummyCommand identifier =
-  Native.Helpers.toCmd "Elmer_Dummy" identifier
+dummy : String -> Cmd msg
+dummy identifier =
+  InternalCommand.mapState <|
+    updateComponentStateWithDummyCommand identifier
+
+updateComponentStateWithDummyCommand : String -> HtmlComponentState model msg -> HtmlComponentState model msg
+updateComponentStateWithDummyCommand identifier componentState =
+  { componentState | dummyCommands = identifier :: componentState.dummyCommands }
 
 expectDummy : String -> ComponentStateResult model msg -> Expect.Expectation
 expectDummy expectedIdentifier =
@@ -38,9 +44,15 @@ expectDummy expectedIdentifier =
         Expect.pass
   )
 
-deferredCommand : Cmd msg -> Cmd msg
-deferredCommand command =
-  Native.Helpers.toCmd "Elmer_Deferred" command
+defer : Cmd msg -> Cmd msg
+defer command =
+  InternalCommand.mapState <|
+    updateComponentStateWithDeferredCommand command
+
+updateComponentStateWithDeferredCommand : Cmd msg -> HtmlComponentState model msg -> HtmlComponentState model msg
+updateComponentStateWithDeferredCommand command componentState =
+  { componentState | deferredCommands = command :: componentState.deferredCommands }
+
 
 resolveDeferred : ComponentStateResult model msg -> ComponentStateResult model msg
 resolveDeferred =
