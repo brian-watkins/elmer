@@ -241,13 +241,13 @@ that fetches the current time and wraps it with a message, like so:
 Task.perform NewTime Time.now
 ```
 
-We want to improve our test so that it drives our this implementation. To do so, we'll need to provide a fake version of this function, since Elmer doesn't actually know how to process a task that will return the time. We can use `Elmer.Command.stubbedCommand`, which lets us create a command whose effect is the message we provide, to specify exactly what time we want for
+We want to improve our test so that it drives our this implementation. To do so, we'll need to provide a fake version of this function, since Elmer doesn't actually know how to process a task that will return the time. We can use `Elmer.Command.stub`, which lets us create a command whose effect is the message we provide, to specify exactly what time we want for
 our test. First, we create a fake version of `Task.perform` in our test module:
 
 ```
 fakeTimeTask : Time -> (Time -> Msg) -> Task Never Time -> Cmd Msg
 fakeTimeTask time tagger task =
-  Command.stubbedCommand (tagger time)
+  Command.stub (tagger time)
 ```
 
 Then we restructure our app so that we can inject this function into the update method:
@@ -405,7 +405,7 @@ You can use the `Elmer.Command.send` function to simulate this.
 
 It's often necessary to test the state of a component while some command is running. For example,
 one might want to show a progress indicator while an HTTP request is in process. Elmer provides
-general support for deferred commands. Use `Elmer.Command.deferredCommand` to create a command that
+general support for deferred commands. Use `Elmer.Command.defer` to create a command that
 will not be processed until `Elmer.Command.resolveDeferred` is called. Note that all currently
 deferred commands will be resolved when this function is called.
 
@@ -417,7 +417,7 @@ to indicate that this response should be deferred until `Elmer.Command.resolveDe
 
 You might want to write a test that expects a command to be sent, but doesn't care to describe the
 behavior that results from processing that command -- perhaps that is tested somewhere else. In
-that case, you could use `Elmer.Command.dummyCommand <identifier>` to create a dummy command.
+that case, you could use `Elmer.Command.dummy <identifier>` to create a dummy command.
 When Elmer processes a dummy command, it simply records the fact that the command was sent; otherwise
 it treats the command just like `Cmd.none`. In your test, use `Elmer.command.expectDummy <identifier>`
 to expect that the command was sent.

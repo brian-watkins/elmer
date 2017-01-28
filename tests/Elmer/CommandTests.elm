@@ -43,7 +43,7 @@ elmerStubbedCommandTest =
         initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
         msg = MessageApp.RenderFirstMessage "Hey this is the message!"
       in
-        Command.send (Command.stubbedCommand msg) initialState
+        Command.send (Command.stub msg) initialState
           |> Markup.find "#first-message"
           |> Markup.expectNode (Matchers.hasText "Hey this is the message!")
   ]
@@ -71,7 +71,7 @@ resolveDeferredCommandsTest =
     ]
   , let
       initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-      deferredClickCommand = Command.stubbedCommand ClickApp.DoClick
+      deferredClickCommand = Command.stub ClickApp.DoClick
                               |> Command.defer
       state = Command.send deferredClickCommand initialState
                 |> Command.send deferredClickCommand
@@ -114,7 +114,7 @@ sendCommandTest =
         \() ->
           let
             initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
-            result = Command.send (Command.stubbedCommand (MessageApp.RenderFirstMessage "Did it!")) initialState
+            result = Command.send (Command.stub (MessageApp.RenderFirstMessage "Did it!")) initialState
           in
             case result of
               CurrentState updatedState ->

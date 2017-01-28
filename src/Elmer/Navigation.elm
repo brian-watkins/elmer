@@ -30,7 +30,7 @@ generateCommandForLocation url componentState =
       let
         message = handleLocationUpdate url locationParser
       in
-        Command.stubbedCommand message
+        Command.stub message
     Nothing ->
       Cmd.none
 

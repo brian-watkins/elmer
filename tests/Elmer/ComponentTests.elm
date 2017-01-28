@@ -20,7 +20,7 @@ all =
 
 subTask : Cmd App.MsgB
 subTask =
-  Command.stubbedCommand (HaveFun "bowling")
+  Command.stub (HaveFun "bowling")
 
 
 mapCommand =

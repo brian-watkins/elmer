@@ -1,6 +1,6 @@
 module Elmer.Command exposing
   ( failureCommand
-  , stubbedCommand
+  , stub
   , defer
   , resolveDeferred
   , dummy
@@ -19,9 +19,9 @@ failureCommand : String -> Cmd msg
 failureCommand message =
   Native.Helpers.toCmd "Elmer_Failure" message
 
-stubbedCommand : msg -> Cmd msg
-stubbedCommand message =
-  Native.Helpers.toCmd "Elmer_Message" message
+stub : msg -> Cmd msg
+stub message =
+  Native.Helpers.toCmd "Elmer_Stub" message
 
 dummy : String -> Cmd msg
 dummy identifier =

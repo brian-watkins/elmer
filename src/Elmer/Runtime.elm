@@ -37,7 +37,7 @@ commandRunners : Dict String (CommandRunner model subMsg msg)
 commandRunners =
   Dict.fromList <|
     [ ( "Elmer_Failure", elmerFailureCommandRunner )
-    , ( "Elmer_Message", elmerStubbedCommandRunner )
+    , ( "Elmer_Stub", elmerStubbedCommandRunner )
     , ( "Elmer_Generate", generateCommandRunner )
     , ( "Elmer_MapState", mapStateCommandRunner )
     ]
