@@ -24,6 +24,7 @@ all : Test
 all =
   describe "Http Tests"
   [ httpSendTests
+  , dummySendTests
   , requestRecordTests
   , noBodyRequestTests
   , errorResponseTests
@@ -90,15 +91,15 @@ noBodyRequestTests =
 
 httpSendTests : Test
 httpSendTests =
-  describe "fakeHttpSend"
+  describe "stubbedSend"
   [ describe "when the requested url is not stubbed"
     [ test "it fails with a message" <|
       \() ->
         let
           stubbedResponse = HttpStub.get "http://wrongUrl.com"
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-          fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-          initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+          stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+          initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
         in
           Markup.find "#request-data-click" initialState
             |> Event.click
@@ -116,8 +117,8 @@ httpSendTests =
         let
           stubbedResponse = HttpStub.get "http://wrongUrl.com?type=fun"
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-          fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-          initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+          stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+          initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
         in
           Markup.find "#request-data-click" initialState
             |> Event.click
@@ -136,8 +137,8 @@ httpSendTests =
           let
             stubbedResponse = HttpStub.post "http://fun.com/fun.html"
               |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-            fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-            initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+            stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+            initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
           in
             Markup.find "#request-data-click" initialState
               |> Event.click
@@ -156,8 +157,8 @@ httpSendTests =
             let
               stubbedResponse = HttpStub.get "http://fun.com/fun.html"
                 |> HttpStub.withStatus (HttpStub.httpStatus 404 "Not Found")
-              fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-              initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+              stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+              initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
             in
               Markup.find "#request-data-click" initialState
                 |> Event.click
@@ -171,8 +172,8 @@ httpSendTests =
               let
                 stubbedResponse = HttpStub.get "http://fun.com/fun.html"
                   |> HttpStub.withBody "{}"
-                fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-                initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+                stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+                initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
               in
                 Markup.find "#request-data-click" initialState
                   |> Event.click
@@ -193,9 +194,9 @@ httpSendTests =
                 defaultModel = App.defaultModel
                 stubbedResponse = HttpStub.get "http://fun.com/fun.html"
                   |> HttpStub.withBody "{\"name\":\"awesome things\"}"
-                fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
+                stubbedSend = ElmerHttp.stubbedSend stubbedResponse
                 testModel = { defaultModel | query = "?type=awesome" }
-                initialState = Elmer.componentState testModel App.view (App.update fakeHttpSend)
+                initialState = Elmer.componentState testModel App.view (App.update stubbedSend)
               in
                 Markup.find "#request-data-click" initialState
                   |> Event.click
@@ -209,8 +210,8 @@ httpSendTests =
               let
                 stubbedResponse = HttpStub.get "http://fun.com/fun.html"
                   |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-                fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-                initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+                stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+                initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
               in
                 Markup.find "#request-data-click" initialState
                   |> Event.click
@@ -223,6 +224,25 @@ httpSendTests =
     ]
   ]
 
+dummySendTests : Test
+dummySendTests =
+  let
+    stubbedSend = ElmerHttp.dummySend
+    initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
+    requestedState = Markup.find "#request-data-click" initialState
+                      |> Event.click
+  in
+    describe "dummySend"
+    [ test "it records any request" <|
+      \() ->
+        ElmerHttp.expectGET "http://fun.com/fun.html" hasBeenRequested requestedState
+    , test "it is as if the response never returned" <|
+      \() ->
+        Markup.find "#data-result" requestedState
+          |> Markup.expectNode (Matchers.hasText "")
+          |> Expect.equal Expect.pass
+    ]
+
 errorResponseTests : Test
 errorResponseTests =
   describe "when the request should result in an Http.Error"
@@ -231,8 +251,8 @@ errorResponseTests =
       let
         stubbedResponse = HttpStub.get "http://fun.com/fun.html"
           |> HttpStub.withError Http.Timeout
-        fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-        initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+        stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+        initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
       in
         Markup.find "#request-data-click" initialState
           |> Event.click
@@ -366,8 +386,8 @@ expectRequestDataTests =
       let
         stubbedResponse = HttpStub.get "http://fun.com/fun.html"
           |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
-        fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-        initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+        stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+        initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
       in
         Markup.find "#request-data-click" initialState
           |> Event.click
@@ -383,8 +403,8 @@ resolveTests =
     stubbedResponse = HttpStub.get "http://fun.com/fun.html"
       |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
       |> HttpStub.deferResponse
-    fakeHttpSend = ElmerHttp.fakeHttpSend stubbedResponse
-    initialState = Elmer.componentState App.defaultModel App.view (App.update fakeHttpSend)
+    stubbedSend = ElmerHttp.stubbedSend stubbedResponse
+    initialState = Elmer.componentState App.defaultModel App.view (App.update stubbedSend)
     requestedState = Markup.find "#request-data-click" initialState
           |> Event.click
   in

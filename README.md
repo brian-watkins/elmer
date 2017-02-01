@@ -353,9 +353,9 @@ in
 In this case, a GET request to the given route will result in a response with the given body.
 See `Elmer.Http.Stub` for the full list of builder functions. (With more on the way ...)
 
-Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.fakeHttpSend`
+Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.stubbedSend`
 method to create a function that can be injected into a component (following the strategy
-described above) as a fake for the `send` function in [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/).
+described above) as a double for the `send` function in [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/).
 
 Elmer also allows you to write tests that expect some HTTP request to have been made, in a
 manner similar to how you can write expectations about some node in an HTML document. For
@@ -371,6 +371,11 @@ Elmer.Html.find "input[name='query']" initialComponentState
             Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
          )
 ```
+
+If you don't care to describe the behavior of your app after the response from a request is
+received -- that is, if you don't care to create a stubbed response for some request -- you
+can inject `Elmer.Http.dummySend` into your component as a double for the `Http.send` function.
+This dummy send function will merely record any requests it receives.
 
 See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 

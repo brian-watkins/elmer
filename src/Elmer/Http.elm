@@ -4,7 +4,8 @@ module Elmer.Http exposing
   , HttpRequestFunction
   , HttpRequest
   , asHttpRequest
-  , fakeHttpSend
+  , stubbedSend
+  , dummySend
   , expectPOST
   , expectGET
   , expectDELETE
@@ -48,8 +49,15 @@ asHttpRequest : Http.Request a -> HttpRequest a
 asHttpRequest request =
   Native.Helpers.asHttpRequest request
 
-fakeHttpSend : HttpResponseStub -> HttpRequestFunction a msg
-fakeHttpSend responseStub tagger request =
+dummySend : HttpRequestFunction a msg
+dummySend _ request =
+  let
+    httpRequest = asHttpRequest request
+  in
+    toHttpCommand False httpRequest Cmd.none
+
+stubbedSend : HttpResponseStub -> HttpRequestFunction a msg
+stubbedSend responseStub tagger request =
   let
     httpRequest = asHttpRequest request
   in

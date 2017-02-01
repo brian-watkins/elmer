@@ -34,10 +34,10 @@ view model =
   ]
 
 update : HttpRequestFunction String Msg -> Msg -> Model -> ( Model, Cmd Msg )
-update fakeHttpSend msg model =
+update stubbedSend msg model =
   case msg of
     RequestData ->
-      ( model, fakeHttpSend WebServiceResponse (fetchDataRequest model) )
+      ( model, stubbedSend WebServiceResponse (fetchDataRequest model) )
     WebServiceResponse (Ok name) ->
       ( { model | dataResult = name }, Cmd.none )
     WebServiceResponse (Err (Http.BadPayload message response)) ->

@@ -27,7 +27,7 @@ all =
 testUpdate : Elmer.Http.HttpResponseStub -> (App.Msg -> App.Model -> (App.Model, Cmd App.Msg))
 testUpdate stub =
   let
-    fakeSend = Elmer.Http.fakeHttpSend stub
+    fakeSend = Elmer.Http.stubbedSend stub
   in
     App.updateWithDependencies (App.requestComponentUpdateWithDependencies fakeSend)
 
