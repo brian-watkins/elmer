@@ -11,6 +11,7 @@ import Elmer.TestApps.ClickTestApp as ClickApp
 import Elmer.Html.Matchers as Matchers
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
+import Task
 
 all : Test
 all =
@@ -20,6 +21,7 @@ all =
   , resolveDeferredCommandsTest
   , sendCommandTest
   , dummyCommandTests
+  , useTests
   ]
 
 elmerFailureCommandTest : Test
@@ -158,5 +160,39 @@ dummyCommandTests =
           Command.send dummyCommand initialState
             |> Command.expectDummy "fakeCommand"
             |> Expect.equal Expect.pass
+    ]
+  ]
+
+useTests : Test
+useTests =
+  describe "use"
+  [ describe "when there is an upstream failure"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = UpstreamFailure "You failed!"
+          override = Command.override (\_ -> Task.perform) (\_ _ -> Command.dummy "dummy")
+        in
+          Command.use [ override ] (Markup.find "#root") initialState
+            |> Expect.equal (UpstreamFailure "You failed!")
+    ]
+  , describe "when the override is not a function"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+          override = Command.override (\_ -> "Huh?") (\_ _ -> Command.dummy "dummy")
+        in
+          Command.use [ override ] (Markup.find "#root") initialState
+            |> Expect.equal (UpstreamFailure "Failed to override commands!")
+    ]
+  , describe "when no overrides are provided"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Command.use [] (Markup.find "#root") initialState
+            |> Expect.equal (UpstreamFailure "No CommandOverrides provided to Elmer.Command.use")
     ]
   ]

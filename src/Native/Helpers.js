@@ -141,12 +141,48 @@ var _brian_watkins$elmer$Native_Helpers = function() {
     return _elm_lang$core$Native_Platform.leaf(home)(data)
   }
 
+  var swizzledFunctions = {}
+
+  var unswizzleAll = function(x) {
+    for (var func in swizzledFunctions) {
+      eval(func + " = swizzledFunctions[func]");
+    }
+    swizzledFunctions = {}
+
+    return true
+  }
+
+  var findFunctionToSwizzle = function(fun) {
+    var name = null;
+    try {
+      var re = /return ([\w$]+);/
+      name = re.exec(fun.toString())[1]
+    } catch (e) {}
+
+    return name;
+  }
+
+  var swizzle = function(fun1, fun2) {
+    var methodToSwizzle = findFunctionToSwizzle(fun1)
+
+    if (!methodToSwizzle) {
+      return false
+    }
+
+    swizzledFunctions[methodToSwizzle] = eval(methodToSwizzle)
+    eval(methodToSwizzle + " = fun2")
+
+    return true
+  }
+
   return {
       asHtmlNode: asHtmlNode,
       asCommandData: asCommandData,
       commandValue: commandValue,
       asHttpRequest: asHttpRequest,
-      toCmd: F2(toCmd)
+      toCmd: F2(toCmd),
+      swizzle: F2(swizzle),
+      unswizzleAll: unswizzleAll
   };
 
 }();

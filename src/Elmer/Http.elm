@@ -4,19 +4,19 @@ module Elmer.Http exposing
   , HttpRequestFunction
   , HttpRequest
   , asHttpRequest
-  , stubbedSend
-  , dummySend
   , expectPOST
   , expectGET
   , expectDELETE
   , clearRequestHistory
+  , server
+  , dummyServer
   )
 
 import Http
 import Dict
 import Elmer
 import Elmer.Types exposing (..)
-import Elmer.Command as Command
+import Elmer.Command as Command exposing (CommandOverride)
 import Elmer.Command.Internal as InternalCommand
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
@@ -55,6 +55,14 @@ dummySend _ request =
     httpRequest = asHttpRequest request
   in
     toHttpCommand False httpRequest Cmd.none
+
+server : HttpResponseStub -> CommandOverride
+server responseStub =
+  Command.override (\_ -> Http.send) (stubbedSend responseStub)
+
+dummyServer : CommandOverride
+dummyServer =
+  Command.override (\_ -> Http.send) dummySend
 
 stubbedSend : HttpResponseStub -> HttpRequestFunction a msg
 stubbedSend responseStub tagger request =

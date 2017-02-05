@@ -9,6 +9,7 @@ import Elmer.Command as Command
 import Elmer.Html.Matchers as Matchers
 import Elmer.Command as Command
 import Elmer.Html as Markup
+import Elmer.Navigation as ElmerNav
 
 import Elmer.TestApps.ComponentTestApp as App exposing (..)
 
@@ -76,9 +77,12 @@ mapCommand =
           let
             initialState = navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
           in
-            Markup.find "#change-location" initialState
-              |> Event.click
-              |> Markup.find "#fun-stuff"
+            initialState
+              |> Command.use [ ElmerNav.spy ] (
+                Markup.find "#change-location"
+                  >> Event.click
+                  >> Markup.find "#fun-stuff"
+                )
               |> Markup.expectNode (Matchers.hasText "Fun things!")
       ]
     ]

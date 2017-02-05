@@ -24,13 +24,6 @@ all =
     , timeAppTests
     ]
 
-testUpdate : Elmer.Http.HttpResponseStub -> (App.Msg -> App.Model -> (App.Model, Cmd App.Msg))
-testUpdate stub =
-  let
-    fakeSend = Elmer.Http.stubbedSend stub
-  in
-    App.updateWithDependencies (App.requestComponentUpdateWithDependencies fakeSend)
-
 successStub : String -> Elmer.Http.HttpResponseStub
 successStub apiMessage =
   Stub.get "/api/request"
@@ -45,20 +38,20 @@ appFlowTests =
   describe "app flow"
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
-        let
-          initialState = Elmer.navigationComponentState App.defaultModel App.view (testUpdate (successStub "Ok")) App.urlParser
-        in
-          ElmerNav.setLocation "/click" initialState
-            |> Markup.find ".button"
-            |> Event.click
-            |> Event.click
-            |> Markup.find "#clickCount"
-            |> Markup.expectNode (Matchers.hasText "2 clicks!")
-            |> Expect.equal (Expect.pass)
+        Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+          |> Command.use [ Elmer.Http.server (successStub "Ok") ] (
+            ElmerNav.setLocation "/click"
+              >> Markup.find ".button"
+              >> Event.click
+              >> Event.click
+              >> Markup.find "#clickCount"
+            )
+          |> Markup.expectNode (Matchers.hasText "2 clicks!")
+          |> Expect.equal (Expect.pass)
     , test "it makes multiple expectations about a node" <|
       \() ->
         let
-          initialState = Elmer.navigationComponentState App.defaultModel App.view (testUpdate (successStub "Ok")) App.urlParser
+          initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
         in
           ElmerNav.setLocation "/text" initialState
             |> Markup.find "ul"
@@ -68,10 +61,13 @@ appFlowTests =
               <&&> Matchers.hasText "Fun Item 3"
               )
     , let
-        initialState = Elmer.navigationComponentState App.defaultModel App.view (testUpdate (successStub "A message from the server!")) App.urlParser
-        resultState = ElmerNav.setLocation "/request" initialState
-          |> Markup.find "#requestButton"
-          |> Event.click
+        initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        resultState = initialState
+          |> Command.use [ Elmer.Http.server (successStub "A message from the server!") ] (
+            ElmerNav.setLocation "/request"
+              >> Markup.find "#requestButton"
+              >> Event.click
+            )
       in
         describe "successful http request"
         [ test "it displays the response body" <|
@@ -84,10 +80,13 @@ appFlowTests =
                 |> Markup.expectNode (Matchers.hasText "Got request error: No error!")
         ]
     , let
-        initialState = Elmer.navigationComponentState App.defaultModel App.view (testUpdate failureStub) App.urlParser
-        resultState = ElmerNav.setLocation "/request" initialState
-          |> Markup.find "#requestButton"
-          |> Event.click
+        initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        resultState = initialState
+          |> Command.use [ Elmer.Http.server failureStub ] (
+            ElmerNav.setLocation "/request"
+              >> Markup.find "#requestButton"
+              >> Event.click
+            )
       in
         describe "unsuccessful http request"
         [ test "it does not display a request output" <|
@@ -103,8 +102,8 @@ appFlowTests =
         ]
     ]
 
-fakeTimeTask : Time -> (Time -> TimeApp.Msg) -> Task Never Time -> Cmd TimeApp.Msg
-fakeTimeTask time tagger task =
+fakeTaskPerform : Time -> (Time -> msg) -> Task Never Time -> Cmd msg
+fakeTaskPerform time tagger task =
   Command.stub (tagger time)
 
 timeAppTests : Test
@@ -113,11 +112,11 @@ timeAppTests =
   [ test "it displays the time" <|
     \() ->
       let
-        testUpdate = TimeApp.updateWithDependencies (fakeTimeTask (3 * Time.second))
-        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view testUpdate
+        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
+        taskOverride = Command.override (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
       in
         Markup.find ".button" initialState
-          |> Event.click
+          |> Command.use [ taskOverride ] Event.click
           |> Markup.find "#currentTime"
           |> Markup.expectNode (Matchers.hasText "Time: 3000")
   ]

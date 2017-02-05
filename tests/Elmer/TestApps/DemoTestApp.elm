@@ -67,11 +67,8 @@ requestView : Model -> Html Msg
 requestView model =
   Html.map RequestComponentMsgWrapper (requestComponentView model.requestComponentModel)
 
-type alias ComponentUpdate msg model =
-  msg -> model -> (model, Cmd msg)
-
-updateWithDependencies : ComponentUpdate RequestComponentMsg RequestComponentModel -> Msg -> Model -> ( Model, Cmd Msg )
-updateWithDependencies requestComponentUpdate msg model =
+update :  Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
   case msg of
     DoClick ->
       ( { model | clicks = model.clicks + 1 }, Cmd.none )
@@ -132,11 +129,11 @@ requestError model =
 type alias HttpRequestFunction a b =
   (Result Http.Error a -> b) -> Http.Request a -> Cmd b
 
-requestComponentUpdateWithDependencies : HttpRequestFunction String RequestComponentMsg -> RequestComponentMsg -> RequestComponentModel -> ( RequestComponentModel, Cmd RequestComponentMsg )
-requestComponentUpdateWithDependencies httpSend msg model =
+requestComponentUpdate : RequestComponentMsg -> RequestComponentModel -> ( RequestComponentModel, Cmd RequestComponentMsg )
+requestComponentUpdate msg model =
   case msg of
     DoRequest ->
-      ( model, httpSend HandleResponse request )
+      ( model, Http.send HandleResponse request )
     HandleResponse result ->
       case result of
         Ok message ->

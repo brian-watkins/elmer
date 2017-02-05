@@ -33,11 +33,11 @@ view model =
     [ Html.text model.dataResult ]
   ]
 
-update : HttpRequestFunction String Msg -> Msg -> Model -> ( Model, Cmd Msg )
-update stubbedSend msg model =
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
   case msg of
     RequestData ->
-      ( model, stubbedSend WebServiceResponse (fetchDataRequest model) )
+      ( model, Http.send WebServiceResponse (fetchDataRequest model) )
     WebServiceResponse (Ok name) ->
       ( { model | dataResult = name }, Cmd.none )
     WebServiceResponse (Err (Http.BadPayload message response)) ->

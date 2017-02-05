@@ -9,7 +9,8 @@ type alias Model =
   { error: String }
 
 type Msg
-  = DoClick
+  = DoNewUrl
+  | DoModifyUrl
   | ViewRoute
   | RouteNotFound String
 
@@ -20,15 +21,18 @@ defaultModel =
 view : Model -> Html Msg
 view model =
   Html.div [ Attr.id "root" ]
-    [ Html.div [ Attr.id "navigateButton", onClick DoClick ] [ Html.text "Click to navigate!" ]
+    [ Html.div [ Attr.id "navigateButton", onClick DoNewUrl ] [ Html.text "Click to navigate!" ]
+    , Html.div [ Attr.id "modifyLocationButton", onClick DoModifyUrl ] [ Html.text "Click to also navigate!" ]
     , Html.div [ Attr.class "error" ] [ Html.text model.error ]
     ]
 
-updateWithDependencies : (String -> Cmd Msg) -> Msg -> Model -> ( Model, Cmd Msg )
-updateWithDependencies navigateFunction msg model =
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
   case msg of
-    DoClick ->
-      ( model, navigateFunction "http://fun.com/fun.html" )
+    DoNewUrl ->
+      ( model, Navigation.newUrl "http://fun.com/fun.html" )
+    DoModifyUrl ->
+      ( model, Navigation.modifyUrl "http://fun.com/awesome.html" )
     ViewRoute ->
       ( { model | error = "No error" }, Cmd.none )
     RouteNotFound error ->

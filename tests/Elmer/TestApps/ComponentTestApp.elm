@@ -4,7 +4,6 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
 import Navigation
-import Elmer.Navigation as ElmerNav
 
 type MsgA
   = DoFun MsgB
@@ -24,13 +23,11 @@ type MsgC
 
 type alias Model =
   { fun: String
-  , navigateToUrl: (String -> Cmd MsgA)
   }
 
 defaultModel : Model
 defaultModel =
   { fun = "Reading"
-  , navigateToUrl = ElmerNav.fakeNavigateCommand
   }
 
 update : MsgA -> Model -> (Model, Cmd MsgA)
@@ -47,7 +44,7 @@ update message model =
     DoClick ->
       ( { model | fun = "click" }, Cmd.none )
     DoChangeLocation location ->
-      ( model, model.navigateToUrl location )
+      ( model, Navigation.newUrl location )
 
 view : Model -> Html MsgA
 view model =

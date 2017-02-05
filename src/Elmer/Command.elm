@@ -6,6 +6,10 @@ module Elmer.Command exposing
   , dummy
   , expectDummy
   , send
+  , use
+  , override
+  , batchOverride
+  , CommandOverride
   )
 
 import Elmer
@@ -14,6 +18,41 @@ import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Command.Internal as InternalCommand
 import Expect
+
+type alias CommandOverride =
+  (() -> Bool)
+
+batchOverride : List CommandOverride -> CommandOverride
+batchOverride overrides =
+  \() ->
+    overrideCommands overrides
+
+override : (() -> a) -> (b -> c) -> CommandOverride
+override namingFunc overridingFunc =
+  \() ->
+    Native.Helpers.swizzle namingFunc overridingFunc
+
+use : List CommandOverride -> (ComponentStateResult model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
+use overrides mapper componentStateResult =
+  if List.isEmpty overrides then
+    UpstreamFailure "No CommandOverrides provided to Elmer.Command.use"
+  else
+    if overrideCommands overrides then
+      mapper componentStateResult |> unswizzleAll
+    else
+      UpstreamFailure "Failed to override commands!"
+
+overrideCommands : List CommandOverride -> Bool
+overrideCommands overrides =
+  List.foldl (\func cur -> cur && func ()) True overrides
+
+unswizzleAll : ComponentStateResult model msg -> ComponentStateResult model msg
+unswizzleAll stateResult =
+  if Native.Helpers.unswizzleAll () then
+    stateResult
+  else
+    UpstreamFailure "Failed to unswizzle functions! (This should never happen)"
+
 
 fail : String -> Cmd msg
 fail message =

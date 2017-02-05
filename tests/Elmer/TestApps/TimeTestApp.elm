@@ -24,18 +24,10 @@ view model =
     , Html.div [ Attr.class "button", onClick GetTime ] [ Html.text "Click me for the time!" ]
     ]
 
-
 update : Msg -> Model -> ( Model, Cmd Msg )
-update =
-  updateWithDependencies Task.perform
-
-type alias SendTimeTask =
-  (Time -> Msg) -> Task Never Time -> Cmd Msg
-
-updateWithDependencies : SendTimeTask -> Msg -> Model -> ( Model, Cmd Msg )
-updateWithDependencies sendTimeTask msg model =
+update msg model =
   case msg of
     GetTime ->
-      ( model, sendTimeTask NewTime Time.now )
+      ( model, Task.perform NewTime Time.now )
     NewTime time ->
       ( { model | time = time }, Cmd.none )

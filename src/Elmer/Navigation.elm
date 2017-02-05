@@ -2,10 +2,10 @@ module Elmer.Navigation
     exposing
         ( setLocation
         , expectLocation
-        , fakeNavigateCommand
+        , spy
         )
 
-import Elmer.Command as Command
+import Elmer.Command as Command exposing (CommandOverride)
 import Elmer.Command.Internal as InternalCommand
 import Elmer.Types exposing (..)
 import Elmer
@@ -14,6 +14,13 @@ import Elmer.Printer exposing (..)
 import Elmer.Navigation.Location as Location
 import Navigation
 
+
+spy : CommandOverride
+spy =
+  Command.batchOverride
+    [ Command.override (\_ -> Navigation.newUrl) fakeNavigateCommand
+    , Command.override (\_ -> Navigation.modifyUrl) fakeNavigateCommand
+    ]
 
 fakeNavigateCommand : String -> Cmd msg
 fakeNavigateCommand url =
