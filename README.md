@@ -314,10 +314,13 @@ update msg model =
 
 And now our test should pass.
 
-Notice that we were able to fake out the time task in our test while still avoiding knowledge of
-how our app tags the time values as well as other implementation details.
-In this way, Elmer allows us to write tests that describe the behavior of our
-system while still allowing us the flexibility to refactor our code.  
+Elmer allows us to write tests first, describing the behavior of our component
+without needing to know the internal details of that component. We can provide fake
+implementations for `Cmd`-generating functions that our component relies upon, but
+in doing so, we don't need to know any details about how our component processes
+the effects of the generated commands. Our tests give us flexibility
+to refactor our code and confidence that changes to that code still result in
+the correct behavior.
 
 For the full example, see `tests/Elmer/TestApps/TimeTestApp.elm` and the associated tests in `tests/Elmer/DemoAppTests.elm`.
 
