@@ -30,6 +30,14 @@ formatMessageTests =
         in
           Expect.equal message "Fun Stuff\n\n\tFun Example"
     ]
+  , describe "when the example has multiple lines"
+    [ test "it prints the formatted example" <|
+      \() ->
+        let
+          message = Printer.formatMessage (Printer.message "Fun Stuff" "Fun Example\nSuper Example\nRadical Example\n")
+        in
+          Expect.equal message "Fun Stuff\n\n\tFun Example\n\tSuper Example\n\tRadical Example"
+    ]
   ]
 
 formatMessageListTests : Test
