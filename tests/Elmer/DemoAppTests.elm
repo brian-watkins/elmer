@@ -39,7 +39,7 @@ appFlowTests =
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
         Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
-          |> Command.use [ Elmer.Http.server (successStub "Ok") ] (
+          |> Command.use [ Elmer.Http.serve [ (successStub "Ok") ] ] (
             ElmerNav.setLocation "/click"
               >> Markup.find ".button"
               >> Event.click
@@ -63,7 +63,7 @@ appFlowTests =
     , let
         initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
-          |> Command.use [ Elmer.Http.server (successStub "A message from the server!") ] (
+          |> Command.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ] (
             ElmerNav.setLocation "/request"
               >> Markup.find "#requestButton"
               >> Event.click
@@ -82,7 +82,7 @@ appFlowTests =
     , let
         initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
-          |> Command.use [ Elmer.Http.server failureStub ] (
+          |> Command.use [ Elmer.Http.serve [ failureStub ] ] (
             ElmerNav.setLocation "/request"
               >> Markup.find "#requestButton"
               >> Event.click

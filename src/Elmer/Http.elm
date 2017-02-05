@@ -8,8 +8,8 @@ module Elmer.Http exposing
   , expectGET
   , expectDELETE
   , clearRequestHistory
-  , server
-  , dummyServer
+  , serve
+  , spy
   )
 
 import Http
@@ -49,32 +49,36 @@ asHttpRequest : Http.Request a -> HttpRequest a
 asHttpRequest request =
   Native.Helpers.asHttpRequest request
 
+
 dummySend : HttpRequestFunction a msg
 dummySend _ request =
   let
     httpRequest = asHttpRequest request
   in
-    toHttpCommand False httpRequest Cmd.none
+    toHttpCommand httpRequest Cmd.none
 
-server : HttpResponseStub -> CommandOverride
-server responseStub =
-  Command.override (\_ -> Http.send) (stubbedSend responseStub)
 
-dummyServer : CommandOverride
-dummyServer =
+serve : List HttpResponseStub -> CommandOverride
+serve responseStubs =
+  Command.override (\_ -> Http.send) (stubbedSend responseStubs)
+
+
+spy : CommandOverride
+spy =
   Command.override (\_ -> Http.send) dummySend
 
-stubbedSend : HttpResponseStub -> HttpRequestFunction a msg
-stubbedSend responseStub tagger request =
+
+stubbedSend : List HttpResponseStub -> HttpRequestFunction a msg
+stubbedSend responseStubs tagger request =
   let
     httpRequest = asHttpRequest request
   in
-    responseStubIsValid responseStub
-      |> Result.andThen (matchRequest httpRequest)
-      |> Result.andThen generateResponse
+    responseStubsAreValid responseStubs
+      |> Result.andThen (matchFirstRequest httpRequest)
       |> Result.andThen (processResponse httpRequest tagger)
       |> collapseToCommand
-      |> toHttpCommand responseStub.deferResponse httpRequest
+      |> toHttpCommand httpRequest
+
 
 collapseToCommand : Result (Cmd msg) (Cmd msg) -> Cmd msg
 collapseToCommand responseResult =
@@ -85,8 +89,8 @@ collapseToCommand responseResult =
       errorCommand
 
 
-toHttpCommand : Bool -> HttpRequest a -> Cmd msg -> Cmd msg
-toHttpCommand shouldDeferResponse request command =
+toHttpCommand : HttpRequest a -> Cmd msg -> Cmd msg
+toHttpCommand request command =
   let
     requestData =
       { method = request.method
@@ -96,14 +100,13 @@ toHttpCommand shouldDeferResponse request command =
       }
     httpCommand = InternalCommand.mapState <| updateComponentState requestData
   in
-    if shouldDeferResponse then
-      Cmd.batch [ httpCommand, Command.defer command ]
-    else
-      Cmd.batch [ httpCommand, command ]
+    Cmd.batch [ httpCommand, command ]
+
 
 updateComponentState : HttpRequestData -> HtmlComponentState model msg -> HtmlComponentState model msg
 updateComponentState requestData componentState =
   { componentState | httpRequests = requestData :: componentState.httpRequests }
+
 
 clearRequestHistory : ComponentStateResult model msg -> ComponentStateResult model msg
 clearRequestHistory =
@@ -114,17 +117,21 @@ clearRequestHistory =
       CurrentState { componentState | httpRequests = [] }
   )
 
+
 expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectPOST =
   expectRequest "POST"
+
 
 expectGET : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectGET =
   expectRequest "GET"
 
+
 expectDELETE : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectDELETE =
   expectRequest "DELETE"
+
 
 expectRequest : String -> String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
 expectRequest method url requestMatcher =
@@ -154,10 +161,28 @@ expectRequest method url requestMatcher =
                   , message "but only found these requests" requests
                   ]
 
+
 hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
 hasRequest requests method url =
   List.filter (\r -> r.method == method && (route r.url) == url) requests
     |> List.head
+
+
+responseStubsAreValid : List HttpResponseStub -> Result (Cmd msg) (List HttpResponseStub)
+responseStubsAreValid responseStubs =
+  List.map responseStubIsValid responseStubs
+    |> List.foldl (\result totalResult ->
+      case result of
+        Ok result ->
+          case totalResult of
+            Ok validStubs ->
+              Ok (result :: validStubs)
+            Err cmd ->
+              Err cmd
+        Err cmd ->
+          Err cmd
+    ) (Ok [])
+
 
 responseStubIsValid : HttpResponseStub -> Result (Cmd msg) HttpResponseStub
 responseStubIsValid responseStub =
@@ -169,20 +194,55 @@ responseStubIsValid responseStub =
   else
     Ok responseStub
 
-matchRequest : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
+
+matchFirstRequest : HttpRequest a -> List HttpResponseStub -> Result (Cmd msg) HttpResponseStub
+matchFirstRequest httpRequest responseStubs =
+  case List.head <| List.filterMap (matchRequest httpRequest) responseStubs of
+    Just matchingResponseStub ->
+      Ok matchingResponseStub
+    Nothing ->
+      Err <| Command.fail <| format
+        [ message "Received a request for" (printRequest httpRequest)
+        , message "but it does not match any of the stubbed requests" (printStubs responseStubs)
+        ]
+
+
+printRequest : HttpRequest a -> String
+printRequest request =
+  request.method ++ " " ++ request.url
+
+
+printStubs : List HttpResponseStub -> String
+printStubs =
+  List.foldl (\s msg -> msg ++ (printStub s) ++ "\n") ""
+
+
+printStub : HttpResponseStub -> String
+printStub responseStub =
+  responseStub.method ++ " " ++ responseStub.url
+
+
+matchRequest : HttpRequest a -> HttpResponseStub -> Maybe HttpResponseStub
 matchRequest httpRequest responseStub =
   matchRequestUrl httpRequest responseStub
-    |> Result.andThen (matchRequestMethod httpRequest)
+    |> Maybe.andThen (matchRequestMethod httpRequest)
 
-matchRequestUrl : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
+
+matchRequestUrl : HttpRequest a -> HttpResponseStub -> Maybe HttpResponseStub
 matchRequestUrl httpRequest responseStub =
   if (route httpRequest.url) == responseStub.url then
-    Ok responseStub
+    Just responseStub
   else
-    Err <| Command.fail <| format
-      [ message "Received a request for" httpRequest.url
-      , message "but it has not been stubbed. The stubbed request is" responseStub.url
-      ]
+    Nothing
+
+
+matchRequestMethod : HttpRequest a -> HttpResponseStub -> Maybe HttpResponseStub
+matchRequestMethod httpRequest responseStub =
+  if httpRequest.method == responseStub.method then
+    Just responseStub
+  else
+    Nothing
+
 
 route : String -> String
 route url =
@@ -190,29 +250,32 @@ route url =
     |> List.head
     |> Maybe.withDefault ""
 
-matchRequestMethod : HttpRequest a -> HttpResponseStub -> Result (Cmd msg) HttpResponseStub
-matchRequestMethod httpRequest responseStub =
-  if httpRequest.method == responseStub.method then
-    Ok responseStub
-  else
-    Err <| Command.fail <| format
-      [ message "A response has been stubbed for" httpRequest.url
-      , description ("but it expects a " ++ responseStub.method ++ " not a " ++ httpRequest.method)
-      ]
 
-
-generateResponse : HttpResponseStub -> Result (Cmd msg) (HttpResponseResult)
+generateResponse : HttpResponseStub -> HttpResponseResult
 generateResponse responseStub =
-  Ok responseStub.response
+  responseStub.response
 
 
-processResponse : HttpRequest a -> (Result Http.Error a -> msg) -> HttpResponseResult -> Result (Cmd msg) (Cmd msg)
-processResponse httpRequest tagger responseResult =
-  handleResponseError responseResult
+processResponse : HttpRequest a -> (Result Http.Error a -> msg) -> HttpResponseStub -> Result (Cmd msg) (Cmd msg)
+processResponse httpRequest tagger responseStub =
+  generateResponse responseStub
+    |> handleResponseError
     |> Result.andThen handleResponseStatus
     |> Result.andThen (handleResponse httpRequest)
     |> Result.mapError (mapResponseError httpRequest tagger)
-    |> Result.map (\d -> Command.stub (tagger (Ok d)))
+    |> Result.map (generateCommand responseStub tagger)
+
+
+generateCommand : HttpResponseStub -> (Result Http.Error a -> msg) -> a -> Cmd msg
+generateCommand responseStub tagger data =
+  let
+    command = Command.stub (tagger (Ok data))
+  in
+    if responseStub.deferResponse then
+      Command.defer command
+    else
+      command
+
 
 mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
 mapResponseError httpRequest tagger error =
