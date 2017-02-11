@@ -9,58 +9,39 @@ module Elmer.Command exposing
   , use
   , override
   , batchOverride
-  , CommandOverride
   )
 
 import Elmer
 import Elmer.Types exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
+import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
 import Expect
 
-type alias CommandOverride =
-  (() -> Bool)
 
-batchOverride : List CommandOverride -> CommandOverride
+batchOverride : List PlatformOverride -> PlatformOverride
 batchOverride overrides =
-  \() ->
-    overrideCommands overrides
+  Platform.batchOverride overrides
 
-override : (() -> a) -> (b -> c) -> CommandOverride
+override : (() -> a) -> (b -> c) -> PlatformOverride
 override namingFunc overridingFunc =
-  \() ->
-    Native.Helpers.swizzle namingFunc overridingFunc
+  Platform.override namingFunc overridingFunc
 
-use : List CommandOverride -> (ComponentStateResult model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
-use overrides mapper componentStateResult =
-  if List.isEmpty overrides then
-    UpstreamFailure "No CommandOverrides provided to Elmer.Command.use"
-  else
-    if overrideCommands overrides then
-      mapper componentStateResult |> unswizzleAll
-    else
-      UpstreamFailure "Failed to override commands!"
-
-overrideCommands : List CommandOverride -> Bool
-overrideCommands overrides =
-  List.foldl (\func cur -> cur && func ()) True overrides
-
-unswizzleAll : ComponentStateResult model msg -> ComponentStateResult model msg
-unswizzleAll stateResult =
-  if Native.Helpers.unswizzleAll () then
-    stateResult
-  else
-    UpstreamFailure "Failed to unswizzle functions! (This should never happen)"
-
+use : List PlatformOverride -> (ComponentStateResult model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
+use overrides mapper =
+  Platform.mapWithOverrides "commands" overrides (\componentState ->
+    CurrentState componentState
+      |> mapper
+  )
 
 fail : String -> Cmd msg
 fail message =
-  Native.Helpers.toCmd "Elmer_Fail" message
+  Platform.toCmd "Elmer_Fail" message
 
 stub : msg -> Cmd msg
 stub message =
-  Native.Helpers.toCmd "Elmer_Stub" message
+  Platform.toCmd "Elmer_Stub" message
 
 dummy : String -> Cmd msg
 dummy identifier =

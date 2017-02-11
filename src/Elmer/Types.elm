@@ -57,6 +57,7 @@ type alias HtmlComponentState model msg =
     , httpRequests : List HttpRequestData
     , deferredCommands : List (Cmd msg)
     , dummyCommands : List String
+    , subscriptions : Sub msg
     }
 
 type ComponentStateResult model msg

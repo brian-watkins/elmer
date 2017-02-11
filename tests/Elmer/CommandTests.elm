@@ -186,13 +186,4 @@ useTests =
           Command.use [ override ] (Markup.find "#root") initialState
             |> Expect.equal (UpstreamFailure "Failed to override commands!")
     ]
-  , describe "when no overrides are provided"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-        in
-          Command.use [] (Markup.find "#root") initialState
-            |> Expect.equal (UpstreamFailure "No CommandOverrides provided to Elmer.Command.use")
-    ]
   ]

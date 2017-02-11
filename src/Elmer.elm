@@ -28,6 +28,7 @@ componentState model view update =
         , httpRequests = []
         , deferredCommands = []
         , dummyCommands = []
+        , subscriptions = Sub.none
         }
 
 
@@ -48,6 +49,7 @@ navigationComponentState model view update parser =
         , httpRequests = []
         , deferredCommands = []
         , dummyCommands = []
+        , subscriptions = Sub.none
         }
 
 (<&&>) : Matcher a -> Matcher a -> Matcher a

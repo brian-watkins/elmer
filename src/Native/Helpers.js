@@ -58,46 +58,46 @@ var _brian_watkins$elmer$Native_Helpers = function() {
     return _elm_lang$core$Maybe$Just(constructHtmlNode(html))
   }
 
-  var asCommandData = function(command) {
-    if (command.type == "leaf") {
-      return _brian_watkins$elmer$Elmer_Runtime$LeafCommand(asLeafCommandData(command))
+  var asIntention = function(intention) {
+    if (intention.type == "leaf") {
+      return _brian_watkins$elmer$Elmer_Platform$Leaf(asLeafData(intention))
     }
 
-    if (command.type == "map") {
-      return _brian_watkins$elmer$Elmer_Runtime$MapCommand(asMapCommandData(command))
+    if (intention.type == "map") {
+      return _brian_watkins$elmer$Elmer_Platform$Tree(asTreeData(intention))
     }
 
-    if (command.type == "node") {
-      return _brian_watkins$elmer$Elmer_Runtime$BatchCommand(asBatchCommandData(command))
+    if (intention.type == "node") {
+      return _brian_watkins$elmer$Elmer_Platform$Batch(asBatch(intention))
     }
 
-    return _brian_watkins$elmer$Elmer_Runtime$NoCommand
+    return _brian_watkins$elmer$Elmer_Platform$Unknown
   }
 
-  var asLeafCommandData = function(command) {
-    return A2(_brian_watkins$elmer$Elmer_Runtime$LeafCommandData,
-      command,
-      command.home
+  var asLeafData = function(intention) {
+    return A2(_brian_watkins$elmer$Elmer_Platform$LeafData,
+      intention,
+      intention.home
     );
   }
 
-  var asMapCommandData = function(command) {
-    var tagger = command.tagger
-    var mappedCommand = command.tree
+  var asTreeData = function(intention) {
+    var tagger = intention.tagger
+    var mappedIntention = intention.tree
 
-    return (A2)(_brian_watkins$elmer$Elmer_Runtime$MapCommandData,
-      mappedCommand,
+    return (A2)(_brian_watkins$elmer$Elmer_Platform$TreeData,
+      mappedIntention,
       tagger
     );
   }
 
-  var asBatchCommandData = function(command) {
-    var commands = _elm_lang$core$Native_List.toArray(command.branches)
-    return _elm_lang$core$Native_List.fromArray(commands)
+  var asBatch = function(intention) {
+    var intentions = _elm_lang$core$Native_List.toArray(intention.branches)
+    return _elm_lang$core$Native_List.fromArray(intentions)
   }
 
-  var commandValue = function(command) {
-    return command.value
+  var intentionValue = function(intention) {
+    return intention.value
   }
 
   var getHttpRequestBody = function(requestData) {
@@ -137,13 +137,13 @@ var _brian_watkins$elmer$Native_Helpers = function() {
       requestData.expect.responseToResult)
   }
 
-  var toCmd = function(home, data) {
+  var toIntention = function(home, data) {
     return _elm_lang$core$Native_Platform.leaf(home)(data)
   }
 
   var swizzledFunctions = {}
 
-  var unswizzleAll = function(x) {
+  var restoreSwizzled = function(x) {
     for (var func in swizzledFunctions) {
       eval(func + " = swizzledFunctions[func]");
     }
@@ -177,12 +177,12 @@ var _brian_watkins$elmer$Native_Helpers = function() {
 
   return {
       asHtmlNode: asHtmlNode,
-      asCommandData: asCommandData,
-      commandValue: commandValue,
+      asIntention: asIntention,
+      intentionValue: intentionValue,
       asHttpRequest: asHttpRequest,
-      toCmd: F2(toCmd),
+      toIntention: F2(toIntention),
       swizzle: F2(swizzle),
-      unswizzleAll: unswizzleAll
+      restoreSwizzled: restoreSwizzled
   };
 
 }();

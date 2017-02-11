@@ -16,6 +16,7 @@ import Elmer.RuntimeTests as RuntimeTests
 import Elmer.NodeTests as NodeTests
 import Elmer.CommandTests as CommandTests
 import Elmer.PrinterTests as PrinterTests
+import Elmer.SubscriptionTests as SubscriptionTests
 
 all : Test
 all =
@@ -32,6 +33,7 @@ all =
     , HttpMatcherTests.all
     , RuntimeTests.all
     , CommandTests.all
+    , SubscriptionTests.all
     , NodeTests.all
     , PrinterTests.all
     ]

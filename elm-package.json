@@ -17,7 +17,8 @@
         "Elmer.Http",
         "Elmer.Http.Stub",
         "Elmer.Http.Matchers",
-        "Elmer.Command"
+        "Elmer.Command",
+        "Elmer.Subscription"
     ],
     "native-modules": true,
     "dependencies": {

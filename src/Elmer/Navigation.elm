@@ -5,7 +5,8 @@ module Elmer.Navigation
         , spy
         )
 
-import Elmer.Command as Command exposing (CommandOverride)
+import Elmer.Command as Command
+import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
 import Elmer.Types exposing (..)
 import Elmer
@@ -15,7 +16,7 @@ import Elmer.Navigation.Location as Location
 import Navigation
 
 
-spy : CommandOverride
+spy : PlatformOverride
 spy =
   Command.batchOverride
     [ Command.override (\_ -> Navigation.newUrl) fakeNavigateCommand

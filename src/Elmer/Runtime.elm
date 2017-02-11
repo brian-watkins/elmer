@@ -6,6 +6,7 @@ module Elmer.Runtime
 
 import Elmer.Types exposing (..)
 import Elmer.Printer exposing (..)
+import Elmer.Platform as Platform exposing (..)
 import Dict exposing (Dict)
 
 type CommandResult model msg
@@ -16,23 +17,8 @@ type alias CommandEffect model msg =
   HtmlComponentState model msg -> (HtmlComponentState model msg, Cmd msg)
 
 type alias CommandRunner model subMsg msg =
-  LeafCommandData subMsg -> (subMsg -> msg) -> CommandResult model msg
+  Cmd subMsg -> (subMsg -> msg) -> CommandResult model msg
 
-type CommandData msg subMsg
-    = LeafCommand (LeafCommandData msg)
-    | MapCommand (MapCommandData subMsg msg)
-    | BatchCommand (List (Cmd msg))
-    | NoCommand
-
-type alias MapCommandData subMsg msg =
-    { tree : Cmd subMsg
-    , tagger : subMsg -> msg
-    }
-
-type alias LeafCommandData msg =
-    { command : Cmd msg
-    , home : String
-    }
 
 commandRunners : Dict String (CommandRunner model subMsg msg)
 commandRunners =
@@ -45,9 +31,9 @@ commandRunners =
 
 
 mapStateCommandRunner : CommandRunner model subMsg msg
-mapStateCommandRunner data _ =
+mapStateCommandRunner command _ =
   let
-    componentStateMapper = Native.Helpers.commandValue data.command
+    componentStateMapper = Platform.cmdValue command
   in
     CommandSuccess (mapComponentState componentStateMapper)
 
@@ -57,9 +43,9 @@ mapComponentState mapper componentState =
 
 
 generateCommandRunner : CommandRunner model subMsg msg
-generateCommandRunner data _ =
+generateCommandRunner command _ =
   let
-    generator = Native.Helpers.commandValue data.command
+    generator = Platform.cmdValue command
   in
     CommandSuccess (generateCommand generator)
 
@@ -69,26 +55,26 @@ generateCommand generator componentState =
 
 
 elmerFailureCommandRunner : CommandRunner model subMsg msg
-elmerFailureCommandRunner data _ =
+elmerFailureCommandRunner command _ =
   let
-    message = Native.Helpers.commandValue data.command
+    message = Platform.cmdValue command
   in
     CommandError message
 
 
 elmerStubbedCommandRunner : CommandRunner model subMsg msg
-elmerStubbedCommandRunner data tagger =
+elmerStubbedCommandRunner command tagger =
   let
-    msg = Native.Helpers.commandValue data.command
+    msg = Platform.cmdValue command
   in
     CommandSuccess (updateComponentState (tagger msg))
 
 
-unknownCommandRunner : CommandRunner model subMsg msg
-unknownCommandRunner data _ =
+unknownCommandRunner : String -> CommandRunner model subMsg msg
+unknownCommandRunner commandName _ _ =
   CommandError <|
     format <|
-      [ message "Elmer encountered a command it does not know how to run" data.home
+      [ message "Elmer encountered a command it does not know how to run" commandName
       , description "Try sending a stubbed or dummy command instead"
       ]
 
@@ -122,7 +108,7 @@ performUpdate message componentState =
 commandRunnerForData : String -> CommandRunner model subMsg msg
 commandRunnerForData commandName =
   Dict.get commandName commandRunners
-    |> Maybe.withDefault unknownCommandRunner
+    |> Maybe.withDefault (unknownCommandRunner commandName)
 
 
 performCommand : Cmd msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
@@ -159,24 +145,24 @@ processCommandEffect commandEffect componentState =
 
 runCommand : (subMsg -> msg) -> Cmd subMsg -> List (CommandResult model msg)
 runCommand tagger command =
-    case Native.Helpers.asCommandData command of
-        LeafCommand data ->
+    case Platform.cmdData command of
+        Leaf data ->
             let
               runner = commandRunnerForData data.home
-              commandResult = runner data tagger
+              commandResult = runner data.intention tagger
             in
-                [ commandResult ]
+              [ commandResult ]
 
-        MapCommand data ->
+        Tree data ->
           let
             composedTagger = composeFunctions tagger data.tagger
           in
             runCommand (composedTagger) data.tree
 
-        BatchCommand commands ->
+        Batch commands ->
           List.concat (List.map (\c -> runCommand tagger c) commands)
 
-        NoCommand ->
+        Unknown ->
           let
             commandResult = CommandSuccess (\componentState -> ( componentState, Cmd.none ))
           in

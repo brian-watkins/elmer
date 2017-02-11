@@ -16,7 +16,8 @@ import Http
 import Dict
 import Elmer
 import Elmer.Types exposing (..)
-import Elmer.Command as Command exposing (CommandOverride)
+import Elmer.Command as Command
+import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
@@ -58,12 +59,12 @@ dummySend _ request =
     toHttpCommand httpRequest Cmd.none
 
 
-serve : List HttpResponseStub -> CommandOverride
+serve : List HttpResponseStub -> PlatformOverride
 serve responseStubs =
   Command.override (\_ -> Http.send) (stubbedSend responseStubs)
 
 
-spy : CommandOverride
+spy : PlatformOverride
 spy =
   Command.override (\_ -> Http.send) dummySend
 
