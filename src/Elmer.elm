@@ -5,6 +5,7 @@ module Elmer
         , map
         , mapToExpectation
         , (<&&>)
+        , expectNot
         )
 
 import Html exposing (Html)
@@ -64,6 +65,19 @@ navigationComponentState model view update parser =
       else
         leftResult
   )
+
+expectNot : Matcher a -> Matcher a
+expectNot matcher =
+  (\node ->
+    let
+      result = matcher node
+    in
+      if result == Expect.pass then
+        Expect.fail "Expected not to be the case but it is"
+      else
+        Expect.pass
+  )
+
 
 map : (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
 map mapper componentStateResult =

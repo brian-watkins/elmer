@@ -14,6 +14,7 @@ all =
     , hasPropertyTests
     , hasIdTests
     , andThenTests
+    , expectNotTests
     ]
 
 hasTextTests : Test
@@ -166,5 +167,24 @@ andThenTests =
           |> (Matchers.hasId "root"
                 <&&> Matchers.hasClass "myClass")
           |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has no classes")
+    ]
+  ]
+
+expectNotTests : Test
+expectNotTests =
+  describe "expectNot"
+  [ describe "when the matcher passes"
+    [ test "it fails" <|
+      \() ->
+        (nodeWithClassAndId "myClass" "myId")
+          |> Elmer.expectNot (Matchers.hasId "myId")
+          |> Expect.equal (Expect.fail "Expected not to be the case but it is")
+    ]
+  , describe "when the matcher fails"
+    [ test "it passes" <|
+      \() ->
+        (nodeWithClassAndId "myClass" "myId")
+          |> (Elmer.expectNot <| Matchers.hasId "someWrongId")
+          |> Expect.equal Expect.pass
     ]
   ]
