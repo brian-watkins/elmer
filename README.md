@@ -423,6 +423,118 @@ When Elmer processes a dummy command, it simply records the fact that the comman
 it treats the command just like `Cmd.none`. In your test, use `Elmer.command.expectDummy <identifier>`
 to expect that the command was sent.
 
+### Subscriptions
+
+Using subscriptions, your component can register to be notified when certain effects occur.
+To describe the behavior of a component that has subscriptions, you'll need to do two things:
+
+1. Override the function that generates the subscription using `Elmer.Subscription.use` and
+`Elmer.Subscription.overrde` -- just as described with commands above
+2. Simulate the effect you've subscribed to receive with `Subscription.send`
+
+Let's test-drive a component that subscribes to receive the time every second. We'll
+begin by writing a test to drive out the basics of our component.
+
+```
+timeDefaultTest : Test
+timeDefaultTest =
+  describe "before the time is received"
+  [ test "it prints 0 seconds" <|
+    \() ->
+      Elmer.componentState App.defaultModel App.view App.update
+        |> Elmer.Html.find "#num-seconds"
+        |> Elmer.Html.expectNode (Matchers.hasText "0 seconds")
+  ]
+```
+
+Let's next do the simplest thing to get this test to compile and fail:
+
+```
+type alias Model =
+  { }
+
+type Msg
+  = Msg
+
+defaultModel : Model
+defaultModel =
+  { }
+
+view : Model -> Html Msg
+view model =
+  Html.div []
+    [ Html.div [ Attr.id "num-seconds" ] [ Html.text "0 seconds" ]
+    ]
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+  ( model, Cmd.none )
+
+subscriptions : Model -> Sub Msg
+subscriptions =
+  Sub.none
+```
+
+Now let's write a test that describes the behavior when a time effect is received.
+
+```
+timeSubscriptionTest : Test
+timeSubscriptionTest =
+  describe "when a time effect is received"
+  [ test "it prints the number of seconds" <|
+    \() ->
+      let
+        timeOverride = Elmer.Subscription.override (\_ -> Time.every) (\_ tagger ->
+            Elmer.Subscription.spy "timeEffect" tagger
+          )
+      in
+        Elmer.componentState App.defaultModel App.view App.update
+          |> Elmer.Subscription.use [ timeOverride ] App.subscriptions
+          |> Elmer.Subscription.send "timeEffect" (3 * 1000)
+          |> Elmer.Html.find "#num-seconds"
+          |> Elmer.Html.expectNode ( Matchers.hasText "3 seconds" )
+  ]
+```
+
+Now we have a failing test; let's make it pass!
+
+```
+type alias Model =
+  { currentTime : Time }
+
+type Msg
+  = TimeUpdate Time
+
+defaultModel : Model
+defaultModel =
+  { currentTime = 0 }
+
+view : Model -> Html Msg
+view model =
+  Html.div []
+    [ Html.div [ Attr.id "num-seconds" ] [ Html.text ((formatTime model.currentTime) ++ " seconds") ]
+    ]
+
+formatTime : Time -> String
+formatTime time =
+  Time.inSeconds time
+    |> toString
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+  case msg of
+    TimeUpdate time ->
+      ( { model | currentTime = time }, Cmd.none )
+
+subscriptions : Model -> Sub Msg
+subscriptions =
+  Time.every Time.second TimeUpdate
+```
+
+And now our test should pass! Notice that we were able to test drive our component without
+our tests knowing how that component actually deals with the effect from the Time
+subscription.
+
 ### Development
 
 To run the tests:
