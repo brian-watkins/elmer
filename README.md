@@ -2,28 +2,33 @@
 
 Elmer makes it easy to describe the behavior of Elm HTML applications.
 
-### Install
+### Why?
 
-Elmer requires Elm 0.18.
+Behavior-driven development is a great practice to follow when writing
+applications. If you describe the behavior of your app in code, it's easy to add
+new features or refactor the code with confidence: just run the tests to see
+if your app still has all the behavior you've described in those tests.
 
-Right now, Elmer can only be installed manually. First, install [elm-ops-tooling](https://github.com/NoRedInk/elm-ops-tooling); you'll use this to install Elmer. Next, you'll want to set up your project with [elm-test](https://github.com/elm-community/elm-test). Since you'll be deploying Elmer manually, you'll have to make sure its dependencies are available in your tests. So, check the `dependencies` section of `elm-package.json` in your tests directory to be sure that it contains the following:
+Elm is a really great language for writing web applications. However, practicing BDD
+in Elm can be difficult. The two main functions in the Elm architecture -- `view` and
+`update` -- return opaque types, which cannot be inspected for testing purposes.
+Even so, calling `view` or `update` directly requires knowledge of an application's
+implementation: the shape of its model, its messages, and so on. If writing
+tests requires knowledge of implementation details, you lose the biggest
+benefit of writing tests in the first place: the ability to change your code
+with confidence.
 
-```
-  "elm-lang/html": "2.0.0 <= v < 3.0.0",
-  "elm-lang/http": "1.0.0 <= v < 2.0.0",
-  "elm-lang/navigation": "2.0.1 <= v < 3.0.0"
-```
+Elmer allows you to describe the behavior of your app without knowledge of
+implementation details. It simulates the Elm architecture, calling `view`
+and `update` as necessary throughout the course of your test. It allows
+you to specify the effects of commands or subscriptions while your application
+is under test. Elmer allows you to write tests first, which gives you
+the freedom and confidence to change your code later on.
 
-You'll probably need these in any case if you're building an elm html application that does much at all.
-
-Next, create a test and run it once to make sure that elm-test has downloaded its dependencies. Clone the Elmer repo into some local directory. Finally, run
-the following command to install Elmer:
-
-```
-$ python ./elm-ops-tooling/elm_self_publish.py <path to elmer> <path to your project>/tests
-```
 
 ### Usage
+
+Elmer requires Elm 0.18.
 
 #### Create a `ComponentState`
 
@@ -316,7 +321,7 @@ without needing to know the internal details of that component. We can provide f
 implementations for `Cmd`-generating functions that our component relies upon, but
 in doing so, we don't need to know any details about how our component processes
 the effects of the generated commands. Our tests give us flexibility
-to refactor our code and confidence that changes to that code still result in
+to refactor our code and confidence that the new code still results in
 the correct behavior.
 
 For the full example, see `tests/Elmer/TestApps/TimeTestApp.elm` and the associated tests in `tests/Elmer/DemoAppTests.elm`.
@@ -530,7 +535,26 @@ And now our test should pass! Notice that we were able to test drive our compone
 our tests knowing how that component actually deals with the effect from the Time
 subscription.
 
-### Development
+### Deveopment
+
+For development purposes, it's possible to deploy Elmer to a local project.
+
+First, install [elm-ops-tooling](https://github.com/NoRedInk/elm-ops-tooling); you'll use this to install Elmer. Next, you'll want to set up your project with [elm-test](https://github.com/elm-community/elm-test). Since you'll be deploying Elmer manually, you'll have to make sure its dependencies are available in your tests. So, check the `dependencies` section of `elm-package.json` in your tests directory to be sure that it contains the following:
+
+```
+  "elm-lang/html": "2.0.0 <= v < 3.0.0",
+  "elm-lang/http": "1.0.0 <= v < 2.0.0",
+  "elm-lang/navigation": "2.0.1 <= v < 3.0.0"
+```
+
+You'll probably need these in any case if you're building an elm html application that does much at all.
+
+Next, create a test and run it once to make sure that elm-test has downloaded its dependencies. Clone the Elmer repo into some local directory. Finally, run
+the following command to install Elmer:
+
+```
+$ python ./elm-ops-tooling/elm_self_publish.py <path to elmer> <path to your project>/tests
+```
 
 To run the tests:
 
