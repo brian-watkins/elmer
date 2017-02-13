@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "summary": "Behavior-driven testing for elm html applications",
+    "summary": "Behavior-driven development for Elm Html applications",
     "repository": "https://github.com/brian-watkins/elmer.git",
     "license": "MIT",
     "source-directories": [
