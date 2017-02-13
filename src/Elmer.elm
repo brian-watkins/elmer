@@ -1,29 +1,70 @@
 module Elmer
     exposing
-        ( componentState
-        , navigationComponentState
-        , map
-        , mapToExpectation
+        ( ComponentState
+        , PlatformOverride
+        , Matcher
+        , componentState
         , (<&&>)
         , expectNot
         )
 
+{-| Basic types and functions for working with ComponentStates and Matchers
+
+# Working with ComponentStates
+@docs ComponentState, componentState
+
+# Working with Matchers
+@docs Matcher, (<&&>), expectNot
+
+# Working with Overrides
+@docs PlatformOverride
+
+-}
+
 import Html exposing (Html)
-import Native.Helpers
+import Native.Platform
+import Native.Http
+import Native.Html
 
 import Expect
-import Elmer.Html.Node as Node
-import Elmer.Types exposing (..)
+import Elmer.Html.Element as Element
+import Elmer.Internal as Internal
+import Elmer.Platform as Platform
 
+{-| Represents the current state of the component under test.
+-}
+type alias ComponentState model msg
+  = Internal.ComponentState model msg
 
+{-| Represents a request to override a platform function.
 
-componentState : model -> ViewFunction model msg -> UpdateFunction model msg -> ComponentStateResult model msg
+See `Elmer.Command.override` and `Elmer.Subscription.override` for examples.
+-}
+type alias PlatformOverride
+  = Platform.PlatformOverride
+
+{-| Generic type for functions that pass or fail.
+
+A matcher returns an `Expect.Expectation` from the
+[elm-test](http://package.elm-lang.org/packages/elm-community/elm-test/latest)
+package.
+-}
+type alias Matcher a =
+  (a -> Expect.Expectation)
+
+{-| Basic constructor for a `ComponentState`.
+-}
+componentState
+  :  model
+  -> ( model -> Html msg )
+  -> ( msg -> model -> ( model, Cmd msg ) )
+  -> ComponentState model msg
 componentState model view update =
-    CurrentState
+    Internal.Ready
         { model = model
         , view = view
         , update = update
-        , targetNode = Nothing
+        , targetElement = Nothing
         , locationParser = Nothing
         , location = Nothing
         , httpRequests = []
@@ -32,27 +73,14 @@ componentState model view update =
         , subscriptions = Sub.none
         }
 
+{-| Operator for conjoining matchers.
+If one fails, then the conjoined matcher fails, otherwise it passes.
 
-navigationComponentState :
-    model
-    -> ViewFunction model msg
-    -> UpdateFunction model msg
-    -> LocationParserFunction msg
-    -> ComponentStateResult model msg
-navigationComponentState model view update parser =
-    CurrentState
-        { model = model
-        , view = view
-        , update = update
-        , targetNode = Nothing
-        , locationParser = Just parser
-        , location = Nothing
-        , httpRequests = []
-        , deferredCommands = []
-        , dummyCommands = []
-        , subscriptions = Sub.none
-        }
-
+    Elmer.Html.expectElement (
+      Elmer.Html.Matchers.hasText "Awesome" <&&>
+      Elmer.Html.Matchers.hasClass "cool"
+    ) componentState
+-}
 (<&&>) : Matcher a -> Matcher a -> Matcher a
 (<&&>) leftFunction rightFunction =
   (\node ->
@@ -66,6 +94,8 @@ navigationComponentState model view update parser =
         leftResult
   )
 
+{-| Expect that a matcher fails.
+-}
 expectNot : Matcher a -> Matcher a
 expectNot matcher =
   (\node ->
@@ -77,21 +107,3 @@ expectNot matcher =
       else
         Expect.pass
   )
-
-
-map : (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
-map mapper componentStateResult =
-    case componentStateResult of
-        CurrentState componentState ->
-            mapper componentState
-
-        UpstreamFailure message ->
-            UpstreamFailure message
-
-mapToExpectation : (HtmlComponentState model msg -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
-mapToExpectation mapper componentStateResult =
-  case componentStateResult of
-    CurrentState componentState ->
-      mapper componentState
-    UpstreamFailure message ->
-      Expect.fail message

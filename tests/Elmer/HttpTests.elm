@@ -7,11 +7,13 @@ import Dict
 import Elmer
 import Html
 import Elmer exposing ((<&&>))
-import Elmer.Types exposing (..)
+import Elmer.Internal as Internal exposing (..)
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers as Matchers
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
+import Elmer.Http.Status as Status
+import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Matchers exposing (..)
 import Elmer.Printer exposing (..)
 import Elmer.Command
@@ -48,7 +50,7 @@ requestRecordTests =
       , timeout = Nothing
       , withCredentials = False
       }
-    httpRequest = ElmerHttp.asHttpRequest request
+    httpRequest = HttpInternal.asHttpRequest request
   in
     describe "RequestRecord"
     [ test "it has the method" <|
@@ -63,8 +65,8 @@ requestRecordTests =
     , test "it has the headers" <|
       \() ->
         let
-          funHeader = { key = "x-fun", value = "fun" }
-          awesomeHeader = { key = "x-awesome", value = "awesome" }
+          funHeader = { name = "x-fun", value = "fun" }
+          awesomeHeader = { name = "x-awesome", value = "awesome" }
         in
           Expect.equal httpRequest.headers [funHeader, awesomeHeader]
     ]
@@ -81,7 +83,7 @@ noBodyRequestTests =
       , timeout = Nothing
       , withCredentials = False
       }
-    httpRequest = ElmerHttp.asHttpRequest request
+    httpRequest = HttpInternal.asHttpRequest request
   in
     describe "No Body RequestRecord"
     [ test "it has Nothing for the body" <|
@@ -107,7 +109,7 @@ serveTests =
                   >> Event.click
                   >> Markup.find "#data-result"
                )
-            |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
+            |> Markup.expectElement (Matchers.hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format
               [ message "Received a request for" "GET http://fun.com/fun.html"
               , message "but it does not match any of the stubbed requests" "POST http://whatUrl.com\nGET http://wrongUrl.com"
@@ -127,7 +129,7 @@ serveTests =
                 >> Event.click
                 >> Markup.find "#data-result"
               )
-            |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
+            |> Markup.expectElement (Matchers.hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format
               [ message "Sent a request where a stubbed route contains a query string" "http://wrongUrl.com?type=fun"
               , description "Stubbed routes may not contain a query string"
@@ -148,7 +150,7 @@ serveTests =
                   >> Event.click
                   >> Markup.find "#data-result"
                 )
-              |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
+              |> Markup.expectElement (Matchers.hasText "Name: Super Fun Person")
               |> Expect.equal (Expect.fail (format
                 [ message "Received a request for" "GET http://fun.com/fun.html"
                 , message "but it does not match any of the stubbed requests" "POST http://fun.com/fun.html"
@@ -161,7 +163,7 @@ serveTests =
           \() ->
             let
               stubbedResponse = HttpStub.get "http://fun.com/fun.html"
-                |> HttpStub.withStatus (HttpStub.httpStatus 404 "Not Found")
+                |> HttpStub.withStatus Status.notFound
             in
               Elmer.componentState App.defaultModel App.view App.update
                 |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
@@ -169,7 +171,7 @@ serveTests =
                     >> Event.click
                     >> Markup.find "#data-result"
                   )
-                |> Markup.expectNode (Matchers.hasText "BadStatus Error: 404 Not Found")
+                |> Markup.expectElement (Matchers.hasText "BadStatus Error: 404 Not Found")
         ]
       , describe "when the response status is in the 200 range"
         [ describe "when the response body cannot be processed"
@@ -185,7 +187,7 @@ serveTests =
                       >> Event.click
                       >> Markup.find "#data-result"
                     )
-                  |> Markup.expectNode (Matchers.hasText "Name: Super Fun Person")
+                  |> Markup.expectElement (Matchers.hasText "Name: Super Fun Person")
                   |> Expect.equal (Expect.fail (format
                     [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
                     , description ("\t{}")
@@ -209,7 +211,7 @@ serveTests =
                       >> Event.click
                       >> Markup.find "#data-result"
                     )
-                  |> Markup.expectNode (Matchers.hasText "awesome things")
+                  |> Markup.expectElement (Matchers.hasText "awesome things")
                   |> Expect.equal Expect.pass
           ]
         , describe "when the response body can be processed"
@@ -225,7 +227,7 @@ serveTests =
                       >> Event.click
                       >> Markup.find "#data-result"
                     )
-                  |> Markup.expectNode (Matchers.hasText "Super Fun Person")
+                  |> Markup.expectElement (Matchers.hasText "Super Fun Person")
                   |> Expect.equal Expect.pass
           ]
         , let
@@ -245,11 +247,11 @@ serveTests =
             [ test "it decodes the response for one stub" <|
               \() ->
                 Markup.find "#data-result" state
-                  |> Markup.expectNode (Matchers.hasText "Super Fun Person")
+                  |> Markup.expectElement (Matchers.hasText "Super Fun Person")
             , test "it decodes the response for the other stub" <|
               \() ->
                 Markup.find "#other-data-result" state
-                  |> Markup.expectNode (Matchers.hasText "This is great!")
+                  |> Markup.expectElement (Matchers.hasText "This is great!")
             ]
         ]
       ]
@@ -272,7 +274,7 @@ spyTests =
     , test "it is as if the response never returned" <|
       \() ->
         Markup.find "#data-result" requestedState
-          |> Markup.expectNode (Matchers.hasText "")
+          |> Markup.expectElement (Matchers.hasText "")
           |> Expect.equal Expect.pass
     ]
 
@@ -291,17 +293,17 @@ errorResponseTests =
               >> Event.click
               >> Markup.find "#data-result"
             )
-          |> Markup.expectNode (Matchers.hasText "Timeout Error")
+          |> Markup.expectElement (Matchers.hasText "Timeout Error")
   ]
 
 
-componentStateWithRequests : List HttpRequestData -> ComponentStateResult SimpleApp.Model SimpleApp.Msg
+componentStateWithRequests : List HttpRequestData -> ComponentState SimpleApp.Model SimpleApp.Msg
 componentStateWithRequests requestData =
   let
     defaultState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
   in
     defaultState
-      |> Elmer.map (\state -> CurrentState { state | httpRequests = requestData })
+      |> Internal.map (\state -> Ready { state | httpRequests = requestData })
 
 testRequest : String -> String -> HttpRequestData
 testRequest method url =
@@ -311,13 +313,13 @@ testRequest method url =
   , headers = []
   }
 
-expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
+expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentState SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
 expectRequestTests method func =
   describe ("expect" ++ method)
   [ describe "when there is an upstream error"
     [ test "it fails with the upstream error" <|
       \() ->
-        func "http://fun.com/fun" hasBeenRequested (UpstreamFailure "Failed!")
+        func "http://fun.com/fun" hasBeenRequested (Failed "Failed!")
           |> Expect.equal (Expect.fail "Failed!")
     ]
   , describe "when the expected route contains a query string"
@@ -448,14 +450,14 @@ resolveTests =
       , test "it does not yet resolve the response" <|
         \() ->
           Markup.find "#data-result" requestedState
-            |> Markup.expectNode (Matchers.hasText "")
+            |> Markup.expectElement (Matchers.hasText "")
       ]
     , describe "when resolve is called"
       [ test "it resolves the response" <|
         \() ->
           Elmer.Command.resolveDeferred requestedState
             |> Markup.find "#data-result"
-            |> Markup.expectNode (Matchers.hasText "Cool Dude")
+            |> Markup.expectElement (Matchers.hasText "Cool Dude")
       ]
     ]
 
@@ -466,9 +468,9 @@ clearRequestsTests =
     [ test "it shows the failure" <|
       \() ->
         let
-          result = ElmerHttp.clearRequestHistory (UpstreamFailure "You Failed!")
+          result = ElmerHttp.clearRequestHistory (Failed "You Failed!")
         in
-          Expect.equal (UpstreamFailure "You Failed!") result
+          Expect.equal (Failed "You Failed!") result
     ]
   , describe "when there are no requests to clear"
     [ test "it fails" <|
@@ -477,7 +479,7 @@ clearRequestsTests =
           initialState = componentStateWithRequests []
         in
           ElmerHttp.clearRequestHistory initialState
-            |> Expect.equal (UpstreamFailure "No HTTP requests to clear")
+            |> Expect.equal (Failed "No HTTP requests to clear")
     ]
   , describe "when there are requests to clear"
     [ test "it clears the requests" <|
@@ -488,9 +490,9 @@ clearRequestsTests =
           initialState = componentStateWithRequests [ request1, request2 ]
         in
           case ElmerHttp.clearRequestHistory initialState of
-            CurrentState state ->
+            Ready state ->
               Expect.equal True (List.isEmpty state.httpRequests)
-            UpstreamFailure _ ->
+            Failed _ ->
               Expect.fail "Should find a component state!"
     ]
   ]

@@ -1,6 +1,6 @@
 module Elmer.Platform exposing
   ( Intention(..)
-  , PlatformOverride
+  , PlatformOverride(..)
   , cmdValue
   , subValue
   , toCmd
@@ -12,8 +12,7 @@ module Elmer.Platform exposing
   , mapWithOverrides
   )
 
-import Elmer
-import Elmer.Types exposing (..)
+import Elmer.Internal as Internal exposing (..)
 
 type Intention a msg subMsg
     = Leaf (LeafData a)
@@ -31,64 +30,66 @@ type alias LeafData a =
     , home : String
     }
 
-type alias PlatformOverride =
-  (() -> Bool)
+type PlatformOverride =
+  PlatformOverride (() -> Bool)
 
 override : (() -> a) -> (b -> c) -> PlatformOverride
 override namingFunc overridingFunc =
-  \() ->
-    Native.Helpers.swizzle namingFunc overridingFunc
+  PlatformOverride <|
+    \() ->
+      Native.Platform.swizzle namingFunc overridingFunc
 
 batchOverride : List PlatformOverride -> PlatformOverride
 batchOverride overrides =
-  \() ->
-    executeOverrides overrides
+  PlatformOverride <|
+    \() ->
+      executeOverrides overrides
 
-mapWithOverrides : String -> List PlatformOverride -> (HtmlComponentState model msg -> ComponentStateResult model msg) -> ComponentStateResult model msg -> ComponentStateResult model msg
+mapWithOverrides : String -> List PlatformOverride -> (Component model msg -> ComponentState model msg) -> ComponentState model msg -> ComponentState model msg
 mapWithOverrides platformType overrides mapper =
-  Elmer.map (\componentState ->
+  Internal.map (\componentState ->
     if executeOverrides overrides then
       mapper componentState
         |> restore
     else
       "Failed to override " ++ platformType ++ "!"
-        |> UpstreamFailure
+        |> Failed
         |> restore
   )
 
 executeOverrides : List PlatformOverride -> Bool
 executeOverrides overrides =
-  List.foldl (\func cur -> cur && func ()) True overrides
+  List.foldl (\(PlatformOverride func) cur -> cur && func ()) True overrides
 
 
-restore : ComponentStateResult model msg -> ComponentStateResult model msg
+restore : ComponentState model msg -> ComponentState model msg
 restore stateResult =
-  if Native.Helpers.restoreSwizzled () then
+  if Native.Platform.restoreSwizzled () then
     stateResult
   else
-    UpstreamFailure "Failed to restore swizzled functions! (This should never happen)"
+    Failed "Failed to restore swizzled functions! (This should never happen)"
 
 
 cmdData : Cmd msg -> Intention a msg subMsg
 cmdData command =
-  Native.Helpers.asIntention command
+  Native.Platform.asIntention command
 
 cmdValue : Cmd a -> b
 cmdValue cmd =
-  Native.Helpers.intentionValue cmd
+  Native.Platform.intentionValue cmd
 
 toCmd : String -> a -> Cmd msg
 toCmd home data =
-  Native.Helpers.toIntention home data
+  Native.Platform.toIntention home data
 
 subData : Sub msg -> Intention a msg subMsg
 subData subscription =
-  Native.Helpers.asIntention subscription
+  Native.Platform.asIntention subscription
 
 subValue : Sub a -> b
 subValue sub =
-  Native.Helpers.intentionValue sub
+  Native.Platform.intentionValue sub
 
 toSub : String -> a -> Sub msg
 toSub home data =
-  Native.Helpers.toIntention home data
+  Native.Platform.toIntention home data

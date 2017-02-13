@@ -2,7 +2,7 @@ module Elmer.HttpMatcherTests exposing (all)
 
 import Test exposing (..)
 import Expect
-import Elmer.Types exposing (..)
+import Elmer.Http.Internal exposing (..)
 import Elmer.Http.Matchers as Matchers
 import Elmer.Printer exposing (..)
 
@@ -149,19 +149,19 @@ hasHeaderTests =
   , describe "when there is no header with the key"
     [ test "it fails" <|
       \() ->
-        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { key = "some-header", value = "some-header-value" }))
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { name = "some-header", value = "some-header-value" }))
           |> Expect.equal (Expect.fail (format [ message "Expected request to have header" "my-header = my-header-value", message "but it has" "some-header = some-header-value" ]))
     ]
   , describe "where there is a header with the key but a different value"
     [ test "it fails" <|
       \() ->
-        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { key = "my-header", value = "some-header-value" }))
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { name = "my-header", value = "some-header-value" }))
           |> Expect.equal (Expect.fail (format [ message "Expected request to have header" "my-header = my-header-value", message "but it has" "my-header = some-header-value" ]))
     ]
   , describe "when a header key and value matches"
     [ test "it passes" <|
       \() ->
-        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { key = "my-header", value = "my-header-value" }))
+        Matchers.hasHeader ("my-header", "my-header-value") (getWithHeader (Just { name = "my-header", value = "my-header-value" }))
           |> Expect.equal Expect.pass
     ]
   ]

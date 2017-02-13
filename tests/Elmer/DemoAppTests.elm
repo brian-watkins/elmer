@@ -11,6 +11,7 @@ import Elmer.Html.Matchers as Matchers
 import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
+import Elmer.Http.Status as Status
 import Elmer.Command as Command
 import Elmer.Html as Markup
 
@@ -32,13 +33,13 @@ successStub apiMessage =
 failureStub : Elmer.Http.HttpResponseStub
 failureStub =
   Stub.get "/api/request"
-    |> Stub.withStatus (Stub.httpStatus 500 "Internal Server Error")
+    |> Stub.withStatus Status.serverError
 
 appFlowTests =
   describe "app flow"
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
-        Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
           |> Command.use [ Elmer.Http.serve [ (successStub "Ok") ] ] (
             ElmerNav.setLocation "/click"
               >> Markup.find ".button"
@@ -46,22 +47,22 @@ appFlowTests =
               >> Event.click
               >> Markup.find "#clickCount"
             )
-          |> Markup.expectNode (Matchers.hasText "2 clicks!")
+          |> Markup.expectElement (Matchers.hasText "2 clicks!")
           |> Expect.equal (Expect.pass)
     , test "it makes multiple expectations about a node" <|
       \() ->
         let
-          initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+          initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         in
           ElmerNav.setLocation "/text" initialState
             |> Markup.find "ul"
-            |> Markup.expectNode (
+            |> Markup.expectElement (
               Matchers.hasText "Fun Item 1"
               <&&> Matchers.hasText "Fun Item 2"
               <&&> Matchers.hasText "Fun Item 3"
               )
     , let
-        initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
           |> Command.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ] (
             ElmerNav.setLocation "/request"
@@ -73,14 +74,14 @@ appFlowTests =
         [ test "it displays the response body" <|
             \() ->
               Markup.find "#requestOutput" resultState
-                |> Markup.expectNode (Matchers.hasText "Response: A message from the server!")
+                |> Markup.expectElement (Matchers.hasText "Response: A message from the server!")
         , test "it does not display an error" <|
             \() ->
               Markup.find "#requestError" resultState
-                |> Markup.expectNode (Matchers.hasText "Got request error: No error!")
+                |> Markup.expectElement (Matchers.hasText "Got request error: No error!")
         ]
     , let
-        initialState = Elmer.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
           |> Command.use [ Elmer.Http.serve [ failureStub ] ] (
             ElmerNav.setLocation "/request"
@@ -92,11 +93,11 @@ appFlowTests =
         [ test "it does not display a request output" <|
             \() ->
               Markup.find "#requestOutput" resultState
-                |> Markup.expectNode (Matchers.hasText "Response: Error!")
+                |> Markup.expectElement (Matchers.hasText "Response: Error!")
         , test "it does display an error" <|
             \() ->
               Markup.find "#requestError" resultState
-                |> Markup.expectNode (
+                |> Markup.expectElement (
                     Matchers.hasText "Got request error: Bad Status: 500 Internal Server Error"
                 )
         ]
@@ -118,5 +119,5 @@ timeAppTests =
         Markup.find ".button" initialState
           |> Command.use [ taskOverride ] Event.click
           |> Markup.find "#currentTime"
-          |> Markup.expectNode (Matchers.hasText "Time: 3000")
+          |> Markup.expectElement (Matchers.hasText "Time: 3000")
   ]

@@ -35,7 +35,7 @@ mapCommand =
         in
           Command.send mapCommand initialState
             |> Markup.find "#root"
-            |> Markup.expectNode (Matchers.hasText "Fun: bowling")
+            |> Markup.expectElement (Matchers.hasText "Fun: bowling")
     , test "it handles a click event" <|
       \() ->
         let
@@ -46,7 +46,7 @@ mapCommand =
             |> Markup.find "#click-display"
             |> Event.click
             |> Markup.find "#root"
-            |> Markup.expectNode (Matchers.hasText "Fun: click")
+            |> Markup.expectElement (Matchers.hasText "Fun: click")
     ]
   , describe "when a child component is used by the parent"
     [ test "it handles a mapped map command" <|
@@ -58,7 +58,7 @@ mapCommand =
         in
           Command.send parentMapCommand initialState
             |> Markup.find "#child-view"
-            |> Markup.expectNode (Matchers.hasText "Fun: bowling")
+            |> Markup.expectElement (Matchers.hasText "Fun: bowling")
     , test "it handles a mapped message from the child view" <|
       \() ->
         let
@@ -70,12 +70,12 @@ mapCommand =
             |> Markup.find "#click-display"
             |> Event.click
             |> Markup.find "#child-view"
-            |> Markup.expectNode (Matchers.hasText "Fun: click")
+            |> Markup.expectElement (Matchers.hasText "Fun: click")
     , describe "when the mapped command has a custom update method"
       [ test "it handles a mapped message from the child view" <|
         \() ->
           let
-            initialState = navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
+            initialState = ElmerNav.navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
           in
             initialState
               |> Command.use [ ElmerNav.spy ] (
@@ -83,7 +83,7 @@ mapCommand =
                   >> Event.click
                   >> Markup.find "#fun-stuff"
                 )
-              |> Markup.expectNode (Matchers.hasText "Fun things!")
+              |> Markup.expectElement (Matchers.hasText "Fun things!")
       ]
     ]
   ]

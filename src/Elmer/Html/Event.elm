@@ -5,15 +5,30 @@ module Elmer.Html.Event
         , on
         )
 
+{-| Trigger events on targeted elements. When an event occurs, Elmer will
+call the component's `update` method with the resulting message.
+
+# Mouse Events
+@docs click
+
+# Form Events
+@docs input
+
+# Custom Events
+@docs on
+
+-}
+
 import Json.Decode as Json
-import Elmer.Types exposing (..)
+import Elmer.Html.Types exposing (..)
+import Elmer.Internal as Internal exposing (..)
 import Elmer
 import Elmer.Runtime as Runtime
 import Dict
 
 
 type alias EventHandler msg =
-    HtmlNode msg -> EventResult msg
+    HtmlElement msg -> EventResult msg
 
 
 type EventResult msg
@@ -25,8 +40,9 @@ clickHandler : EventHandler msg
 clickHandler node =
     genericHandler "click" "{}" node
 
-
-click : ComponentStateResult model msg -> ComponentStateResult model msg
+{-| Trigger a click event on the targeted element.
+-}
+click : ComponentState model msg -> ComponentState model msg
 click componentStateResult =
     handleEvent clickHandler componentStateResult
 
@@ -39,8 +55,9 @@ inputHandler inputString node =
     in
         genericHandler "input" eventJson node
 
-
-input : String -> ComponentStateResult model msg -> ComponentStateResult model msg
+{-| Trigger an input event on the targeted element.
+-}
+input : String -> ComponentState model msg -> ComponentState model msg
 input inputString componentStateResult =
     handleEvent (inputHandler inputString) componentStateResult
 
@@ -58,8 +75,14 @@ genericHandler eventName eventJson node =
         Nothing ->
             EventFailure ("No " ++ eventName ++ " event found")
 
+{-| Trigger a custom event on the targeted element.
 
-on : String -> String -> ComponentStateResult model msg -> ComponentStateResult model msg
+The following will trigger a `keyup` event:
+
+    componentState
+      |> on "keyup" "{\"keyCode\":65}"
+-}
+on : String -> String -> ComponentState model msg -> ComponentState model msg
 on eventName eventJson componentStateResult =
     handleEvent (genericHandler eventName eventJson) componentStateResult
 
@@ -67,45 +90,45 @@ on eventName eventJson componentStateResult =
 -- Private functions
 
 
-getEvent : String -> HtmlNode msg -> Maybe (HtmlEvent msg)
+getEvent : String -> HtmlElement msg -> Maybe (HtmlEvent msg)
 getEvent eventName node =
     List.head (List.filter (\e -> e.eventType == eventName) node.events)
 
 
-handleEvent : EventHandler msg -> ComponentStateResult model msg -> ComponentStateResult model msg
+handleEvent : EventHandler msg -> ComponentState model msg -> ComponentState model msg
 handleEvent eventHandler componentStateResult =
     componentStateResult
-        |> Elmer.map (handleNodeEvent eventHandler)
+        |> Internal.map (handleNodeEvent eventHandler)
 
 
-handleNodeEvent : EventHandler msg -> HtmlComponentState model msg -> ComponentStateResult model msg
+handleNodeEvent : EventHandler msg -> Component model msg -> ComponentState model msg
 handleNodeEvent eventHandler componentState =
-    case componentState.targetNode of
+    case componentState.targetElement of
         Just node ->
             updateComponent node eventHandler componentState
 
         Nothing ->
-            UpstreamFailure "No target node specified"
+            Failed "No target node specified"
 
 
-updateComponent : HtmlNode msg -> EventHandler msg -> HtmlComponentState model msg -> ComponentStateResult model msg
+updateComponent : HtmlElement msg -> EventHandler msg -> Component model msg -> ComponentState model msg
 updateComponent node eventHandler componentState =
     case eventHandler node of
         Message msg ->
           Runtime.performUpdate msg componentState
-            |> asComponentStateResult
+            |> asComponentState
 
         EventFailure msg ->
-            UpstreamFailure msg
+            Failed msg
 
 
-asComponentStateResult : Result String (HtmlComponentState model msg) -> ComponentStateResult model msg
-asComponentStateResult commandResult =
+asComponentState : Result String (Component model msg) -> ComponentState model msg
+asComponentState commandResult =
   case commandResult of
     Ok updatedComponentState ->
-      CurrentState updatedComponentState
+      Ready updatedComponentState
     Err message ->
-      UpstreamFailure message
+      Failed message
 
 
 eventResult : Result String msg -> HtmlEvent msg -> EventResult msg

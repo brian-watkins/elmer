@@ -2,19 +2,29 @@ module Elmer.HtmlTests exposing (all)
 
 import Test exposing (..)
 import Expect
-import Elmer.Types exposing (..)
+import Elmer.Internal exposing (..)
 import Elmer.Html as Markup
 import Elmer
 import Elmer.Html.Matchers as Matchers
-
+import Elmer.Html.Query as Query
+import Elmer.TestHelpers exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
+import Html.Attributes as Attr
+import Html exposing (Html)
 
 all : Test
 all =
   describe "Html Tests"
   [ findTests
-  , expectNodeTests
-  , expectNodeExistsTests
+  , findChildrenTests
+  , noElementFound
+  , findById
+  , findByClass
+  , findByTag
+  , findByAttribute
+  , findByProperty
+  , expectElementTests
+  , expectElementExistsTests
   , childNodeTests
   ]
 
@@ -24,7 +34,7 @@ findTests =
     [ test "it returns the failure" <|
       \() ->
         let
-          initialState = UpstreamFailure "upstream failure"
+          initialState = Failed "upstream failure"
         in
           Markup.find ".button" initialState
             |> Expect.equal initialState
@@ -37,7 +47,7 @@ findTests =
             initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
             Markup.find ".blah" initialState
-              |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled', id = 'root' } \n  - Some text")
+              |> Expect.equal (Failed "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled', id = 'root' } \n  - Some text")
       ]
     , describe "when there is only text" <|
       [ test "it returns the failure message and prints that there are no nodes" <|
@@ -46,7 +56,7 @@ findTests =
             initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.textView SimpleApp.update
           in
             Markup.find ".blah" initialState
-              |> Expect.equal (UpstreamFailure "No html node found with selector: .blah\n\nThe current view is:\n\n<No Nodes>")
+              |> Expect.equal (Failed "No html node found with selector: .blah\n\nThe current view is:\n\n<No Nodes>")
       ]
     ]
   , describe "when the element is found"
@@ -57,27 +67,308 @@ findTests =
           stateResult = Markup.find ".styled" initialState
         in
           case stateResult of
-            CurrentState state ->
-              case state.targetNode of
+            Ready state ->
+              case state.targetElement of
                 Just node ->
                   Expect.equal node.tag "div"
                 Nothing ->
                   Expect.fail "No target node!"
-            UpstreamFailure message ->
+            Failed message ->
               Expect.fail message
     ]
   ]
 
+findChildrenTests : Test
+findChildrenTests =
+  describe "findChildren"
+  [ describe "when the node has no matching children"
+    [ test "it fails" <|
+      \() ->
+        Markup.findChildren ".some-class" (emptyNode "div")
+          |> Expect.equal []
+    ]
+  , describe "when the node has matching children"
+    [ test "it finds the children" <|
+      \() ->
+        Markup.findChildren "li" nodeWithList
+          |> Expect.equal [(emptyNode "li"), (emptyNode "li"), (emptyNode "li")]
+    ]
+  ]
 
-expectNodeTests =
+
+noElementFound : Test
+noElementFound =
+  describe "when no element found"
+    [ describe "with bad id"
+      [ test "it returns a failure mesage" <|
+        \() ->
+          let
+            html = Html.div [ Attr.id "something" ] []
+          in
+            Expect.equal ( Query.findElement html "#nothing" ) Nothing
+      ]
+    , describe "with bad class"
+      [ test "it returns nothing" <|
+        \() ->
+          let
+            html = Html.div [ Attr.class "something" ] []
+          in
+            Expect.equal ( Query.findElement html ".nothing" ) Nothing
+      ]
+    , describe "when there is only text"
+      [ test "it returns nothing" <|
+        \() ->
+          let
+            html = Html.text "Something"
+          in
+            Expect.equal ( Query.findElement html ".anything" ) Nothing
+      ]
+    ]
+
+findById : Test
+findById =
+  let
+    html = Html.div [ Attr.id "root" ]
+      [ Html.div [ Attr.id "nested" ] []
+      ]
+  in
+    describe "find by id"
+      [ test "it finds the top element by id" <|
+        \() ->
+          case (Query.findElement html "#root") of
+            Just a ->
+              Matchers.hasId "root" a
+            Nothing ->
+              Expect.fail "Nothing found"
+      , test "finds a nested element by id" <|
+        \() ->
+          case (Query.findElement html "#nested") of
+            Just a ->
+              Matchers.hasId "nested" a
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+
+findByClass : Test
+findByClass =
+  describe "find by class"
+    [ let
+        html = Html.div [ Attr.class "content" ]
+          [ Html.div [ Attr.class "nested" ] []
+          ]
+      in
+        describe "when there is one class"
+        [ test "it finds the top element by class" <|
+          \() ->
+            case ( Query.findElement html ".content" ) of
+              Just a ->
+                Matchers.hasClass "content" a
+              Nothing ->
+                Expect.fail "Nothing found"
+        , test "it finds a nested element by class" <|
+          \() ->
+            case ( Query.findElement html ".nested" ) of
+              Just a ->
+                Matchers.hasClass "nested" a
+              Nothing ->
+                Expect.fail "Nothing found"
+        ]
+    , let
+        html = Html.div [ Attr.classList [ ("awesome", True), ("super", True), ("root", True) ] ] []
+      in
+        describe "when there is more than one class"
+        [ test "it finds the element" <|
+          \() ->
+            case ( Query.findElement html ".super" ) of
+              Just a ->
+                Matchers.hasClass "super" a
+              Nothing ->
+                Expect.fail "Nothing found"
+        ]
+    , let
+        html = Html.div [ Attr.id "root", Attr.class "root" ] []
+      in
+        describe "when the class name is the same as an id"
+        [ test "it returns the element with the class name" <|
+          \() ->
+            case ( Query.findElement html ".root" ) of
+              Just a ->
+                Matchers.hasClass "root" a
+              Nothing ->
+                Expect.fail "Nothing found"
+        ]
+    , let
+        html = Html.div [ Attr.id "root" ]
+          [ Html.div [ Attr.id "firstNested" ]
+            [ Html.div [ Attr.class "deeplyNested" ] []
+            ]
+          ]
+      in
+        describe "when the node is nested"
+        [ test "it returns the node with the class name" <|
+          \() ->
+            case ( Query.findElement html ".deeplyNested" ) of
+              Just a ->
+                Matchers.hasClass "deeplyNested" a
+              Nothing ->
+                Expect.fail "Nothing found"
+        ]
+    ]
+
+findByTag =
+  let
+    html = Html.div [ Attr.id "root" ]
+      [ Html.input [ Attr.class "inputField" ] []
+      ]
+  in
+  describe "find by tag"
+  [ describe "when there is an element with the tag"
+    [ test "it finds the first element" <|
+      \() ->
+        case Query.findElement html "div" of
+          Just node ->
+            Matchers.hasId "root" node
+          Nothing ->
+            Expect.fail "Nothing found"
+    , test "it finds a nested element" <|
+      \() ->
+        case Query.findElement html "input" of
+          Just node ->
+            Matchers.hasClass "inputField" node
+          Nothing ->
+            Expect.fail "Nothing found"
+    ]
+  ]
+
+findByAttribute =
+  let
+    html = Html.div
+      [ Attr.class "withAttribute"
+      , Attr.attribute "data-attribute-name" "myFunAttributeValue"
+      ]
+      [ Html.div
+        [ Attr.class "anotherWithAttribute"
+        , Attr.attribute "data-attribute-name" "myDifferentAttributeValue"
+        ] []
+      , Html.p
+        [ Attr.class "thirdWithAttribute"
+        , Attr.attribute "data-attribute-name" "thirdAttributeValue"
+        ] []
+      ]
+  in
+    describe "find by attribute"
+    [ describe "when nothing is specified"
+      [ test "it fails" <|
+        \() ->
+          case Query.findElement html "" of
+            Just node ->
+              Expect.fail "Should not have found anything!"
+            Nothing ->
+              Expect.pass
+      ]
+    , describe "when the selector is not parseable"
+      [ test "it fails" <|
+        \() ->
+          case Query.findElement html "[blah='stuff'" of
+            Just node ->
+              Expect.fail "Should not have found anything!"
+            Nothing ->
+              Expect.pass
+      ]
+    , describe "when only an attribute is specified"
+      [ test "it finds the first node with the attribute" <|
+        \() ->
+          case Query.findElement html "[data-attribute-name]" of
+            Just node ->
+              Matchers.hasClass "withAttribute" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when an attribute and value is specified"
+      [ test "it finds the node with the attribute and value" <|
+        \() ->
+          case Query.findElement html "[data-attribute-name='myDifferentAttributeValue']" of
+            Just node ->
+              Matchers.hasClass "anotherWithAttribute" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag and attribute is specified"
+      [ test "it finds the node with the tag and attribute" <|
+        \() ->
+          case Query.findElement html "p[data-attribute-name]" of
+            Just node ->
+              Matchers.hasClass "thirdWithAttribute" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag, attribute, and value is specified"
+      [ test "it finds the node with the tag and attribute and value" <|
+        \() ->
+          case Query.findElement html "div[data-attribute-name='myDifferentAttributeValue']" of
+            Just node ->
+              Matchers.hasClass "anotherWithAttribute" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    ]
+
+findByProperty =
+  let
+    html = Html.div [ Attr.id "my-form" ]
+      [ Html.input [ Attr.id "name-field", Attr.name "name" ] []
+      , Html.input [ Attr.id "telephone-field", Attr.name "telephone" ] []
+      ]
+  in
+    describe "find by property"
+    [ describe "when only a property is specified"
+      [ test "it finds the node with the property" <|
+        \() ->
+          case Query.findElement html "[name]" of
+            Just node ->
+              Matchers.hasId "name-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a property and value is specified"
+      [ test "it finds the node with the property and value" <|
+        \() ->
+          case Query.findElement html "[name='telephone']" of
+            Just node ->
+              Matchers.hasId "telephone-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag and attribute is specified"
+      [ test "it finds the node with the tag and attribute" <|
+        \() ->
+          case Query.findElement html "input[name]" of
+            Just node ->
+              Matchers.hasId "name-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when a tag, attribute, and value is specified"
+      [ test "it finds the node with the tag and attribute and value" <|
+        \() ->
+          case Query.findElement html "input[name='telephone']" of
+            Just node ->
+              Matchers.hasId "telephone-field" node
+            Nothing ->
+              Expect.fail "Nothing found"
+      ]
+    ]
+
+
+expectElementTests =
   describe "expect node"
   [ describe "when there is an upstream failure"
     [ test "it fails with the error message" <|
       \() ->
         let
-          initialState = UpstreamFailure "upstream failure"
+          initialState = Failed "upstream failure"
         in
-          Markup.expectNode (
+          Markup.expectElement (
             \node -> Expect.fail "Should not get here"
           ) initialState
             |> Expect.equal (Expect.fail "upstream failure")
@@ -88,10 +379,10 @@ expectNodeTests =
         let
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
-          Markup.expectNode (
+          Markup.expectElement (
             \node -> Expect.fail "Should not get here"
           ) initialState
-            |> Expect.equal (Expect.fail "Node does not exist")
+            |> Expect.equal (Expect.fail "Element does not exist")
     ]
   , describe "when there is a target node"
     [ test "it executes the expectation function" <|
@@ -100,22 +391,22 @@ expectNodeTests =
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           Markup.find ".styled" initialState
-            |> Markup.expectNode (
+            |> Markup.expectElement (
                   \node -> Expect.equal "div" node.tag
                 )
             |> Expect.equal Expect.pass
     ]
   ]
 
-expectNodeExistsTests =
+expectElementExistsTests =
   describe "expect node exists"
   [ describe "when there is an upstream failure"
     [ test "it fails with the upstream error message" <|
       \() ->
         let
-          initialState = UpstreamFailure "upstream failure"
+          initialState = Failed "upstream failure"
         in
-          Markup.expectNodeExists initialState
+          Markup.expectElementExists initialState
             |> Expect.equal (Expect.fail "upstream failure")
     ]
   , describe "when there is no target node"
@@ -124,8 +415,8 @@ expectNodeExistsTests =
         let
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
-          Markup.expectNodeExists initialState
-            |> Expect.equal (Expect.fail "Node does not exist")
+          Markup.expectElementExists initialState
+            |> Expect.equal (Expect.fail "Element does not exist")
     ]
   , describe "where there is a target node"
     [ test "it passes" <|
@@ -134,7 +425,7 @@ expectNodeExistsTests =
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           Markup.find "#root" initialState
-            |> Markup.expectNodeExists
+            |> Markup.expectElementExists
             |> Expect.equal Expect.pass
     ]
   ]
@@ -148,7 +439,7 @@ childNodeTests =
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.viewWithChildren SimpleApp.update
         in
           Markup.find "#root" initialState
-            |> Markup.expectNode (
+            |> Markup.expectElement (
                   \node ->
                     Matchers.hasText "Child text" node
                 )

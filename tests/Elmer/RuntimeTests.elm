@@ -5,7 +5,7 @@ import Expect
 
 import Html exposing (Html)
 import Elmer exposing (..)
-import Elmer.Types exposing (..)
+import Elmer.Internal exposing (..)
 import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Html.Matchers as Matchers
@@ -47,11 +47,11 @@ batchCommandTest =
     [ test "it processes the first command" <|
       \() ->
           Markup.find "#first-message" result
-            |> Markup.expectNode (Matchers.hasText "Cool stuff!")
+            |> Markup.expectElement (Matchers.hasText "Cool stuff!")
     , test "it processes the second command" <|
       \() ->
           Markup.find "#second-message" result
-            |> Markup.expectNode (Matchers.hasText "Fun stuff!")
+            |> Markup.expectElement (Matchers.hasText "Fun stuff!")
     ]
 
 batchCommandFailureTest : Test
@@ -68,7 +68,7 @@ batchCommandFailureTest =
     describe "when a batched command fails"
     [ test "it reports the failure" <|
       \() ->
-          Expect.equal (UpstreamFailure "It failed!") result
+          Expect.equal (Failed "It failed!") result
     ]
 
 mappedBatchCommandTest : Test
@@ -86,11 +86,11 @@ mappedBatchCommandTest =
     [ test "it maps the first command" <|
       \() ->
           Markup.find "#first-message" result
-            |> Markup.expectNode (Matchers.hasText "Cool stuff!")
+            |> Markup.expectElement (Matchers.hasText "Cool stuff!")
     , test "it maps the second command" <|
       \() ->
           Markup.find "#second-message" result
-            |> Markup.expectNode (Matchers.hasText "Fun stuff!")
+            |> Markup.expectElement (Matchers.hasText "Fun stuff!")
     ]
 
 type ParentMsg
@@ -125,7 +125,7 @@ unknownCommandTest =
         unknownCommand = Task.perform App.RenderFirstMessage (Task.succeed "hello")
       in
         Command.send unknownCommand initialState
-          |> Expect.equal (UpstreamFailure ( format
+          |> Expect.equal (Failed ( format
             [ message "Elmer encountered a command it does not know how to run" "Task"
             , description "Try sending a stubbed or dummy command instead"
             ]

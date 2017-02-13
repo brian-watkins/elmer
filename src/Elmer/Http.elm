@@ -1,9 +1,5 @@
 module Elmer.Http exposing
   ( HttpResponseStub
-  , HttpResponseResult(..)
-  , HttpRequestFunction
-  , HttpRequest
-  , asHttpRequest
   , expectPOST
   , expectGET
   , expectDELETE
@@ -12,10 +8,31 @@ module Elmer.Http exposing
   , spy
   )
 
+{-| Functions for handling Http requests in your tests.
+
+Your component makes Http requests. You want to describe the behavior of your
+component. What to do?
+
+1. Create an HttpResponseStub -- see `Elmer.Http.Stub`
+
+2. Serve it up during your test
+
+3. Smile!
+
+# Serve Stubbed Responses
+@docs HttpResponseStub, serve, spy
+
+# Make Expectations about Http Requests
+@docs expectGET, expectPOST, expectDELETE, clearRequestHistory
+
+-}
+
 import Http
 import Dict
-import Elmer
-import Elmer.Types exposing (..)
+import Elmer exposing (Matcher)
+import Elmer.Http.Internal as HttpInternal exposing (..)
+import Elmer.Http.Server as Server
+import Elmer.Internal as Internal exposing (..)
 import Elmer.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
@@ -23,120 +40,104 @@ import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
 
-type alias HttpRequestFunction a b =
-  (Result Http.Error a -> b) -> Http.Request a -> Cmd b
+{-| Represents a stubbed HttpResponse
 
-type alias HttpRequest a =
-  { method: String
-  , url: String
-  , headers: List HttpHeader
-  , body: Maybe String
-  , responseHandler: (Http.Response String -> Result String a)
-  }
-
-type alias HttpResponseStub =
-  { url: String
-  , method: String
-  , response: HttpResponseResult
-  , deferResponse: Bool
-  }
-
-type HttpResponseResult
-  = HttpResponse (Http.Response String)
-  | HttpError Http.Error
+Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
+-}
+type alias HttpResponseStub
+  = HttpInternal.HttpResponseStub
 
 
-asHttpRequest : Http.Request a -> HttpRequest a
-asHttpRequest request =
-  Native.Helpers.asHttpRequest request
+{-| Override `Http.send` and register HttpResponseStubs to be returned
+when the appropriate request is received. Used in conjunction with
+`Elmer.Command.use`.
 
+Suppose you have a component that requests information about a user when
+a button is clicked. You could register a stub for that request like so
 
-dummySend : HttpRequestFunction a msg
-dummySend _ request =
-  let
-    httpRequest = asHttpRequest request
-  in
-    toHttpCommand httpRequest Cmd.none
+    let
+      stubbedResponse = Elmer.Http.Stub.post "http://fun.com/user"
+        |> Elmer.Http.Stub.withBody
+          "{\"name\":\"Super User\",\"type\":\"admin\"}"
+    in
+      componentState
+        |> Markup.find "#request-data-button"
+        |> Elmer.Command.use [ serve [ stubbedResponse ] ] click
+        |> Markup.find "#data-result"
+        |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
 
-
+-}
 serve : List HttpResponseStub -> PlatformOverride
 serve responseStubs =
-  Command.override (\_ -> Http.send) (stubbedSend responseStubs)
+  Command.override (\_ -> Http.send) (Server.stubbedSend responseStubs)
 
+{-| Override `Http.send` and record requests as they are received.
+Used in conjunction with `Elmer.Command.use`.
 
+Suppose you simply want to make an expectation about a request without
+describing the behavior that results when its response is received.
+
+    componentState
+      |> Markup.find "#request-data-button"
+      |> Elmer.Command.use [ spy ] click
+      |> expectGET "http://fun.com/user" Elmer.Http.Matchers.hasBeenRequested
+
+-}
 spy : PlatformOverride
 spy =
-  Command.override (\_ -> Http.send) dummySend
+  Command.override (\_ -> Http.send) Server.dummySend
 
 
-stubbedSend : List HttpResponseStub -> HttpRequestFunction a msg
-stubbedSend responseStubs tagger request =
-  let
-    httpRequest = asHttpRequest request
-  in
-    responseStubsAreValid responseStubs
-      |> Result.andThen (matchFirstRequest httpRequest)
-      |> Result.andThen (processResponse httpRequest tagger)
-      |> collapseToCommand
-      |> toHttpCommand httpRequest
-
-
-collapseToCommand : Result (Cmd msg) (Cmd msg) -> Cmd msg
-collapseToCommand responseResult =
-  case responseResult of
-    Ok command ->
-      command
-    Err errorCommand ->
-      errorCommand
-
-
-toHttpCommand : HttpRequest a -> Cmd msg -> Cmd msg
-toHttpCommand request command =
-  let
-    requestData =
-      { method = request.method
-      , url = request.url
-      , body = request.body
-      , headers = request.headers
-      }
-    httpCommand = InternalCommand.mapState <| updateComponentState requestData
-  in
-    Cmd.batch [ httpCommand, command ]
-
-
-updateComponentState : HttpRequestData -> HtmlComponentState model msg -> HtmlComponentState model msg
-updateComponentState requestData componentState =
-  { componentState | httpRequests = requestData :: componentState.httpRequests }
-
-
-clearRequestHistory : ComponentStateResult model msg -> ComponentStateResult model msg
+{-| Clear any Http requests that may have been recorded at an earlier point
+in the history of this ComponentState.
+-}
+clearRequestHistory : ComponentState model msg -> ComponentState model msg
 clearRequestHistory =
-  Elmer.map (\componentState ->
+  Internal.map (\componentState ->
     if List.isEmpty componentState.httpRequests then
-      UpstreamFailure "No HTTP requests to clear"
+      Failed "No HTTP requests to clear"
     else
-      CurrentState { componentState | httpRequests = [] }
+      Ready { componentState | httpRequests = [] }
   )
 
 
-expectPOST : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+{-| Expect a matching POST request to the specified url.
+
+The path argument is just the url you expect (relative or absolute) up to but not
+including the query string. See `Elmer.Http.Matchers` for request matchers.
+
+Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
+-}
+expectPOST : String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
 expectPOST =
   expectRequest "POST"
 
+{-| Expect a matching GET request to the specified url.
 
-expectGET : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+The path argument is just the url you expect (relative or absolute) up to but not
+including the query string. See `Elmer.Http.Matchers` for request matchers.
+
+Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
+-}
+expectGET : String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
 expectGET =
   expectRequest "GET"
 
+{-| Expect a matching DELETE request to the specified url.
 
-expectDELETE : String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+The path argument is just the url you expect (relative or absolute) up to but not
+including the query string. See `Elmer.Http.Matchers` for request matchers.
+
+Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
+-}
+expectDELETE : String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
 expectDELETE =
   expectRequest "DELETE"
 
 
-expectRequest : String -> String -> (HttpRequestData -> Expect.Expectation) -> ComponentStateResult model msg -> Expect.Expectation
+expectRequest : String -> String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
 expectRequest method url requestMatcher =
-  Elmer.mapToExpectation <|
+  Internal.mapToExpectation <|
     \componentState ->
       if String.contains "?" url then
         Expect.fail <| format
@@ -165,154 +166,5 @@ expectRequest method url requestMatcher =
 
 hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
 hasRequest requests method url =
-  List.filter (\r -> r.method == method && (route r.url) == url) requests
+  List.filter (\r -> r.method == method && (HttpInternal.route r.url) == url) requests
     |> List.head
-
-
-responseStubsAreValid : List HttpResponseStub -> Result (Cmd msg) (List HttpResponseStub)
-responseStubsAreValid responseStubs =
-  List.map responseStubIsValid responseStubs
-    |> List.foldl (\result totalResult ->
-      case result of
-        Ok result ->
-          case totalResult of
-            Ok validStubs ->
-              Ok (result :: validStubs)
-            Err cmd ->
-              Err cmd
-        Err cmd ->
-          Err cmd
-    ) (Ok [])
-
-
-responseStubIsValid : HttpResponseStub -> Result (Cmd msg) HttpResponseStub
-responseStubIsValid responseStub =
-  if String.contains "?" responseStub.url then
-    Err <| Command.fail <| format
-      [ message "Sent a request where a stubbed route contains a query string" responseStub.url
-      , description "Stubbed routes may not contain a query string"
-      ]
-  else
-    Ok responseStub
-
-
-matchFirstRequest : HttpRequest a -> List HttpResponseStub -> Result (Cmd msg) HttpResponseStub
-matchFirstRequest httpRequest responseStubs =
-  case List.head <| List.filterMap (matchRequest httpRequest) responseStubs of
-    Just matchingResponseStub ->
-      Ok matchingResponseStub
-    Nothing ->
-      Err <| Command.fail <| format
-        [ message "Received a request for" (printRequest httpRequest)
-        , message "but it does not match any of the stubbed requests" (printStubs responseStubs)
-        ]
-
-
-printRequest : HttpRequest a -> String
-printRequest request =
-  request.method ++ " " ++ request.url
-
-
-printStubs : List HttpResponseStub -> String
-printStubs =
-  List.foldl (\s msg -> msg ++ (printStub s) ++ "\n") ""
-
-
-printStub : HttpResponseStub -> String
-printStub responseStub =
-  responseStub.method ++ " " ++ responseStub.url
-
-
-matchRequest : HttpRequest a -> HttpResponseStub -> Maybe HttpResponseStub
-matchRequest httpRequest responseStub =
-  matchRequestUrl httpRequest responseStub
-    |> Maybe.andThen (matchRequestMethod httpRequest)
-
-
-matchRequestUrl : HttpRequest a -> HttpResponseStub -> Maybe HttpResponseStub
-matchRequestUrl httpRequest responseStub =
-  if (route httpRequest.url) == responseStub.url then
-    Just responseStub
-  else
-    Nothing
-
-
-matchRequestMethod : HttpRequest a -> HttpResponseStub -> Maybe HttpResponseStub
-matchRequestMethod httpRequest responseStub =
-  if httpRequest.method == responseStub.method then
-    Just responseStub
-  else
-    Nothing
-
-
-route : String -> String
-route url =
-  String.split "?" url
-    |> List.head
-    |> Maybe.withDefault ""
-
-
-generateResponse : HttpResponseStub -> HttpResponseResult
-generateResponse responseStub =
-  responseStub.response
-
-
-processResponse : HttpRequest a -> (Result Http.Error a -> msg) -> HttpResponseStub -> Result (Cmd msg) (Cmd msg)
-processResponse httpRequest tagger responseStub =
-  generateResponse responseStub
-    |> handleResponseError
-    |> Result.andThen handleResponseStatus
-    |> Result.andThen (handleResponse httpRequest)
-    |> Result.mapError (mapResponseError httpRequest tagger)
-    |> Result.map (generateCommand responseStub tagger)
-
-
-generateCommand : HttpResponseStub -> (Result Http.Error a -> msg) -> a -> Cmd msg
-generateCommand responseStub tagger data =
-  let
-    command = Command.stub (tagger (Ok data))
-  in
-    if responseStub.deferResponse then
-      Command.defer command
-    else
-      command
-
-
-mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
-mapResponseError httpRequest tagger error =
-  case error of
-    Http.BadPayload msg response ->
-      Command.fail <| format
-        [ message "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
-        , description ("\t" ++ response.body)
-        , message "failed with error" msg
-        , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
-        ]
-    _ ->
-      Command.stub (tagger (Err error))
-
-
-handleResponseError : HttpResponseResult -> Result Http.Error (Http.Response String)
-handleResponseError responseResult =
-  case responseResult of
-    HttpResponse response ->
-      Ok response
-    HttpError error ->
-      Err error
-
-
-handleResponseStatus : Http.Response String -> Result Http.Error (Http.Response String)
-handleResponseStatus response =
-  if response.status.code >= 200 && response.status.code < 300 then
-    Ok response
-  else
-    Err (Http.BadStatus response)
-
-
-handleResponse : HttpRequest a -> Http.Response String -> Result Http.Error a
-handleResponse httpRequest response =
-  case httpRequest.responseHandler response of
-    Ok data ->
-      Ok data
-    Err err ->
-      Err (Http.BadPayload err response)

@@ -1,6 +1,6 @@
 # Elmer
 
-Describe the behavior of Elm HTML applications.
+Elmer makes it easy to describe the behavior of Elm HTML applications.
 
 ### Install
 
@@ -25,64 +25,64 @@ $ python ./elm-ops-tooling/elm_self_publish.py <path to elmer> <path to your pro
 
 ### Usage
 
-#### Create a `ComponentStateResult`
+#### Create a `ComponentState`
 
-Elmer functions generally pass around `ComponentStateResult` records. To get started describing some
+Elmer functions generally pass around `ComponentStates`. To get started describing some
 behavior with Elmer, you'll need to generate an initial component state with the `Elmer.componentState`
 function. Just pass it your model, view method, and update method.
 
 #### Finding a node
 
-Use `Elmer.Html.find` to find an `HtmlNode` record, which describes a HTML tag in your view. The `find`
-function takes a selector and a `ComponentStateResult` as arguments. The selector can take the following
+Use `Elmer.Html.find` to find an `HtmlElement`, which describes a HTML element in your view. The `find`
+function takes a selector and a `ComponentState` as arguments. The selector can take the following
 formats:
 
-+ To find the first node with the class myClass, use `.myClass`
-+ To find a node with the id myId, use `#myId`
++ To find the first element with the class myClass, use `.myClass`
++ To find a element with the id myId, use `#myId`
 + To find the first div tag, use `div`
 + To find the first div tag with the custom data attribute data-node, use `div[data-node]`
 + To find the first div tag with the attribute data-node and the value myData, use `div[data-node='myData']`
 
-#### Taking action on a node
+#### Taking action on an element
 
-Once you find a node, that node is _targeted_ as the subject of subsequent actions, that is, until
-you find another node. The following functions define actions on nodes:
+Once you find an element, that element is _targeted_ as the subject of subsequent actions, that is, until
+you find another element. The following functions define actions on elements:
 
-+ Click events: `Elmer.Html.Event.click <componentStateResult>`
-+ Input events: `Elmer.Html.Event.input <text> <componentStateResult>`
-+ Custom events: `Elmer.Html.Event.on <eventName> <eventJson> <componentStateResult>`
++ Click events: `Elmer.Html.Event.click <componentState>`
++ Input events: `Elmer.Html.Event.input <text> <componentState>`
++ Custom events: `Elmer.Html.Event.on <eventName> <eventJson> <componentState>`
 + More to come ...
 
-#### Node Matchers
+#### Element Matchers
 
-You can make expectations about the targeted node using the `expectNode` function, which takes a
-function that maps an HtmlNode to an Expectation and a `ComponentStateResult`. The following
-matchers can be used to make expectations about an HtmlNode:
+You can make expectations about the targeted element using the `expectElement` function, which takes a
+function that maps an HtmlElement to an Expectation and a `ComponentState`. The following
+matchers can be used to make expectations about an HtmlElement:
 
-+ `hasId <string> <HtmlNode>`
-+ `hasClass <string> <HtmlNode>`
-+ `hasText <string> <HtmlNode>`
-+ `hasProperty (<string>, <string>) <HtmlNode>`
++ `hasId <string> <HtmlElement>`
++ `hasClass <string> <HtmlElement>`
++ `hasText <string> <HtmlElement>`
++ `hasProperty (<string>, <string>) <HtmlElement>`
 + More to come ...
 
-You can also expect that the targeted node exists using the `expectNodeExists` function. You can combine
+You can also expect that the targeted node exists using the `expectElementExists` function. You can combine
 multiple matchers using the `<&&>` operator like so:
 
 ```
-Elmer.Html.expectNode (
+Elmer.Html.expectElement (
   Matchers.hasText "Text one" <&&>
   Matchers.hasText "Text two"
 ) componentStateResult
 ```
 
-Find the children of a node and make expectations about them like so:
+Find the children of an element and make expectations about them like so:
 
 ```
-Elmer.Html.expectNode (\node ->
-  Elmer.Html.Node.findChildren "li" node
+Elmer.Html.expectElement (\element ->
+  Elmer.Html.findChildren "li" element
     |> List.length
     |> Expect.equal 3
-) componentStateResult
+) componentState
 ```
 
 ### Example
@@ -100,7 +100,7 @@ allTests =
       [ test "it shows that no clicks have occurred" <|
         \() ->
           Elmer.Html.find "#clickCount" initialState
-            |> Elmer.Html.expectNode (
+            |> Elmer.Html.expectElement (
                   Matchers.hasText "0 clicks!"
             )      
       ]
@@ -141,7 +141,7 @@ Now, let's add a new test that describes what we expect to happen when a button 
         |> Event.click
         |> Event.click
         |> Elmer.Html.find "#clickCount"
-        |> Elmer.Html.expectNode (
+        |> Elmer.Html.expectElement (
             Matchers.hasText "2 clicks!"
         )
   ]
@@ -169,9 +169,7 @@ update msg model =
 
 And our test should pass.
 
-Notice that we were able to test-drive our app, writing our tests first, without worrying about implementation details like the names of the messages our `update` function will use and so on. Elmer simulates the elm architecture workflow, delivering messages to the `update` function when events occur and passing the result to the `view` function so you can write expectations about the updated html. Elmer exposes an `HtmlNode` record and matchers that make it easy to write expectations about the html generated by the `view` function.
-
-Elmer makes it easy to practice behavior-driven development with Elm.
+Notice that we were able to test-drive our app, writing our tests first, without worrying about implementation details like the names of the messages our `update` function will use and so on. Elmer simulates the elm architecture workflow, delivering messages to the `update` function when events occur and passing the result to the `view` function so you can write expectations about the updated html.
 
 ### Commands
 
@@ -204,7 +202,7 @@ timeAppTests =
         Elmer.Html.find ".button" initialState
           |> Event.click
           |> Elmer.Html.find "#currentTime"
-          |> Elmer.Html.expectNode (Matchers.hasText "Time: ???")
+          |> Elmer.Html.expectElement (Matchers.hasText "Time: ???")
   ]
 ```
 
@@ -251,17 +249,16 @@ fakeTaskPerform time tagger _ =
   Command.stub (tagger time)
 ```
 
-We use `Elmer.Command.stub` to create a command whose effect is the message we provide.
-Here, we use it to let us specify exactly what time should be returned for the purpose of our test.
+Here, we use `Elmer.Command.stub` to create a command whose effect is the message we provide.
+This lets us specify exactly what time should be returned for the purpose of our test.
 
 Now we update our test to override `Task.perform` with `fakeTaskPerform`. We use
 two functions to do this:
 
 - `Elmer.Command.override` allows us to specify which `Cmd`-generating function to
-override and provide the alternate implementation. This produces a `CommandOverride`.
-- `Elmer.Command.use` takes a list of `CommandOverride` and a function that operates on a
-`ComponentStateResult`. It ensures that the `Cmd`-generating functions will be replaced
-with the alternate implementation during the execution of the provided function.
+override and provide the alternate implementation.
+- `Elmer.Command.use` ensures that, during the appropriate portion of our test,
+`Cmd`-generating functions will be replaced with the alternate implementations we specify.
 
 ```
 timeAppTests : Test
@@ -276,7 +273,7 @@ timeAppTests =
         Elmer.Html.find ".button" initialState
           |> Elmer.Command.use [ taskPerformOverride ] Event.click
           |> Elmer.Html.find "#currentTime"
-          |> Elmer.Html.expectNode (Matchers.hasText "Time: 3000")
+          |> Elmer.Html.expectElement (Matchers.hasText "Time: 3000")
   ]
 ```
 
@@ -325,7 +322,7 @@ the correct behavior.
 For the full example, see `tests/Elmer/TestApps/TimeTestApp.elm` and the associated tests in `tests/Elmer/DemoAppTests.elm`.
 
 Note that while Elmer is not capable of processing any commands, it does support
-the general operations on commands in the core `Platform.Cmd`, namely, `batch` and `map`. So, you
+the general operations on commands in the core `Platform.Cmd` module, namely, `batch` and `map`. So, you
 can use these functions as expected in your components and Elmer should do the right thing.
 
 Elmer provides additional support for HTTP request commands and navigation commands.
@@ -334,7 +331,7 @@ Elmer provides additional support for HTTP request commands and navigation comma
 
 Modern web apps often need to make HTTP requests to some backend server. Elmer makes it easy to stub HTTP
 responses and write expectations about the requests made. The `Elmer.Http.Stub` module contains methods
-for constructing an `HttpResponseStub` record that describes how to respond to some request. For example:
+for constructing an `HttpResponseStub` that describes how to respond to some request. For example:
 
 ```
 let
@@ -352,18 +349,16 @@ When your application code calls `Http.send`, the request will be checked agains
 provided stubs and if a match occurs, the given response will be returned.
 
 Elmer also allows you to write tests that expect some HTTP request to have been made, in a
-manner similar to how you can write expectations about some node in an HTML document. For
+manner similar to how you can write expectations about some element in an HTML document. For
 example, this test inputs search terms into a field, clicks a search button, and then expects
 that a request is made to a specific route with the search terms in the query string:
 
 ```
 initialComponentState
-  |> Elmer.Command.use [ Elmer.Http.serve stubbedResponse ] (
-    Elmer.Html.find "input[name='query']"
-      >> Elmer.Html.Event.input "Fun Stuff"
-      >> Elmer.Html.find "#search-button"
-      >> Elmer.Html.Event.click
-  )
+  |> Elmer.Html.find "input[name='query']"
+  |> Elmer.Html.Event.input "Fun Stuff"
+  |> Elmer.Html.find "#search-button"
+  |> Elmer.Command.use [ Elmer.Http.serve stubbedResponse ] Elmer.Html.Event.click
   |> Elmer.Http.expectGET "http://fake.com/search" (
     Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
   )
@@ -381,8 +376,8 @@ See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 Elmer provides support for functions in the [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/2.0.1/)
 module that allow you to handle navigation for single-page web applications.
 
-To simulate location updates, you must construct a `ComponentStateResult` using
-`Elmer.navigationComponentState`. This function is just like `Elmer.componentState`
+To simulate location updates, you must construct a `ComponentState` using
+`Elmer.Navigation.navigationComponentState`. This function is just like `Elmer.componentState`
 except that it also takes the location parser function (`Navigation.Location -> msg`)
 that you provide to `Navigation.program` when you initialize your app. This provides
 Elmer with the information it needs to process location updates as they occur in a test.
@@ -429,7 +424,7 @@ Using subscriptions, your component can register to be notified when certain eff
 To describe the behavior of a component that has subscriptions, you'll need to do two things:
 
 1. Override the function that generates the subscription using `Elmer.Subscription.use` and
-`Elmer.Subscription.overrde` -- just as described with commands above
+`Elmer.Subscription.override` and replace it with a `Elmer.Subscription.spy`
 2. Simulate the effect you've subscribed to receive with `Subscription.send`
 
 Let's test-drive a component that subscribes to receive the time every second. We'll
@@ -443,11 +438,11 @@ timeDefaultTest =
     \() ->
       Elmer.componentState App.defaultModel App.view App.update
         |> Elmer.Html.find "#num-seconds"
-        |> Elmer.Html.expectNode (Matchers.hasText "0 seconds")
+        |> Elmer.Html.expectElement (Matchers.hasText "0 seconds")
   ]
 ```
 
-Let's next do the simplest thing to get this test to compile and fail:
+Let's next do the simplest thing to get this test to compile:
 
 ```
 type alias Model =
@@ -492,7 +487,7 @@ timeSubscriptionTest =
           |> Elmer.Subscription.use [ timeOverride ] App.subscriptions
           |> Elmer.Subscription.send "timeEffect" (3 * 1000)
           |> Elmer.Html.find "#num-seconds"
-          |> Elmer.Html.expectNode ( Matchers.hasText "3 seconds" )
+          |> Elmer.Html.expectElement ( Matchers.hasText "3 seconds" )
   ]
 ```
 

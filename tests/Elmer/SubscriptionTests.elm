@@ -3,7 +3,7 @@ module Elmer.SubscriptionTests exposing (all)
 import Test exposing (..)
 import Expect
 import Elmer
-import Elmer.Types exposing (..)
+import Elmer.Internal exposing (..)
 import Elmer.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
@@ -25,10 +25,10 @@ useTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = UpstreamFailure "You Failed!"
+          initialState = Failed "You Failed!"
         in
           Subscription.use [] (\_ -> Sub.none) initialState
-            |> Expect.equal (UpstreamFailure "You Failed!")
+            |> Expect.equal (Failed "You Failed!")
     ]
   , describe "when the override is not a function"
     [ test "it fails" <|
@@ -38,7 +38,7 @@ useTests =
           override = Subscription.override (\_ -> "Huh?") (\_ -> Sub.none)
         in
           Subscription.use [ override ] (\_ -> Sub.none) initialState
-            |> Expect.equal (UpstreamFailure "Failed to override subscriptions!")
+            |> Expect.equal (Failed "Failed to override subscriptions!")
     ]
   ]
 
@@ -49,10 +49,10 @@ sendTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = UpstreamFailure "You Failed!"
+          initialState = Failed "You Failed!"
         in
           Subscription.send "mySub" 37 initialState
-            |> Expect.equal (UpstreamFailure "You Failed!")
+            |> Expect.equal (Failed "You Failed!")
     ]
   , describe "when no subscription is found"
     [ describe "when there are no subscriptions spies"
@@ -62,7 +62,7 @@ sendTests =
             initialState = Elmer.componentState App.defaultModel App.view App.update
           in
             Subscription.send "someOtherSub" 37 initialState
-              |> Expect.equal (UpstreamFailure (
+              |> Expect.equal (Failed (
                 format
                   [ message "No subscription spy found with name" "someOtherSub"
                   , description "because there are no subscription spies"]
@@ -79,7 +79,7 @@ sendTests =
           in
             Subscription.use [ override ] App.mappedSubscriptions initialState
               |> Subscription.send "someOtherSub" 37
-              |> Expect.equal (UpstreamFailure (
+              |> Expect.equal (Failed (
                 format
                   [ message "No subscription spy found with name" "someOtherSub"
                   , message "These are the current subscription spies" "my-spy-3600000\nmy-spy-1"
@@ -100,7 +100,7 @@ sendTests =
             Subscription.use [ override ] App.subscriptions initialState
               |> Subscription.send "fakeTime-1000" 23000
               |> Markup.find "#time"
-              |> Markup.expectNode ( Matchers.hasText "23 seconds" )
+              |> Markup.expectElement ( Matchers.hasText "23 seconds" )
       ]
     , describe "when the subscription is a batch of Subs"
       [ test "the data is tagged and processed" <|
@@ -114,7 +114,7 @@ sendTests =
             Subscription.use [ override ] App.batchedSubscriptions initialState
               |> Subscription.send "fakeTime-60000" (1000 * 60 * 37)
               |> Markup.find "#minute"
-              |> Markup.expectNode ( Matchers.hasText "37 minutes" )
+              |> Markup.expectElement ( Matchers.hasText "37 minutes" )
       ]
     , describe "when the subscription is a mapped Sub"
       [ test "the data is tagged and processed" <|
@@ -128,7 +128,7 @@ sendTests =
             Subscription.use [ override ] App.mappedSubscriptions initialState
               |> Subscription.send "fakeTime-3600000" (1000 * 60 * 60 * 18)
               |> Markup.find "#child-hours"
-              |> Markup.expectNode ( Matchers.hasText "18 hours" )
+              |> Markup.expectElement ( Matchers.hasText "18 hours" )
       ]
     ]
   ]

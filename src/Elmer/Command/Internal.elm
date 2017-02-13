@@ -3,13 +3,13 @@ module Elmer.Command.Internal exposing
   , generate
   )
 
-import Elmer.Types exposing (..)
+import Elmer.Internal exposing (..)
 import Elmer.Platform as Platform
 
-mapState : (HtmlComponentState model msg -> HtmlComponentState model msg) -> Cmd msg
+mapState : (Component model msg -> Component model msg) -> Cmd msg
 mapState mapper =
   Platform.toCmd "Elmer_MapState" mapper
 
-generate : (HtmlComponentState model msg -> Cmd msg) -> Cmd msg
+generate : (Component model msg -> Cmd msg) -> Cmd msg
 generate generator =
   Platform.toCmd "Elmer_Generate" generator

@@ -4,7 +4,7 @@ module Elmer.Runtime
         , performCommand
         )
 
-import Elmer.Types exposing (..)
+import Elmer.Internal exposing (..)
 import Elmer.Printer exposing (..)
 import Elmer.Platform as Platform exposing (..)
 import Dict exposing (Dict)
@@ -14,7 +14,7 @@ type CommandResult model msg
   | CommandError String
 
 type alias CommandEffect model msg =
-  HtmlComponentState model msg -> (HtmlComponentState model msg, Cmd msg)
+  Component model msg -> (Component model msg, Cmd msg)
 
 type alias CommandRunner model subMsg msg =
   Cmd subMsg -> (subMsg -> msg) -> CommandResult model msg
@@ -37,7 +37,7 @@ mapStateCommandRunner command _ =
   in
     CommandSuccess (mapComponentState componentStateMapper)
 
-mapComponentState : (HtmlComponentState model msg -> HtmlComponentState model msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+mapComponentState : (Component model msg -> Component model msg) -> Component model msg -> ( Component model msg, Cmd msg )
 mapComponentState mapper componentState =
   ( mapper componentState, Cmd.none )
 
@@ -49,7 +49,7 @@ generateCommandRunner command _ =
   in
     CommandSuccess (generateCommand generator)
 
-generateCommand : (HtmlComponentState model msg -> Cmd msg) -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+generateCommand : (Component model msg -> Cmd msg) -> Component model msg -> ( Component model msg, Cmd msg )
 generateCommand generator componentState =
   ( componentState, generator componentState )
 
@@ -84,7 +84,7 @@ identityTagger msg =
   msg
 
 
-updateComponentState : msg -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+updateComponentState : msg -> Component model msg -> ( Component model msg, Cmd msg )
 updateComponentState message componentState =
     let
         ( updatedModel, command ) =
@@ -96,7 +96,7 @@ updateComponentState message componentState =
         ( updatedState, command )
 
 
-performUpdate : msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
+performUpdate : msg -> Component model msg -> Result String (Component model msg)
 performUpdate message componentState =
     let
         ( updatedComponent, command ) =
@@ -111,7 +111,7 @@ commandRunnerForData commandName =
     |> Maybe.withDefault (unknownCommandRunner commandName)
 
 
-performCommand : Cmd msg -> HtmlComponentState model msg -> Result String (HtmlComponentState model msg)
+performCommand : Cmd msg -> Component model msg -> Result String (Component model msg)
 performCommand command componentState =
     let
         commandResults =
@@ -119,7 +119,7 @@ performCommand command componentState =
     in
       List.foldl reduceCommandResults (Ok componentState) commandResults
 
-reduceCommandResults : CommandResult model msg -> Result String (HtmlComponentState model msg) -> Result String (HtmlComponentState model msg)
+reduceCommandResults : CommandResult model msg -> Result String (Component model msg) -> Result String (Component model msg)
 reduceCommandResults commandResult currentResult =
   case currentResult of
     Ok componentState ->
@@ -138,7 +138,7 @@ reduceCommandResults commandResult currentResult =
       Err errorMessage
 
 
-processCommandEffect : CommandEffect model msg -> HtmlComponentState model msg -> ( HtmlComponentState model msg, Cmd msg )
+processCommandEffect : CommandEffect model msg -> Component model msg -> ( Component model msg, Cmd msg )
 processCommandEffect commandEffect componentState =
     commandEffect componentState
 

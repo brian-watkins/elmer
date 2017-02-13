@@ -1,21 +1,75 @@
 module Elmer.Navigation
     exposing
-        ( setLocation
+        ( navigationComponentState
+        , setLocation
         , expectLocation
         , spy
         )
 
+{-| Functions for describing the behavior of components that use
+[elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/latest/Navigation).
+
+# Create a ComponentState
+@docs navigationComponentState
+
+# Update the Location
+@docs setLocation
+
+# Make Expectations about the Location
+@docs spy, expectLocation
+
+-}
+
 import Elmer.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
-import Elmer.Types exposing (..)
+import Elmer.Internal as Internal exposing (..)
 import Elmer
 import Expect
 import Elmer.Printer exposing (..)
 import Elmer.Navigation.Location as Location
 import Navigation
+import Html exposing (Html)
 
+{-| Create a `ComponentState` with a location parser function.
 
+The location parser function is the function you would provide to
+`Navigation.program` when you initialize your app.
+-}
+navigationComponentState
+  :  model
+  -> ( model -> Html msg )
+  -> ( msg -> model -> ( model, Cmd msg ) )
+  -> ( Navigation.Location -> msg )
+  -> ComponentState model msg
+navigationComponentState model view update parser =
+    Ready
+        { model = model
+        , view = view
+        , update = update
+        , targetElement = Nothing
+        , locationParser = Just parser
+        , location = Nothing
+        , httpRequests = []
+        , deferredCommands = []
+        , dummyCommands = []
+        , subscriptions = Sub.none
+        }
+
+{-| Override `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
+records the location as it is set.
+
+You must use this function with `Elmer.Command.use` in order to make expectations
+about the location. Suppose you want to test a home button that sets the
+location to `/home` when clicked:
+
+    componentState
+      |> Command.use [ Navigation.spy ] (\state ->
+        find "#home-button" state
+          |> click
+      )
+      |> Navigation.expectLocation "/home"
+-}
 spy : PlatformOverride
 spy =
   Command.batchOverride
@@ -31,7 +85,7 @@ fakeNavigateCommand url =
   in
     Cmd.batch [ stateCommand, parseCommand ]
 
-generateCommandForLocation : String -> HtmlComponentState model msg -> Cmd msg
+generateCommandForLocation : String -> Component model msg -> Cmd msg
 generateCommandForLocation url componentState =
   case componentState.locationParser of
     Just locationParser ->
@@ -46,14 +100,17 @@ handleLocationUpdate : String -> (Navigation.Location -> msg) -> msg
 handleLocationUpdate url parser =
     (parser (Location.asLocation url))
 
-storeLocation : String -> HtmlComponentState model msg -> HtmlComponentState model msg
+storeLocation : String -> Component model msg -> Component model msg
 storeLocation url componentState =
   { componentState | location = Just url }
 
+{-| Expect that the current location is equal to the given string.
 
-expectLocation : String -> ComponentStateResult model msg -> Expect.Expectation
+Note: This expectation must be used in conjunction with `spy` above.
+-}
+expectLocation : String -> ComponentState model msg -> Expect.Expectation
 expectLocation expectedURL =
-  Elmer.mapToExpectation <|
+  Internal.mapToExpectation <|
       \componentState ->
           case componentState.location of
               Just location ->
@@ -63,18 +120,21 @@ expectLocation expectedURL =
               Nothing ->
                   Expect.fail (format [message "Expected to be at location:" expectedURL, description "but no location has been set"])
 
+{-| Set the location for the component.
 
-setLocation : String -> ComponentStateResult model msg -> ComponentStateResult model msg
-setLocation location componentStateResult =
-    componentStateResult
-        |> Elmer.map
-            (\componentState ->
-                case componentState.locationParser of
-                    Just locationParser ->
-                      let
-                          command = fakeNavigateCommand location
-                      in
-                          Command.send command componentStateResult
-                    Nothing ->
-                        UpstreamFailure "setLocation failed because no locationParser was set"
-            )
+When the location is set and a location parser is defined for this component,
+then the parser will be applied to the location and the resulting message
+will be passed to the component's `update` function for processing.
+-}
+setLocation : String -> ComponentState model msg -> ComponentState model msg
+setLocation location =
+  Internal.map (\componentState ->
+    case componentState.locationParser of
+        Just locationParser ->
+          let
+              command = fakeNavigateCommand location
+          in
+              Command.send command (Ready componentState)
+        Nothing ->
+            Failed "setLocation failed because no locationParser was set"
+  )

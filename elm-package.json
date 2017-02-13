@@ -8,17 +8,17 @@
     ],
     "exposed-modules": [
         "Elmer",
-        "Elmer.Types",
         "Elmer.Html",
-        "Elmer.Html.Node",
-        "Elmer.Html.Event",
         "Elmer.Html.Matchers",
+        "Elmer.Html.Event",
+        "Elmer.Html.Element",
         "Elmer.Navigation",
+        "Elmer.Command",
+        "Elmer.Subscription",
         "Elmer.Http",
         "Elmer.Http.Stub",
         "Elmer.Http.Matchers",
-        "Elmer.Command",
-        "Elmer.Subscription"
+        "Elmer.Http.Status"
     ],
     "native-modules": true,
     "dependencies": {

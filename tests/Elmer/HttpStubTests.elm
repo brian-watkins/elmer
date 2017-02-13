@@ -3,7 +3,9 @@ module Elmer.HttpStubTests exposing (all)
 import Test exposing (..)
 import Expect
 import Elmer.Http as ElmerHttp
+import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Stub as HttpStub
+import Elmer.Http.Status as Status
 import Http
 import Dict
 
@@ -22,34 +24,34 @@ requestBuilderTests =
   , describeRequestMethod "DELETE" HttpStub.delete
   ]
 
-describeRequestMethod : String -> (String -> ElmerHttp.HttpResponseStub) -> Test
+describeRequestMethod : String -> (String -> HttpResponseStub) -> Test
 describeRequestMethod method builder =
   describe method
     [ test ("it creates a " ++ method ++ " response") <|
       \() ->
         let
-          responseStub = builder "http://fake.com"
+          (HttpResponseStub responseStub) = builder "http://fake.com"
         in
           Expect.equal method responseStub.method
     , test "it has a status of 200 Ok" <|
       \() ->
         let
-          responseStub = builder "http://fake.com"
+          (HttpResponseStub responseStub) = builder "http://fake.com"
         in
           case responseStub.response of
-            ElmerHttp.HttpResponse response ->
+            Response response ->
               Expect.equal { code = 200, message = "Ok" } response.status
-            ElmerHttp.HttpError _ ->
+            Error _ ->
               Expect.fail "Should be a response"
     , test "it has the right url" <|
       \() ->
         let
-          responseStub = builder "http://fake.com"
+          (HttpResponseStub responseStub) = builder "http://fake.com"
         in
           case responseStub.response of
-            ElmerHttp.HttpResponse response ->
+            Response response ->
               Expect.equal "http://fake.com" response.url
-            ElmerHttp.HttpError _ ->
+            Error _ ->
               Expect.fail "Should be a response"
     ]
 
@@ -60,12 +62,12 @@ responseBuilderTests =
     [ test "it sets the stub to return an error response" <|
       \() ->
         let
-          updatedResponse = defaultResponseStub |> HttpStub.withError Http.Timeout
+          (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.withError Http.Timeout
         in
           case updatedResponse.response of
-            ElmerHttp.HttpResponse _ ->
+            Response _ ->
               Expect.fail "Should be an error response"
-            ElmerHttp.HttpError error ->
+            Error error ->
               Expect.equal Http.Timeout error
     ]
   , describe "withBody"
@@ -75,44 +77,47 @@ responseBuilderTests =
         \() ->
           let
             body = "{\"name\":\"fun\"}"
-            updatedResponse = defaultResponseStub |> HttpStub.withBody body
+            (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.withBody body
           in
             case updatedResponse.response of
-              ElmerHttp.HttpResponse response ->
+              Response response ->
                 Expect.equal body response.body
-              ElmerHttp.HttpError _ ->
+              Error _ ->
                 Expect.fail "Should have a response"
       ]
     ]
   , describe "withStatus"
-    [ testDoesNotUpdateResponseStatus (HttpStub.withStatus (HttpStub.httpStatus 200 "Ok"))
+    [ testDoesNotUpdateResponseStatus (HttpStub.withStatus Status.ok)
     , describe "when the stubbed response has a response"
       [ test "it updates the response status" <|
         \() ->
           let
-            updatedResponse = defaultResponseStub |> HttpStub.withStatus (HttpStub.httpStatus 404 "Not Found")
+            (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.withStatus Status.notFound
           in
             case updatedResponse.response of
-              ElmerHttp.HttpResponse response ->
+              Response response ->
                 Expect.equal { code = 404, message = "Not Found" } response.status
-              ElmerHttp.HttpError _ ->
+              Error _ ->
                 Expect.fail "Should have a response"
       ]
     ]
   , describe "deferResponse"
     [ test "by default it does not defer the response" <|
       \() ->
-        Expect.equal False defaultResponseStub.deferResponse
+        let
+          (HttpResponseStub defaultStub) = defaultResponseStub
+        in
+          Expect.equal False defaultStub.deferResponse
     , test "it sets the response to be deferred" <|
       \() ->
         let
-          updatedResponse = defaultResponseStub |> HttpStub.deferResponse
+          (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.deferResponse
         in
           Expect.equal True updatedResponse.deferResponse
     ]
   ]
 
-testDoesNotUpdateResponseStatus : (ElmerHttp.HttpResponseStub -> ElmerHttp.HttpResponseStub) -> Test
+testDoesNotUpdateResponseStatus : (HttpInternal.HttpResponseStub -> HttpInternal.HttpResponseStub) -> Test
 testDoesNotUpdateResponseStatus builder =
   describe "when the stubbed response is set to return an error"
     [ test "it does not update the response status" <|
@@ -123,23 +128,25 @@ testDoesNotUpdateResponseStatus builder =
           Expect.equal defaultErrorResponseStub updatedResponse
     ]
 
-defaultResponseStub : ElmerHttp.HttpResponseStub
+defaultResponseStub : HttpResponseStub
 defaultResponseStub =
-  { url = "http://fake.com"
-  , method = "GET"
-  , response = ElmerHttp.HttpResponse
+  HttpResponseStub
     { url = "http://fake.com"
-    , status = { code = 200, message = "Ok" }
-    , headers = Dict.empty
-    , body = ""
+    , method = "GET"
+    , response = Response
+      { url = "http://fake.com"
+      , status = { code = 200, message = "Ok" }
+      , headers = Dict.empty
+      , body = ""
+      }
+    , deferResponse = False
     }
-  , deferResponse = False
-  }
 
-defaultErrorResponseStub : ElmerHttp.HttpResponseStub
+defaultErrorResponseStub : HttpResponseStub
 defaultErrorResponseStub =
-  { url = "http://fake.com"
-  , method = "GET"
-  , response = ElmerHttp.HttpError Http.Timeout
-  , deferResponse = False
-  }
+  HttpResponseStub
+    { url = "http://fake.com"
+    , method = "GET"
+    , response = Error Http.Timeout
+    , deferResponse = False
+    }

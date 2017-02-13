@@ -6,16 +6,40 @@ module Elmer.Http.Matchers exposing
   , hasHeader
   )
 
+{-| Make expectations about Http requests sent by the component under test.
+
+These matchers should be used with `Elmer.Http.expectGET` etc.
+
+Note: Your test must use `Elmer.Http.serve` or `Elmer.Http.spy` at the
+appropriate time to allow Elmer to record the requests sent by the component
+under test.
+
+# Matchers
+@docs hasBeenRequested, hasAnyBody, hasBody, hasQueryParam, hasHeader
+-}
+
 import Expect
 import Http
-import Elmer.Types exposing (..)
+import Elmer exposing (Matcher)
+import Elmer.Internal exposing (..)
+import Elmer.Http.Internal exposing (..)
 import Elmer.Http exposing (..)
 import Elmer.Printer exposing (..)
 
+
+{-| Match any request with the proper method and route as specified in
+`Elmer.Http.expectGET` etc.
+
+    expectGET "http://fake.com/fake" hasBeenRequested
+
+-}
 hasBeenRequested : Matcher HttpRequestData
 hasBeenRequested request =
   Expect.pass
 
+
+{-| Match any request that has a body.
+-}
 hasAnyBody : Matcher HttpRequestData
 hasAnyBody request =
   case request.body of
@@ -24,6 +48,14 @@ hasAnyBody request =
     Nothing ->
       Expect.fail (formatMessage (description "Expected request to have a body but it does not"))
 
+
+{-| Match a request with the specified body.
+
+    expectPOST "http://fake.com/fake" (
+      hasBody "{\"name\":\"Fun Person\"}"
+    )
+
+-}
 hasBody : String -> Matcher HttpRequestData
 hasBody expectedBody request =
   case request.body of
@@ -35,6 +67,16 @@ hasBody expectedBody request =
     Nothing ->
       Expect.fail (format [ message "Expected request to have body" expectedBody, description "but it has no body" ])
 
+
+{-| Match a request that has a query string containing the specified name and value.
+
+Note: You don't need to worry about url encoding the name or value.
+
+    expectGET "http://fake.com/fake" (
+      hasQueryParam ( "name", "Fun Person" )
+    )
+
+-}
 hasQueryParam : ( String, String ) -> Matcher HttpRequestData
 hasQueryParam ( key, value ) request =
   let
@@ -56,18 +98,26 @@ queryString request =
     |> List.head
     |> Maybe.withDefault ""
 
+
+{-| Match a request with the specified header name and value.
+
+    expectGET "http://fake.com/fake" (
+      hasHeader ( "x-auth-token", "xxxxx" )
+    )
+
+-}
 hasHeader : ( String, String ) -> Matcher HttpRequestData
-hasHeader ( key, value ) request =
+hasHeader ( name, value ) request =
   if List.isEmpty request.headers then
-    Expect.fail (format [ message "Expected request to have header" (key ++ " = " ++ value), description "but no headers have been set" ])
+    Expect.fail (format [ message "Expected request to have header" (name ++ " = " ++ value), description "but no headers have been set" ])
   else
     let
-      filteredHeaders = List.filter (\h -> h.key == key && h.value == value) request.headers
+      filteredHeaders = List.filter (\h -> h.name == name && h.value == value) request.headers
     in
       if List.isEmpty filteredHeaders then
         let
-          headers = String.join "\n" (List.map (\h -> h.key ++ " = " ++ h.value) request.headers)
+          headers = String.join "\n" (List.map (\h -> h.name ++ " = " ++ h.value) request.headers)
         in
-          Expect.fail (format [ message "Expected request to have header" (key ++ " = " ++ value), message "but it has" headers])
+          Expect.fail (format [ message "Expected request to have header" (name ++ " = " ++ value), message "but it has" headers])
       else
         Expect.pass

@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer.Command as Command
 import Elmer
-import Elmer.Types exposing (..)
+import Elmer.Internal exposing (..)
 import Elmer.TestApps.SimpleTestApp as App
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Elmer.TestApps.ClickTestApp as ClickApp
@@ -33,7 +33,7 @@ elmerFailureCommandTest =
         initialState = Elmer.componentState App.defaultModel App.view App.update
         result = Command.send (Command.fail "You failed!") initialState
       in
-        Expect.equal (UpstreamFailure "You failed!") result
+        Expect.equal (Failed "You failed!") result
   ]
 
 elmerStubbedCommandTest : Test
@@ -47,7 +47,7 @@ elmerStubbedCommandTest =
       in
         Command.send (Command.stub msg) initialState
           |> Markup.find "#first-message"
-          |> Markup.expectNode (Matchers.hasText "Hey this is the message!")
+          |> Markup.expectElement (Matchers.hasText "Hey this is the message!")
   ]
 
 resolveDeferredCommandsTest : Test
@@ -57,10 +57,10 @@ resolveDeferredCommandsTest =
     [ test "it returns the error" <|
       \() ->
         let
-          initialState = UpstreamFailure "You failed!"
+          initialState = Failed "You failed!"
           state = Command.resolveDeferred initialState
         in
-          Expect.equal (UpstreamFailure "You failed!") state
+          Expect.equal (Failed "You failed!") state
     ]
   , describe "when there are no deferred commands"
     [ test "it fails" <|
@@ -69,7 +69,7 @@ resolveDeferredCommandsTest =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Command.resolveDeferred initialState
-            |> Expect.equal (UpstreamFailure "No deferred commands found")
+            |> Expect.equal (Failed "No deferred commands found")
     ]
   , let
       initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
@@ -83,7 +83,7 @@ resolveDeferredCommandsTest =
         [ test "it doesn't process deferred commands immediately" <|
           \() ->
             Markup.find "#click-counter" state
-              |> Markup.expectNode (Matchers.hasText "0 clicks!")
+              |> Markup.expectElement (Matchers.hasText "0 clicks!")
         , let
             resolvedCommandsState = Command.resolveDeferred state
           in
@@ -91,11 +91,11 @@ resolveDeferredCommandsTest =
             [ test "it processes the deferred commands" <|
               \() ->
                 Markup.find "#click-counter" resolvedCommandsState
-                  |> Markup.expectNode (Matchers.hasText "3 clicks!")
+                  |> Markup.expectElement (Matchers.hasText "3 clicks!")
             , test "it clears the deferred commands" <|
               \() ->
                 Command.resolveDeferred resolvedCommandsState
-                  |> Expect.equal (UpstreamFailure "No deferred commands found")
+                  |> Expect.equal (Failed "No deferred commands found")
             ]
         ]
   ]
@@ -106,7 +106,7 @@ sendCommandTest =
     [ test "it passes on the error" <|
       \() ->
         let
-          initialState = UpstreamFailure "upstream failure"
+          initialState = Failed "upstream failure"
         in
           Command.send Cmd.none initialState
             |> Expect.equal initialState
@@ -119,9 +119,9 @@ sendCommandTest =
             result = Command.send (Command.stub (MessageApp.RenderFirstMessage "Did it!")) initialState
           in
             case result of
-              CurrentState updatedState ->
+              Ready updatedState ->
                 Expect.equal updatedState.model.firstMessage "Did it!"
-              UpstreamFailure msg ->
+              Failed msg ->
                 Expect.fail msg
     ]
   ]
@@ -134,7 +134,7 @@ dummyCommandTests =
     [ test "it shows the failure" <|
       \() ->
         let
-          state = UpstreamFailure "You Failed!"
+          state = Failed "You Failed!"
           result = Command.expectDummy "someCommand" state
         in
           Expect.equal (Expect.fail "You Failed!") result
@@ -170,11 +170,11 @@ useTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = UpstreamFailure "You failed!"
+          initialState = Failed "You failed!"
           override = Command.override (\_ -> Task.perform) (\_ _ -> Command.dummy "dummy")
         in
           Command.use [ override ] (Markup.find "#root") initialState
-            |> Expect.equal (UpstreamFailure "You failed!")
+            |> Expect.equal (Failed "You failed!")
     ]
   , describe "when the override is not a function"
     [ test "it fails" <|
@@ -184,6 +184,6 @@ useTests =
           override = Command.override (\_ -> "Huh?") (\_ _ -> Command.dummy "dummy")
         in
           Command.use [ override ] (Markup.find "#root") initialState
-            |> Expect.equal (UpstreamFailure "Failed to override commands!")
+            |> Expect.equal (Failed "Failed to override commands!")
     ]
   ]

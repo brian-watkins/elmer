@@ -5,8 +5,8 @@ import Elmer.TestApps.ClickTestApp as ClickApp
 import Elmer.TestApps.InputTestApp as InputApp
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Expect
-import Elmer exposing (..)
-import Elmer.Types exposing (..)
+import Elmer
+import Elmer.Internal exposing (..)
 import Elmer.Html.Event as Event
 import Elmer.Command as Command
 import Elmer.Html as Markup
@@ -19,14 +19,14 @@ all =
     , customEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentStateResult ClickApp.Model ClickApp.Msg -> ComponentStateResult ClickApp.Model ClickApp.Msg) -> String -> Test
+standardEventHandlerBehavior : (ComponentState ClickApp.Model ClickApp.Msg -> ComponentState ClickApp.Model ClickApp.Msg) -> String -> Test
 standardEventHandlerBehavior eventHandler eventName =
   describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
     [ test "it passes on the error" <|
       \() ->
         let
-          initialState = UpstreamFailure "upstream failure"
+          initialState = Failed "upstream failure"
         in
           eventHandler initialState
             |> Expect.equal initialState
@@ -38,7 +38,7 @@ standardEventHandlerBehavior eventHandler eventName =
           initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
         in
           eventHandler initialState
-           |> Expect.equal (UpstreamFailure "No target node specified")
+           |> Expect.equal (Failed "No target node specified")
     ]
   , describe "when the event is not found on the target node"
     [ test "it returns an event not found error" <|
@@ -48,7 +48,7 @@ standardEventHandlerBehavior eventHandler eventName =
         in
           Markup.find ".noEvents" initialState
             |> eventHandler
-            |> Expect.equal (UpstreamFailure ("No " ++ eventName ++ " event found"))
+            |> Expect.equal (Failed ("No " ++ eventName ++ " event found"))
     ]
   ]
 
@@ -64,9 +64,9 @@ clickTests =
                                 |> Event.click
         in
           case updatedStateResult of
-            CurrentState updatedState ->
+            Ready updatedState ->
               Expect.equal updatedState.model.clicks 1
-            UpstreamFailure msg ->
+            Failed msg ->
               Expect.fail msg
     ]
   ]
@@ -83,9 +83,9 @@ inputTests =
                                 |> Event.input "Mr. Fun Stuff"
         in
           case updatedStateResult of
-            CurrentState updatedState ->
+            Ready updatedState ->
               Expect.equal updatedState.model.name "Mr. Fun Stuff"
-            UpstreamFailure msg ->
+            Failed msg ->
               Expect.fail msg
     ]
   ]
@@ -105,9 +105,9 @@ customEventTests =
                                   |> Event.on "keyup" keyUpEventJson
           in
             case updatedStateResult of
-              CurrentState updatedState ->
+              Ready updatedState ->
                 Expect.equal updatedState.model.lastLetter 65
-              UpstreamFailure msg ->
+              Failed msg ->
                 Expect.fail msg
       ]
     ]

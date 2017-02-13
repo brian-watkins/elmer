@@ -1,9 +1,9 @@
 module Elmer.TestHelpers exposing (..)
 
-import Elmer.Types exposing (..)
+import Elmer.Html.Types exposing (..)
 import Dict
 
-emptyNode : String -> HtmlNode msg
+emptyNode : String -> HtmlElement msg
 emptyNode tagName =
   { tag = tagName
   , facts = "{}"
@@ -11,21 +11,21 @@ emptyNode tagName =
   , events = []
   }
 
-nodeWithClass : String -> HtmlNode msg
+nodeWithClass : String -> HtmlElement msg
 nodeWithClass className =
   let
     node = emptyNode "div"
   in
     { node | facts = "{\"className\":\"" ++ className ++ " funClass\"}"}
 
-nodeWithId : String -> HtmlNode msg
+nodeWithId : String -> HtmlElement msg
 nodeWithId id =
   let
     node = emptyNode "div"
   in
     { node | facts = "{\"id\":\"" ++ id ++ "\"}" }
 
-nodeWithClassAndId : String -> String -> HtmlNode msg
+nodeWithClassAndId : String -> String -> HtmlElement msg
 nodeWithClassAndId className id =
   let
     node = emptyNode "div"
@@ -33,50 +33,50 @@ nodeWithClassAndId className id =
     { node | facts = "{\"className\":\"" ++ className ++ " funClass\", \"id\":\"" ++ id ++ "\"}"}
 
 
-textNode : String -> HtmlElement msg
+textNode : String -> HtmlNode msg
 textNode text =
   Text text
 
-nodeWithText : String -> HtmlNode msg
+nodeWithText : String -> HtmlElement msg
 nodeWithText text =
   let
     node = emptyNode "div"
   in
     { node | children = [(textNode text)] }
 
-nodeWithList : HtmlNode msg
+nodeWithList : HtmlElement msg
 nodeWithList =
   let
     ul = emptyNode "ul"
   in
     { ul | children =
-      [ Node (emptyNode "li")
-      , Node (emptyNode "li")
-      , Node (emptyNode "li")
+      [ Element (emptyNode "li")
+      , Element (emptyNode "li")
+      , Element (emptyNode "li")
       ]
     }
 
-nodeWithMultipleChildren : String -> HtmlNode msg
+nodeWithMultipleChildren : String -> HtmlElement msg
 nodeWithMultipleChildren text =
   let
     node = emptyNode "div"
   in
-    { node | children = [(textNode "fun stuff"), Node (emptyNode "div"), (textNode text)] }
+    { node | children = [(textNode "fun stuff"), Element (emptyNode "div"), (textNode text)] }
 
-nodeWithNestedChildren : String -> HtmlNode msg
+nodeWithNestedChildren : String -> HtmlElement msg
 nodeWithNestedChildren text =
   { tag = "div"
   , facts = "{}"
   , children =
     [ (textNode "fun stuff")
-    , Node (emptyNode "div")
+    , Element (emptyNode "div")
     , (textNode "another sibling")
-    , Node (nodeWithText text)
+    , Element (nodeWithText text)
     ]
   , events = []
   }
 
-nodeWithProperty : (String, String) -> HtmlNode msg
+nodeWithProperty : (String, String) -> HtmlElement msg
 nodeWithProperty (name, value) =
   let
     node = emptyNode "div"
