@@ -15,6 +15,7 @@ all : Test
 all =
   describe "Event Tests"
     [ clickTests
+    , doubleClickTests
     , inputTests
     , customEventTests
     ]
@@ -66,6 +67,25 @@ clickTests =
           case updatedStateResult of
             Ready updatedState ->
               Expect.equal updatedState.model.clicks 1
+            Failed msg ->
+              Expect.fail msg
+    ]
+  ]
+
+doubleClickTests =
+  describe "Double Click Event Tests"
+  [ standardEventHandlerBehavior Event.doubleClick "dblclick"
+  , describe "when the double click succeeds"
+    [ test "it updates the model accordingly" <|
+      \() ->
+        let
+          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
+          updatedStateResult = Markup.find ".button" initialState
+                                |> Event.doubleClick
+        in
+          case updatedStateResult of
+            Ready updatedState ->
+              Expect.equal updatedState.model.doubleClicks 1
             Failed msg ->
               Expect.fail msg
     ]

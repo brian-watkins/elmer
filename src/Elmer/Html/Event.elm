@@ -1,6 +1,7 @@
 module Elmer.Html.Event
     exposing
         ( click
+        , doubleClick
         , input
         , on
         )
@@ -9,7 +10,7 @@ module Elmer.Html.Event
 call the component's `update` method with the resulting message.
 
 # Mouse Events
-@docs click
+@docs click, doubleClick
 
 # Form Events
 @docs input
@@ -36,16 +37,21 @@ type EventResult msg
     | EventFailure String
 
 
-clickHandler : EventHandler msg
-clickHandler node =
-    genericHandler "click" "{}" node
+clickHandler : String -> EventHandler msg
+clickHandler clickType node =
+    genericHandler clickType "{}" node
 
 {-| Trigger a click event on the targeted element.
 -}
 click : ComponentState model msg -> ComponentState model msg
 click componentStateResult =
-    handleEvent clickHandler componentStateResult
+    handleEvent (clickHandler "click") componentStateResult
 
+{-| Trigger a double click event on the targeted element.
+-}
+doubleClick : ComponentState model msg -> ComponentState model msg
+doubleClick componentState =
+    handleEvent (clickHandler "dblclick") componentState
 
 inputHandler : String -> EventHandler msg
 inputHandler inputString node =
