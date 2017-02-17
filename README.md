@@ -20,10 +20,11 @@ with confidence.
 
 Elmer allows you to describe the behavior of your app without knowledge of
 implementation details. It simulates the Elm architecture, calling `view`
-and `update` as necessary throughout the course of your test. It allows
-you to specify the effects of commands or subscriptions while your application
-is under test. Elmer allows you to write tests first, which gives you
-the freedom and confidence to change your code later on.
+and `update` as necessary throughout the course of your test. It lets
+you manage how commands and subscriptions are processed so you can
+describe the behavior of your app under whatever conditions you need. Elmer
+allows you to write tests first, which gives you the freedom and confidence
+to change your code later on.
 
 
 ### Usage
@@ -106,7 +107,7 @@ allTests =
         \() ->
           Elmer.Html.find "#clickCount" initialState
             |> Elmer.Html.expectElement (
-                  Matchers.hasText "0 clicks!"
+                  Elmer.Html.Matchers.hasText "0 clicks!"
             )      
       ]
     ]
@@ -115,6 +116,9 @@ allTests =
 Our test finds the html element containing the counter text by its id and checks that it has the text we expect when the app first appears. Let's make it pass:
 
 ```
+import Html as Html
+import Html.Attributes as Attr
+
 type alias Model =
   { clicks: Int }
 
@@ -127,7 +131,7 @@ type Msg =
 
 view : Model -> Html Msg
 view model =
-  div [ id "clickCount" ] [ text "0 clicks!") ]
+  Html.div [ Attr.id "clickCount" ] [ Html.text "0 clicks!" ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -143,11 +147,11 @@ Now, let's add a new test that describes what we expect to happen when a button 
   [ test "it updates the counter" <|
     \() ->
       Elmer.Html.find ".button" initialState
-        |> Event.click
-        |> Event.click
+        |> Elmer.Html.Event.click
+        |> Elmer.Html.Event.click
         |> Elmer.Html.find "#clickCount"
         |> Elmer.Html.expectElement (
-            Matchers.hasText "2 clicks!"
+            Elmer.Html.Matchers.hasText "2 clicks!"
         )
   ]
 ```
@@ -155,14 +159,16 @@ Now, let's add a new test that describes what we expect to happen when a button 
 This should fail, since we don't even have a button in our view yet. Let's fix that. We'll add a button with a click event handler that sends a message we can handle in the update function. We update the `Msg` type, the `view` function, and the `update` function like so:
 
 ```
+import Html.Events as Events
+
 type Msg =
   HandleClick
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ div [ id "clickCount" ] [ text ((toString model.clicks) ++ " clicks!") ]
-    , div [ class "button", onClick HandleClick ] [ text "Click Me" ]  
+  Html.div []
+    [ Html.div [ Attr.id "clickCount" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
+    , Html.div [ Attr.class "button", Events.onClick HandleClick ] [ Html.text "Click Me" ]
     ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
