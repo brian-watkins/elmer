@@ -1,5 +1,6 @@
 module Elmer.Http exposing
   ( HttpResponseStub
+  , HttpRequestData
   , expectPOST
   , expectGET
   , expectDELETE
@@ -23,7 +24,7 @@ component. What to do?
 @docs HttpResponseStub, serve, spy
 
 # Make Expectations about Http Requests
-@docs expectGET, expectPOST, expectDELETE, clearRequestHistory
+@docs HttpRequestData, expectGET, expectPOST, expectDELETE, clearRequestHistory
 
 -}
 
@@ -47,6 +48,10 @@ Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
 type alias HttpResponseStub
   = HttpInternal.HttpResponseStub
 
+{-| Represents a recorded request about which expectations may be made. 
+-}
+type alias HttpRequestData
+  = HttpInternal.HttpRequestData
 
 {-| Override `Http.send` and register HttpResponseStubs to be returned
 when the appropriate request is received. Used in conjunction with
@@ -67,7 +72,7 @@ a button is clicked. You could register a stub for that request like so
         |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
 
 -}
-serve : List HttpResponseStub -> PlatformOverride
+serve : List HttpResponseStub -> Elmer.PlatformOverride
 serve responseStubs =
   Command.override (\_ -> Http.send) (Server.stubbedSend responseStubs)
 
@@ -83,7 +88,7 @@ describing the behavior that results when its response is received.
       |> expectGET "http://fun.com/user" Elmer.Http.Matchers.hasBeenRequested
 
 -}
-spy : PlatformOverride
+spy : Elmer.PlatformOverride
 spy =
   Command.override (\_ -> Http.send) Server.dummySend
 
@@ -91,7 +96,7 @@ spy =
 {-| Clear any Http requests that may have been recorded at an earlier point
 in the history of this ComponentState.
 -}
-clearRequestHistory : ComponentState model msg -> ComponentState model msg
+clearRequestHistory : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 clearRequestHistory =
   Internal.map (\componentState ->
     if List.isEmpty componentState.httpRequests then
@@ -108,7 +113,7 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectPOST : String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
+expectPOST : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
 expectPOST =
   expectRequest "POST"
 
@@ -119,7 +124,7 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectGET : String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
+expectGET : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
 expectGET =
   expectRequest "GET"
 
@@ -130,12 +135,12 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectDELETE : String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
+expectDELETE : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
 expectDELETE =
   expectRequest "DELETE"
 
 
-expectRequest : String -> String -> Matcher HttpRequestData -> Matcher (ComponentState model msg)
+expectRequest : String -> String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
 expectRequest method url requestMatcher =
   Internal.mapToExpectation <|
     \componentState ->

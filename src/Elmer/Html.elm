@@ -19,7 +19,7 @@ module Elmer.Html exposing
 import Elmer exposing (Matcher)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Element as Element
+import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
 import Html exposing (Html)
 import Expect
@@ -66,7 +66,7 @@ Find an element with an attribute and value:
     find "[data-my-attr='my-value']"
 
 -}
-find : String -> ComponentState model msg -> ComponentState model msg
+find : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 find selector =
     Internal.map (updateTargetNode selector)
 
@@ -97,7 +97,7 @@ findChildren selector node =
       )
 
 -}
-expectElement : Matcher (HtmlElement msg) -> Matcher (ComponentState model msg)
+expectElement : Matcher (HtmlElement msg) -> Matcher (Elmer.ComponentState model msg)
 expectElement expectFunction =
   Internal.mapToExpectation <|
     \componentState ->
@@ -109,7 +109,7 @@ expectElement expectFunction =
 
 {-| Expect that the targeted element exists.
 -}
-expectElementExists : Matcher (ComponentState model msg)
+expectElementExists : Matcher (Elmer.ComponentState model msg)
 expectElementExists componentStateResult =
     expectElement (\_ -> Expect.pass) componentStateResult
 
@@ -137,6 +137,6 @@ htmlToString : Html msg -> String
 htmlToString htmlMsg =
   case Native.Html.asHtmlElement htmlMsg of
     Just node ->
-      Element.toString node
+      HtmlInternal.toString node
     Nothing ->
       "<No Nodes>"

@@ -59,7 +59,7 @@ You could override `Time.every` with a subscription spy like so:
     )
 
 -}
-override : (() -> a) -> (b -> c) -> PlatformOverride
+override : (() -> a) -> (b -> c) -> Elmer.PlatformOverride
 override namingFunc overridingFunc =
   Platform.override namingFunc overridingFunc
 
@@ -84,7 +84,7 @@ could do the following:
         |> expectElement (hasText "3 seconds")
 
 -}
-use : List PlatformOverride -> (model -> Sub msg) -> ComponentState model msg -> ComponentState model msg
+use : List Elmer.PlatformOverride -> (model -> Sub msg) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 use overrides subsFunc =
   Platform.mapWithOverrides "subscriptions" overrides (\componentState ->
     let
@@ -119,7 +119,7 @@ spy name tagger =
 Data sent via this function will be tagged accordingly and passed to
 the component's `update` function for processing.
 -}
-send : String -> a -> ComponentState model msg -> ComponentState model msg
+send : String -> a -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 send subName data =
   Internal.map (\componentState ->
     case findSubDescription subName componentState.subscriptions of

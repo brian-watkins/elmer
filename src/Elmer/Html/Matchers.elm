@@ -14,7 +14,8 @@ module Elmer.Html.Matchers exposing
 import Elmer exposing (Matcher)
 import Elmer.Internal exposing (..)
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Element as Element
+import Elmer.Html
+import Elmer.Html.Internal as Internal
 import Elmer.Printer exposing (..)
 import Expect
 import String
@@ -23,7 +24,7 @@ import Json.Decode as Json
 {-| Expect that an element has some text. This matcher will pass only if the element
 or any of its descendents contains some `Html.text` with the specified text.
 -}
-hasText : String -> Matcher (HtmlElement msg)
+hasText : String -> Matcher (Elmer.Html.HtmlElement msg)
 hasText text node =
     let
         texts =
@@ -38,11 +39,11 @@ hasText text node =
 
 {-| Expect that an element has the specified class. No need to prepend the class name with a dot.
 -}
-hasClass : String -> Matcher (HtmlElement msg)
+hasClass : String -> Matcher (Elmer.Html.HtmlElement msg)
 hasClass className node =
     let
         classList =
-            Element.classList node
+            Internal.classList node
     in
         if List.length classList > 0 then
             if List.member className classList then
@@ -57,9 +58,9 @@ hasClass className node =
     hasProperty ( "innerHtml", "Fun <i>stuff</i>" ) node
 
 -}
-hasProperty : (String, String) -> Matcher (HtmlElement msg)
+hasProperty : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
 hasProperty (name, value) node =
-  case Element.property name node of
+  case Internal.property name node of
     Just propertyValue ->
       if value == propertyValue then
         Expect.pass
@@ -73,9 +74,9 @@ hasProperty (name, value) node =
 
 {-| Expect that an element has the specified id. No need to prepend the id with a pound sign.
 -}
-hasId : String -> Matcher (HtmlElement msg)
+hasId : String -> Matcher (Elmer.Html.HtmlElement msg)
 hasId expectedId node =
-  case Element.id node of
+  case Internal.elementId node of
     Just nodeId ->
       if nodeId == expectedId then
         Expect.pass

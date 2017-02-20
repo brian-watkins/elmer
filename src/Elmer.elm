@@ -27,7 +27,6 @@ import Native.Http
 import Native.Html
 
 import Expect
-import Elmer.Html.Element as Element
 import Elmer.Internal as Internal
 import Elmer.Platform as Platform
 
@@ -38,7 +37,7 @@ type alias ComponentState model msg
 
 {-| Represents a request to override a platform function.
 
-See `Elmer.Command.override` and `Elmer.Subscription.override` for examples.
+See `Elmer.Platform.Command.override` and `Elmer.Platform.Subscription.override` for examples.
 -}
 type alias PlatformOverride
   = Platform.PlatformOverride

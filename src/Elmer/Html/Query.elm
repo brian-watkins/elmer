@@ -8,7 +8,7 @@ import Elmer.Html.Types exposing (..)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
-import Elmer.Html.Element as Element
+import Elmer.Html.Internal as Internal
 import Regex exposing (Regex)
 
 findElement : Html msg -> String -> Maybe (HtmlElement msg)
@@ -127,12 +127,12 @@ notEmpty maybeEmpty =
 
 matchesId : String -> HtmlElement msg -> Bool
 matchesId selector node =
-    Maybe.withDefault False (Maybe.map ((==) selector) (Element.id node))
+    Maybe.withDefault False (Maybe.map ((==) selector) (Internal.elementId node))
 
 
 matchesClass : String -> HtmlElement msg -> Bool
 matchesClass selector node =
-    List.member selector (Element.classList node)
+    List.member selector (Internal.classList node)
 
 
 matchesTag : String -> HtmlElement msg -> Bool
@@ -153,7 +153,7 @@ matchesCharacteristic charName maybeCharValue node =
 
 allCharacteristics : HtmlElement msg -> Dict String String
 allCharacteristics node =
-  Dict.union (Element.attributes node) (Element.properties node)
+  Dict.union (Internal.attributes node) (Internal.properties node)
 
 
 takeElements : List (HtmlNode msg) -> List (HtmlElement msg)

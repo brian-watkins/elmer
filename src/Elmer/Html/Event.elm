@@ -43,13 +43,13 @@ clickHandler clickType node =
 
 {-| Trigger a click event on the targeted element.
 -}
-click : ComponentState model msg -> ComponentState model msg
+click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 click componentStateResult =
     handleEvent (clickHandler "click") componentStateResult
 
 {-| Trigger a double click event on the targeted element.
 -}
-doubleClick : ComponentState model msg -> ComponentState model msg
+doubleClick : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 doubleClick componentState =
     handleEvent (clickHandler "dblclick") componentState
 
@@ -63,7 +63,7 @@ inputHandler inputString node =
 
 {-| Trigger an input event on the targeted element.
 -}
-input : String -> ComponentState model msg -> ComponentState model msg
+input : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 input inputString componentStateResult =
     handleEvent (inputHandler inputString) componentStateResult
 
@@ -88,7 +88,7 @@ The following will trigger a `keyup` event:
     componentState
       |> on "keyup" "{\"keyCode\":65}"
 -}
-on : String -> String -> ComponentState model msg -> ComponentState model msg
+on : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 on eventName eventJson componentStateResult =
     handleEvent (genericHandler eventName eventJson) componentStateResult
 

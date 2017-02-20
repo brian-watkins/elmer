@@ -24,6 +24,7 @@ module Elmer.Http.Stub exposing
 
 -}
 
+import Elmer.Http
 import Elmer.Http.Internal exposing (..)
 import Elmer.Http.Status as Status
 import Http
@@ -37,7 +38,7 @@ By default, this response will return an empty body with a status of
 
 Note: The route should not contain a query string.
 -}
-get : String -> HttpResponseStub
+get : String -> Elmer.Http.HttpResponseStub
 get url =
   defaultResponse "GET" url
 
@@ -49,7 +50,7 @@ By default, this response will return an empty body with a status of
 
 Note: The route should not contain a query string.
 -}
-post : String -> HttpResponseStub
+post : String -> Elmer.Http.HttpResponseStub
 post url =
   defaultResponse "POST" url
 
@@ -61,7 +62,7 @@ By default, this response will return an empty body with a status of
 
 Note: The route should not contain a query string.
 -}
-delete : String -> HttpResponseStub
+delete : String -> Elmer.Http.HttpResponseStub
 delete url =
   defaultResponse "DELETE" url
 
@@ -93,7 +94,7 @@ times out. You could create a stubbed response like so:
       |> withError Http.Error.Timout
 
 -}
-withError : Http.Error -> HttpResponseStub -> HttpResponseStub
+withError : Http.Error -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
 withError error (HttpResponseStub stub) =
   HttpResponseStub { stub | response = Error error }
 
@@ -107,7 +108,7 @@ returns a `500 Internal Server Error`. You could create a stubbed response like 
       |> withStatus Elmer.Http.Status.serverError
 
 -}
-withStatus : HttpStatus -> HttpResponseStub -> HttpResponseStub
+withStatus : HttpStatus -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
 withStatus (HttpStatus newStatus) =
   mapResponse (\r -> { r | status = newStatus })
 
@@ -121,7 +122,7 @@ parsed. You could create a stub like so:
       |> withBody "{\"name\":\"Fun Person\"}"
 
 -}
-withBody : String -> HttpResponseStub -> HttpResponseStub
+withBody : String -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
 withBody newBody =
   mapResponse (\r -> { r | body = newBody })
 
@@ -130,7 +131,7 @@ withBody newBody =
 
 The response will not be processed until `Elmer.Command.resolveDeferred` is called.
 -}
-deferResponse : HttpResponseStub -> HttpResponseStub
+deferResponse : Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
 deferResponse (HttpResponseStub stub) =
   HttpResponseStub { stub | deferResponse = True }
 

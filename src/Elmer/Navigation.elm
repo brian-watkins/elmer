@@ -24,7 +24,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
 import Elmer.Internal as Internal exposing (..)
-import Elmer
+import Elmer exposing (Matcher)
 import Expect
 import Elmer.Printer exposing (..)
 import Elmer.Navigation.Location as Location
@@ -41,7 +41,7 @@ navigationComponentState
   -> ( model -> Html msg )
   -> ( msg -> model -> ( model, Cmd msg ) )
   -> ( Navigation.Location -> msg )
-  -> ComponentState model msg
+  -> Elmer.ComponentState model msg
 navigationComponentState model view update parser =
     Ready
         { model = model
@@ -70,7 +70,7 @@ location to `/home` when clicked:
       )
       |> Navigation.expectLocation "/home"
 -}
-spy : PlatformOverride
+spy : Elmer.PlatformOverride
 spy =
   Command.batchOverride
     [ Command.override (\_ -> Navigation.newUrl) fakeNavigateCommand
@@ -108,7 +108,7 @@ storeLocation url componentState =
 
 Note: This expectation must be used in conjunction with `spy` above.
 -}
-expectLocation : String -> ComponentState model msg -> Expect.Expectation
+expectLocation : String -> Matcher (Elmer.ComponentState model msg)
 expectLocation expectedURL =
   Internal.mapToExpectation <|
       \componentState ->
@@ -126,7 +126,7 @@ When the location is set and a location parser is defined for this component,
 then the parser will be applied to the location and the resulting message
 will be passed to the component's `update` function for processing.
 -}
-setLocation : String -> ComponentState model msg -> ComponentState model msg
+setLocation : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 setLocation location =
   Internal.map (\componentState ->
     case componentState.locationParser of

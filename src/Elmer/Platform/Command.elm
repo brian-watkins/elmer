@@ -55,7 +55,7 @@ import Expect
 
 {-| Combine a List of PlatformOverrides into a single override.
 -}
-batchOverride : List PlatformOverride -> PlatformOverride
+batchOverride : List Elmer.PlatformOverride -> Elmer.PlatformOverride
 batchOverride overrides =
   Platform.batchOverride overrides
 
@@ -76,7 +76,7 @@ You could override `Task.perform` with a stubbed command that tags some data lik
     )
 
 -}
-override : (() -> a) -> (b -> c) -> PlatformOverride
+override : (() -> a) -> (b -> c) -> Elmer.PlatformOverride
 override namingFunc overridingFunc =
   Platform.override namingFunc overridingFunc
 
@@ -100,7 +100,10 @@ generate a command with `Task.perform`. To describe this behavior in your test
         |> expectElement (hasText "11/12/2016 5:30 pm")
 
 -}
-use : List PlatformOverride -> (ComponentState model msg -> ComponentState model msg) -> ComponentState model msg -> ComponentState model msg
+use : List Elmer.PlatformOverride
+  -> (Elmer.ComponentState model msg -> Elmer.ComponentState model msg)
+  -> Elmer.ComponentState model msg
+  -> Elmer.ComponentState model msg
 use overrides mapper =
   Platform.mapWithOverrides "commands" overrides (\componentState ->
     Ready componentState
@@ -142,7 +145,7 @@ updateComponentStateWithDummyCommand identifier componentState =
 
 {-| Expect that a dummy command with the given identifier has been sent.
 -}
-expectDummy : String -> Matcher (ComponentState model msg)
+expectDummy : String -> Matcher (Elmer.ComponentState model msg)
 expectDummy expectedIdentifier =
   Internal.mapToExpectation (\componentState ->
     let
@@ -177,7 +180,7 @@ updateComponentStateWithDeferredCommand command componentState =
 Once this function is called, all messages associated with deferred commands will be
 sent to the component's `update` function.
 -}
-resolveDeferred : ComponentState model msg -> ComponentState model msg
+resolveDeferred : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 resolveDeferred =
   Internal.map (\componentState ->
     if List.isEmpty componentState.deferredCommands then
@@ -197,7 +200,7 @@ Use this function to send a command to your component. Any effect associated wit
 command will be processed accordingly. Elmer only knows how to process the fake commands
 described above.
 -}
-send : Cmd msg -> ComponentState model msg -> ComponentState model msg
+send : Cmd msg -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 send command =
     Internal.map (\state ->
       Runtime.performCommand command state
