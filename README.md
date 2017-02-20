@@ -260,15 +260,15 @@ fakeTaskPerform time tagger _ =
   Command.stub (tagger time)
 ```
 
-Here, we use `Elmer.Command.stub` to create a command whose effect is the message we provide.
+Here, we use `Elmer.Platform.Command.stub` to create a command whose effect is the message we provide.
 This lets us specify exactly what time should be returned for the purpose of our test.
 
 Now we update our test to override `Task.perform` with `fakeTaskPerform`. We use
 two functions to do this:
 
-- `Elmer.Command.override` allows us to specify which `Cmd`-generating function to
+- `Elmer.Platform.Command.override` allows us to specify which `Cmd`-generating function to
 override and provide the alternate implementation.
-- `Elmer.Command.use` ensures that, during the appropriate portion of our test,
+- `Elmer.Platform.Command.use` ensures that, during the appropriate portion of our test,
 `Cmd`-generating functions will be replaced with the alternate implementations we specify.
 
 ```
@@ -279,10 +279,10 @@ timeAppTests =
     \() ->
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskPerformOverride = Elmer.Command.override (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
+        taskPerformOverride = Elmer.Platform.Command.override (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
       in
         Elmer.Html.find ".button" initialState
-          |> Elmer.Command.use [ taskPerformOverride ] Event.click
+          |> Elmer.Platform.Command.use [ taskPerformOverride ] Event.click
           |> Elmer.Html.find "#currentTime"
           |> Elmer.Html.expectElement (Matchers.hasText "Time: 3000")
   ]
@@ -355,7 +355,7 @@ In this case, a GET request to the given route will result in a response with th
 See `Elmer.Http.Stub` for the full list of builder functions. (With more on the way ...)
 
 Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.serve` function
-along with `Elmer.Command.use` to override `Http.send` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during a portion of your test.
+along with `Elmer.Platform.Command.use` to override `Http.send` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during a portion of your test.
 When your application code calls `Http.send`, the request will be checked against the
 provided stubs and if a match occurs, the given response will be returned.
 
@@ -369,7 +369,7 @@ initialComponentState
   |> Elmer.Html.find "input[name='query']"
   |> Elmer.Html.Event.input "Fun Stuff"
   |> Elmer.Html.find "#search-button"
-  |> Elmer.Command.use [ Elmer.Http.serve stubbedResponse ] Elmer.Html.Event.click
+  |> Elmer.Platform.Command.use [ Elmer.Http.serve stubbedResponse ] Elmer.Html.Event.click
   |> Elmer.Http.expectGET "http://fake.com/search" (
     Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
   )
@@ -377,7 +377,7 @@ initialComponentState
 
 If you don't care to describe the behavior of your app after the response from a request is
 received -- that is, if you don't care to create a stubbed response for some request -- you
-can provide `Elmer.Http.spy` to `Elmer.Command.use` and it will override the `Http.send`
+can provide `Elmer.Http.spy` to `Elmer.Platform.Command.use` and it will override the `Http.send`
 function, merely recording any requests it receives.
 
 See `Elmer.Http` and `Elmer.Http.Matchers` for more.
@@ -395,7 +395,7 @@ Elmer with the information it needs to process location updates as they occur in
 
 You can send a command to update the location manually with the `Elmer.Navigation.setLocation` function.
 If your component produces commands to update the location using `Navigation.newUrl` or
-`Navigation.modifyUrl`, your tests you should provide `Elmer.Command.use` with `Elmer.Navigation.spy`
+`Navigation.modifyUrl`, your tests you should provide `Elmer.Platform.Command.use` with `Elmer.Navigation.spy`
 so that Elmer will be able to record and process location updates.
 
 You can write an expectation about the current location with `Elmer.Navigation.expectLocation`.
@@ -406,25 +406,25 @@ examples.
 #### Sending Arbitrary Commands
 
 Sometimes, a component may be sent a command, either from its parent or as part of initialization.
-You can use the `Elmer.Command.send` function to simulate this.
+You can use the `Elmer.Platform.Command.send` function to simulate this.
 
 #### Deferred Command Processing
 
 It's often necessary to test the state of a component while some command is running. For example,
 one might want to show a progress indicator while an HTTP request is in process. Elmer provides
-general support for deferred commands. Use `Elmer.Command.defer` to create a command that
-will not be processed until `Elmer.Command.resolveDeferred` is called. Note that all currently
+general support for deferred commands. Use `Elmer.Platform.Command.defer` to create a command that
+will not be processed until `Elmer.Platform.Command.resolveDeferred` is called. Note that all currently
 deferred commands will be resolved when this function is called.
 
 `Elmer.Http` allows you to specify when the processing of a stubbed response should be deferred.
 When you create your `HttpResponseStub` just use the `Elmer.Http.Stub.deferResponse` builder function
-to indicate that this response should be deferred until `Elmer.Command.resolveDeferred` is called.
+to indicate that this response should be deferred until `Elmer.Platform.Command.resolveDeferred` is called.
 
 #### Dummy Commands
 
 You might want to write a test that expects a command to be sent, but doesn't care to describe the
 behavior that results from processing that command -- perhaps that is tested somewhere else. In
-that case, you could use `Elmer.Command.dummy <identifier>` to create a dummy command.
+that case, you could use `Elmer.Platform.Command.dummy <identifier>` to create a dummy command.
 When Elmer processes a dummy command, it simply records the fact that the command was sent; otherwise
 it treats the command just like `Cmd.none`. In your test, use `Elmer.command.expectDummy <identifier>`
 to expect that the command was sent.
@@ -434,8 +434,8 @@ to expect that the command was sent.
 Using subscriptions, your component can register to be notified when certain effects occur.
 To describe the behavior of a component that has subscriptions, you'll need to do two things:
 
-1. Override the function that generates the subscription using `Elmer.Subscription.use` and
-`Elmer.Subscription.override` and replace it with a `Elmer.Subscription.spy`
+1. Override the function that generates the subscription using `Elmer.Platform.Subscription.use` and
+`Elmer.Platform.Subscription.override` and replace it with a `Elmer.Platform.Subscription.spy`
 2. Simulate the effect you've subscribed to receive with `Subscription.send`
 
 Let's test-drive a component that subscribes to receive the time every second. We'll
@@ -490,13 +490,13 @@ timeSubscriptionTest =
   [ test "it prints the number of seconds" <|
     \() ->
       let
-        timeOverride = Elmer.Subscription.override (\_ -> Time.every) (\_ tagger ->
-            Elmer.Subscription.spy "timeEffect" tagger
+        timeOverride = Elmer.Platform.Subscription.override (\_ -> Time.every) (\_ tagger ->
+            Elmer.Platform.Subscription.spy "timeEffect" tagger
           )
       in
         Elmer.componentState App.defaultModel App.view App.update
-          |> Elmer.Subscription.use [ timeOverride ] App.subscriptions
-          |> Elmer.Subscription.send "timeEffect" (3 * 1000)
+          |> Elmer.Platform.Subscription.use [ timeOverride ] App.subscriptions
+          |> Elmer.Platform.Subscription.send "timeEffect" (3 * 1000)
           |> Elmer.Html.find "#num-seconds"
           |> Elmer.Html.expectElement ( Matchers.hasText "3 seconds" )
   ]

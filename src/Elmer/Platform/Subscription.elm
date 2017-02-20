@@ -1,4 +1,4 @@
-module Elmer.Subscription exposing
+module Elmer.Platform.Subscription exposing
   ( use
   , override
   , send
@@ -34,7 +34,7 @@ import Elmer
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Printer exposing (..)
 import Elmer.Runtime as Runtime
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Platform as Platform exposing (..)
 
 

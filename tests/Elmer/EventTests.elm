@@ -8,7 +8,7 @@ import Expect
 import Elmer
 import Elmer.Internal exposing (..)
 import Elmer.Html.Event as Event
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
 all : Test

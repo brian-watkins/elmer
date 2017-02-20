@@ -11,7 +11,7 @@ import Elmer.Runtime as Runtime
 import Elmer.Html.Matchers as Matchers
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 import Elmer.Printer exposing (..)
 import Task

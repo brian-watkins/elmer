@@ -2,7 +2,7 @@ module Elmer.CommandTests exposing (all)
 
 import Test exposing (..)
 import Expect
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer
 import Elmer.Internal exposing (..)
 import Elmer.TestApps.SimpleTestApp as App

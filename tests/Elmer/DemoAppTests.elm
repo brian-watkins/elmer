@@ -12,7 +12,7 @@ import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
 import Time exposing (Time)

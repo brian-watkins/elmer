@@ -20,7 +20,7 @@ module Elmer.Navigation
 
 -}
 
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
 import Elmer.Command.Internal as InternalCommand
 import Elmer.Internal as Internal exposing (..)

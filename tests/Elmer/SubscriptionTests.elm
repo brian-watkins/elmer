@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer
 import Elmer.Internal exposing (..)
-import Elmer.Subscription as Subscription
+import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
 import Elmer.Html.Matchers as Matchers

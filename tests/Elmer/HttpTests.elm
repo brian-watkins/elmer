@@ -16,7 +16,7 @@ import Elmer.Http.Status as Status
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Matchers exposing (..)
 import Elmer.Printer exposing (..)
-import Elmer.Command
+import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
 import Elmer.TestApps.HttpTestApp as App
@@ -104,7 +104,7 @@ serveTests =
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
         in
           Elmer.componentState App.defaultModel App.view App.update
-            |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse, anotherStubbedResponse ] ] (
+            |> Command.use [ ElmerHttp.serve [ stubbedResponse, anotherStubbedResponse ] ] (
                 Markup.find "#request-data-click"
                   >> Event.click
                   >> Markup.find "#data-result"
@@ -124,7 +124,7 @@ serveTests =
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
         in
           Elmer.componentState App.defaultModel App.view App.update
-            |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+            |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
               Markup.find "#request-data-click"
                 >> Event.click
                 >> Markup.find "#data-result"
@@ -145,7 +145,7 @@ serveTests =
               |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
           in
             Elmer.componentState App.defaultModel App.view App.update
-              |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+              |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
                 Markup.find "#request-data-click"
                   >> Event.click
                   >> Markup.find "#data-result"
@@ -166,7 +166,7 @@ serveTests =
                 |> HttpStub.withStatus Status.notFound
             in
               Elmer.componentState App.defaultModel App.view App.update
-                |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+                |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
                   Markup.find "#request-data-click"
                     >> Event.click
                     >> Markup.find "#data-result"
@@ -182,7 +182,7 @@ serveTests =
                   |> HttpStub.withBody "{}"
               in
                 Elmer.componentState App.defaultModel App.view App.update
-                  |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+                  |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
                     Markup.find "#request-data-click"
                       >> Event.click
                       >> Markup.find "#data-result"
@@ -206,7 +206,7 @@ serveTests =
                 testModel = { defaultModel | query = "?type=awesome" }
               in
                 Elmer.componentState testModel App.view App.update
-                  |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+                  |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
                     Markup.find "#request-data-click"
                       >> Event.click
                       >> Markup.find "#data-result"
@@ -222,7 +222,7 @@ serveTests =
                   |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
               in
                 Elmer.componentState App.defaultModel App.view App.update
-                  |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+                  |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
                     Markup.find "#request-data-click"
                       >> Event.click
                       >> Markup.find "#data-result"
@@ -236,7 +236,7 @@ serveTests =
             otherStub = HttpStub.get "http://fun.com/super.html"
               |> HttpStub.withBody "{\"message\":\"This is great!\"}"
             state = Elmer.componentState App.defaultModel App.view App.update
-              |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse, otherStub ] ] (
+              |> Command.use [ ElmerHttp.serve [ stubbedResponse, otherStub ] ] (
                 Markup.find "#request-data-click"
                   >> Event.click
                   >> Markup.find "#request-other-data-click"
@@ -262,7 +262,7 @@ spyTests : Test
 spyTests =
   let
     requestedState = Elmer.componentState App.defaultModel App.view App.update
-      |> Elmer.Command.use [ ElmerHttp.spy ] (
+      |> Command.use [ ElmerHttp.spy ] (
         Markup.find "#request-data-click"
           >> Event.click
         )
@@ -288,7 +288,7 @@ errorResponseTests =
           |> HttpStub.withError Http.Timeout
       in
         Elmer.componentState App.defaultModel App.view App.update
-          |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+          |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
             Markup.find "#request-data-click"
               >> Event.click
               >> Markup.find "#data-result"
@@ -420,7 +420,7 @@ expectRequestDataTests =
   [ test "it finds the headers" <|
     \() ->
       Elmer.componentState App.defaultModel App.view App.update
-        |> Elmer.Command.use [ ElmerHttp.spy ] (
+        |> Command.use [ ElmerHttp.spy ] (
           Markup.find "#request-data-click"
             >> Event.click
           )
@@ -437,7 +437,7 @@ resolveTests =
       |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
       |> HttpStub.deferResponse
     requestedState = Elmer.componentState App.defaultModel App.view App.update
-      |> Elmer.Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
+      |> Command.use [ ElmerHttp.serve [ stubbedResponse ] ] (
         Markup.find "#request-data-click"
           >> Event.click
         )
@@ -455,7 +455,7 @@ resolveTests =
     , describe "when resolve is called"
       [ test "it resolves the response" <|
         \() ->
-          Elmer.Command.resolveDeferred requestedState
+          Command.resolveDeferred requestedState
             |> Markup.find "#data-result"
             |> Markup.expectElement (Matchers.hasText "Cool Dude")
       ]

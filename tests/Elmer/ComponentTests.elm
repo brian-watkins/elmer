@@ -5,9 +5,9 @@ import Expect
 
 import Elmer exposing (..)
 import Elmer.Html.Event as Event
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Html.Matchers as Matchers
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 import Elmer.Navigation as ElmerNav
 

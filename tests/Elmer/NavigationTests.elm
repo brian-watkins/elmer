@@ -6,7 +6,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Html.Event as Event
-import Elmer.Command as Command
+import Elmer.Platform.Command as Command
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
 import Elmer.Html.Matchers as Matchers exposing (..)

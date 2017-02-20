@@ -1,4 +1,4 @@
-module Elmer.Command exposing
+module Elmer.Platform.Command exposing
   ( fail
   , stub
   , defer
