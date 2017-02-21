@@ -22,7 +22,6 @@ module Elmer.Navigation
 
 import Elmer.Platform.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
-import Elmer.Command.Internal as InternalCommand
 import Elmer.Internal as Internal exposing (..)
 import Elmer exposing (Matcher)
 import Expect
@@ -59,7 +58,7 @@ navigationComponentState model view update parser =
 {-| Override `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
 records the location as it is set.
 
-You must use this function with `Elmer.Command.use` in order to make expectations
+You must use this function with `Elmer.Platform.Command.use` in order to make expectations
 about the location. Suppose you want to test a home button that sets the
 location to `/home` when clicked:
 
@@ -80,8 +79,8 @@ spy =
 fakeNavigateCommand : String -> Cmd msg
 fakeNavigateCommand url =
   let
-    parseCommand = InternalCommand.generate <| generateCommandForLocation url
-    stateCommand = InternalCommand.mapState <| storeLocation url
+    parseCommand = Platform.generateCommand <| generateCommandForLocation url
+    stateCommand = Platform.mapStateCommand <| storeLocation url
   in
     Cmd.batch [ stateCommand, parseCommand ]
 

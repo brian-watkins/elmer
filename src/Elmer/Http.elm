@@ -36,7 +36,6 @@ import Elmer.Http.Server as Server
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Platform.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
-import Elmer.Command.Internal as InternalCommand
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
@@ -48,14 +47,14 @@ Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
 type alias HttpResponseStub
   = HttpInternal.HttpResponseStub
 
-{-| Represents a recorded request about which expectations may be made. 
+{-| Represents a recorded request about which expectations may be made.
 -}
 type alias HttpRequestData
   = HttpInternal.HttpRequestData
 
 {-| Override `Http.send` and register HttpResponseStubs to be returned
 when the appropriate request is received. Used in conjunction with
-`Elmer.Command.use`.
+`Elmer.Platform.Command.use`.
 
 Suppose you have a component that requests information about a user when
 a button is clicked. You could register a stub for that request like so
@@ -67,7 +66,7 @@ a button is clicked. You could register a stub for that request like so
     in
       componentState
         |> Markup.find "#request-data-button"
-        |> Elmer.Command.use [ serve [ stubbedResponse ] ] click
+        |> Elmer.Platform.Command.use [ serve [ stubbedResponse ] ] click
         |> Markup.find "#data-result"
         |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
 
@@ -77,14 +76,14 @@ serve responseStubs =
   Command.override (\_ -> Http.send) (Server.stubbedSend responseStubs)
 
 {-| Override `Http.send` and record requests as they are received.
-Used in conjunction with `Elmer.Command.use`.
+Used in conjunction with `Elmer.Platform.Command.use`.
 
 Suppose you simply want to make an expectation about a request without
 describing the behavior that results when its response is received.
 
     componentState
       |> Markup.find "#request-data-button"
-      |> Elmer.Command.use [ spy ] click
+      |> Elmer.Platform.Command.use [ spy ] click
       |> expectGET "http://fun.com/user" Elmer.Http.Matchers.hasBeenRequested
 
 -}

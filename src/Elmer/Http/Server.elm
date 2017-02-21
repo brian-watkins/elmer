@@ -10,7 +10,6 @@ import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Platform.Command as Command
 import Elmer.Platform as Platform exposing (PlatformOverride)
-import Elmer.Command.Internal as InternalCommand
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
@@ -60,7 +59,7 @@ toHttpCommand request command =
       , body = request.body
       , headers = request.headers
       }
-    httpCommand = InternalCommand.mapState <| updateComponentState requestData
+    httpCommand = Platform.mapStateCommand <| updateComponentState requestData
   in
     Cmd.batch [ httpCommand, command ]
 

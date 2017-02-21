@@ -10,6 +10,8 @@ module Elmer.Platform exposing
   , override
   , batchOverride
   , mapWithOverrides
+  , mapStateCommand
+  , generateCommand
   )
 
 import Elmer.Internal as Internal exposing (..)
@@ -93,3 +95,11 @@ subValue sub =
 toSub : String -> a -> Sub msg
 toSub home data =
   Native.Platform.toIntention home data
+
+mapStateCommand : (Component model msg -> Component model msg) -> Cmd msg
+mapStateCommand mapper =
+  toCmd "Elmer_MapState" mapper
+
+generateCommand : (Component model msg -> Cmd msg) -> Cmd msg
+generateCommand generator =
+  toCmd "Elmer_Generate" generator

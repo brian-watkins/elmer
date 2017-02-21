@@ -129,7 +129,7 @@ withBody newBody =
 
 {-| Defer a response.
 
-The response will not be processed until `Elmer.Command.resolveDeferred` is called.
+The response will not be processed until `Elmer.Platform.Command.resolveDeferred` is called.
 -}
 deferResponse : Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
 deferResponse (HttpResponseStub stub) =

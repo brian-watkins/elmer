@@ -50,7 +50,6 @@ import Elmer.Internal as Internal exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Platform as Platform exposing (PlatformOverride)
-import Elmer.Command.Internal as InternalCommand
 import Expect
 
 {-| Combine a List of PlatformOverrides into a single override.
@@ -136,7 +135,7 @@ This will be most useful in conjunction with `expectDummy`.
 -}
 dummy : String -> Cmd msg
 dummy identifier =
-  InternalCommand.mapState <|
+  Platform.mapStateCommand <|
     updateComponentStateWithDummyCommand identifier
 
 updateComponentStateWithDummyCommand : String -> Component model msg -> Component model msg
@@ -168,7 +167,7 @@ to he component's `update` function until `resolveDeferred` is called.
 -}
 defer : Cmd msg -> Cmd msg
 defer command =
-  InternalCommand.mapState <|
+  Platform.mapStateCommand <|
     updateComponentStateWithDeferredCommand command
 
 updateComponentStateWithDeferredCommand : Cmd msg -> Component model msg -> Component model msg
