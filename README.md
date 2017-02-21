@@ -26,6 +26,10 @@ describe the behavior of your app under whatever conditions you need. Elmer
 allows you to write tests first, which gives you the freedom and confidence
 to change your code later on.
 
+### Install
+
+Follow the instructions at [elmer-test.cfapps.io](http://elmer-test.cfapps.io).
+
 
 ### Usage
 
