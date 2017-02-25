@@ -1,13 +1,13 @@
 var _brian_watkins$elmer$Native_Html = function() {
 
-  var getChildren = function(html, tagger) {
+  var getChildren = function(html, inheritedEvents, tagger) {
     var children = []
     for (var i = 0; i < html.children.length; i++) {
       var element = html.children[i]
       if (element.type == "text") {
         children.push(_brian_watkins$elmer$Elmer_Html_Types$Text(element.text))
       } else {
-        children.push(_brian_watkins$elmer$Elmer_Html_Types$Element(constructHtmlElement(element, tagger)))
+        children.push(_brian_watkins$elmer$Elmer_Html_Types$Element(constructHtmlElement(element, inheritedEvents, tagger)))
       }
     }
 
@@ -35,18 +35,31 @@ var _brian_watkins$elmer$Native_Html = function() {
     return clonedFacts
   }
 
-  var constructHtmlElement = function(html, tagger) {
+  var concatLists = function (list_1, list_2) {
+    var array_1 = _elm_lang$core$Native_List.toArray(list_1);
+    var array_2 = _elm_lang$core$Native_List.toArray(list_2);
+
+    var all = array_1.concat(array_2);
+
+    return _elm_lang$core$Native_List.fromArray(all);
+  }
+
+  var constructHtmlElement = function(html, inheritedEvents, tagger) {
     var node = html;
     if (html.type == "tagger") {
       node = html.node
       tagger = html.tagger
     }
 
-    return A4(_brian_watkins$elmer$Elmer_Html_Types$HtmlElement,
+    var events = getHtmlEvents(node, tagger);
+    var eventsToInherit = concatLists(inheritedEvents, events);
+
+    return A5(_brian_watkins$elmer$Elmer_Html_Types$HtmlElement,
       node.tag,
       JSON.stringify(getFacts(node.facts)),
-      getChildren(node, tagger),
-      getHtmlEvents(node, tagger)
+      getChildren(node, eventsToInherit, tagger),
+      inheritedEvents,
+      events
     );
   }
 
@@ -55,7 +68,9 @@ var _brian_watkins$elmer$Native_Html = function() {
       return _elm_lang$core$Maybe$Nothing;
     }
 
-    return _elm_lang$core$Maybe$Just(constructHtmlElement(html))
+    var inheritedEvents = _elm_lang$core$Native_List.fromArray([])
+
+    return _elm_lang$core$Maybe$Just(constructHtmlElement(html, inheritedEvents))
   }
 
   return {

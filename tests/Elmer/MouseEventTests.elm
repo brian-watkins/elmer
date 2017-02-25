@@ -19,6 +19,7 @@ all =
     , mouseUpTests
     , mouseEnterTests
     , mouseLeaveTests
+    , mouseOverTests
     ]
 
 clickTests =
@@ -156,5 +157,77 @@ mouseLeaveTests =
                 Expect.equal updatedState.model.mouseLeaves 1
               Failed msg ->
                 Expect.fail msg
+      ]
+  ]
+
+mouseOverTests =
+  describe "Mouse Over Event Tests"
+  [ describe "when there is an upstream failure"
+    [ test "it passes on the error" <|
+      \() ->
+        let
+          initialState = Failed "upstream failure"
+        in
+          Event.mouseOver initialState
+            |> Expect.equal initialState
+    ]
+  , describe "when there is no target node"
+    [ test "it returns an upstream failure" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Event.mouseOver initialState
+           |> Expect.equal (Failed "No target node specified")
+    ]
+  , describe "when neither the targeted node nor the ancestor registers a mouseOver event"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.viewForMouseOver App.update
+        in
+          Markup.find ".no-events" initialState
+            |> Event.mouseOver
+            |> Expect.equal (Failed ("No mouseover event found on the targeted element or its ancestors"))
+    ]
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.viewForMouseOver App.update
+    in
+      describe "when the mouseOver event is registered"
+      [ describe "when the targeted element has the mouseOver event"
+        [ test "at first no mouse over is recorded" <|
+          \() ->
+            Expect.equal initialModel.mouseOvers 0
+        , test "the event updates the model" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "#event-parent" initialState
+                                    |> Event.mouseOver
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseOvers 1
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      , describe "when an ancestor of the targeted element has the mouseOver event"
+        [ test "at first no mouse over is recorded" <|
+          \() ->
+            Expect.equal initialModel.mouseOvers 0
+        , test "the event updates the model" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "li[data-option='2']" initialState
+                                    |> Event.mouseOver
+                                    |> Markup.find "li[data-option='3']"
+                                    |> Event.mouseOver
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseOvers 2
+                Failed msg ->
+                  Expect.fail msg
+        ]
       ]
   ]

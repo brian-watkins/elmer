@@ -16,6 +16,7 @@ type alias HtmlElement msg =
     { tag : String
     , facts : String
     , children : List (HtmlNode msg)
+    , inheritedEvents : List (HtmlEvent msg)
     , events : List (HtmlEvent msg)
     }
 

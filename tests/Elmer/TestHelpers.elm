@@ -8,6 +8,7 @@ emptyNode tagName =
   { tag = tagName
   , facts = "{}"
   , children = []
+  , inheritedEvents = []
   , events = []
   }
 
@@ -73,6 +74,7 @@ nodeWithNestedChildren text =
     , (textNode "another sibling")
     , Element (nodeWithText text)
     ]
+  , inheritedEvents = []
   , events = []
   }
 

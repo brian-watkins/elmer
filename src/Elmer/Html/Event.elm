@@ -6,6 +6,7 @@ module Elmer.Html.Event
         , mouseUp
         , mouseEnter
         , mouseLeave
+        , mouseOver
         , input
         , on
         )
@@ -14,7 +15,7 @@ module Elmer.Html.Event
 call the component's `update` method with the resulting message.
 
 # Mouse Events
-@docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave
+@docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver
 
 # Form Events
 @docs input
@@ -40,10 +41,6 @@ type EventResult msg
     = Message msg
     | EventFailure String
 
-
-basicHandler : String -> EventHandler msg
-basicHandler eventType node =
-    genericHandler eventType "{}" node
 
 {-| Trigger a click event on the targeted element.
 -}
@@ -82,13 +79,17 @@ mouseLeave =
     handleEvent <| basicHandler "mouseleave"
 
 
-inputHandler : String -> EventHandler msg
-inputHandler inputString node =
-    let
-        eventJson =
-            "{\"target\":{\"value\":\"" ++ inputString ++ "\"}}"
-    in
-        genericHandler "input" eventJson node
+{-| Trigger a mouse over event on the targeted element.
+
+Note: A mouse over event is typically triggered whenever the mouse moves
+onto the element that has the event listener attached or one of its children.
+To simulate this behavior, Elmer allows you to call `mouseOver` on any targeted
+element so long as it or one of its ancestors registers to handle
+mouse over events.
+-}
+mouseOver : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+mouseOver =
+    handleEvent <| basicInheritableHandler "mouseover"
 
 {-| Trigger an input event on the targeted element.
 -}
@@ -96,19 +97,6 @@ input : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model m
 input inputString =
     handleEvent <| inputHandler inputString
 
-
-genericHandler : String -> String -> EventHandler msg
-genericHandler eventName eventJson node =
-    case getEvent eventName node of
-        Just customEvent ->
-            let
-                message =
-                    Json.decodeString customEvent.decoder eventJson
-            in
-                eventResult message customEvent
-
-        Nothing ->
-            EventFailure ("No " ++ eventName ++ " event found")
 
 {-| Trigger a custom event on the targeted element.
 
@@ -119,15 +107,60 @@ The following will trigger a `keyup` event:
 -}
 on : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 on eventName eventJson =
-    handleEvent <| genericHandler eventName eventJson
+    handleEvent <| elementEventHandler eventName eventJson
 
 
 -- Private functions
 
+basicHandler : String -> EventHandler msg
+basicHandler eventType node =
+    elementEventHandler eventType "{}" node
 
-getEvent : String -> HtmlElement msg -> Maybe (HtmlEvent msg)
-getEvent eventName node =
+basicInheritableHandler : String -> EventHandler msg
+basicInheritableHandler eventType node =
+    inheritedEventHandler eventType "{}" node
+
+inputHandler : String -> EventHandler msg
+inputHandler inputString =
+    let
+        eventJson =
+            "{\"target\":{\"value\":\"" ++ inputString ++ "\"}}"
+    in
+        elementEventHandler "input" eventJson
+
+elementEventHandler : String -> String -> EventHandler msg
+elementEventHandler eventName eventJson node =
+  case elementEvent eventName node of
+    Just event ->
+      genericHandler event eventJson
+    Nothing ->
+      EventFailure ("No " ++ eventName ++ " event found")
+
+inheritedEventHandler : String -> String -> EventHandler msg
+inheritedEventHandler eventName eventJson node =
+  case inheritedEvent eventName node of
+    Just event ->
+      genericHandler event eventJson
+    Nothing ->
+      EventFailure ("No " ++ eventName ++ " event found on the targeted element or its ancestors")
+
+genericHandler : HtmlEvent msg -> String -> EventResult msg
+genericHandler event eventJson =
+  let
+    message = Json.decodeString event.decoder eventJson
+  in
+    eventResult message event
+
+elementEvent : String -> HtmlElement msg -> Maybe (HtmlEvent msg)
+elementEvent eventName node =
     List.head (List.filter (\e -> e.eventType == eventName) node.events)
+
+inheritedEvent : String -> HtmlElement msg -> Maybe (HtmlEvent msg)
+inheritedEvent eventName node =
+  let
+    allEvents = List.append node.events node.inheritedEvents
+  in
+    List.head (List.filter (\e -> e.eventType == eventName) allEvents)
 
 
 handleEvent : EventHandler msg -> ComponentState model msg -> ComponentState model msg
