@@ -8,6 +8,7 @@ import Html.Events exposing
   , onMouseDown
   , onMouseUp
   , onMouseEnter
+  , onMouseLeave
   )
 
 type alias Model =
@@ -16,6 +17,7 @@ type alias Model =
   , mouseDowns : Int
   , mouseUps : Int
   , mouseEnters : Int
+  , mouseLeaves : Int
   }
 
 type Msg
@@ -24,6 +26,7 @@ type Msg
   | DoMouseDown
   | DoMouseUp
   | DoMouseEnter
+  | DoMouseLeave
 
 defaultModel : Model
 defaultModel =
@@ -32,6 +35,7 @@ defaultModel =
   , mouseDowns = 0
   , mouseUps = 0
   , mouseEnters = 0
+  , mouseLeaves = 0
   }
 
 view : Model -> Html Msg
@@ -45,6 +49,7 @@ view model =
       , onMouseDown DoMouseDown
       , onMouseUp DoMouseUp
       , onMouseEnter DoMouseEnter
+      , onMouseLeave DoMouseLeave
       ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
     ]
@@ -63,3 +68,5 @@ update msg model =
       ( { model | mouseUps = model.mouseUps + 1 }, Cmd.none )
     DoMouseEnter ->
       ( { model | mouseEnters = model.mouseEnters + 1 }, Cmd.none )
+    DoMouseLeave ->
+      ( { model | mouseLeaves = model.mouseLeaves + 1 }, Cmd.none )

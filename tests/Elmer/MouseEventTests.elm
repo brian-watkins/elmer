@@ -18,6 +18,7 @@ all =
     , mouseDownTests
     , mouseUpTests
     , mouseEnterTests
+    , mouseLeaveTests
     ]
 
 clickTests =
@@ -128,6 +129,31 @@ mouseEnterTests =
             case updatedStateResult of
               Ready updatedState ->
                 Expect.equal updatedState.model.mouseEnters 1
+              Failed msg ->
+                Expect.fail msg
+      ]
+  ]
+
+mouseLeaveTests =
+  describe "Mouse Leave Event Tests"
+  [ EventTests.standardEventHandlerBehavior Event.mouseLeave "mouseleave"
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.view App.update
+    in
+      describe "the mouse leave event"
+      [ test "at first no mouse leave is recorded" <|
+        \() ->
+          Expect.equal initialModel.mouseLeaves 0
+      , test "the event updates the model" <|
+        \() ->
+          let
+            updatedStateResult = Markup.find ".button" initialState
+                                  |> Event.mouseLeave
+          in
+            case updatedStateResult of
+              Ready updatedState ->
+                Expect.equal updatedState.model.mouseLeaves 1
               Failed msg ->
                 Expect.fail msg
       ]
