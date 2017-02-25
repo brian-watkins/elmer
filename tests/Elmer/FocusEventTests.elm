@@ -14,6 +14,7 @@ all : Test
 all =
   describe "Focus Event Tests"
     [ focusTests
+    , blurTests
     ]
 
 focusTests : Test
@@ -37,6 +38,32 @@ focusTests =
             case updatedStateResult of
               Ready updatedState ->
                 Expect.equal updatedState.model.isFocused True
+              Failed msg ->
+                Expect.fail msg
+      ]
+  ]
+
+blurTests : Test
+blurTests =
+  describe "blur"
+  [ EventTests.standardEventHandlerBehavior Event.blur "blur"
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.view App.update
+    in
+      describe "the blur event"
+      [ test "at first the element is not blurred" <|
+        \() ->
+          Expect.equal initialModel.isBlurred False
+      , test "the event updates the model" <|
+        \() ->
+          let
+            updatedStateResult = Markup.find "#name-field" initialState
+                                  |> Event.blur
+          in
+            case updatedStateResult of
+              Ready updatedState ->
+                Expect.equal updatedState.model.isBlurred True
               Failed msg ->
                 Expect.fail msg
       ]
