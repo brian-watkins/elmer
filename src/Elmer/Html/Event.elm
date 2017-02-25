@@ -4,6 +4,7 @@ module Elmer.Html.Event
         , doubleClick
         , mouseDown
         , mouseUp
+        , mouseEnter
         , input
         , on
         )
@@ -66,6 +67,10 @@ mouseDown =
 mouseUp : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 mouseUp =
     handleEvent <| basicHandler "mouseup"
+
+mouseEnter : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+mouseEnter =
+    handleEvent <| basicHandler "mouseenter"
 
 inputHandler : String -> EventHandler msg
 inputHandler inputString node =

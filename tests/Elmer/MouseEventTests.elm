@@ -17,6 +17,7 @@ all =
     , doubleClickTests
     , mouseDownTests
     , mouseUpTests
+    , mouseEnterTests
     ]
 
 clickTests =
@@ -102,6 +103,31 @@ mouseUpTests =
             case updatedStateResult of
               Ready updatedState ->
                 Expect.equal updatedState.model.mouseUps 1
+              Failed msg ->
+                Expect.fail msg
+      ]
+  ]
+
+mouseEnterTests =
+  describe "Mouse Enter Event Tests"
+  [ EventTests.standardEventHandlerBehavior Event.mouseEnter "mouseenter"
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.view App.update
+    in
+      describe "the mouse enter event"
+      [ test "at first no mouse enter is recorded" <|
+        \() ->
+          Expect.equal initialModel.mouseEnters 0
+      , test "the event updates the model" <|
+        \() ->
+          let
+            updatedStateResult = Markup.find ".button" initialState
+                                  |> Event.mouseEnter
+          in
+            case updatedStateResult of
+              Ready updatedState ->
+                Expect.equal updatedState.model.mouseEnters 1
               Failed msg ->
                 Expect.fail msg
       ]

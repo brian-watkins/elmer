@@ -2,13 +2,20 @@ module Elmer.TestApps.MouseTestApp exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Html.Events exposing (onClick, onDoubleClick, onMouseDown, onMouseUp)
+import Html.Events exposing
+  ( onClick
+  , onDoubleClick
+  , onMouseDown
+  , onMouseUp
+  , onMouseEnter
+  )
 
 type alias Model =
   { clicks : Int
   , doubleClicks : Int
   , mouseDowns : Int
   , mouseUps : Int
+  , mouseEnters : Int
   }
 
 type Msg
@@ -16,6 +23,7 @@ type Msg
   | DoDoubleClick
   | DoMouseDown
   | DoMouseUp
+  | DoMouseEnter
 
 defaultModel : Model
 defaultModel =
@@ -23,6 +31,7 @@ defaultModel =
   , doubleClicks = 0
   , mouseDowns = 0
   , mouseUps = 0
+  , mouseEnters = 0
   }
 
 view : Model -> Html Msg
@@ -35,6 +44,7 @@ view model =
       , onDoubleClick DoDoubleClick
       , onMouseDown DoMouseDown
       , onMouseUp DoMouseUp
+      , onMouseEnter DoMouseEnter
       ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
     ]
@@ -51,3 +61,5 @@ update msg model =
       ( { model | mouseDowns = model.mouseDowns + 1 }, Cmd.none )
     DoMouseUp ->
       ( { model | mouseUps = model.mouseUps + 1 }, Cmd.none )
+    DoMouseEnter ->
+      ( { model | mouseEnters = model.mouseEnters + 1 }, Cmd.none )
