@@ -3,6 +3,7 @@ module Elmer.Html.Event
         ( click
         , doubleClick
         , mouseDown
+        , mouseUp
         , input
         , on
         )
@@ -11,7 +12,7 @@ module Elmer.Html.Event
 call the component's `update` method with the resulting message.
 
 # Mouse Events
-@docs click, doubleClick, mouseDown
+@docs click, doubleClick, mouseDown, mouseUp
 
 # Form Events
 @docs input
@@ -60,6 +61,11 @@ mouseDown : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 mouseDown =
     handleEvent <| basicHandler "mousedown"
 
+{-| Trigger a mouse up event on the targeted element.
+-}
+mouseUp : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+mouseUp =
+    handleEvent <| basicHandler "mouseup"
 
 inputHandler : String -> EventHandler msg
 inputHandler inputString node =
