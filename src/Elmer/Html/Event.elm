@@ -8,6 +8,7 @@ module Elmer.Html.Event
         , mouseLeave
         , mouseOver
         , mouseOut
+        , focus
         , input
         , on
         )
@@ -20,6 +21,9 @@ call the component's `update` method with the resulting message.
 
 # Form Events
 @docs input
+
+# Focus Events
+@docs focus
 
 # Custom Events
 @docs on
@@ -104,6 +108,11 @@ mouseOut : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 mouseOut =
     handleEvent <| basicInheritableHandler "mouseout"
 
+{-| Trigger a focus event on the targeted element.
+-}
+focus : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+focus =
+  handleEvent <| basicHandler "focus"
 
 {-| Trigger an input event on the targeted element.
 -}

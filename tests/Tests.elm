@@ -7,6 +7,7 @@ import Elmer.HtmlTests
 import Elmer.MatcherTests
 import Elmer.EventTests
 import Elmer.MouseEventTests
+import Elmer.FocusEventTests
 import Elmer.DemoAppTests
 import Elmer.NavigationTests
 import Elmer.ComponentTests
@@ -28,6 +29,7 @@ all =
     , Elmer.MatcherTests.all
     , Elmer.EventTests.all
     , Elmer.MouseEventTests.all
+    , Elmer.FocusEventTests.all
     , Elmer.DemoAppTests.all
     , Elmer.NavigationTests.all
     , Elmer.ComponentTests.all
