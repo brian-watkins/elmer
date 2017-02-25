@@ -10,6 +10,7 @@ import Html.Events exposing
   , onMouseEnter
   , onMouseLeave
   , onMouseOver
+  , onMouseOut
   )
 
 type alias Model =
@@ -20,6 +21,7 @@ type alias Model =
   , mouseEnters : Int
   , mouseLeaves : Int
   , mouseOvers : Int
+  , mouseOuts : Int
   }
 
 type Msg
@@ -30,6 +32,7 @@ type Msg
   | DoMouseEnter
   | DoMouseLeave
   | DoMouseOver
+  | DoMouseOut
 
 defaultModel : Model
 defaultModel =
@@ -40,6 +43,7 @@ defaultModel =
   , mouseEnters = 0
   , mouseLeaves = 0
   , mouseOvers = 0
+  , mouseOuts = 0
   }
 
 view : Model -> Html Msg
@@ -53,16 +57,15 @@ view model =
       , onMouseUp DoMouseUp
       , onMouseEnter DoMouseEnter
       , onMouseLeave DoMouseLeave
-      , onMouseOver DoMouseOver
       ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
     ]
 
-viewForMouseOver : Model -> Html Msg
-viewForMouseOver model =
+viewForMouseOverOut : Model -> Html Msg
+viewForMouseOverOut model =
   Html.div [ Attr.id "root" ]
     [ Html.div [ Attr.class "no-events" ] [ Html.text "no events" ]
-    , Html.div [ Attr.id "event-parent", onMouseOver DoMouseOver ]
+    , Html.div [ Attr.id "event-parent", onMouseOver DoMouseOver, onMouseOut DoMouseOut ]
       [ Html.ul []
         [ Html.li [ Attr.attribute "data-option" "1" ] [ Html.text "Option 1" ]
         , Html.li [ Attr.attribute "data-option" "2" ] [ Html.text "Option 2" ]
@@ -88,3 +91,5 @@ update msg model =
       ( { model | mouseLeaves = model.mouseLeaves + 1 }, Cmd.none )
     DoMouseOver ->
       ( { model | mouseOvers = model.mouseOvers + 1 }, Cmd.none )
+    DoMouseOut ->
+      ( { model | mouseOuts = model.mouseOuts + 1 }, Cmd.none )

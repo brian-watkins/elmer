@@ -7,6 +7,7 @@ module Elmer.Html.Event
         , mouseEnter
         , mouseLeave
         , mouseOver
+        , mouseOut
         , input
         , on
         )
@@ -15,7 +16,7 @@ module Elmer.Html.Event
 call the component's `update` method with the resulting message.
 
 # Mouse Events
-@docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver
+@docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver, mouseOut
 
 # Form Events
 @docs input
@@ -90,6 +91,19 @@ mouse over events.
 mouseOver : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 mouseOver =
     handleEvent <| basicInheritableHandler "mouseover"
+
+{-| Trigger a mouse out event on the targeted element.
+
+Note: A mouse out event is typically triggered whenever the mouse moves
+out of the element that has the event listener attached or one of its children.
+To simulate this behavior, Elmer allows you to call `mouseOut` on any targeted
+element so long as it or one of its ancestors registers to handle
+mouse out events.
+-}
+mouseOut : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+mouseOut =
+    handleEvent <| basicInheritableHandler "mouseout"
+
 
 {-| Trigger an input event on the targeted element.
 -}

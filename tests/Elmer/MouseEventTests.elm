@@ -20,6 +20,7 @@ all =
     , mouseEnterTests
     , mouseLeaveTests
     , mouseOverTests
+    , mouseOutTests
     ]
 
 clickTests =
@@ -184,7 +185,7 @@ mouseOverTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.viewForMouseOver App.update
+          initialState = Elmer.componentState App.defaultModel App.viewForMouseOverOut App.update
         in
           Markup.find ".no-events" initialState
             |> Event.mouseOver
@@ -192,7 +193,7 @@ mouseOverTests =
     ]
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.viewForMouseOver App.update
+      initialState = Elmer.componentState initialModel App.viewForMouseOverOut App.update
     in
       describe "when the mouseOver event is registered"
       [ describe "when the targeted element has the mouseOver event"
@@ -226,6 +227,78 @@ mouseOverTests =
               case updatedStateResult of
                 Ready updatedState ->
                   Expect.equal updatedState.model.mouseOvers 2
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      ]
+  ]
+
+mouseOutTests =
+  describe "Mouse Out Event Tests"
+  [ describe "when there is an upstream failure"
+    [ test "it passes on the error" <|
+      \() ->
+        let
+          initialState = Failed "upstream failure"
+        in
+          Event.mouseOver initialState
+            |> Expect.equal initialState
+    ]
+  , describe "when there is no target node"
+    [ test "it returns an upstream failure" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.view App.update
+        in
+          Event.mouseOut initialState
+           |> Expect.equal (Failed "No target node specified")
+    ]
+  , describe "when neither the targeted node nor the ancestor registers a mouseOut event"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState App.defaultModel App.viewForMouseOverOut App.update
+        in
+          Markup.find ".no-events" initialState
+            |> Event.mouseOut
+            |> Expect.equal (Failed ("No mouseout event found on the targeted element or its ancestors"))
+    ]
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.viewForMouseOverOut App.update
+    in
+      describe "when the mouseOut event is registered"
+      [ describe "when the targeted element has the mouseOut event"
+        [ test "at first no mouse out is recorded" <|
+          \() ->
+            Expect.equal initialModel.mouseOuts 0
+        , test "the event updates the model" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "#event-parent" initialState
+                                    |> Event.mouseOut
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseOuts 1
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      , describe "when an ancestor of the targeted element has the mouseOut event"
+        [ test "at first no mouse out is recorded" <|
+          \() ->
+            Expect.equal initialModel.mouseOuts 0
+        , test "the event updates the model" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "li[data-option='2']" initialState
+                                    |> Event.mouseOut
+                                    |> Markup.find "li[data-option='3']"
+                                    |> Event.mouseOut
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseOuts 2
                 Failed msg ->
                   Expect.fail msg
         ]
