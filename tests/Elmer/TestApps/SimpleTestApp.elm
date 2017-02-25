@@ -14,7 +14,9 @@ defaultModel =
 
 view : Model -> Html Msg
 view model =
-  Html.div [ Attr.id "root", Attr.class "styled" ] [ Html.text "Some text" ]
+  Html.div
+    [ Attr.id "root", Attr.class "styled no-events" ]
+    [ Html.text "Some text" ]
 
 viewWithChildren : Model -> Html Msg
 viewWithChildren model =

@@ -47,7 +47,7 @@ findTests =
             initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
             Markup.find ".blah" initialState
-              |> Expect.equal (Failed "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled', id = 'root' } \n  - Some text")
+              |> Expect.equal (Failed "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
       ]
     , describe "when there is only text" <|
       [ test "it returns the failure message and prints that there are no nodes" <|

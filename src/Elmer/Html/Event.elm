@@ -2,6 +2,7 @@ module Elmer.Html.Event
     exposing
         ( click
         , doubleClick
+        , mouseDown
         , input
         , on
         )
@@ -10,7 +11,7 @@ module Elmer.Html.Event
 call the component's `update` method with the resulting message.
 
 # Mouse Events
-@docs click, doubleClick
+@docs click, doubleClick, mouseDown
 
 # Form Events
 @docs input
@@ -37,21 +38,28 @@ type EventResult msg
     | EventFailure String
 
 
-clickHandler : String -> EventHandler msg
-clickHandler clickType node =
-    genericHandler clickType "{}" node
+basicHandler : String -> EventHandler msg
+basicHandler eventType node =
+    genericHandler eventType "{}" node
 
 {-| Trigger a click event on the targeted element.
 -}
 click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-click componentStateResult =
-    handleEvent (clickHandler "click") componentStateResult
+click =
+    handleEvent <| basicHandler "click"
 
 {-| Trigger a double click event on the targeted element.
 -}
 doubleClick : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-doubleClick componentState =
-    handleEvent (clickHandler "dblclick") componentState
+doubleClick =
+    handleEvent <| basicHandler "dblclick"
+
+{-| Trigger a mouse down event on the targeted element.
+-}
+mouseDown : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+mouseDown =
+    handleEvent <| basicHandler "mousedown"
+
 
 inputHandler : String -> EventHandler msg
 inputHandler inputString node =
@@ -64,8 +72,8 @@ inputHandler inputString node =
 {-| Trigger an input event on the targeted element.
 -}
 input : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-input inputString componentStateResult =
-    handleEvent (inputHandler inputString) componentStateResult
+input inputString =
+    handleEvent <| inputHandler inputString
 
 
 genericHandler : String -> String -> EventHandler msg
@@ -89,8 +97,8 @@ The following will trigger a `keyup` event:
       |> on "keyup" "{\"keyCode\":65}"
 -}
 on : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-on eventName eventJson componentStateResult =
-    handleEvent (genericHandler eventName eventJson) componentStateResult
+on eventName eventJson =
+    handleEvent <| genericHandler eventName eventJson
 
 
 -- Private functions
@@ -102,9 +110,8 @@ getEvent eventName node =
 
 
 handleEvent : EventHandler msg -> ComponentState model msg -> ComponentState model msg
-handleEvent eventHandler componentStateResult =
-    componentStateResult
-        |> Internal.map (handleNodeEvent eventHandler)
+handleEvent eventHandler =
+    Internal.map <| handleNodeEvent eventHandler
 
 
 handleNodeEvent : EventHandler msg -> Component model msg -> ComponentState model msg

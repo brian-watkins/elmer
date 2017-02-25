@@ -7,7 +7,7 @@ import Elmer
 import Elmer.Internal exposing (..)
 import Elmer.TestApps.SimpleTestApp as App
 import Elmer.TestApps.MessageTestApp as MessageApp
-import Elmer.TestApps.ClickTestApp as ClickApp
+import Elmer.TestApps.MouseTestApp as ClickApp
 import Elmer.Html.Matchers as Matchers
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup

@@ -1,7 +1,10 @@
-module Elmer.EventTests exposing (all)
+module Elmer.EventTests exposing
+  ( all
+  , standardEventHandlerBehavior
+  )
 
 import Test exposing (..)
-import Elmer.TestApps.ClickTestApp as ClickApp
+import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestApps.InputTestApp as InputApp
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Expect
@@ -14,13 +17,11 @@ import Elmer.Html as Markup
 all : Test
 all =
   describe "Event Tests"
-    [ clickTests
-    , doubleClickTests
-    , inputTests
+    [ inputTests
     , customEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentState ClickApp.Model ClickApp.Msg -> ComponentState ClickApp.Model ClickApp.Msg) -> String -> Test
+standardEventHandlerBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> String -> Test
 standardEventHandlerBehavior eventHandler eventName =
   describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
@@ -36,7 +37,7 @@ standardEventHandlerBehavior eventHandler eventName =
     [ test "it returns an upstream failure" <|
       \() ->
         let
-          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           eventHandler initialState
            |> Expect.equal (Failed "No target node specified")
@@ -45,51 +46,14 @@ standardEventHandlerBehavior eventHandler eventName =
     [ test "it returns an event not found error" <|
       \() ->
         let
-          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
-          Markup.find ".noEvents" initialState
+          Markup.find ".no-events" initialState
             |> eventHandler
             |> Expect.equal (Failed ("No " ++ eventName ++ " event found"))
     ]
   ]
 
-clickTests =
-  describe "Click Event Tests"
-  [ standardEventHandlerBehavior Event.click "click"
-  , describe "when the click succeeds"
-    [ test "it updates the model accordingly" <|
-      \() ->
-        let
-          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-          updatedStateResult = Markup.find ".button" initialState
-                                |> Event.click
-        in
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal updatedState.model.clicks 1
-            Failed msg ->
-              Expect.fail msg
-    ]
-  ]
-
-doubleClickTests =
-  describe "Double Click Event Tests"
-  [ standardEventHandlerBehavior Event.doubleClick "dblclick"
-  , describe "when the double click succeeds"
-    [ test "it updates the model accordingly" <|
-      \() ->
-        let
-          initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-          updatedStateResult = Markup.find ".button" initialState
-                                |> Event.doubleClick
-        in
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal updatedState.model.doubleClicks 1
-            Failed msg ->
-              Expect.fail msg
-    ]
-  ]
 
 inputTests =
   describe "input event tests"
