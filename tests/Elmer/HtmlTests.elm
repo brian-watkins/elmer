@@ -60,7 +60,7 @@ findTests =
       ]
     ]
   , describe "when the element is found"
-    [ test "it updates the state with the targetnode" <|
+    [ test "it updates the state with the target selector" <|
       \() ->
         let
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
@@ -68,11 +68,11 @@ findTests =
         in
           case stateResult of
             Ready state ->
-              case state.targetElement of
-                Just node ->
-                  Expect.equal node.tag "div"
+              case state.targetSelector of
+                Just selector ->
+                  Expect.equal ".styled" selector
                 Nothing ->
-                  Expect.fail "No target node!"
+                  Expect.fail "No target selector!"
             Failed message ->
               Expect.fail message
     ]
@@ -105,7 +105,7 @@ noElementFound =
           let
             html = Html.div [ Attr.id "something" ] []
           in
-            Expect.equal ( Query.findElement html "#nothing" ) Nothing
+            Expect.equal ( Query.findElement "#nothing" html ) Nothing
       ]
     , describe "with bad class"
       [ test "it returns nothing" <|
@@ -113,7 +113,7 @@ noElementFound =
           let
             html = Html.div [ Attr.class "something" ] []
           in
-            Expect.equal ( Query.findElement html ".nothing" ) Nothing
+            Expect.equal ( Query.findElement ".nothing" html ) Nothing
       ]
     , describe "when there is only text"
       [ test "it returns nothing" <|
@@ -121,7 +121,7 @@ noElementFound =
           let
             html = Html.text "Something"
           in
-            Expect.equal ( Query.findElement html ".anything" ) Nothing
+            Expect.equal ( Query.findElement ".anything" html ) Nothing
       ]
     ]
 
@@ -135,14 +135,14 @@ findById =
     describe "find by id"
       [ test "it finds the top element by id" <|
         \() ->
-          case (Query.findElement html "#root") of
+          case (Query.findElement "#root" html) of
             Just a ->
               Matchers.hasId "root" a
             Nothing ->
               Expect.fail "Nothing found"
       , test "finds a nested element by id" <|
         \() ->
-          case (Query.findElement html "#nested") of
+          case (Query.findElement "#nested" html) of
             Just a ->
               Matchers.hasId "nested" a
             Nothing ->
@@ -160,14 +160,14 @@ findByClass =
         describe "when there is one class"
         [ test "it finds the top element by class" <|
           \() ->
-            case ( Query.findElement html ".content" ) of
+            case ( Query.findElement ".content" html ) of
               Just a ->
                 Matchers.hasClass "content" a
               Nothing ->
                 Expect.fail "Nothing found"
         , test "it finds a nested element by class" <|
           \() ->
-            case ( Query.findElement html ".nested" ) of
+            case ( Query.findElement ".nested" html ) of
               Just a ->
                 Matchers.hasClass "nested" a
               Nothing ->
@@ -179,7 +179,7 @@ findByClass =
         describe "when there is more than one class"
         [ test "it finds the element" <|
           \() ->
-            case ( Query.findElement html ".super" ) of
+            case ( Query.findElement ".super" html ) of
               Just a ->
                 Matchers.hasClass "super" a
               Nothing ->
@@ -191,7 +191,7 @@ findByClass =
         describe "when the class name is the same as an id"
         [ test "it returns the element with the class name" <|
           \() ->
-            case ( Query.findElement html ".root" ) of
+            case ( Query.findElement ".root" html ) of
               Just a ->
                 Matchers.hasClass "root" a
               Nothing ->
@@ -207,7 +207,7 @@ findByClass =
         describe "when the node is nested"
         [ test "it returns the node with the class name" <|
           \() ->
-            case ( Query.findElement html ".deeplyNested" ) of
+            case ( Query.findElement ".deeplyNested" html ) of
               Just a ->
                 Matchers.hasClass "deeplyNested" a
               Nothing ->
@@ -225,14 +225,14 @@ findByTag =
   [ describe "when there is an element with the tag"
     [ test "it finds the first element" <|
       \() ->
-        case Query.findElement html "div" of
+        case Query.findElement "div" html of
           Just node ->
             Matchers.hasId "root" node
           Nothing ->
             Expect.fail "Nothing found"
     , test "it finds a nested element" <|
       \() ->
-        case Query.findElement html "input" of
+        case Query.findElement "input" html of
           Just node ->
             Matchers.hasClass "inputField" node
           Nothing ->
@@ -260,7 +260,7 @@ findByAttribute =
     [ describe "when nothing is specified"
       [ test "it fails" <|
         \() ->
-          case Query.findElement html "" of
+          case Query.findElement "" html of
             Just node ->
               Expect.fail "Should not have found anything!"
             Nothing ->
@@ -269,7 +269,7 @@ findByAttribute =
     , describe "when the selector is not parseable"
       [ test "it fails" <|
         \() ->
-          case Query.findElement html "[blah='stuff'" of
+          case Query.findElement "[blah='stuff'" html of
             Just node ->
               Expect.fail "Should not have found anything!"
             Nothing ->
@@ -278,7 +278,7 @@ findByAttribute =
     , describe "when only an attribute is specified"
       [ test "it finds the first node with the attribute" <|
         \() ->
-          case Query.findElement html "[data-attribute-name]" of
+          case Query.findElement "[data-attribute-name]" html of
             Just node ->
               Matchers.hasClass "withAttribute" node
             Nothing ->
@@ -287,7 +287,7 @@ findByAttribute =
     , describe "when an attribute and value is specified"
       [ test "it finds the node with the attribute and value" <|
         \() ->
-          case Query.findElement html "[data-attribute-name='myDifferentAttributeValue']" of
+          case Query.findElement "[data-attribute-name='myDifferentAttributeValue']" html of
             Just node ->
               Matchers.hasClass "anotherWithAttribute" node
             Nothing ->
@@ -296,7 +296,7 @@ findByAttribute =
     , describe "when a tag and attribute is specified"
       [ test "it finds the node with the tag and attribute" <|
         \() ->
-          case Query.findElement html "p[data-attribute-name]" of
+          case Query.findElement "p[data-attribute-name]" html of
             Just node ->
               Matchers.hasClass "thirdWithAttribute" node
             Nothing ->
@@ -305,7 +305,7 @@ findByAttribute =
     , describe "when a tag, attribute, and value is specified"
       [ test "it finds the node with the tag and attribute and value" <|
         \() ->
-          case Query.findElement html "div[data-attribute-name='myDifferentAttributeValue']" of
+          case Query.findElement "div[data-attribute-name='myDifferentAttributeValue']" html of
             Just node ->
               Matchers.hasClass "anotherWithAttribute" node
             Nothing ->
@@ -324,7 +324,7 @@ findByProperty =
     [ describe "when only a property is specified"
       [ test "it finds the node with the property" <|
         \() ->
-          case Query.findElement html "[name]" of
+          case Query.findElement "[name]" html of
             Just node ->
               Matchers.hasId "name-field" node
             Nothing ->
@@ -333,7 +333,7 @@ findByProperty =
     , describe "when a property and value is specified"
       [ test "it finds the node with the property and value" <|
         \() ->
-          case Query.findElement html "[name='telephone']" of
+          case Query.findElement "[name='telephone']" html of
             Just node ->
               Matchers.hasId "telephone-field" node
             Nothing ->
@@ -342,7 +342,7 @@ findByProperty =
     , describe "when a tag and attribute is specified"
       [ test "it finds the node with the tag and attribute" <|
         \() ->
-          case Query.findElement html "input[name]" of
+          case Query.findElement "input[name]" html of
             Just node ->
               Matchers.hasId "name-field" node
             Nothing ->
@@ -351,7 +351,7 @@ findByProperty =
     , describe "when a tag, attribute, and value is specified"
       [ test "it finds the node with the tag and attribute and value" <|
         \() ->
-          case Query.findElement html "input[name='telephone']" of
+          case Query.findElement "input[name='telephone']" html of
             Just node ->
               Matchers.hasId "telephone-field" node
             Nothing ->

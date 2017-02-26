@@ -179,7 +179,7 @@ mouseOverTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Event.mouseOver initialState
-           |> Expect.equal (Failed "No target node specified")
+           |> Expect.equal (Failed "No target element specified")
     ]
   , describe "when neither the targeted node nor the ancestor registers a mouseOver event"
     [ test "it fails" <|
@@ -251,7 +251,7 @@ mouseOutTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Event.mouseOut initialState
-           |> Expect.equal (Failed "No target node specified")
+           |> Expect.equal (Failed "No target element specified")
     ]
   , describe "when neither the targeted node nor the ancestor registers a mouseOut event"
     [ test "it fails" <|

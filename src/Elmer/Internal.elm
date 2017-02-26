@@ -28,7 +28,7 @@ type alias Component model msg =
     { model : model
     , view : ViewFunction model msg
     , update : UpdateFunction model msg
-    , targetElement : Maybe (HtmlElement msg)
+    , targetSelector : Maybe String
     , locationParser : Maybe (LocationParserFunction msg)
     , location : Maybe String
     , httpRequests : List HttpRequestData

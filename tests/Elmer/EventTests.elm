@@ -39,7 +39,7 @@ standardEventHandlerBehavior eventHandler eventName =
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           eventHandler initialState
-           |> Expect.equal (Failed "No target node specified")
+           |> Expect.equal (Failed "No target element specified")
     ]
   , describe "when the event is not found on the target node"
     [ test "it returns an event not found error" <|

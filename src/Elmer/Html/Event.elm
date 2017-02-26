@@ -235,20 +235,20 @@ handleEvent eventHandler =
 
 
 handleNodeEvent : EventHandler msg -> Component model msg -> ComponentState model msg
-handleNodeEvent eventHandler componentState =
-    case componentState.targetElement of
-        Just node ->
-            updateComponent node eventHandler componentState
+handleNodeEvent eventHandler component =
+    case Query.targetElement component of
+        Just element ->
+            updateComponent element eventHandler component
 
         Nothing ->
-            Failed "No target node specified"
+            Failed "No target element specified"
 
 
 updateComponent : HtmlElement msg -> EventHandler msg -> Component model msg -> ComponentState model msg
-updateComponent node eventHandler componentState =
-    case eventHandler node of
+updateComponent element eventHandler component =
+    case eventHandler element of
         Message msg ->
-          Runtime.performUpdate msg componentState
+          Runtime.performUpdate msg component
             |> asComponentState
 
         EventFailure msg ->

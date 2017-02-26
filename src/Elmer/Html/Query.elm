@@ -2,17 +2,28 @@ module Elmer.Html.Query exposing
   ( findElement
   , findWithinElement
   , takeElements
+  , targetElement
   )
 
 import Elmer.Html.Types exposing (..)
+import Elmer.Html.Internal as Internal
+import Elmer.Internal exposing (Component)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
-import Elmer.Html.Internal as Internal
 import Regex exposing (Regex)
 
-findElement : Html msg -> String -> Maybe (HtmlElement msg)
-findElement html selector =
+
+targetElement : Component model msg -> Maybe (HtmlElement msg)
+targetElement component =
+  case component.targetSelector of
+    Just selector ->
+      findElement selector <| component.view component.model
+    Nothing ->
+      Nothing
+
+findElement : String -> Html msg -> Maybe (HtmlElement msg)
+findElement selector html =
     Native.Html.asHtmlElement html |> Maybe.andThen (findWithinElement selector)
 
 

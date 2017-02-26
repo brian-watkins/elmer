@@ -39,7 +39,7 @@ mapToExpectationTests =
           in
             Internal.mapToExpectation (
               \componentState ->
-                Expect.equal Nothing componentState.targetElement
+                Expect.equal Nothing componentState.targetSelector
             ) initialState
               |> Expect.equal (Expect.pass)
       ]

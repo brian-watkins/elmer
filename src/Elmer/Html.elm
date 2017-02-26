@@ -68,7 +68,7 @@ Find an element with an attribute and value:
 -}
 find : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 find selector =
-    Internal.map (updateTargetNode selector)
+    Internal.map (updateTargetSelector selector)
 
 
 {-| Find the descendents of an element that match the given selector string.
@@ -101,7 +101,7 @@ expectElement : Matcher (HtmlElement msg) -> Matcher (Elmer.ComponentState model
 expectElement expectFunction =
   Internal.mapToExpectation <|
     \componentState ->
-      case componentState.targetElement of
+      case Query.targetElement componentState of
         Just element ->
           expectFunction element
         Nothing ->
@@ -116,14 +116,14 @@ expectElementExists componentStateResult =
 
 -- Private methods
 
-updateTargetNode : String -> Component model msg -> ComponentState model msg
-updateTargetNode selector componentState =
+updateTargetSelector : String -> Component model msg -> ComponentState model msg
+updateTargetSelector selector componentState =
   let
     currentView = componentState.view componentState.model
   in
-    case Query.findElement currentView selector of
+    case Query.findElement selector currentView of
         Just element ->
-            Ready { componentState | targetElement = Just element }
+            Ready { componentState | targetSelector = Just selector }
 
         Nothing ->
           let

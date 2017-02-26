@@ -57,7 +57,7 @@ standardCheckEventHandlerBehavior actionName eventHandler eventName =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           eventHandler initialState
-           |> Expect.equal (Failed "No target node specified")
+           |> Expect.equal (Failed "No target element specified")
     ]
   , describe "when the targeted element is not a checkbox"
     [ test "it fails" <|
