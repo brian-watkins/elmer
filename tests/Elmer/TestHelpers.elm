@@ -84,3 +84,10 @@ nodeWithProperty (name, value) =
     node = emptyNode "div"
   in
     { node | facts = "{\"" ++ name ++ "\":\"" ++ value ++ "\"}" }
+
+nodeWithBooleanProperty : (String, Bool) -> HtmlElement msg
+nodeWithBooleanProperty (name, value) =
+  let
+    node = emptyNode "div"
+  in
+    { node | facts = "{\"" ++ name ++ "\":" ++ (String.toLower (toString value)) ++ "}" }

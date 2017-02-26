@@ -5,10 +5,12 @@ module Elmer.Html.Internal exposing
   , attributes
   , properties
   , property
+  , isCheckbox
   )
 
 import Json.Decode as Json
 import Elmer.Html.Types exposing (..)
+import Elmer.Internal as Internal
 import Dict exposing (Dict)
 
 toString : HtmlElement msg -> String
@@ -34,9 +36,9 @@ classList node =
             []
 
 property : String -> HtmlElement msg -> Maybe String
-property name node =
-  Json.decodeString (Json.field name Json.string) node.facts
-    |> Result.toMaybe
+property name element =
+  properties element
+    |> Dict.get name
 
 properties : HtmlElement msg -> Dict String String
 properties node =
@@ -46,6 +48,8 @@ properties node =
       case fact of
         StringValue value ->
           Just (key, value)
+        BoolValue value ->
+          Just (key, Internal.boolToString value)
         DictValue _ ->
           Nothing
       )
@@ -62,6 +66,7 @@ factsDecoder : Json.Decoder HtmlFact
 factsDecoder =
   Json.oneOf
     [ Json.map StringValue Json.string
+    , Json.map BoolValue Json.bool
     , Json.map DictValue (Json.dict Json.string)
     ]
 
@@ -115,6 +120,8 @@ factToString (key, fact) =
   case fact of
     StringValue value ->
       stringFactToString (key, value)
+    BoolValue value ->
+      boolFactToString (key, value)
     DictValue value ->
       Dict.toList value
         |> List.map stringFactToString
@@ -123,3 +130,13 @@ factToString (key, fact) =
 stringFactToString : (String, String) -> String
 stringFactToString (key, value) =
   key ++ " = '" ++ value ++ "'"
+
+boolFactToString : (String, Bool) -> String
+boolFactToString (key, value) =
+  key ++ " = " ++ Internal.boolToString value
+
+
+isCheckbox : HtmlElement msg -> Bool
+isCheckbox element =
+  element.tag == "input" &&
+    ( property "type" element |> Maybe.withDefault "" ) == "checkbox"

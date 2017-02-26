@@ -11,6 +11,8 @@ module Elmer.Html.Event
         , focus
         , blur
         , input
+        , check
+        , uncheck
         , on
         )
 
@@ -21,7 +23,7 @@ call the component's `update` method with the resulting message.
 @docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver, mouseOut
 
 # Form Events
-@docs input
+@docs input, check, uncheck
 
 # Focus Events
 @docs focus, blur
@@ -33,6 +35,8 @@ call the component's `update` method with the resulting message.
 
 import Json.Decode as Json
 import Elmer.Html.Types exposing (..)
+import Elmer.Html.Internal as HtmlInternal
+import Elmer.Html.Query as Query
 import Elmer.Internal as Internal exposing (..)
 import Elmer
 import Elmer.Runtime as Runtime
@@ -127,6 +131,38 @@ input : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model m
 input inputString =
     handleEvent <| inputHandler inputString
 
+{-| Trigger a change event on the targeted checkbox element with
+`True` for the `checked` property.
+-}
+check : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+check =
+  handleEvent <| checkEventHandler True
+
+{-| Trigger a change event on the targeted checkbox element with
+`False` for the `checked` property.
+-}
+uncheck : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+uncheck =
+  handleEvent <| checkEventHandler False
+
+checkEventHandler : Bool -> EventHandler msg
+checkEventHandler doCheck element =
+  if HtmlInternal.isCheckbox element then
+    let
+      eventJson = "{\"target\":{\"checked\":"
+        ++ Internal.boolToString doCheck
+        ++ "}}"
+    in
+      elementEventHandler "change" eventJson element
+  else
+    let
+      action = if doCheck then "check" else "uncheck"
+    in
+      EventFailure <|
+        "You tried to "
+          ++ action
+          ++ " an element that is not a checkbox. Are you sure that's what you want to do?"
+
 
 {-| Trigger a custom event on the targeted element.
 
@@ -164,7 +200,7 @@ elementEventHandler eventName eventJson node =
     Just event ->
       genericHandler event eventJson
     Nothing ->
-      EventFailure ("No " ++ eventName ++ " event found")
+      EventFailure ("No " ++ eventName ++ " event found on the targeted element")
 
 inheritedEventHandler : String -> String -> EventHandler msg
 inheritedEventHandler eventName eventJson node =

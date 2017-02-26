@@ -6,6 +6,7 @@ module Elmer.Internal exposing
   , LocationParserFunction
   , map
   , mapToExpectation
+  , boolToString
   )
 
 import Elmer.Http.Internal exposing (HttpRequestData)
@@ -59,3 +60,9 @@ mapToExpectation mapper componentStateResult =
       mapper componentState
     Failed message ->
       Expect.fail message
+
+
+boolToString : Bool -> String
+boolToString bool =
+  Basics.toString bool
+    |> String.toLower

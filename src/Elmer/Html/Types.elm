@@ -27,4 +27,5 @@ type alias HtmlEvent msg =
 
 type HtmlFact
   = StringValue String
+  | BoolValue Bool
   | DictValue (Dict String String)

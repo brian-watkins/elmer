@@ -17,8 +17,7 @@ import Elmer.Html as Markup
 all : Test
 all =
   describe "Event Tests"
-    [ inputTests
-    , customEventTests
+    [ customEventTests
     ]
 
 standardEventHandlerBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> String -> Test
@@ -50,29 +49,10 @@ standardEventHandlerBehavior eventHandler eventName =
         in
           Markup.find ".no-events" initialState
             |> eventHandler
-            |> Expect.equal (Failed ("No " ++ eventName ++ " event found"))
+            |> Expect.equal (Failed ("No " ++ eventName ++ " event found on the targeted element"))
     ]
   ]
 
-
-inputTests =
-  describe "input event tests"
-  [ standardEventHandlerBehavior (Event.input "fun stuff") "input"
-  , describe "when the input succeeds"
-    [ test "it updates the model accordingly" <|
-      \() ->
-        let
-          initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
-          updatedStateResult = Markup.find ".nameField" initialState
-                                |> Event.input "Mr. Fun Stuff"
-        in
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal updatedState.model.name "Mr. Fun Stuff"
-            Failed msg ->
-              Expect.fail msg
-    ]
-  ]
 
 customEventTests =
   let
@@ -85,7 +65,7 @@ customEventTests =
         \() ->
           let
             initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
-            updatedStateResult = Markup.find ".nameField" initialState
+            updatedStateResult = Markup.find "input[name='first-name']" initialState
                                   |> Event.on "keyup" keyUpEventJson
           in
             case updatedStateResult of

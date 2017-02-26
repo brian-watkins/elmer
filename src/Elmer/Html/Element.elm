@@ -2,6 +2,7 @@ module Elmer.Html.Element exposing
   ( id
   , classList
   , property
+  , boolProperty
   , properties
   , attributes
   , toString
@@ -10,7 +11,7 @@ module Elmer.Html.Element exposing
 {-| Functions for working directly with HtmlElements.
 
 # Element Characteristics
-@docs id, classList, property, properties, attributes
+@docs id, classList, property, boolProperty, properties, attributes
 
 # Debugging
 @docs toString
@@ -45,6 +46,28 @@ element, if that property is defined.
 property : String -> Elmer.Html.HtmlElement msg -> Maybe String
 property name =
   Internal.property name
+
+{-| Get the boolean value of a particular property belonging to
+this element, if that property is defined.
+
+If the property is defined, but its value is not boolean, then
+`Nothing` is returned.
+-}
+boolProperty : String -> Elmer.Html.HtmlElement msg -> Maybe Bool
+boolProperty name element =
+  property name element
+    |> Maybe.andThen toBool
+
+toBool : String -> Maybe Bool
+toBool str =
+  case str of
+    "true" ->
+      Just True
+    "false" ->
+      Just False
+    _ ->
+      Nothing
+
 
 {-| Get this element's properties as a `Dict`.
 
