@@ -24,7 +24,13 @@ targetElement component =
 
 findElement : String -> Html msg -> Maybe (HtmlElement msg)
 findElement selector html =
-    Native.Html.asHtmlElement html |> Maybe.andThen (findWithinElement selector)
+  let
+    root = Native.Html.asHtmlElement html
+    subselectors = String.split " " selector
+  in
+    List.foldl (\selector maybeElement ->
+      Maybe.andThen (findWithinElement selector) maybeElement
+    ) root subselectors
 
 
 findWithinElement : String -> HtmlElement msg -> Maybe (HtmlElement msg)

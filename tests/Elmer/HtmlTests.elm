@@ -23,6 +23,7 @@ all =
   , findByTag
   , findByAttribute
   , findByProperty
+  , findDescendantTests
   , expectElementTests
   , expectElementExistsTests
   , childNodeTests
@@ -358,6 +359,50 @@ findByProperty =
               Expect.fail "Nothing found"
       ]
     ]
+
+findDescendantTests : Test
+findDescendantTests =
+  let
+    html = Html.ul [ Attr.id "list" ]
+      [ Html.li [ Attr.attribute "data-item" "1" ]
+        [ Html.div [] [ Html.text "Another Item" ]
+        , Html.div [ Attr.class "header" ]
+          [ Html.div [ Attr.class "title" ] [ Html.text "Fun Item #1" ]
+          , Html.div [ Attr.class "author" ] [ Html.text "Some fun person" ]
+          ]
+        , Html.div [ Attr.class "body" ] [ Html.text "Some info about the fun item." ]
+        ]
+      , Html.li [ Attr.attribute "data-item" "2" ]
+        [ Html.div [] [ Html.text "Another Item" ]
+        , Html.div [ Attr.class "header" ]
+          [ Html.div [ Attr.class "title" ] [ Html.text "Awesome Item #1" ]
+          , Html.div [ Attr.class "author" ] [ Html.text "Some awesome person" ]
+          ]
+        , Html.div [ Attr.class "body" ] [ Html.text "Some info about the awesome item." ]
+        ]
+      , Html.div [ Attr.class "footer" ] [ Html.text "Footer text" ]
+      ]
+  in
+  describe "when there are multiple selectors separated by spaces"
+  [ describe "when all the selectors match"
+    [ test "it finds the element" <|
+      \() ->
+        case Query.findElement "li[data-item='2'] .author" html of
+          Just element ->
+            Matchers.hasClass "author" element
+          Nothing ->
+            Expect.fail "Nothing found"
+    ]
+  , describe "when one selector fails"
+    [ test "it fails to find the element" <|
+      \() ->
+        case Query.findElement "li[data-item='99'] .author" html of
+          Just _ ->
+            Expect.fail "Should not find anything!"
+          Nothing ->
+            Expect.pass
+    ]
+  ]
 
 
 expectElementTests =

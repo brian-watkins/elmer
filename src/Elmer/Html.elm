@@ -65,6 +65,18 @@ Find an element with an attribute and value:
 
     find "[data-my-attr='my-value']"
 
+Find the first descendant:
+
+    find "selector1 selector2"
+
+This will find the first element that matches `selector2` and is a
+descendant of the element matching `selector1`, where these selectors follow
+the syntax described above. For example,
+
+    find "div a"
+
+will find the first `a` element that is a descendant of the first `div` element.
+You can add as many selectors as you want.
 -}
 find : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 find selector =
