@@ -21,6 +21,7 @@ focusTests : Test
 focusTests =
   describe "focus"
   [ EventTests.standardEventHandlerBehavior Event.focus "focus"
+  , EventTests.propagationBehavior Event.focus "focus"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.view App.update
@@ -47,6 +48,7 @@ blurTests : Test
 blurTests =
   describe "blur"
   [ EventTests.standardEventHandlerBehavior Event.blur "blur"
+  , EventTests.propagationBehavior Event.blur "blur"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.view App.update

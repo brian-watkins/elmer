@@ -48,26 +48,30 @@ defaultModel =
 
 view : Model -> Html Msg
 view model =
-  Html.div [Attr.id "root"]
+  Html.div [Attr.id "root", Attr.class "no-events"]
     [ Html.div
       [ Attr.class "button"
       , onClick DoClick
       , onDoubleClick DoDoubleClick
       , onMouseDown DoMouseDown
       , onMouseUp DoMouseUp
-      , onMouseEnter DoMouseEnter
-      , onMouseLeave DoMouseLeave
+      , onMouseOver DoMouseOver
+      , onMouseOut DoMouseOut
       ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
     ]
 
-viewForMouseOverOut : Model -> Html Msg
-viewForMouseOverOut model =
+viewForMouseEnterLeave : Model -> Html Msg
+viewForMouseEnterLeave model =
   Html.div [ Attr.id "root" ]
     [ Html.div [ Attr.class "no-events" ] [ Html.text "no events" ]
-    , Html.div [ Attr.id "event-parent", onMouseOver DoMouseOver, onMouseOut DoMouseOut ]
+    , Html.div [ Attr.id "event-parent", onMouseEnter DoMouseEnter, onMouseLeave DoMouseLeave ]
       [ Html.ul []
-        [ Html.li [ Attr.attribute "data-option" "1" ] [ Html.text "Option 1" ]
+        [ Html.li
+          [ Attr.attribute "data-option" "1"
+          , onMouseEnter DoMouseEnter
+          , onMouseLeave DoMouseLeave
+          ] [ Html.text "Option 1" ]
         , Html.li [ Attr.attribute "data-option" "2" ] [ Html.text "Option 2" ]
         , Html.li [ Attr.attribute "data-option" "3" ] [ Html.text "Option 3" ]
         ]

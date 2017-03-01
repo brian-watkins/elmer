@@ -1,12 +1,13 @@
 module Elmer.EventTests exposing
   ( all
   , standardEventHandlerBehavior
+  , propagationBehavior
   )
 
 import Test exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestApps.InputTestApp as InputApp
-import Elmer.TestApps.MessageTestApp as MessageApp
+import Elmer.TestApps.EventPropagationTestApp as EventApp
 import Expect
 import Elmer
 import Elmer.Internal exposing (..)
@@ -49,10 +50,42 @@ standardEventHandlerBehavior eventHandler eventName =
         in
           Markup.find ".no-events" initialState
             |> eventHandler
-            |> Expect.equal (Failed ("No " ++ eventName ++ " event found on the targeted element"))
+            |> Expect.equal (Failed ("No " ++ eventName ++ " event found on the targeted element or its ancestors"))
     ]
   ]
 
+propagationBehavior : (ComponentState EventApp.Model EventApp.Msg -> ComponentState EventApp.Model EventApp.Msg) -> String -> Test
+propagationBehavior eventFunc eventName =
+  describe "event propagation tests"
+  [ describe "when there is no event handler on the target element"
+    [ test "the event bubbles up through all the ancestors" <|
+      \() ->
+        let
+          state = Elmer.componentState EventApp.defaultModel EventApp.view EventApp.update
+                    |> Markup.find "#no-events"
+                    |> eventFunc
+        in
+          case state of
+            Ready s ->
+              Expect.equal s.model.eventCount 3
+            Failed msg ->
+              Expect.fail msg
+    ]
+  , describe "when an event handler has stopPropagation set to True"
+    [ test "the event stops at the non-propagating event handler" <|
+      \() ->
+        let
+          state = Elmer.componentState EventApp.defaultModel (EventApp.viewWithNonPropagatingEvent eventName) EventApp.update
+                    |> Markup.find "#no-events"
+                    |> eventFunc
+        in
+          case state of
+            Ready s ->
+              Expect.equal s.model.eventCount 2
+            Failed msg ->
+              Expect.fail msg
+    ]
+  ]
 
 customEventTests =
   let
@@ -66,7 +99,7 @@ customEventTests =
           let
             initialState = Elmer.componentState InputApp.defaultModel InputApp.view InputApp.update
             updatedStateResult = Markup.find "input[name='first-name']" initialState
-                                  |> Event.on "keyup" keyUpEventJson
+                                  |> Event.trigger "keyup" keyUpEventJson
           in
             case updatedStateResult of
               Ready updatedState ->

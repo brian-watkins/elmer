@@ -22,8 +22,14 @@ type alias HtmlElement msg =
 
 type alias HtmlEvent msg =
     { eventType : String
+    , options : HtmlEventOptions
     , decoder : Json.Decoder msg
     }
+
+type alias HtmlEventOptions =
+  { stopPropagation : Bool
+  , preventDefault : Bool
+  }
 
 type HtmlFact
   = StringValue String

@@ -23,7 +23,12 @@ var _brian_watkins$elmer$Native_Html = function() {
           decoder = A2(_elm_lang$core$Native_Json.map1, tagger, decoder)
         }
 
-        events.push(A2(_brian_watkins$elmer$Elmer_Html_Types$HtmlEvent, eventType, decoder))
+        var event = A3(_brian_watkins$elmer$Elmer_Html_Types$HtmlEvent,
+          eventType,
+          html.facts.EVENT[eventType].options,
+          decoder);
+
+        events.push(event);
       }
     }
     return _elm_lang$core$Native_List.fromArray(events)

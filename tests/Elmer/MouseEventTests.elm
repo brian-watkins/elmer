@@ -26,6 +26,7 @@ all =
 clickTests =
   describe "Click Event Tests"
   [ EventTests.standardEventHandlerBehavior Event.click "click"
+  , EventTests.propagationBehavior Event.click "click"
   , describe "when the click succeeds"
     [ test "it updates the model accordingly" <|
       \() ->
@@ -45,6 +46,7 @@ clickTests =
 doubleClickTests =
   describe "Double Click Event Tests"
   [ EventTests.standardEventHandlerBehavior Event.doubleClick "dblclick"
+  , EventTests.propagationBehavior Event.doubleClick "dblclick"
   , describe "when the double click succeeds"
     [ test "it updates the model accordingly" <|
       \() ->
@@ -64,6 +66,7 @@ doubleClickTests =
 mouseDownTests =
   describe "Mouse Down Event Tests"
   [ EventTests.standardEventHandlerBehavior Event.mouseDown "mousedown"
+  , EventTests.propagationBehavior Event.mouseDown "mousedown"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.view App.update
@@ -89,6 +92,7 @@ mouseDownTests =
 mouseUpTests =
   describe "Mouse Up Event Tests"
   [ EventTests.standardEventHandlerBehavior Event.mouseUp "mouseup"
+  , EventTests.propagationBehavior Event.mouseUp "mouseup"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.view App.update
@@ -111,65 +115,16 @@ mouseUpTests =
       ]
   ]
 
-mouseEnterTests =
-  describe "Mouse Enter Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseEnter "mouseenter"
-  , let
-      initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
-    in
-      describe "the mouse enter event"
-      [ test "at first no mouse enter is recorded" <|
-        \() ->
-          Expect.equal initialModel.mouseEnters 0
-      , test "the event updates the model" <|
-        \() ->
-          let
-            updatedStateResult = Markup.find ".button" initialState
-                                  |> Event.mouseEnter
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.mouseEnters 1
-              Failed msg ->
-                Expect.fail msg
-      ]
-  ]
-
-mouseLeaveTests =
-  describe "Mouse Leave Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseLeave "mouseleave"
-  , let
-      initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
-    in
-      describe "the mouse leave event"
-      [ test "at first no mouse leave is recorded" <|
-        \() ->
-          Expect.equal initialModel.mouseLeaves 0
-      , test "the event updates the model" <|
-        \() ->
-          let
-            updatedStateResult = Markup.find ".button" initialState
-                                  |> Event.mouseLeave
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.mouseLeaves 1
-              Failed msg ->
-                Expect.fail msg
-      ]
-  ]
-
-mouseOverTests =
-  describe "Mouse Over Event Tests"
+elementEventBehavior : (ComponentState App.Model App.Msg -> ComponentState App.Model App.Msg) -> String -> Test
+elementEventBehavior eventHandler eventName =
+  describe "Event Handler Behavior"
   [ describe "when there is an upstream failure"
     [ test "it passes on the error" <|
       \() ->
         let
           initialState = Failed "upstream failure"
         in
-          Event.mouseOver initialState
+          eventHandler initialState
             |> Expect.equal initialState
     ]
   , describe "when there is no target node"
@@ -178,22 +133,123 @@ mouseOverTests =
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
-          Event.mouseOver initialState
+          eventHandler initialState
            |> Expect.equal (Failed "No target element specified")
     ]
-  , describe "when neither the targeted node nor the ancestor registers a mouseOver event"
-    [ test "it fails" <|
+  , describe "when the event is not found on the target node"
+    [ test "it returns an event not found error" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.viewForMouseOverOut App.update
+          initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Markup.find ".no-events" initialState
-            |> Event.mouseOver
-            |> Expect.equal (Failed ("No mouseover event found on the targeted element or its ancestors"))
+            |> eventHandler
+            |> Expect.equal (Failed ("No " ++ eventName ++ " event found on the targeted element"))
     ]
+  ]
+
+mouseEnterTests =
+  describe "Mouse Enter Event Tests"
+  [ elementEventBehavior Event.mouseEnter "mouseenter"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.viewForMouseOverOut App.update
+      initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
+    in
+      describe "the mouse enter event"
+      [ describe "when the element does not have a mouse enter event but its ancestor does"
+        [ test "it fails to find the event" <|
+          \() ->
+            Markup.find "li[data-option='2']" initialState
+              |> Event.mouseEnter
+              |> Expect.equal (Failed ("No mouseenter event found on the targeted element"))
+        ]
+      , describe "when the element has a mouse enter event"
+        [ test "at first no mouse enter is recorded" <|
+          \() ->
+            Expect.equal initialModel.mouseEnters 0
+        , test "the event updates the model" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "#event-parent" initialState
+                                    |> Event.mouseEnter
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseEnters 1
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      , describe "when the element and its ancestor have a mouse enter event"
+        [ test "it triggers only the handler on the element" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "li[data-option='1']" initialState
+                                    |> Event.mouseEnter
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseEnters 1
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      ]
+  ]
+
+mouseLeaveTests =
+  describe "Mouse Leave Event Tests"
+  [ elementEventBehavior Event.mouseLeave "mouseleave"
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
+    in
+      describe "the mouse leave event"
+      [ describe "when the element does not have a mouse leave event but its ancestor does"
+        [ test "it fails to find the event" <|
+          \() ->
+            Markup.find "li[data-option='2']" initialState
+              |> Event.mouseLeave
+              |> Expect.equal (Failed ("No mouseleave event found on the targeted element"))
+        ]
+      , describe "when the element has the mouse leave event"
+        [ test "at first no mouse leave is recorded" <|
+          \() ->
+            Expect.equal initialModel.mouseLeaves 0
+        , test "the event updates the model" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "#event-parent" initialState
+                                    |> Event.mouseLeave
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseLeaves 1
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      , describe "when the element and its ancestor have a mouse leave event"
+        [ test "it triggers only the handler on the element" <|
+          \() ->
+            let
+              updatedStateResult = Markup.find "li[data-option='1']" initialState
+                                    |> Event.mouseLeave
+            in
+              case updatedStateResult of
+                Ready updatedState ->
+                  Expect.equal updatedState.model.mouseLeaves 1
+                Failed msg ->
+                  Expect.fail msg
+        ]
+      ]
+
+  ]
+
+mouseOverTests =
+  describe "Mouse Over Event Tests"
+  [ EventTests.standardEventHandlerBehavior Event.mouseOver "mouseover"
+  , EventTests.propagationBehavior Event.mouseOver "mouseover"
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.view App.update
     in
       describe "when the mouseOver event is registered"
       [ describe "when the targeted element has the mouseOver event"
@@ -203,7 +259,7 @@ mouseOverTests =
         , test "the event updates the model" <|
           \() ->
             let
-              updatedStateResult = Markup.find "#event-parent" initialState
+              updatedStateResult = Markup.find ".button" initialState
                                     |> Event.mouseOver
             in
               case updatedStateResult of
@@ -212,60 +268,16 @@ mouseOverTests =
                 Failed msg ->
                   Expect.fail msg
         ]
-      , describe "when an ancestor of the targeted element has the mouseOver event"
-        [ test "at first no mouse over is recorded" <|
-          \() ->
-            Expect.equal initialModel.mouseOvers 0
-        , test "the event updates the model" <|
-          \() ->
-            let
-              updatedStateResult = Markup.find "li[data-option='2']" initialState
-                                    |> Event.mouseOver
-                                    |> Markup.find "li[data-option='3']"
-                                    |> Event.mouseOver
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseOvers 2
-                Failed msg ->
-                  Expect.fail msg
-        ]
       ]
   ]
 
 mouseOutTests =
   describe "Mouse Out Event Tests"
-  [ describe "when there is an upstream failure"
-    [ test "it passes on the error" <|
-      \() ->
-        let
-          initialState = Failed "upstream failure"
-        in
-          Event.mouseOver initialState
-            |> Expect.equal initialState
-    ]
-  , describe "when there is no target node"
-    [ test "it returns an upstream failure" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-        in
-          Event.mouseOut initialState
-           |> Expect.equal (Failed "No target element specified")
-    ]
-  , describe "when neither the targeted node nor the ancestor registers a mouseOut event"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.viewForMouseOverOut App.update
-        in
-          Markup.find ".no-events" initialState
-            |> Event.mouseOut
-            |> Expect.equal (Failed ("No mouseout event found on the targeted element or its ancestors"))
-    ]
+  [ EventTests.standardEventHandlerBehavior Event.mouseOut "mouseout"
+  , EventTests.propagationBehavior Event.mouseOut "mouseOut"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.viewForMouseOverOut App.update
+      initialState = Elmer.componentState initialModel App.view App.update
     in
       describe "when the mouseOut event is registered"
       [ describe "when the targeted element has the mouseOut event"
@@ -275,30 +287,12 @@ mouseOutTests =
         , test "the event updates the model" <|
           \() ->
             let
-              updatedStateResult = Markup.find "#event-parent" initialState
+              updatedStateResult = Markup.find ".button" initialState
                                     |> Event.mouseOut
             in
               case updatedStateResult of
                 Ready updatedState ->
                   Expect.equal updatedState.model.mouseOuts 1
-                Failed msg ->
-                  Expect.fail msg
-        ]
-      , describe "when an ancestor of the targeted element has the mouseOut event"
-        [ test "at first no mouse out is recorded" <|
-          \() ->
-            Expect.equal initialModel.mouseOuts 0
-        , test "the event updates the model" <|
-          \() ->
-            let
-              updatedStateResult = Markup.find "li[data-option='2']" initialState
-                                    |> Event.mouseOut
-                                    |> Markup.find "li[data-option='3']"
-                                    |> Event.mouseOut
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseOuts 2
                 Failed msg ->
                   Expect.fail msg
         ]
