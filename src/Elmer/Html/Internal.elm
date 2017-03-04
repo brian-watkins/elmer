@@ -3,9 +3,13 @@ module Elmer.Html.Internal exposing
   , elementId
   , classList
   , attributes
+  , attribute
   , properties
   , property
+  , hasProperty
   , isCheckbox
+  , isSubmitButton
+  , isSubmitInput
   )
 
 import Json.Decode as Json
@@ -40,9 +44,15 @@ property name element =
   properties element
     |> Dict.get name
 
+hasProperty : (String, String) -> HtmlElement msg -> Bool
+hasProperty (key, value) element =
+  property key element
+    |> Maybe.withDefault ""
+    |> (==) value
+
 properties : HtmlElement msg -> Dict String String
-properties node =
-  facts node
+properties element =
+  facts element
     |> Dict.toList
     |> List.filterMap (\(key, fact) ->
       case fact of
@@ -56,11 +66,14 @@ properties node =
     |> Dict.fromList
 
 attributes : HtmlElement msg -> Dict String String
-attributes node =
-    Result.withDefault Dict.empty <|
-        Json.decodeString (Json.field "ATTR" (Json.dict Json.string)) node.facts
+attributes element =
+  Result.withDefault Dict.empty <|
+      Json.decodeString (Json.field "ATTR" (Json.dict Json.string)) element.facts
 
-
+attribute : String -> HtmlElement msg -> Maybe String
+attribute name element =
+  attributes element
+    |> Dict.get name
 
 factsDecoder : Json.Decoder HtmlFact
 factsDecoder =
@@ -89,11 +102,11 @@ printElement indentation element =
 
 printEvents : HtmlElement msg -> String
 printEvents node =
-  if List.isEmpty node.events then
+  if List.isEmpty node.eventHandlers then
     ""
   else
     let
-      eventString = List.map .eventType node.events
+      eventString = List.map .eventType node.eventHandlers
         |> String.join ", "
     in
       "[ " ++ eventString ++ " ]"
@@ -140,3 +153,15 @@ isCheckbox : HtmlElement msg -> Bool
 isCheckbox element =
   element.tag == "input" &&
     ( property "type" element |> Maybe.withDefault "" ) == "checkbox"
+
+isSubmitInput : HtmlElement msg -> Bool
+isSubmitInput element =
+  element.tag == "input" &&
+    hasProperty ("type", "submit") element
+
+isSubmitButton : HtmlElement msg -> Bool
+isSubmitButton element =
+  element.tag == "button" &&
+    ( hasProperty ("type", "") element ||
+      hasProperty ("type", "submit") element
+    )

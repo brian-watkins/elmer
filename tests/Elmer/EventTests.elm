@@ -50,7 +50,7 @@ standardEventHandlerBehavior eventHandler eventName =
         in
           Markup.find ".no-events" initialState
             |> eventHandler
-            |> Expect.equal (Failed ("No " ++ eventName ++ " event found on the targeted element or its ancestors"))
+            |> Expect.equal (Failed ("No relevant event handler found"))
     ]
   ]
 

@@ -115,42 +115,9 @@ mouseUpTests =
       ]
   ]
 
-elementEventBehavior : (ComponentState App.Model App.Msg -> ComponentState App.Model App.Msg) -> String -> Test
-elementEventBehavior eventHandler eventName =
-  describe "Event Handler Behavior"
-  [ describe "when there is an upstream failure"
-    [ test "it passes on the error" <|
-      \() ->
-        let
-          initialState = Failed "upstream failure"
-        in
-          eventHandler initialState
-            |> Expect.equal initialState
-    ]
-  , describe "when there is no target node"
-    [ test "it returns an upstream failure" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-        in
-          eventHandler initialState
-           |> Expect.equal (Failed "No target element specified")
-    ]
-  , describe "when the event is not found on the target node"
-    [ test "it returns an event not found error" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-        in
-          Markup.find ".no-events" initialState
-            |> eventHandler
-            |> Expect.equal (Failed ("No " ++ eventName ++ " event found on the targeted element"))
-    ]
-  ]
-
 mouseEnterTests =
   describe "Mouse Enter Event Tests"
-  [ elementEventBehavior Event.mouseEnter "mouseenter"
+  [ EventTests.standardEventHandlerBehavior Event.mouseEnter "mouseenter"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
@@ -161,7 +128,7 @@ mouseEnterTests =
           \() ->
             Markup.find "li[data-option='2']" initialState
               |> Event.mouseEnter
-              |> Expect.equal (Failed ("No mouseenter event found on the targeted element"))
+              |> Expect.equal (Failed ("No relevant event handler found"))
         ]
       , describe "when the element has a mouse enter event"
         [ test "at first no mouse enter is recorded" <|
@@ -197,7 +164,7 @@ mouseEnterTests =
 
 mouseLeaveTests =
   describe "Mouse Leave Event Tests"
-  [ elementEventBehavior Event.mouseLeave "mouseleave"
+  [ EventTests.standardEventHandlerBehavior Event.mouseLeave "mouseleave"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
@@ -208,7 +175,7 @@ mouseLeaveTests =
           \() ->
             Markup.find "li[data-option='2']" initialState
               |> Event.mouseLeave
-              |> Expect.equal (Failed ("No mouseleave event found on the targeted element"))
+              |> Expect.equal (Failed ("No relevant event handler found"))
         ]
       , describe "when the element has the mouse leave event"
         [ test "at first no mouse leave is recorded" <|

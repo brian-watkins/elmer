@@ -1,7 +1,7 @@
 module Elmer.Html.Types exposing
   ( HtmlNode(..)
   , HtmlElement
-  , HtmlEvent
+  , HtmlEventHandler
   , HtmlFact(..)
   )
 
@@ -16,17 +16,17 @@ type alias HtmlElement msg =
     { tag : String
     , facts : String
     , children : List (HtmlNode msg)
-    , inheritedEvents : List (HtmlEvent msg)
-    , events : List (HtmlEvent msg)
+    , inheritedEventHandlers : List (HtmlEventHandler msg)
+    , eventHandlers : List (HtmlEventHandler msg)
     }
 
-type alias HtmlEvent msg =
+type alias HtmlEventHandler msg =
     { eventType : String
-    , options : HtmlEventOptions
+    , options : EventHandlerOptions
     , decoder : Json.Decoder msg
     }
 
-type alias HtmlEventOptions =
+type alias EventHandlerOptions =
   { stopPropagation : Bool
   , preventDefault : Bool
   }

@@ -29,7 +29,7 @@ ancestor registers for click events and the event will be handled by that
 ancestor as expected.
 
 `mouseEnter` and `mouseLeave` are exceptions to this rule. These events only
-trigger a handler attached to the targeted element. 
+trigger a handler attached to the targeted element.
 
 # Mouse Events
 @docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver, mouseOut
@@ -53,23 +53,87 @@ import Elmer.Internal as Internal exposing (..)
 import Elmer
 import Elmer.Runtime as Runtime
 import Dict
+import Html exposing (Html)
 
+
+type alias EventHandlerQuery msg =
+  HtmlElement msg -> List (HtmlEventHandler msg)
 
 type alias EventHandler msg =
-    HtmlEvent msg -> EventResult msg
-
-type alias EventGenerator msg =
-  HtmlElement msg -> Result String (List (HtmlEvent msg))
+  EventJson -> EventResult msg
 
 type alias EventResult msg =
   Result String msg
 
+type alias EventJson =
+  String
 
-{-| Trigger a click event on the targeted element.
+type alias EventPropagation msg =
+  { handlerQuery : EventHandlerQuery msg
+  , event : EventJson
+  }
+
+eventPropagation : EventHandlerQuery msg -> EventJson -> EventPropagation msg
+eventPropagation query event =
+  { handlerQuery = query
+  , event = event
+  }
+
+{-| Simulate a click on the targeted element.
+
+A click will trigger the appropriate `click` event handlers on the
+targeted element or its ancestors.
+
+A click on an input element with type submit or a button element with type submit (or
+a button with no type specified) will also trigger the appropriate `submit` event handlers as follows:
+- If the targeted element has a form attribute, then the submit handler
+on the specified form will be triggered; if the specified form does not exist, no submit
+handlers will be triggered.
+- If the targeted element has no form attribute, then the submit handler on any form that is an
+ancestor of the targeted element will be triggered.
 -}
 click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-click =
-  processBasicEvent "click"
+click componentState =
+  updateComponentState
+    [ eventPropagation (eventHandlerQuery "click") "{}"
+    , eventPropagation (submitHandlerQuery (viewForState componentState)) "{}"
+    ] componentState
+
+viewForState : ComponentState model msg -> Maybe (Html msg)
+viewForState componentState =
+  case componentState of
+    Ready component ->
+      Just <| component.view component.model
+    Failed _ ->
+      Nothing
+
+submitHandlerQuery : Maybe (Html msg) -> EventHandlerQuery msg
+submitHandlerQuery maybeDom element =
+  if triggersSubmit element then
+    Maybe.withDefault [] <|
+      ( maybeDom |> Maybe.map (\dom ->
+          case HtmlInternal.attribute "form" element of
+            Just formId ->
+              case formFor formId dom of
+                Just formElement ->
+                  elementEventHandlerQuery "submit" formElement
+                Nothing ->
+                  []
+            Nothing ->
+              eventHandlerQuery "submit" element
+          )
+      )
+  else
+    []
+
+formFor : String -> Html msg -> Maybe (HtmlElement msg)
+formFor formId dom =
+  Query.findElement ("#" ++ formId) dom
+
+triggersSubmit : HtmlElement msg -> Bool
+triggersSubmit element =
+  HtmlInternal.isSubmitInput element || HtmlInternal.isSubmitButton element
+
 
 {-| Trigger a double click event on the targeted element.
 -}
@@ -137,8 +201,7 @@ processBasicEvent eventName =
 
 processBasicElementEvent : String -> ComponentState model msg -> ComponentState model msg
 processBasicElementEvent eventName =
-  processEvents (gatherEventsOnElement eventName) <| genericHandler "{}"
-
+  updateComponentState [ eventPropagation (elementEventHandlerQuery eventName) "{}" ]
 
 {-| Trigger an input event on the targeted element.
 -}
@@ -187,89 +250,89 @@ The following will trigger a `keyup` event:
     componentState
       |> trigger "keyup" "{\"keyCode\":65}"
 -}
-trigger : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+trigger : String -> EventJson -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 trigger eventName eventJson =
-  processEvents (gatherEvents eventName) <| genericHandler eventJson
-
+  updateComponentState [ eventPropagation (eventHandlerQuery eventName) eventJson ]
 
 -- Private functions
 
-gatherEvents : String -> EventGenerator msg
-gatherEvents eventName element =
+eventHandlerQuery : String -> EventHandlerQuery msg
+eventHandlerQuery eventName element =
+  List.append element.eventHandlers element.inheritedEventHandlers
+    |> List.filter (\e -> e.eventType == eventName)
+
+elementEventHandlerQuery : String -> EventHandlerQuery msg
+elementEventHandlerQuery eventName element =
+  List.filter (\e -> e.eventType == eventName) element.eventHandlers
+
+updateComponentState : List (EventPropagation msg) -> ComponentState model msg -> ComponentState model msg
+updateComponentState eventPropagations =
+  Internal.map (\component ->
+    targetElement component
+      |> Result.andThen (hasHandlersFor eventPropagations)
+      |> Result.andThen (apply eventPropagations component)
+      |> toComponentState
+  )
+
+hasHandlersFor : List (EventPropagation msg) -> HtmlElement msg -> Result String (HtmlElement msg)
+hasHandlersFor eventPropagations element =
   let
-    allEvents = List.append element.events element.inheritedEvents
-    matchingEvents = List.filter (\e -> e.eventType == eventName) allEvents
+    handlers = List.map (\ep -> ep.handlerQuery element) eventPropagations
+      |> List.concat
   in
-    if List.isEmpty matchingEvents then
-      Err <| "No " ++ eventName ++ " event found on the targeted element or its ancestors"
+    if List.isEmpty handlers then
+      Err <| "No relevant event handler found"
     else
-      Ok matchingEvents
+      Ok element
 
-gatherEventsOnElement : String -> EventGenerator msg
-gatherEventsOnElement eventName element =
-  let
-    matchingEvents = List.filter (\e -> e.eventType == eventName) element.events
-  in
-    if List.isEmpty matchingEvents then
-      Err <| "No " ++ eventName ++ " event found on the targeted element"
-    else
-      Ok matchingEvents
+apply : List (EventPropagation msg) -> Component model msg -> HtmlElement msg -> Result String (Component model msg)
+apply eventPropagationList component element =
+  List.foldl (\ep result ->
+    case result of
+      Ok component ->
+        collectEventHandlers ep.handlerQuery element
+          |> propagateEvent ep.event component
+      Err _ ->
+        result
+  ) (Ok component) eventPropagationList
 
-genericHandler : String -> HtmlEvent msg -> EventResult msg
-genericHandler eventJson event =
-  Json.decodeString event.decoder eventJson
-
-processEvents : EventGenerator msg -> EventHandler msg -> ComponentState model msg -> ComponentState model msg
-processEvents eventGenerator eventHandler =
-  Internal.map
-    <| mapTargetElement
-    <| collectEvents eventGenerator
-    <| propagateEvents eventHandler
-
-mapTargetElement : (HtmlElement msg -> Component model msg -> ComponentState model msg) -> Component model msg -> ComponentState model msg
-mapTargetElement mapper component =
+targetElement : Component model msg -> Result String (HtmlElement msg)
+targetElement component =
   case Query.targetElement component of
     Just element ->
-      mapper element component
+      Ok element
     Nothing ->
-      Failed "No target element specified"
+      Err "No target element specified"
 
-collectEvents : EventGenerator msg -> (List (HtmlEvent msg) -> Component model msg -> ComponentState model msg) -> HtmlElement msg -> Component model msg -> ComponentState model msg
-collectEvents eventGenerator operator element component =
-  case eventGenerator element of
-    Ok events ->
-      let
-        propagatingEvents = takeUpTo (\event -> event.options.stopPropagation) events
-      in
-        operator propagatingEvents component
-    Err message ->
-      Failed message
+prepareHandler : HtmlEventHandler msg -> EventHandler msg
+prepareHandler eventHandler =
+  Json.decodeString eventHandler.decoder
 
-propagateEvents : EventHandler msg -> List (HtmlEvent msg) -> Component model msg -> ComponentState model msg
-propagateEvents eventHandler events component =
-  List.foldl (\event componentState ->
-    case componentState of
-      Ready component ->
+collectEventHandlers : EventHandlerQuery msg -> HtmlElement msg -> List (EventHandler msg)
+collectEventHandlers eventHandlerQuery element =
+  eventHandlerQuery element
+    |> takeUpTo (\handler -> handler.options.stopPropagation)
+    |> List.map prepareHandler
+
+propagateEvent : EventJson -> Component model msg -> List (EventHandler msg) -> Result String (Component model msg)
+propagateEvent event component eventHandlers =
+  List.foldl (\eventHandler componentResult ->
+    case componentResult of
+      Ok component ->
         updateComponent (eventHandler event) component
-      Failed _ ->
-        componentState
-  ) (Ready component) events
+      Err _ ->
+        componentResult
+  ) (Ok component) eventHandlers
 
-updateComponent : EventResult msg -> Component model msg -> ComponentState model msg
+updateComponent : EventResult msg -> Component model msg -> Result String (Component model msg)
 updateComponent result component =
-  case result of
-    Ok msg ->
-      Runtime.performUpdate msg component
-        |> asComponentState
+  Result.andThen (\msg -> Runtime.performUpdate msg component) result
 
-    Err msg ->
-        Failed msg
-
-asComponentState : Result String (Component model msg) -> ComponentState model msg
-asComponentState commandResult =
-  case commandResult of
-    Ok updatedComponentState ->
-      Ready updatedComponentState
+toComponentState : Result String (Component model msg) -> ComponentState model msg
+toComponentState componentResult =
+  case componentResult of
+    Ok component ->
+      Ready component
     Err message ->
       Failed message
 

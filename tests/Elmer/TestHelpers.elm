@@ -8,8 +8,8 @@ emptyNode tagName =
   { tag = tagName
   , facts = "{}"
   , children = []
-  , inheritedEvents = []
-  , events = []
+  , inheritedEventHandlers = []
+  , eventHandlers = []
   }
 
 nodeWithClass : String -> HtmlElement msg
@@ -74,8 +74,8 @@ nodeWithNestedChildren text =
     , (textNode "another sibling")
     , Element (nodeWithText text)
     ]
-  , inheritedEvents = []
-  , events = []
+  , inheritedEventHandlers = []
+  , eventHandlers = []
   }
 
 nodeWithProperty : (String, String) -> HtmlElement msg

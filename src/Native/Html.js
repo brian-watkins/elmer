@@ -1,20 +1,20 @@
 var _brian_watkins$elmer$Native_Html = function() {
 
-  var getChildren = function(html, inheritedEvents, tagger) {
+  var getChildren = function(html, inheritedEventHandlers, tagger) {
     var children = []
     for (var i = 0; i < html.children.length; i++) {
       var element = html.children[i]
       if (element.type == "text") {
         children.push(_brian_watkins$elmer$Elmer_Html_Types$Text(element.text))
       } else {
-        children.push(_brian_watkins$elmer$Elmer_Html_Types$Element(constructHtmlElement(element, inheritedEvents, tagger)))
+        children.push(_brian_watkins$elmer$Elmer_Html_Types$Element(constructHtmlElement(element, inheritedEventHandlers, tagger)))
       }
     }
 
     return _elm_lang$core$Native_List.fromArray(children)
   }
 
-  var getHtmlEvents = function(html, tagger) {
+  var getHtmlEventHandlers = function(html, tagger) {
     var events = []
     if (html.facts.EVENT) {
       for (var eventType in html.facts.EVENT) {
@@ -23,7 +23,7 @@ var _brian_watkins$elmer$Native_Html = function() {
           decoder = A2(_elm_lang$core$Native_Json.map1, tagger, decoder)
         }
 
-        var event = A3(_brian_watkins$elmer$Elmer_Html_Types$HtmlEvent,
+        var event = A3(_brian_watkins$elmer$Elmer_Html_Types$HtmlEventHandler,
           eventType,
           html.facts.EVENT[eventType].options,
           decoder);
@@ -49,22 +49,22 @@ var _brian_watkins$elmer$Native_Html = function() {
     return _elm_lang$core$Native_List.fromArray(all);
   }
 
-  var constructHtmlElement = function(html, inheritedEvents, tagger) {
+  var constructHtmlElement = function(html, inheritedEventHandlers, tagger) {
     var node = html;
     if (html.type == "tagger") {
       node = html.node
       tagger = html.tagger
     }
 
-    var events = getHtmlEvents(node, tagger);
-    var eventsToInherit = concatLists(inheritedEvents, events);
+    var eventHandlers = getHtmlEventHandlers(node, tagger);
+    var eventHandlersToInherit = concatLists(inheritedEventHandlers, eventHandlers);
 
     return A5(_brian_watkins$elmer$Elmer_Html_Types$HtmlElement,
       node.tag,
       JSON.stringify(getFacts(node.facts)),
-      getChildren(node, eventsToInherit, tagger),
-      inheritedEvents,
-      events
+      getChildren(node, eventHandlersToInherit, tagger),
+      inheritedEventHandlers,
+      eventHandlers
     );
   }
 
@@ -73,9 +73,9 @@ var _brian_watkins$elmer$Native_Html = function() {
       return _elm_lang$core$Maybe$Nothing;
     }
 
-    var inheritedEvents = _elm_lang$core$Native_List.fromArray([])
+    var inheritedEventHandlers = _elm_lang$core$Native_List.fromArray([])
 
-    return _elm_lang$core$Maybe$Just(constructHtmlElement(html, inheritedEvents))
+    return _elm_lang$core$Maybe$Just(constructHtmlElement(html, inheritedEventHandlers))
   }
 
   return {
