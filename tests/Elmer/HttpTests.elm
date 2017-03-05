@@ -34,6 +34,7 @@ all =
   , expectRequestTests "POST" ElmerHttp.expectPOST
   , expectRequestTests "PUT" ElmerHttp.expectPUT
   , expectRequestTests "DELETE" ElmerHttp.expectDELETE
+  , expectRequestTests "PATCH" ElmerHttp.expectPATCH
   , expectRequestDataTests
   , resolveTests
   , clearRequestsTests

@@ -3,6 +3,7 @@ module Elmer.Http.Stub exposing
   , post
   , delete
   , put
+  , patch
   , withError
   , withStatus
   , withBody
@@ -12,7 +13,7 @@ module Elmer.Http.Stub exposing
 {-| Functions for building stubbed responses to Http requests.
 
 # Specify the Method and Route
-@docs get, post, put, delete
+@docs get, post, put, patch, delete
 
 # Describe the Response body
 @docs withBody
@@ -77,6 +78,17 @@ Note: The route should not contain a query string.
 put : String -> Elmer.Http.HttpResponseStub
 put url =
   defaultResponse "PUT" url
+
+{-| Stub the response to a PATCH request at the specified route.
+
+By default, this response will return an empty body with a status of
+`200 OK`.
+
+Note: The route should not contain a query string.
+-}
+patch : String -> Elmer.Http.HttpResponseStub
+patch url =
+  defaultResponse "PATCH" url
 
 defaultResponse : String -> String -> HttpResponseStub
 defaultResponse method url =
