@@ -13,6 +13,7 @@ module Elmer.Html.Event
         , input
         , check
         , uncheck
+        , select
         , on
         , trigger
         )
@@ -35,7 +36,7 @@ trigger a handler attached to the targeted element.
 @docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver, mouseOut
 
 # Form Events
-@docs input, check, uncheck
+@docs input, check, uncheck, select
 
 # Focus Events
 @docs focus, blur
@@ -49,9 +50,11 @@ import Json.Decode as Json
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
+import Elmer.Html
 import Elmer.Internal as Internal exposing (..)
 import Elmer
 import Elmer.Runtime as Runtime
+import Elmer.Printer exposing (..)
 import Dict
 import Html exposing (Html)
 
@@ -207,11 +210,11 @@ processBasicElementEvent eventName =
 -}
 input : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 input inputString =
-  let
-      eventJson =
-          "{\"target\":{\"value\":\"" ++ inputString ++ "\"}}"
-  in
-    trigger "input" eventJson
+    trigger "input" (inputEvent inputString)
+
+inputEvent : String -> EventJson
+inputEvent value =
+  "{\"target\":{\"value\":\"" ++ value ++ "\"}}"
 
 {-| Trigger a change event on the targeted checkbox element with
 `True` for the `checked` property.
@@ -235,6 +238,53 @@ handleCheck doCheck =
           ++ "}}"
   in
     trigger "change" eventJson
+
+{-| Trigger an input event on the targeted select element.
+
+The argument specifies the value of the option to select.
+-}
+select : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+select value =
+  Internal.map (\component ->
+    let
+      eventPropagations = [ eventPropagation (eventHandlerQuery "input") (inputEvent value) ]
+    in
+      targetElement component
+        |> Result.andThen isSelectable
+        |> Result.andThen (hasOption value)
+        |> Result.andThen (hasHandlersFor eventPropagations)
+        |> Result.andThen (apply eventPropagations component)
+        |> toComponentState
+  )
+
+isSelectable : HtmlElement msg -> Result String (HtmlElement msg)
+isSelectable element =
+  if element.tag == "select" then
+    Ok element
+  else
+    Err "The targeted element is not selectable"
+
+hasOption : String -> HtmlElement msg -> Result String (HtmlElement msg)
+hasOption value element =
+  let
+    options = Elmer.Html.findChildren "option" element
+  in
+    if List.isEmpty options then
+      Err <| format [ message "No option found with value" value ]
+    else
+      case findOption value element of
+        Just option ->
+          Ok element
+        Nothing ->
+          Err <| format
+            [ message "No option found with value" value
+            , message "These are the options" ( HtmlInternal.toString element )
+            ]
+
+findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)
+findOption value element =
+  Elmer.Html.findChildren ("option[value='" ++ value ++ "']") element
+    |> List.head
 
 {-| Deprecated. Use `trigger` instead.
 -}

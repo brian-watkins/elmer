@@ -25,7 +25,7 @@ all =
 
 clickTests =
   describe "Click Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.click "click"
+  [ EventTests.standardEventBehavior Event.click "click"
   , EventTests.propagationBehavior Event.click "click"
   , describe "when the click succeeds"
     [ test "it updates the model accordingly" <|
@@ -45,7 +45,7 @@ clickTests =
 
 doubleClickTests =
   describe "Double Click Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.doubleClick "dblclick"
+  [ EventTests.standardEventBehavior Event.doubleClick "dblclick"
   , EventTests.propagationBehavior Event.doubleClick "dblclick"
   , describe "when the double click succeeds"
     [ test "it updates the model accordingly" <|
@@ -65,7 +65,7 @@ doubleClickTests =
 
 mouseDownTests =
   describe "Mouse Down Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseDown "mousedown"
+  [ EventTests.standardEventBehavior Event.mouseDown "mousedown"
   , EventTests.propagationBehavior Event.mouseDown "mousedown"
   , let
       initialModel = App.defaultModel
@@ -91,7 +91,7 @@ mouseDownTests =
 
 mouseUpTests =
   describe "Mouse Up Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseUp "mouseup"
+  [ EventTests.standardEventBehavior Event.mouseUp "mouseup"
   , EventTests.propagationBehavior Event.mouseUp "mouseup"
   , let
       initialModel = App.defaultModel
@@ -117,7 +117,7 @@ mouseUpTests =
 
 mouseEnterTests =
   describe "Mouse Enter Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseEnter "mouseenter"
+  [ EventTests.standardEventBehavior Event.mouseEnter "mouseenter"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
@@ -164,7 +164,7 @@ mouseEnterTests =
 
 mouseLeaveTests =
   describe "Mouse Leave Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseLeave "mouseleave"
+  [ EventTests.standardEventBehavior Event.mouseLeave "mouseleave"
   , let
       initialModel = App.defaultModel
       initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
@@ -212,7 +212,7 @@ mouseLeaveTests =
 
 mouseOverTests =
   describe "Mouse Over Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseOver "mouseover"
+  [ EventTests.standardEventBehavior Event.mouseOver "mouseover"
   , EventTests.propagationBehavior Event.mouseOver "mouseover"
   , let
       initialModel = App.defaultModel
@@ -240,7 +240,7 @@ mouseOverTests =
 
 mouseOutTests =
   describe "Mouse Out Event Tests"
-  [ EventTests.standardEventHandlerBehavior Event.mouseOut "mouseout"
+  [ EventTests.standardEventBehavior Event.mouseOut "mouseout"
   , EventTests.propagationBehavior Event.mouseOut "mouseOut"
   , let
       initialModel = App.defaultModel

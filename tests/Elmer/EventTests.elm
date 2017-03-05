@@ -1,6 +1,6 @@
 module Elmer.EventTests exposing
   ( all
-  , standardEventHandlerBehavior
+  , standardEventBehavior
   , propagationBehavior
   )
 
@@ -21,16 +21,16 @@ all =
     [ customEventTests
     ]
 
-standardEventHandlerBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> String -> Test
-standardEventHandlerBehavior eventHandler eventName =
-  describe "Event Handler Behavior"
+standardEventBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> String -> Test
+standardEventBehavior eventFunction eventName =
+  describe "Event Behavior"
   [ describe "when there is an upstream failure"
     [ test "it passes on the error" <|
       \() ->
         let
           initialState = Failed "upstream failure"
         in
-          eventHandler initialState
+          eventFunction initialState
             |> Expect.equal initialState
     ]
   , describe "when there is no target node"
@@ -39,17 +39,17 @@ standardEventHandlerBehavior eventHandler eventName =
         let
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
-          eventHandler initialState
+          eventFunction initialState
            |> Expect.equal (Failed "No target element specified")
     ]
-  , describe "when the event is not found on the target node"
+  , describe "when the event handler is not found"
     [ test "it returns an event not found error" <|
       \() ->
         let
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           Markup.find ".no-events" initialState
-            |> eventHandler
+            |> eventFunction
             |> Expect.equal (Failed ("No relevant event handler found"))
     ]
   ]
@@ -92,7 +92,7 @@ customEventTests =
     keyUpEventJson = "{\"keyCode\":65}"
   in
     describe "custom event tests"
-    [ standardEventHandlerBehavior (Event.on "keyup" keyUpEventJson) "keyup"
+    [ standardEventBehavior (Event.on "keyup" keyUpEventJson) "keyup"
     , describe "when the event succeeds"
       [ test "it updates the model accordingly" <|
         \() ->

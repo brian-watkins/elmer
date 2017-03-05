@@ -10,6 +10,7 @@ type alias Model =
   , lastLetter : Int
   , isChecked : Bool
   , isSubmitted : Bool
+  , selectedValue : String
   }
 
 type Msg
@@ -18,6 +19,7 @@ type Msg
   | HandleCheck Bool
   | HandleSubmit
   | HandleClick
+  | HandleSelect String
 
 defaultModel : Model
 defaultModel =
@@ -25,6 +27,7 @@ defaultModel =
   , lastLetter = -1
   , isChecked = False
   , isSubmitted = False
+  , selectedValue = ""
   }
 
 view : Model -> Html Msg
@@ -87,6 +90,28 @@ submitBadFormView model =
     , Html.button [ Attr.id "default-type-button", Attr.form "my-formsss" ] [ Html.text "Submit My Form By Default" ]
     ]
 
+selectWithNoHandlerView : Model -> Html Msg
+selectWithNoHandlerView model =
+  Html.div [ Attr.id "root" ]
+    [ Html.select []
+      [ Html.option [ Attr.value "some-value" ] [ Html.text "Something" ] ]
+    ]
+
+selectWithNoOptionsView : Model -> Html Msg
+selectWithNoOptionsView model =
+  Html.div [ Attr.id "root" ]
+    [ Html.select [ onInput HandleSelect ] []
+    ]
+
+selectView : Model -> Html Msg
+selectView model =
+  Html.div [ Attr.id "root" ]
+    [ Html.select [ onInput HandleSelect ]
+      [ Html.option [ Attr.value "cat" ] [ Html.text "Cat" ]
+      , Html.option [ Attr.value "dog" ] [ Html.text "Dog" ]
+      , Html.option [ Attr.value "mouse" ] [ Html.text "Mouse" ]
+      ]
+    ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -101,6 +126,8 @@ update msg model =
       ( { model | isSubmitted = True }, Cmd.none )
     HandleClick ->
       ( model, Cmd.none )
+    HandleSelect val ->
+      ( { model | selectedValue = val }, Cmd.none )
 
 onKeyUp : (Int -> msg) -> Attribute msg
 onKeyUp tagger =
