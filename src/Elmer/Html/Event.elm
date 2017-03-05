@@ -83,8 +83,8 @@ eventPropagation query event =
 
 {-| Simulate a click on the targeted element.
 
-A click will trigger the appropriate `click` event handlers on the
-targeted element or its ancestors.
+A click will trigger the appropriate `click`, `mouseDown`, and `mouseUp` event
+handlers on the targeted element or its ancestors.
 
 A click on an input element with type submit or a button element with type submit (or
 a button with no type specified) will also trigger the appropriate `submit` event handlers as follows:
@@ -98,6 +98,8 @@ click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 click componentState =
   updateComponentState
     [ basicEventPropagation "click"
+    , basicEventPropagation "mousedown"
+    , basicEventPropagation "mouseup"
     , eventPropagation (submitHandlerQuery (viewForState componentState)) "{}"
     ] componentState
 

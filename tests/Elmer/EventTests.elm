@@ -2,6 +2,7 @@ module Elmer.EventTests exposing
   ( all
   , standardEventBehavior
   , propagationBehavior
+  , multiEventPropagationBehavior
   )
 
 import Test exposing (..)
@@ -54,8 +55,8 @@ standardEventBehavior eventFunction =
     ]
   ]
 
-propagationBehavior : (ComponentState EventApp.Model EventApp.Msg -> ComponentState EventApp.Model EventApp.Msg) -> String -> Test
-propagationBehavior eventFunc eventName =
+multiEventPropagationBehavior : Int -> Int -> (ComponentState EventApp.Model EventApp.Msg -> ComponentState EventApp.Model EventApp.Msg) -> String -> Test
+multiEventPropagationBehavior allEvents nonPropagatingEvents eventFunc eventName =
   describe "event propagation tests"
   [ describe "when there is no event handler on the target element"
     [ test "the event bubbles up through all the ancestors" <|
@@ -67,7 +68,7 @@ propagationBehavior eventFunc eventName =
         in
           case state of
             Ready s ->
-              Expect.equal s.model.eventCount 3
+              Expect.equal s.model.eventCount allEvents
             Failed msg ->
               Expect.fail msg
     ]
@@ -81,11 +82,15 @@ propagationBehavior eventFunc eventName =
         in
           case state of
             Ready s ->
-              Expect.equal s.model.eventCount 2
+              Expect.equal s.model.eventCount nonPropagatingEvents
             Failed msg ->
               Expect.fail msg
     ]
   ]
+
+propagationBehavior : (ComponentState EventApp.Model EventApp.Msg -> ComponentState EventApp.Model EventApp.Msg) -> String -> Test
+propagationBehavior =
+  multiEventPropagationBehavior 3 2
 
 customEventTests =
   let

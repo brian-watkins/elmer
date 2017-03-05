@@ -25,24 +25,51 @@ all =
     , mouseOutTests
     ]
 
+andExpect : Expect.Expectation -> Expect.Expectation -> Expect.Expectation
+andExpect leftResult rightResult =
+  if rightResult == Expect.pass then
+    leftResult
+  else
+    rightResult
+
 clickTests =
   describe "Click Event Tests"
   [ EventTests.standardEventBehavior Event.click
-  , EventTests.propagationBehavior Event.click "click"
-  , describe "when the click succeeds"
-    [ test "it updates the model accordingly" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-          updatedStateResult = Markup.find ".button" initialState
-                                |> Event.click
-        in
+  , EventTests.multiEventPropagationBehavior 9 6 Event.click "click"
+  , EventTests.multiEventPropagationBehavior 9 6 Event.click "mousedown"
+  , EventTests.multiEventPropagationBehavior 9 6 Event.click "mouseup"
+  , let
+      initialModel = App.defaultModel
+      initialState = Elmer.componentState initialModel App.view App.update
+      updatedStateResult = Markup.find ".button" initialState
+                            |> Event.click
+    in
+      describe "when the click succeeds"
+      [ test "it records a click" <|
+        \() ->
           case updatedStateResult of
             Ready updatedState ->
-              Expect.equal updatedState.model.clicks 1
+              Expect.equal initialModel.clicks 0
+                |> andExpect (Expect.equal updatedState.model.clicks 1)
             Failed msg ->
               Expect.fail msg
-    ]
+      , test "it records a mouse down" <|
+        \() ->
+          case updatedStateResult of
+            Ready updatedState ->
+              Expect.equal initialModel.mouseDowns 0
+                |> andExpect (Expect.equal updatedState.model.mouseDowns 1)
+            Failed msg ->
+              Expect.fail msg
+      , test "it records a mouse up" <|
+        \() ->
+          case updatedStateResult of
+            Ready updatedState ->
+              Expect.equal initialModel.mouseUps 0
+                |> andExpect (Expect.equal updatedState.model.mouseUps 1)
+            Failed msg ->
+              Expect.fail msg
+      ]
   ]
 
 doubleClickTests =
