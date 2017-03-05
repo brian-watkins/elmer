@@ -52,6 +52,7 @@ formats:
 + To find the first div tag, use `div`
 + To find the first div tag with the custom data attribute data-node, use `div[data-node]`
 + To find the first div tag with the attribute data-node and the value myData, use `div[data-node='myData']`
++ To find the descendants of a node add another selector separated by a space: `div a`
 
 #### Taking action on an element
 
@@ -60,8 +61,9 @@ you find another element. The following functions define actions on elements:
 
 + Click events: `Elmer.Html.Event.click <componentState>`
 + Input events: `Elmer.Html.Event.input <text> <componentState>`
-+ Custom events: `Elmer.Html.Event.on <eventName> <eventJson> <componentState>`
-+ More to come ...
++ Custom events: `Elmer.Html.Event.trigger <eventName> <eventJson> <componentState>`
++ There are also events for mouse movements, and checking and selecting input elements. See
+the [docs](http://elmer-test.cfapps.io/packages/brian-watkins/elmer/latest) for more information.
 
 #### Element Matchers
 
@@ -545,7 +547,7 @@ And now our test should pass! Notice that we were able to test drive our compone
 our tests knowing how that component actually deals with the effect from the Time
 subscription.
 
-### Deveopment
+### Development
 
 For development purposes, it's possible to deploy Elmer to a local project.
 
