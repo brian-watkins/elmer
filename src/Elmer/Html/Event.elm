@@ -2,12 +2,10 @@ module Elmer.Html.Event
     exposing
         ( click
         , doubleClick
-        , mouseDown
-        , mouseUp
-        , mouseEnter
-        , mouseLeave
-        , mouseOver
-        , mouseOut
+        , press
+        , release
+        , moveMouseIn
+        , moveMouseOut
         , focus
         , blur
         , input
@@ -29,11 +27,12 @@ This means, for example, that you can `click` a targeted element whose
 ancestor registers for click events and the event will be handled by that
 ancestor as expected.
 
-`mouseEnter` and `mouseLeave` are exceptions to this rule. These events only
-trigger a handler attached to the targeted element.
+The `mouseEnter` and `mouseLeave` events are exceptions to this rule. These events only
+trigger a handler attached to the targeted element. See `moveMouseIn` and `moveMouseOut`
+for more.
 
 # Mouse Events
-@docs click, doubleClick, mouseDown, mouseUp, mouseEnter, mouseLeave, mouseOver, mouseOut
+@docs click, doubleClick, press, release, moveMouseIn, moveMouseOut
 
 # Form Events
 @docs input, check, uncheck, select
@@ -98,7 +97,7 @@ ancestor of the targeted element will be triggered.
 click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 click componentState =
   updateComponentState
-    [ eventPropagation (eventHandlerQuery "click") "{}"
+    [ basicEventPropagation "click"
     , eventPropagation (submitHandlerQuery (viewForState componentState)) "{}"
     ] componentState
 
@@ -146,45 +145,43 @@ doubleClick =
 
 {-| Trigger a mouse down event on the targeted element.
 -}
-mouseDown : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-mouseDown =
+press : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+press =
     processBasicEvent "mousedown"
 
 {-| Trigger a mouse up event on the targeted element.
 -}
-mouseUp : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-mouseUp =
+release : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+release =
     processBasicEvent "mouseup"
 
-{-| Trigger a mouse enter event on the targeted element.
+{-| Simulate moving the mouse into the targeted element.
+
+This may trigger any relevant `mouseOver` or `mouseEnter` event handlers.
 
 Note: Mouse enter events do not propagate, so a mouse enter action will only
 trigger an event handler that is registered by the targeted element.
 -}
-mouseEnter : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-mouseEnter =
-  processBasicElementEvent "mouseenter"
+moveMouseIn : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+moveMouseIn =
+  updateComponentState
+    [ basicElementEventPropagation "mouseenter"
+    , basicEventPropagation "mouseover"
+    ]
 
-{-| Trigger a mouse leave event on the targeted element.
+{-| Simulate moving the mouse out of the targeted element.
+
+This may trigger any relevant `mouseOut` or `mouseLeave` event handlers.
 
 Note: Mouse leave events do not propagate, so a mouse leave action will only
 trigger an event handler that is registered by the targeted element.
 -}
-mouseLeave : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-mouseLeave =
-  processBasicElementEvent "mouseleave"
-
-{-| Trigger a mouse over event on the targeted element.
--}
-mouseOver : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-mouseOver =
-  processBasicEvent "mouseover"
-
-{-| Trigger a mouse out event on the targeted element.
--}
-mouseOut : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-mouseOut =
-  processBasicEvent "mouseout"
+moveMouseOut : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+moveMouseOut =
+  updateComponentState
+    [ basicElementEventPropagation "mouseleave"
+    , basicEventPropagation "mouseout"
+    ]
 
 {-| Trigger a focus event on the targeted element.
 -}
@@ -197,14 +194,6 @@ focus =
 blur : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 blur =
   processBasicEvent "blur"
-
-processBasicEvent : String -> ComponentState model msg -> ComponentState model msg
-processBasicEvent eventName =
-  trigger eventName "{}"
-
-processBasicElementEvent : String -> ComponentState model msg -> ComponentState model msg
-processBasicElementEvent eventName =
-  updateComponentState [ eventPropagation (elementEventHandlerQuery eventName) "{}" ]
 
 {-| Trigger an input event on the targeted element.
 -}
@@ -241,7 +230,7 @@ handleCheck doCheck =
 
 {-| Trigger an input event on the targeted select element.
 
-The argument specifies the value of the option to select.
+The argument specifies the option to select by its `value` property.
 -}
 select : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 select value =
@@ -305,6 +294,22 @@ trigger eventName eventJson =
   updateComponentState [ eventPropagation (eventHandlerQuery eventName) eventJson ]
 
 -- Private functions
+
+processBasicEvent : String -> ComponentState model msg -> ComponentState model msg
+processBasicEvent eventName =
+  trigger eventName "{}"
+
+basicEventPropagation : String -> EventPropagation msg
+basicEventPropagation eventName =
+  eventPropagation (eventHandlerQuery eventName) "{}"
+
+basicElementEventPropagation : String -> EventPropagation msg
+basicElementEventPropagation eventName =
+  eventPropagation (elementEventHandlerQuery eventName) "{}"
+
+processBasicElementEvent : String -> ComponentState model msg -> ComponentState model msg
+processBasicElementEvent eventName =
+  updateComponentState [ basicElementEventPropagation eventName ]
 
 eventHandlerQuery : String -> EventHandlerQuery msg
 eventHandlerQuery eventName element =

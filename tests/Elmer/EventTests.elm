@@ -21,8 +21,8 @@ all =
     [ customEventTests
     ]
 
-standardEventBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> String -> Test
-standardEventBehavior eventFunction eventName =
+standardEventBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> Test
+standardEventBehavior eventFunction =
   describe "Event Behavior"
   [ describe "when there is an upstream failure"
     [ test "it passes on the error" <|
@@ -92,7 +92,7 @@ customEventTests =
     keyUpEventJson = "{\"keyCode\":65}"
   in
     describe "custom event tests"
-    [ standardEventBehavior (Event.on "keyup" keyUpEventJson) "keyup"
+    [ standardEventBehavior (Event.on "keyup" keyUpEventJson)
     , describe "when the event succeeds"
       [ test "it updates the model accordingly" <|
         \() ->

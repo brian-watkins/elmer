@@ -23,7 +23,7 @@ all =
 
 inputTests =
   describe "input event tests"
-  [ EventTests.standardEventBehavior (Event.input "fun stuff") "input"
+  [ EventTests.standardEventBehavior (Event.input "fun stuff")
   , EventTests.propagationBehavior (Event.input "fun stuff") "input"
   , describe "when the input succeeds"
     [ test "it updates the model accordingly" <|
@@ -45,7 +45,7 @@ inputTests =
 checkTests : Test
 checkTests =
   describe "check event"
-  [ EventTests.standardEventBehavior Event.check "change"
+  [ EventTests.standardEventBehavior Event.check
   , EventTests.propagationBehavior Event.check "change"
   , let
       initialModel = App.defaultModel
@@ -73,7 +73,7 @@ checkTests =
 uncheckTests : Test
 uncheckTests =
   describe "uncheck event"
-  [ EventTests.standardEventBehavior Event.uncheck "change"
+  [ EventTests.standardEventBehavior Event.uncheck
   , EventTests.propagationBehavior Event.uncheck "change"
   , let
       initialModel = App.defaultModel
