@@ -75,6 +75,10 @@ type alias EventPropagation msg =
   , event : EventJson
   }
 
+type ClickType
+  = Single
+  | Double
+
 eventPropagation : EventHandlerQuery msg -> EventJson -> EventPropagation msg
 eventPropagation query event =
   { handlerQuery = query
@@ -95,13 +99,26 @@ handlers will be triggered.
 ancestor of the targeted element will be triggered.
 -}
 click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-click componentState =
-  updateComponentState
-    [ basicEventPropagation "click"
-    , basicEventPropagation "mousedown"
-    , basicEventPropagation "mouseup"
-    , eventPropagation (submitHandlerQuery (viewForState componentState)) "{}"
-    ] componentState
+click =
+  triggerClick Single
+
+triggerClick : ClickType -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+triggerClick clickType componentState =
+  let
+    eventPropagations =
+      [ basicEventPropagation "click"
+      , basicEventPropagation "mousedown"
+      , basicEventPropagation "mouseup"
+      , eventPropagation (submitHandlerQuery (viewForState componentState)) "{}"
+      ]
+  in
+    case clickType of
+      Single ->
+        updateComponentState eventPropagations componentState
+      Double ->
+        updateComponentState
+          ( eventPropagations ++ [ basicEventPropagation "dblclick" ] )
+          componentState
 
 viewForState : ComponentState model msg -> Maybe (Html msg)
 viewForState componentState =
@@ -139,11 +156,15 @@ triggersSubmit element =
   HtmlInternal.isSubmitInput element || HtmlInternal.isSubmitButton element
 
 
-{-| Trigger a double click event on the targeted element.
+{-| Simulate a double click on the targeted element.
+
+Two clicks will occur in succession, with the second also triggering a double
+click event. See `click` above for a list of the events triggered by a click.
 -}
 doubleClick : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 doubleClick =
-    processBasicEvent "dblclick"
+  triggerClick Single
+    >> triggerClick Double
 
 {-| Trigger a mouse down event on the targeted element.
 -}
