@@ -22,6 +22,7 @@ requestBuilderTests =
   [ describeRequestMethod "GET" HttpStub.get
   , describeRequestMethod "POST" HttpStub.post
   , describeRequestMethod "DELETE" HttpStub.delete
+  , describeRequestMethod "PUT" HttpStub.put
   ]
 
 describeRequestMethod : String -> (String -> HttpResponseStub) -> Test

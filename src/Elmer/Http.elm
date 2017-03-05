@@ -4,6 +4,7 @@ module Elmer.Http exposing
   , expectPOST
   , expectGET
   , expectDELETE
+  , expectPUT
   , clearRequestHistory
   , serve
   , spy
@@ -24,7 +25,7 @@ component. What to do?
 @docs HttpResponseStub, serve, spy
 
 # Make Expectations about Http Requests
-@docs HttpRequestData, expectGET, expectPOST, expectDELETE, clearRequestHistory
+@docs HttpRequestData, expectGET, expectPOST, expectPUT, expectDELETE, clearRequestHistory
 
 -}
 
@@ -138,6 +139,16 @@ expectDELETE : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentStat
 expectDELETE =
   expectRequest "DELETE"
 
+{-| Expect a matching PUT request to the specified url.
+
+The path argument is just the url you expect (relative or absolute) up to but not
+including the query string. See `Elmer.Http.Matchers` for request matchers.
+
+Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
+-}
+expectPUT : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectPUT =
+  expectRequest "PUT"
 
 expectRequest : String -> String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
 expectRequest method url requestMatcher =
