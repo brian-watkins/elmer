@@ -6,12 +6,13 @@ module Elmer
         , componentState
         , (<&&>)
         , expectNot
+        , init
         )
 
 {-| Basic types and functions for working with ComponentStates and Matchers
 
 # Working with ComponentStates
-@docs ComponentState, componentState
+@docs ComponentState, componentState, init
 
 # Working with Matchers
 @docs Matcher, (<&&>), expectNot
@@ -29,6 +30,7 @@ import Native.Html
 import Expect
 import Elmer.Internal as Internal
 import Elmer.Platform as Platform
+import Elmer.Runtime as Runtime
 
 {-| Represents the current state of the component under test.
 -}
@@ -105,4 +107,21 @@ expectNot matcher =
         Expect.fail "Expected not to be the case but it is"
       else
         Expect.pass
+  )
+
+{-| Update the `ComponentState` with the given model and Cmd.
+
+Useful for testing `init` functions.
+-}
+init : (model, Cmd msg) -> ComponentState model msg -> ComponentState model msg
+init ( initModel, initCommand ) =
+  Internal.map (\component ->
+    let
+      updatedComponent = { component | model = initModel }
+    in
+      case Runtime.performCommand initCommand updatedComponent of
+        Ok initializedComponent ->
+          Internal.Ready initializedComponent
+        Err message ->
+          Internal.Failed message
   )

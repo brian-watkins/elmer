@@ -112,12 +112,12 @@ commandRunnerForData commandName =
 
 
 performCommand : Cmd msg -> Component model msg -> Result String (Component model msg)
-performCommand command componentState =
+performCommand command component =
     let
         commandResults =
             runCommand identityTagger command
     in
-      List.foldl reduceCommandResults (Ok componentState) commandResults
+      List.foldl reduceCommandResults (Ok component) commandResults
 
 reduceCommandResults : CommandResult model msg -> Result String (Component model msg) -> Result String (Component model msg)
 reduceCommandResults commandResult currentResult =
