@@ -79,20 +79,49 @@ findTests =
     ]
   ]
 
+getElement : Html msg -> Markup.HtmlElement msg
+getElement html =
+  Maybe.withDefault nodeWithList <| Native.Html.asHtmlElement html
+
+liWithDiv : String -> Markup.HtmlElement msg
+liWithDiv name =
+  Html.li [] [ Html.div [ Attr.class name ] [] ]
+    |> getElement
+
+divWithClass : String -> Markup.HtmlElement msg
+divWithClass name =
+  Html.div [ Attr.class name ] []
+    |> getElement
+
 findChildrenTests : Test
 findChildrenTests =
+  let
+    html =
+      Html.ul []
+        [ Html.li [] [ Html.div [ Attr.class "fun" ] [] ]
+        , Html.li [] [ Html.div [ Attr.class "awesome" ] [] ]
+        , Html.li [] [ Html.div [ Attr.class "fun" ] [] ]
+        ]
+    element = getElement html
+  in
   describe "findChildren"
   [ describe "when the node has no matching children"
     [ test "it fails" <|
       \() ->
-        Markup.findChildren ".some-class" (emptyNode "div")
+        Markup.findChildren ".some-class" element
           |> Expect.equal []
     ]
   , describe "when the node has matching children"
     [ test "it finds the children" <|
       \() ->
-        Markup.findChildren "li" nodeWithList
-          |> Expect.equal [(emptyNode "li"), (emptyNode "li"), (emptyNode "li")]
+        Markup.findChildren "li" element
+          |> Expect.equal [liWithDiv "fun", liWithDiv "awesome", liWithDiv "fun"]
+    ]
+  , describe "when finding descendants"
+    [ test "it finds the descendants" <|
+      \() ->
+        Markup.findChildren "li .fun" element
+          |> Expect.equal [ divWithClass "fun", divWithClass "fun" ]
     ]
   ]
 

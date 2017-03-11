@@ -1,8 +1,8 @@
 module Elmer.Html.Query exposing
   ( findElement
-  , findWithinElement
   , takeElements
   , targetElement
+  , findAll
   )
 
 import Elmer.Html.Types exposing (..)
@@ -26,20 +26,28 @@ findElement : String -> Html msg -> Maybe (HtmlElement msg)
 findElement selector html =
   let
     root = Native.Html.asHtmlElement html
+  in
+    root
+      |> Maybe.andThen (\rootElement ->
+        findAll selector rootElement
+          |> List.head
+      )
+
+findAll : String -> HtmlElement msg -> List (HtmlElement msg)
+findAll selector element =
+  let
     subselectors = String.split " " selector
   in
-    List.foldl (\selector maybeElement ->
-      Maybe.andThen (findWithinElement selector) maybeElement
-    ) root subselectors
+    List.foldl (\selector elements ->
+      List.concatMap (findAllWithinElement selector) elements
+    ) [ element ] subselectors
 
-
-findWithinElement : String -> HtmlElement msg -> Maybe (HtmlElement msg)
-findWithinElement selector root =
-    if matchesElement selector root then
-        Just root
+findAllWithinElement : String -> HtmlElement msg -> List (HtmlElement msg)
+findAllWithinElement selector element =
+    if matchesElement selector element then
+      [ element ]
     else
-        List.head <|
-            List.filterMap (findWithinElement selector) (takeElements root.children)
+      List.concatMap (findAllWithinElement selector) (takeElements element.children)
 
 
 matchesElement : String -> HtmlElement msg -> Bool

@@ -99,7 +99,7 @@ For example, you could expect that a list has a certain number of items:
 -}
 findChildren : String -> HtmlElement msg -> List (HtmlElement msg)
 findChildren selector node =
-  List.filterMap (Query.findWithinElement selector) (Query.takeElements node.children)
+  List.concatMap (Query.findAll selector) (Query.takeElements node.children)
 
 {-| Make expectations about the targeted element.
 
