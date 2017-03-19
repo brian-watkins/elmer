@@ -26,6 +26,7 @@ all =
   , findDescendantTests
   , expectElementTests
   , expectElementExistsTests
+  , expectElementsTests
   , childNodeTests
   ]
 
@@ -456,7 +457,7 @@ expectElementTests =
           Markup.expectElement (
             \node -> Expect.fail "Should not get here"
           ) initialState
-            |> Expect.equal (Expect.fail "Element does not exist")
+            |> Expect.equal (Expect.fail "No element targeted")
     ]
   , describe "when there is a target node"
     [ test "it executes the expectation function" <|
@@ -490,7 +491,7 @@ expectElementExistsTests =
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           Markup.expectElementExists initialState
-            |> Expect.equal (Expect.fail "Element does not exist")
+            |> Expect.equal (Expect.fail "No element targeted")
     ]
   , describe "where there is a target node"
     [ test "it passes" <|
@@ -500,6 +501,43 @@ expectElementExistsTests =
         in
           Markup.find "#root" initialState
             |> Markup.expectElementExists
+            |> Expect.equal Expect.pass
+    ]
+  ]
+
+expectElementsTests : Test
+expectElementsTests =
+  describe "expectElements"
+  [ describe "when there is a failure upstream"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Failed "You failed!"
+        in
+          Markup.expectElements (\elements -> Expect.fail "Should not get here!") initialState
+            |> Expect.equal (Expect.fail "You failed!")
+    ]
+  , describe "when no target is specified"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+        in
+          Markup.expectElements (
+            \elements -> Expect.fail "Should not get here"
+          ) initialState
+            |> Expect.equal (Expect.fail "No elements targeted")
+    ]
+  , describe "when elements are found"
+    [ test "it applies the matcher" <|
+      \() ->
+        let
+          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.viewWithChildren SimpleApp.update
+        in
+          Markup.find "div" initialState
+            |> Markup.expectElements (
+              \elements -> Expect.equal (List.length elements) 4
+            )
             |> Expect.equal Expect.pass
     ]
   ]

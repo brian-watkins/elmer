@@ -1,7 +1,8 @@
 module Elmer.Html.Query exposing
   ( findElement
   , takeElements
-  , targetElement
+  , targetedElement
+  , targetedElements
   , findAll
   )
 
@@ -14,24 +15,34 @@ import Json.Decode as Json
 import Regex exposing (Regex)
 
 
-targetElement : Component model msg -> Maybe (HtmlElement msg)
-targetElement component =
+targetedElement : Component model msg -> Maybe (HtmlElement msg)
+targetedElement component =
   case component.targetSelector of
     Just selector ->
       findElement selector <| component.view component.model
     Nothing ->
       Nothing
 
+targetedElements : Component model msg -> Maybe (List (HtmlElement msg))
+targetedElements component =
+  case component.targetSelector of
+    Just selector ->
+      findElements selector <| component.view component.model
+    Nothing ->
+      Nothing
+
 findElement : String -> Html msg -> Maybe (HtmlElement msg)
 findElement selector html =
-  let
-    root = Native.Html.asHtmlElement html
-  in
-    root
-      |> Maybe.andThen (\rootElement ->
+  Native.Html.asHtmlElement html
+    |> Maybe.andThen (\rootElement ->
         findAll selector rootElement
           |> List.head
-      )
+    )
+
+findElements : String -> Html msg -> Maybe (List (HtmlElement msg))
+findElements selector html =
+  Native.Html.asHtmlElement html
+    |> Maybe.map (findAll selector)
 
 findAll : String -> HtmlElement msg -> List (HtmlElement msg)
 findAll selector element =
@@ -45,7 +56,8 @@ findAll selector element =
 findAllWithinElement : String -> HtmlElement msg -> List (HtmlElement msg)
 findAllWithinElement selector element =
     if matchesElement selector element then
-      [ element ]
+      element ::
+        List.concatMap (findAllWithinElement selector) (takeElements element.children)
     else
       List.concatMap (findAllWithinElement selector) (takeElements element.children)
 

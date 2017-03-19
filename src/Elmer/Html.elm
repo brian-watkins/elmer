@@ -3,6 +3,7 @@ module Elmer.Html exposing
   , find
   , findChildren
   , expectElement
+  , expectElements
   , expectElementExists
   )
 
@@ -12,7 +13,7 @@ module Elmer.Html exposing
 @docs HtmlElement, find, findChildren
 
 # General expectations
-@docs expectElement, expectElementExists
+@docs expectElements, expectElement, expectElementExists
 
 -}
 
@@ -108,16 +109,37 @@ findChildren selector node =
         Elmer.Html.Matchers.hasText "some text" element
       )
 
+If the selector matches more than one element, only the first element
+will be applied to the matcher.
+
 -}
 expectElement : Matcher (HtmlElement msg) -> Matcher (Elmer.ComponentState model msg)
 expectElement expectFunction =
   Internal.mapToExpectation <|
-    \componentState ->
-      case Query.targetElement componentState of
+    \component ->
+      case Query.targetedElement component of
         Just element ->
           expectFunction element
         Nothing ->
-          Expect.fail "Element does not exist"
+          Expect.fail "No element targeted"
+
+{-| Make expectations about the targeted elements.
+
+    find "li" componentState
+      |> expectElements (\elements ->
+        Elmer.Html.Matchers.hasCount 4 elements
+      )
+
+-}
+expectElements : Matcher (List (HtmlElement msg)) -> Matcher (Elmer.ComponentState model msg)
+expectElements listMatcher =
+  Internal.mapToExpectation <|
+    \component ->
+      case Query.targetedElements component of
+        Just elements ->
+          listMatcher elements
+        Nothing ->
+          Expect.fail "No elements targeted"
 
 {-| Expect that the targeted element exists.
 -}

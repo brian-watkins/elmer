@@ -261,7 +261,7 @@ select value =
     let
       eventPropagations = [ eventPropagation (eventHandlerQuery "input") (inputEvent value) ]
     in
-      targetElement component
+      targetedElement component
         |> Result.andThen isSelectable
         |> Result.andThen (hasOption value)
         |> Result.andThen (hasHandlersFor eventPropagations)
@@ -346,7 +346,7 @@ elementEventHandlerQuery eventName element =
 updateComponentState : List (EventPropagation msg) -> ComponentState model msg -> ComponentState model msg
 updateComponentState eventPropagations =
   Internal.map (\component ->
-    targetElement component
+    targetedElement component
       |> Result.andThen (hasHandlersFor eventPropagations)
       |> Result.andThen (apply eventPropagations component)
       |> toComponentState
@@ -374,9 +374,9 @@ apply eventPropagationList component element =
         result
   ) (Ok component) eventPropagationList
 
-targetElement : Component model msg -> Result String (HtmlElement msg)
-targetElement component =
-  case Query.targetElement component of
+targetedElement : Component model msg -> Result String (HtmlElement msg)
+targetedElement component =
+  case Query.targetedElement component of
     Just element ->
       Ok element
     Nothing ->
