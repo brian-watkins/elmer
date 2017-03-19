@@ -6,6 +6,8 @@ module Elmer
         , componentState
         , (<&&>)
         , expectNot
+        , each
+        , some
         , init
         )
 
@@ -15,7 +17,7 @@ module Elmer
 @docs ComponentState, componentState, init
 
 # Working with Matchers
-@docs Matcher, (<&&>), expectNot
+@docs Matcher, (<&&>), expectNot, each, one
 
 # Working with Overrides
 @docs PlatformOverride
@@ -31,6 +33,7 @@ import Expect
 import Elmer.Internal as Internal
 import Elmer.Platform as Platform
 import Elmer.Runtime as Runtime
+import Elmer.Printer exposing (..)
 
 {-| Represents the current state of the component under test.
 -}
@@ -108,6 +111,54 @@ expectNot matcher =
       else
         Expect.pass
   )
+
+{-| Create a matcher that applies the given matcher to each item in a list.
+
+The created matcher will pass if all items satisfy the given matcher.
+-}
+each : Matcher a -> Matcher (List a)
+each matcher list =
+  case Expect.getFailure <| expectAll matcher list of
+    Just failure ->
+      Expect.fail <| format [ message "An item failed to match" failure.message ]
+    Nothing ->
+      Expect.pass
+
+expectAll : Matcher a -> Matcher (List a)
+expectAll matcher list =
+  case list of
+    [] ->
+      Expect.pass
+    x :: xs ->
+      List.foldl (\item r ->
+        if r == Expect.pass then
+          matcher item
+        else
+          r
+      ) (matcher x) xs
+
+{-| Create a matcher that applies the given matcher to each item in a list.
+
+The created matcher will pass if at least one item satisfies the given matcher.
+-}
+some : Matcher a -> Matcher (List a)
+some matcher list =
+  case Expect.getFailure <| expectAny matcher list of
+    Just _ ->
+      Expect.fail "No items matched"
+    Nothing ->
+      Expect.pass
+
+expectAny : Matcher a -> Matcher (List a)
+expectAny matcher =
+  List.foldl (\item testResult ->
+    case Expect.getFailure testResult of
+      Just _ ->
+        matcher item
+      Nothing ->
+        testResult
+  ) (Expect.fail "Nothing")
+
 
 {-| Update the `ComponentState` with the given model and Cmd.
 

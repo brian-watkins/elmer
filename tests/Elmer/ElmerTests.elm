@@ -12,6 +12,7 @@ import Elmer.Html.Matchers as Matchers
 import Elmer.Platform.Command as Command
 import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
+import Elmer.Printer exposing (..)
 import Task
 
 all : Test
@@ -19,6 +20,8 @@ all =
   describe "Elmer Tests"
     [ mapToExpectationTests
     , initTests
+    , matchAllTests
+    , matchOneTests
     ]
 
 mapToExpectationTests =
@@ -101,3 +104,49 @@ initTests =
                 String.contains "Elmer encountered a command it does not know how to run" message
     ]
   ]
+
+matchAllTests : Test
+matchAllTests =
+  describe "each"
+  [ describe "when all items match"
+    [ test "it passes" <|
+      \() ->
+        let
+          items = [ 2, 4, 6, 8, 10 ]
+        in
+          each (\n -> Expect.equal (n % 2) 0) items
+            |> Expect.equal Expect.pass
+    ]
+  , describe "when one item fails to match"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = [ 2, 4, 5, 6, 8, 10]
+        in
+          each (\n -> Expect.equal (n % 2) 0) items
+            |> Expect.equal (Expect.fail (format [ message "An item failed to match" "0\n╷\n│ Expect.equal\n╵\n1" ]))
+    ]
+  ]
+
+matchOneTests : Test
+matchOneTests =
+  describe "some"
+    [ describe "when no items match"
+      [ test "it fails" <|
+        \() ->
+          let
+            items = [ 2, 4, 6, 8, 10 ]
+          in
+            some (\n -> Expect.equal (n % 17) 0) items
+              |> Expect.equal (Expect.fail "No items matched")
+      ]
+    , describe "when one item matches"
+      [ test "it passes" <|
+        \() ->
+          let
+            items = [ 2, 4, 5, 17, 8, 10]
+          in
+            some (\n -> Expect.equal (n % 17) 0) items
+              |> Expect.equal Expect.pass
+      ]
+    ]
