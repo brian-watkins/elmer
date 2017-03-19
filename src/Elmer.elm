@@ -8,6 +8,7 @@ module Elmer
         , expectNot
         , each
         , some
+        , hasSize
         , init
         )
 
@@ -17,7 +18,10 @@ module Elmer
 @docs ComponentState, componentState, init
 
 # Working with Matchers
-@docs Matcher, (<&&>), expectNot, each, one
+@docs Matcher, (<&&>), expectNot
+
+# List Matchers
+@docs each, some, hasSize
 
 # Working with Overrides
 @docs PlatformOverride
@@ -112,9 +116,7 @@ expectNot matcher =
         Expect.pass
   )
 
-{-| Create a matcher that applies the given matcher to each item in a list.
-
-The created matcher will pass if all items satisfy the given matcher.
+{-| Expect that all items in a list satisfy the given matcher.
 -}
 each : Matcher a -> Matcher (List a)
 each matcher list =
@@ -137,9 +139,7 @@ expectAll matcher list =
           r
       ) (matcher x) xs
 
-{-| Create a matcher that applies the given matcher to each item in a list.
-
-The created matcher will pass if at least one item satisfies the given matcher.
+{-| Expect that at least one item in a list satisfies the given matcher.
 -}
 some : Matcher a -> Matcher (List a)
 some matcher list =
@@ -159,6 +159,18 @@ expectAny matcher =
         testResult
   ) (Expect.fail "Nothing")
 
+{-| Expect that a list has the given size.
+-}
+hasSize : Int -> Matcher (List a)
+hasSize expectedCount list =
+  if List.length list == expectedCount then
+    Expect.pass
+  else
+    Expect.fail <|
+      format
+        [ message "Expected list to have size" (toString expectedCount)
+        , message "but it has size" (toString (List.length list))
+        ]
 
 {-| Update the `ComponentState` with the given model and Cmd.
 

@@ -127,7 +127,7 @@ expectElement expectFunction =
 
     find "li" componentState
       |> expectElements (\elements ->
-        Elmer.Html.Matchers.hasCount 4 elements
+        Elmer.hasSize 4 elements
       )
 
 -}

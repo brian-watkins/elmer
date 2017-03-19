@@ -22,6 +22,7 @@ all =
     , initTests
     , matchAllTests
     , matchOneTests
+    , hasSizeTests
     ]
 
 mapToExpectationTests =
@@ -150,3 +151,26 @@ matchOneTests =
               |> Expect.equal Expect.pass
       ]
     ]
+
+hasSizeTests : Test
+hasSizeTests =
+  describe "hasSize"
+  [ describe "when the list has the expected size"
+    [ test "it passes" <|
+      \() ->
+        let
+          items = [ 2, 4, 6, 8, 10 ]
+        in
+          hasSize 5 items
+            |> Expect.equal Expect.pass
+    ]
+  , describe "when the list does not have the expected size"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = [ 2, 4, 6, 8, 10 ]
+        in
+          hasSize 3 items
+            |> Expect.equal (Expect.fail (format [ message "Expected list to have size" "3", message "but it has size" "5"]))
+    ]
+  ]
