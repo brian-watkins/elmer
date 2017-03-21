@@ -23,6 +23,8 @@ all =
     , matchAllTests
     , matchOneTests
     , hasSizeTests
+    , expectNotTests
+    , andThenTests
     ]
 
 mapToExpectationTests =
@@ -172,5 +174,53 @@ hasSizeTests =
         in
           hasSize 3 items
             |> Expect.equal (Expect.fail (format [ message "Expected list to have size" "3", message "but it has size" "5"]))
+    ]
+  ]
+
+expectNotTests : Test
+expectNotTests =
+  describe "expectNot"
+  [ describe "when the matcher passes"
+    [ test "it fails" <|
+      \() ->
+        (nodeWithClassAndId "myClass" "myId")
+          |> Elmer.expectNot (Matchers.hasId "myId")
+          |> Expect.equal (Expect.fail "Expected not to be the case but it is")
+    ]
+  , describe "when the matcher fails"
+    [ test "it passes" <|
+      \() ->
+        (nodeWithClassAndId "myClass" "myId")
+          |> (Elmer.expectNot <| Matchers.hasId "someWrongId")
+          |> Expect.equal Expect.pass
+    ]
+  ]
+
+andThenTests : Test
+andThenTests =
+  describe "andThen"
+  [ describe "when all matchers pass"
+    [ test "it passes" <|
+      \() ->
+        (nodeWithClassAndId "myClass" "myId") |>
+          Matchers.hasId "myId"
+            <&&> Matchers.hasClass "myClass"
+            <&&> Matchers.hasClass "funClass"
+    ]
+  , describe "when the first matcher fails"
+    [ test "it fails with the first failure" <|
+      \() ->
+        (nodeWithClass "myClass")
+          |> (Matchers.hasId "root"
+                <&&> Matchers.hasClass "myClass")
+          |> Expect.equal (Expect.fail "Expected node to have id\n\n\troot\n\nbut it has no id")
+    ]
+  , describe "when the second matcher fails"
+    [ test "it fails with the second failure" <|
+      \() ->
+        (nodeWithId "root")
+          |> (Matchers.hasId "root"
+                <&&> Matchers.hasClass "myClass")
+          |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has no classes")
     ]
   ]
