@@ -4,7 +4,11 @@ import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
+import Elmer.Html exposing (HtmlElement)
 import Elmer.Html.Matchers as Matchers
+import Elmer.Printer exposing (..)
+import Html exposing (Html)
+import Html.Attributes as Attr
 
 all : Test
 all =
@@ -13,6 +17,7 @@ all =
     , hasClassTests
     , hasPropertyTests
     , hasIdTests
+    , hasStyleTests
     ]
 
 hasTextTests : Test
@@ -138,3 +143,56 @@ hasIdTests =
       ]
     ]
   ]
+
+hasStyleTests : Test
+hasStyleTests =
+  describe "hasStyle"
+  [ describe "when the element has no style"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasStyle ("position", "relative") (emptyNode "div")
+          |> Expect.equal (Expect.fail <|
+            format
+              [ message "Expected element to have style" "position: relative"
+              , description "but it has no style"
+              ]
+            )
+    ]
+  , describe "when the element has some other style"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasStyle ("position", "relative") (elementWithStyles [ ("left", "0px"), ("top", "20px") ])
+          |> Expect.equal (Expect.fail <|
+            format
+              [ message "Expected element to have style" "position: relative"
+              , message "but it has style" "left: 0px\ntop: 20px"
+              ]
+            )
+    ]
+  , describe "when the element has the style name but not the style value"
+    [ test "it fails" <|
+      \() ->
+        Matchers.hasStyle ("position", "relative") (elementWithStyles [("position", "absolute")])
+          |> Expect.equal (Expect.fail <|
+            format
+              [ message "Expected element to have style" "position: relative"
+              , message "but it has style" "position: absolute"
+              ]
+            )
+
+    ]
+  , describe "when the element has the style"
+    [ test "it passes" <|
+      \() ->
+        Matchers.hasStyle ("position", "relative") (elementWithStyles [("margin", "10px"), ("position", "relative")])
+          |> Expect.equal Expect.pass
+    ]
+  ]
+
+elementWithStyles : List (String, String) -> HtmlElement msg
+elementWithStyles styles =
+  let
+    html = Html.div [ Attr.style styles ] []
+  in
+    Native.Html.asHtmlElement html
+      |> Maybe.withDefault (nodeWithId "fail")

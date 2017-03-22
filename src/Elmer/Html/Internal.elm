@@ -6,6 +6,7 @@ module Elmer.Html.Internal exposing
   , attribute
   , properties
   , property
+  , styles
   , hasProperty
   , isCheckbox
   , isSubmitButton
@@ -64,6 +65,17 @@ properties element =
           Nothing
       )
     |> Dict.fromList
+
+styles : HtmlElement msg -> Maybe (Dict String String)
+styles element =
+  case Dict.get "STYLE" <| facts element of
+    Just (DictValue styles) ->
+      Just styles
+    Just _ ->
+      Nothing
+    Nothing ->
+      Nothing
+
 
 attributes : HtmlElement msg -> Dict String String
 attributes element =

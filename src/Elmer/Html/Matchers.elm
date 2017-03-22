@@ -3,11 +3,12 @@ module Elmer.Html.Matchers exposing
   , hasClass
   , hasProperty
   , hasId
+  , hasStyle
   )
 
 {-| Make expectations about an Html element.
 
-@docs hasText, hasId, hasClass, hasProperty
+@docs hasText, hasId, hasClass, hasStyle, hasProperty
 
 -}
 
@@ -20,6 +21,7 @@ import Elmer.Printer exposing (..)
 import Expect
 import String
 import Json.Decode as Json
+import Dict exposing (Dict)
 
 {-| Expect that an element has some text. This matcher will pass only if the element
 or any of its descendents contains some `Html.text` with the specified text.
@@ -55,7 +57,7 @@ hasClass className node =
 
 {-| Expect that an element has the specified property with the specified value.
 
-    hasProperty ( "innerHtml", "Fun <i>stuff</i>" ) node
+    hasProperty ( "innerHtml", "Fun <i>stuff</i>" ) element
 
 -}
 hasProperty : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
@@ -85,6 +87,35 @@ hasId expectedId node =
     Nothing ->
       Expect.fail (format [message "Expected node to have id" expectedId, description "but it has no id" ])
 
+{-| Expect that an element has the specified style.
+
+    hasStyle ("left", "20px") element
+
+-}
+hasStyle : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
+hasStyle (name, value) element =
+  case Internal.styles element of
+    Just styles ->
+      case Dict.get name styles of
+        Just styleValue ->
+          if styleValue == value then
+            Expect.pass
+          else
+            Expect.fail <| format
+              [ message "Expected element to have style" <| name ++ ": " ++ value
+              , message "but it has style" (printDict styles)
+              ]
+        Nothing ->
+          Expect.fail <| format
+            [ message "Expected element to have style" <| name ++ ": " ++ value
+            , message "but it has style" (printDict styles)
+            ]
+    Nothing ->
+      Expect.fail <| format
+        [ message "Expected element to have style" <| name ++ ": " ++ value
+        , description "but it has no style"
+        ]
+
 -- Private functions
 
 flattenTexts : List (HtmlNode msg) -> List String
@@ -105,3 +136,9 @@ flattenTexts children =
 printList : List String -> String
 printList list =
     String.join ", " list
+
+printDict : Dict String String -> String
+printDict dict =
+  Dict.toList dict
+    |> List.map (\(name, value) -> name ++ ": " ++ value)
+    |> String.join "\n"
