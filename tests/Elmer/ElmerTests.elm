@@ -25,6 +25,7 @@ all =
     , hasSizeTests
     , expectNotTests
     , andThenTests
+    , expectModelTests
     ]
 
 mapToExpectationTests =
@@ -222,5 +223,28 @@ andThenTests =
           |> (Matchers.hasId "root"
                 <&&> Matchers.hasClass "myClass")
           |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has no classes")
+    ]
+  ]
+
+expectModelTests : Test
+expectModelTests =
+  describe "expectModel"
+  [ describe "when there is a failure upstream"
+    [ test "it fails" <|
+      \() ->
+        let
+          initialState = Failed "You failed!"
+        in
+          Elmer.expectModel (\model -> Expect.fail "Shouldn't get here") initialState
+            |> Expect.equal (Expect.fail "You failed!")
+    ]
+  , describe "when there is no failure"
+    [ test "it runs the matcher on the current model" <|
+      \() ->
+        Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+          |> Elmer.expectModel (\model ->
+            Expect.equal model.name "Cool Person"
+          )
+          |> Expect.equal Expect.pass
     ]
   ]

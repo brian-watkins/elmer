@@ -10,12 +10,13 @@ module Elmer
         , some
         , hasSize
         , init
+        , expectModel
         )
 
 {-| Basic types and functions for working with ComponentStates and Matchers
 
 # Working with ComponentStates
-@docs ComponentState, componentState, init
+@docs ComponentState, componentState, init, expectModel
 
 # Working with Matchers
 @docs Matcher, (<&&>), expectNot
@@ -101,6 +102,25 @@ If one fails, then the conjoined matcher fails, otherwise it passes.
       else
         leftResult
   )
+
+{-| Make expectations about the model in its current state.
+
+    Elmer.componentState defaultModel view update
+      |> Elmer.Html.find "button"
+      |> Elmer.Html.Event.click
+      |> Elmer.expectModel (\model ->
+        Expect.equal model.clickCount 1
+      )
+
+Use Elmer to get the model into a certain state. Then use the normal facilities of
+elm-test to describe how the model should look in that state.
+-}
+expectModel : Matcher model -> Matcher (ComponentState model msg)
+expectModel matcher =
+  Internal.mapToExpectation (\component ->
+    matcher component.model
+  )
+
 
 {-| Expect that a matcher fails.
 -}
