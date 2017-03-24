@@ -2,13 +2,14 @@ module Elmer.Html.Matchers exposing
   ( hasText
   , hasClass
   , hasProperty
+  , hasAttribute
   , hasId
   , hasStyle
   )
 
 {-| Make expectations about an Html element.
 
-@docs hasText, hasId, hasClass, hasStyle, hasProperty
+@docs hasText, hasId, hasClass, hasStyle, hasAttribute, hasProperty
 
 -}
 
@@ -67,11 +68,29 @@ hasProperty (name, value) node =
       if value == propertyValue then
         Expect.pass
       else
-        Expect.fail (format [message "Expected node to have property" (name ++ " = " ++ value),
+        Expect.fail (format [message "Expected element to have property" (name ++ " = " ++ value),
           message "but it has" (name ++ " = " ++ propertyValue) ])
     Nothing ->
-      Expect.fail (format [message "Expected node to have property" (name ++ " = " ++ value),
+      Expect.fail (format [message "Expected element to have property" (name ++ " = " ++ value),
           description "but it has no property with that name" ])
+
+{-| Expect that an element has the specified attribute with the specified value.
+
+    hasAttribute ( "src", "http://fun.com" ) element
+
+-}
+hasAttribute : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
+hasAttribute (name, value) element =
+  case Internal.attribute name element of
+    Just attributeValue ->
+      if value == attributeValue then
+        Expect.pass
+      else
+        Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
+          message "but it has" (name ++ " = " ++ attributeValue) ])
+    Nothing ->
+      Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
+          description "but it has no attribute with that name" ])
 
 
 {-| Expect that an element has the specified id. No need to prepend the id with a pound sign.

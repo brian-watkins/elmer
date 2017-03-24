@@ -18,6 +18,7 @@ all =
     , hasPropertyTests
     , hasIdTests
     , hasStyleTests
+    , hasAttributeTests
     ]
 
 hasTextTests : Test
@@ -93,26 +94,69 @@ hasPropertyTests =
     [ test "it fails with the right message" <|
       \() ->
         Matchers.hasProperty ("innerHTML", "some <i>html</i>") (emptyNode "div")
-          |> Expect.equal (Expect.fail "Expected node to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
+          |> Expect.equal (Expect.fail "Expected element to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
     ]
   , describe "when the node has properties"
     [ describe "when the node does not have the specified property"
       [ test "it fails with the right message" <|
         \() ->
           Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
-            |> Expect.equal (Expect.fail "Expected node to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
+            |> Expect.equal (Expect.fail "Expected element to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
       ]
     , describe "when the node has the specified property"
       [ describe "when the value is incorrect"
         [ test "it fails" <|
           \() ->
             Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "blah"))
-              |> Expect.equal (Expect.fail "Expected node to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has\n\n\tinnerHTML = blah")
+              |> Expect.equal (Expect.fail "Expected element to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has\n\n\tinnerHTML = blah")
         ]
       , describe "when the value is correct"
         [ test "it passes" <|
           \() ->
             Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "some <i>html</i>"))
+              |> Expect.equal Expect.pass
+        ]
+      ]
+    ]
+  ]
+
+elementWithAttributes : List (String, String) -> HtmlElement msg
+elementWithAttributes attributes =
+  let
+    attrs = List.map (\(name, value) -> Attr.attribute name value) attributes
+    html = Html.div attrs []
+  in
+    Native.Html.asHtmlElement html
+      |> Maybe.withDefault (nodeWithId "fail")
+
+
+hasAttributeTests : Test
+hasAttributeTests =
+  describe "hasAttribute"
+  [ describe "when the node has no attributes"
+    [ test "it fails with the right message" <|
+      \() ->
+        Matchers.hasAttribute ("data-fun-attribute", "something") (emptyNode "div")
+          |> Expect.equal (Expect.fail (format [ message "Expected element to have attribute" "data-fun-attribute = something", description "but it has no attribute with that name" ]))
+    ]
+  , describe "when the element has attributes"
+    [ describe "when the node does not have the specified attribute"
+      [ test "it fails with the right message" <|
+        \() ->
+          Matchers.hasAttribute ("data-fun-attribute", "something") (elementWithAttributes [("someProperty", "blah")])
+            |> Expect.equal (Expect.fail (format [ message "Expected element to have attribute" "data-fun-attribute = something", description "but it has no attribute with that name" ]))
+      ]
+    , describe "when the element has the specified attribute"
+      [ describe "when the value is incorrect"
+        [ test "it fails" <|
+          \() ->
+            Matchers.hasAttribute ("data-fun-attribute", "something") (elementWithAttributes [("data-fun-attribute", "blah")])
+              |> Expect.equal (Expect.fail ( format [ message "Expected element to have attribute" "data-fun-attribute = something", message "but it has" "data-fun-attribute = blah" ]))
+        ]
+      , describe "when the value is correct"
+        [ test "it passes" <|
+          \() ->
+            Matchers.hasAttribute ("data-fun-attribute", "something") (elementWithAttributes [("data-fun-attribute", "something")])
               |> Expect.equal Expect.pass
         ]
       ]
