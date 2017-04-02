@@ -1,105 +1,149 @@
 module Elmer.Platform exposing
-  ( Intention(..)
-  , PlatformOverride(..)
-  , cmdValue
-  , subValue
-  , toCmd
-  , toSub
-  , cmdData
-  , subData
-  , override
-  , batchOverride
-  , mapWithOverrides
-  , mapStateCommand
-  , generateCommand
+  ( Spy
+  , Stub
+  , spy
+  , expectSpy
+  , stub
+  , batchStub
+  , use
   )
 
+{-| Functions for spying on and stubbing functions during tests.
+
+# Spy on a Function
+@docs Spy, spy, expectSpy
+
+# Stub a Function
+@docs Stub, stub, batchStub, use
+
+-}
+
+import Expect
+import Elmer exposing (Matcher)
 import Elmer.Internal as Internal exposing (..)
+import Elmer.Platform.Internal as Platform
+import Elmer.Printer exposing (..)
 
-type Intention a msg subMsg
-    = Leaf (LeafData a)
-    | Tree (TreeData a subMsg msg)
-    | Batch (List a)
-    | Unknown
+{-| Represents a function that has been spied on.
+-}
+type alias Spy =
+  Platform.Spy
 
-type alias TreeData a subMsg msg =
-    { tree : a
-    , tagger : subMsg -> msg
-    }
+{-| Spy on a function
 
-type alias LeafData a =
-    { intention : a
-    , home : String
-    }
+Use a spy when you want to know that a function was called, but you don't care to
+describe the consequences of that function.
 
-type PlatformOverride =
-  PlatformOverride (() -> Bool)
+Pass in a string to identify the spy and a function that returns the
+function you want spy on. When the spied upon function is called, Elmer will record that it
+has been called and then call through to the original function.
 
-override : (() -> a) -> (b -> c) -> PlatformOverride
-override namingFunc overridingFunc =
-  PlatformOverride <|
+    spy "my-spy" (\_ -> MyComponent.someFunction) componentState
+      |> expectSpy "my-spy" (wasCalled 0)
+
+-}
+spy : String -> (() -> a) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+spy name func =
+  use [ spyStub name func ]
+
+spyStub : String -> (() -> a) -> Platform.Stub
+spyStub name namingFunc =
+  Platform.Stub <|
     \() ->
-      Native.Platform.swizzle namingFunc overridingFunc
+      Platform.spyOn name namingFunc
 
-batchOverride : List PlatformOverride -> PlatformOverride
-batchOverride overrides =
-  PlatformOverride <|
-    \() ->
-      executeOverrides overrides
 
-mapWithOverrides : String -> List PlatformOverride -> (Component model msg -> ComponentState model msg) -> ComponentState model msg -> ComponentState model msg
-mapWithOverrides platformType overrides mapper =
-  Internal.map (\componentState ->
-    if executeOverrides overrides then
-      mapper componentState
-        |> restore
-    else
-      "Failed to override " ++ platformType ++ "!"
-        |> Failed
-        |> restore
+{-| Make an expectation about a spy.
+
+    spy "my-spy" (\_ -> MyComponent.someFunction) componentState
+      |> expectSpy "my-spy" (wasCalled 0)
+
+-}
+expectSpy : String -> Matcher Spy -> Elmer.ComponentState model msg -> Expect.Expectation
+expectSpy name matcher =
+  Internal.mapToExpectation (\component ->
+    case Platform.spyData name of
+      Just spyData ->
+        matcher spyData
+      Nothing ->
+        Expect.fail <|
+          format
+            [ message "Attempted to make expectations about a spy" name
+            , description "but it has not been registered as a spy"
+            ]
   )
 
-executeOverrides : List PlatformOverride -> Bool
-executeOverrides overrides =
-  List.foldl (\(PlatformOverride func) cur -> cur && func ()) True overrides
+{-| Represents a stubbed function.
+-}
+type alias Stub
+  = Platform.Stub
+
+{-| Combine a List of Stubs into a single Stub.
+-}
+batchStub : List Stub -> Stub
+batchStub overrides =
+  Platform.Stub <|
+    \() ->
+      Platform.installStubs overrides
 
 
-restore : ComponentState model msg -> ComponentState model msg
-restore stateResult =
-  if Native.Platform.restoreSwizzled () then
-    stateResult
-  else
-    Failed "Failed to restore swizzled functions! (This should never happen)"
+{-| Stub a function.
 
+The first argument is a function that simply returns the function you want to
+stub. The second argument is a function with the same signature as the function
+to stub. It should return whatever you need it to return for your test.
 
-cmdData : Cmd msg -> Intention a msg subMsg
-cmdData command =
-  Native.Platform.asIntention command
+If you are stubbing a function that returns a `Cmd`, then your stub should return
+one of the fake commands described in `Elmer.Platform.Command`.
 
-cmdValue : Cmd a -> b
-cmdValue cmd =
-  Native.Platform.intentionValue cmd
+If you are stubbing a function that returns a `Sub`, then your stub should
+return a fake subscription; see `Subscription.fake`.
 
-toCmd : String -> a -> Cmd msg
-toCmd home data =
-  Native.Platform.toIntention home data
+Note: This function merely creates a description of the stub; the function
+is not actually stubbed until you call `Elmer.Platform.use`.
 
-subData : Sub msg -> Intention a msg subMsg
-subData subscription =
-  Native.Platform.asIntention subscription
+You could override `Task.perform` with a fake command that tags some data like so:
 
-subValue : Sub a -> b
-subValue sub =
-  Native.Platform.intentionValue sub
+    stub (\_ -> Task.perform) (\tagger task ->
+      Elmer.Platform.Command.fake (tagger "some data")
+    )
 
-toSub : String -> a -> Sub msg
-toSub home data =
-  Native.Platform.toIntention home data
+-}
+stub : (() -> a) -> (b -> c) -> Stub
+stub namingFunc stubbingFunc =
+  Platform.Stub <|
+    \() ->
+      Platform.stub namingFunc stubbingFunc
 
-mapStateCommand : (Component model msg -> Component model msg) -> Cmd msg
-mapStateCommand mapper =
-  toCmd "Elmer_MapState" mapper
+{-| Install stubs for use during the test.
 
-generateCommand : (Component model msg -> Cmd msg) -> Cmd msg
-generateCommand generator =
-  toCmd "Elmer_Generate" generator
+Suppose your component contains a button that,
+when clicked, issues a command to get the current date and updates the view. To
+get the current date, in your code you'll need to create a `Task` with `Date.now` and then
+generate a command with `Task.perform`. To describe this behavior in your test,
+you could do something like the following:
+
+    let
+      taskOverride = stub (\_ -> Task.perform) (\tagger task ->
+        Elmer.Platform.Command.fake (tagger (toDate "11/12/2016 5:30 pm"))
+      )
+    in
+      componentState
+        |> use [ taskOverride ]
+        |> Elmer.Html.find "#get-date"
+        |> Elmer.Html.Event.click
+        |> Elmer.Html.find "#current-date"
+        |> Elmer.Html.expectElement (
+          Elmer.Html.Matchers.hasText "11/12/2016 5:30 pm"
+        )
+
+-}
+use : List Stub -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+use stubs =
+  Internal.map (\component ->
+    if Platform.installStubs stubs then
+      Ready component
+    else
+      Failed "Failed to install stubs!"
+        |> Platform.clearStubs
+  )

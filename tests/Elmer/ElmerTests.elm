@@ -9,6 +9,7 @@ import Elmer exposing (..)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Html
 import Elmer.Html.Matchers as Matchers
+import Elmer.Platform
 import Elmer.Platform.Command as Command
 import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
@@ -70,17 +71,13 @@ initTests =
         let
           initialState = Failed "You failed!"
         in
-          Elmer.init ( InitApp.defaultModel "", Cmd.none ) initialState
+          Elmer.init (\() -> (InitApp.defaultModel "", Cmd.none)) initialState
             |> Expect.equal (Failed "You failed!")
     ]
   , let
       state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
-        |> Command.use [ Elmer.Http.spy ] (\s ->
-          let
-            initPair = InitApp.init { baseUrl = "http://fun.com/api" }
-          in
-            Elmer.init initPair s
-        )
+        |> Elmer.Platform.use [ Elmer.Http.spy ]
+        |> Elmer.init (\() -> InitApp.init { baseUrl = "http://fun.com/api" })
     in
       describe "when there is no failure"
       [ test "it sets the model" <|
@@ -98,7 +95,7 @@ initTests =
       \() ->
         let
           state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
-            |> Elmer.init ( InitApp.defaultModel "", Task.perform InitApp.Tag (Task.succeed "Yo") )
+            |> Elmer.init (\() -> (InitApp.defaultModel "", Task.perform InitApp.Tag (Task.succeed "Yo")) )
         in
           case state of
             Ready _ ->

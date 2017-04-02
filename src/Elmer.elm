@@ -1,7 +1,6 @@
 module Elmer
     exposing
         ( ComponentState
-        , PlatformOverride
         , Matcher
         , componentState
         , (<&&>)
@@ -24,9 +23,6 @@ module Elmer
 # List Matchers
 @docs each, some, hasSize
 
-# Working with Overrides
-@docs PlatformOverride
-
 -}
 
 import Html exposing (Html)
@@ -36,7 +32,7 @@ import Native.Html
 
 import Expect
 import Elmer.Internal as Internal
-import Elmer.Platform as Platform
+import Elmer.Platform.Internal as Platform
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 
@@ -44,13 +40,6 @@ import Elmer.Printer exposing (..)
 -}
 type alias ComponentState model msg
   = Internal.ComponentState model msg
-
-{-| Represents a request to override a platform function.
-
-See `Elmer.Platform.Command.override` and `Elmer.Platform.Subscription.override` for examples.
--}
-type alias PlatformOverride
-  = Platform.PlatformOverride
 
 {-| Generic type for functions that pass or fail.
 
@@ -194,12 +183,24 @@ hasSize expectedCount list =
 
 {-| Update the `ComponentState` with the given model and Cmd.
 
-Useful for testing `init` functions.
+The current model will be replaced by the given model and the given command
+will then be executed. This is most useful for testing `init` functions.
+
+The first argument takes a wrapper around whatever function produces the initial
+model and command. This allows Elmer to evaluate the initializing function lazily,
+in case any stubs need to be applied.
+
+    Elmer.componentState MyComponent.defaultModel MyComponent.view MyComponent.update
+      |> init (\() -> MyComponent.init)
+      |> Elmer.Html.find "#title"
+      |> Elmer.Html.expectElementExists
+
 -}
-init : (model, Cmd msg) -> ComponentState model msg -> ComponentState model msg
-init ( initModel, initCommand ) =
+init : (() -> (model, Cmd msg)) -> ComponentState model msg -> ComponentState model msg
+init initThunk =
   Internal.map (\component ->
     let
+      (initModel, initCommand) = initThunk ()
       updatedComponent = { component | model = initModel }
     in
       case Runtime.performCommand initCommand updatedComponent of

@@ -2,22 +2,22 @@ var _brian_watkins$elmer$Native_Platform = function() {
 
   var asIntention = function(intention) {
     if (intention.type == "leaf") {
-      return _brian_watkins$elmer$Elmer_Platform$Leaf(asLeafData(intention))
+      return _brian_watkins$elmer$Elmer_Platform_Internal$Leaf(asLeafData(intention))
     }
 
     if (intention.type == "map") {
-      return _brian_watkins$elmer$Elmer_Platform$Tree(asTreeData(intention))
+      return _brian_watkins$elmer$Elmer_Platform_Internal$Tree(asTreeData(intention))
     }
 
     if (intention.type == "node") {
-      return _brian_watkins$elmer$Elmer_Platform$Batch(asBatch(intention))
+      return _brian_watkins$elmer$Elmer_Platform_Internal$Batch(asBatch(intention))
     }
 
-    return _brian_watkins$elmer$Elmer_Platform$Unknown
+    return _brian_watkins$elmer$Elmer_Platform_Internal$Unknown
   }
 
   var asLeafData = function(intention) {
-    return A2(_brian_watkins$elmer$Elmer_Platform$LeafData,
+    return A2(_brian_watkins$elmer$Elmer_Platform_Internal$LeafData,
       intention,
       intention.home
     );
@@ -27,7 +27,7 @@ var _brian_watkins$elmer$Native_Platform = function() {
     var tagger = intention.tagger
     var mappedIntention = intention.tree
 
-    return (A2)(_brian_watkins$elmer$Elmer_Platform$TreeData,
+    return (A2)(_brian_watkins$elmer$Elmer_Platform_Internal$TreeData,
       mappedIntention,
       tagger
     );
@@ -80,12 +80,63 @@ var _brian_watkins$elmer$Native_Platform = function() {
     return true
   }
 
+  var countCalls = function(name, funcName) {
+    return function () {
+      spies[name].calls += 1
+      return swizzledFunctions[funcName](arguments[0])
+    }
+  };
+
+  var spies = {}
+
+  var spy = function(name, fun) {
+    var methodToSpyOn = findFunctionToSwizzle(fun)
+
+    if (!methodToSpyOn) {
+      return false
+    }
+
+    spies[name] =
+      { name: name
+      , calls: 0
+      }
+
+    swizzledFunctions[methodToSpyOn] = eval(methodToSpyOn)
+    eval(methodToSpyOn + " = countCalls(name, methodToSpyOn)")
+
+    return true;
+  }
+
+  var spyData = function(name) {
+    var data = spies[name]
+
+    if (data) {
+      var spyData = (A2)(_brian_watkins$elmer$Elmer_Platform_Internal$Spy,
+        data.name,
+        data.calls
+      );
+
+      return _elm_lang$core$Maybe$Just(spyData);
+    }
+
+    return _elm_lang$core$Maybe$Nothing;
+  }
+
+  var clearSpies = function() {
+    spies = {};
+
+    return true;
+  }
+
   return {
       asIntention: asIntention,
       intentionValue: intentionValue,
       toIntention: F2(toIntention),
       swizzle: F2(swizzle),
-      restoreSwizzled: restoreSwizzled
+      restoreSwizzled: restoreSwizzled,
+      spy: F2(spy),
+      spyData: spyData,
+      clearSpies: clearSpies
   };
 
 }();

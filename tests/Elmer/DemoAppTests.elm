@@ -12,6 +12,7 @@ import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
+import Elmer.Platform
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
@@ -40,13 +41,12 @@ appFlowTests =
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
         ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
-          |> Command.use [ Elmer.Http.serve [ (successStub "Ok") ] ] (
-            ElmerNav.setLocation "/click"
-              >> Markup.find ".button"
-              >> Event.click
-              >> Event.click
-              >> Markup.find "#clickCount"
-            )
+          |> Elmer.Platform.use [ Elmer.Http.serve [ (successStub "Ok" ) ] ]
+          |> ElmerNav.setLocation "/click"
+          |> Markup.find ".button"
+          |> Event.click
+          |> Event.click
+          |> Markup.find "#clickCount"
           |> Markup.expectElement (Matchers.hasText "2 clicks!")
           |> Expect.equal (Expect.pass)
     , test "it makes multiple expectations about a node" <|
@@ -64,11 +64,10 @@ appFlowTests =
     , let
         initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
-          |> Command.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ] (
-            ElmerNav.setLocation "/request"
-              >> Markup.find "#requestButton"
-              >> Event.click
-            )
+          |> Elmer.Platform.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ]
+          |> ElmerNav.setLocation "/request"
+          |> Markup.find "#requestButton"
+          |> Event.click
       in
         describe "successful http request"
         [ test "it displays the response body" <|
@@ -83,11 +82,10 @@ appFlowTests =
     , let
         initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
-          |> Command.use [ Elmer.Http.serve [ failureStub ] ] (
-            ElmerNav.setLocation "/request"
-              >> Markup.find "#requestButton"
-              >> Event.click
-            )
+          |> Elmer.Platform.use [ Elmer.Http.serve [ failureStub ] ]
+          |> ElmerNav.setLocation "/request"
+          |> Markup.find "#requestButton"
+          |> Event.click
       in
         describe "unsuccessful http request"
         [ test "it does not display a request output" <|
@@ -105,7 +103,7 @@ appFlowTests =
 
 fakeTaskPerform : Time -> (Time -> msg) -> Task Never Time -> Cmd msg
 fakeTaskPerform time tagger task =
-  Command.stub (tagger time)
+  Command.fake (tagger time)
 
 timeAppTests : Test
 timeAppTests =
@@ -114,10 +112,11 @@ timeAppTests =
     \() ->
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskOverride = Command.override (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
+        taskOverride = Elmer.Platform.stub (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
       in
         Markup.find ".button" initialState
-          |> Command.use [ taskOverride ] Event.click
+          |> Elmer.Platform.use [ taskOverride ]
+          |> Event.click
           |> Markup.find "#currentTime"
           |> Markup.expectElement (Matchers.hasText "Time: 3000")
   ]

@@ -7,6 +7,7 @@ import Elmer exposing (..)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html.Matchers as Matchers
+import Elmer.Platform
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 import Elmer.Navigation as ElmerNav
@@ -21,7 +22,7 @@ all =
 
 subTask : Cmd App.MsgB
 subTask =
-  Command.stub (HaveFun "bowling")
+  Command.fake (HaveFun "bowling")
 
 
 mapCommand =
@@ -31,7 +32,7 @@ mapCommand =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          mapCommand = Cmd.map DoFun subTask
+          mapCommand = \() -> Cmd.map DoFun subTask
         in
           Command.send mapCommand initialState
             |> Markup.find "#root"
@@ -40,7 +41,7 @@ mapCommand =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          mapCommand = Cmd.map DoFun subTask
+          mapCommand = \() -> Cmd.map DoFun subTask
         in
           Command.send mapCommand initialState
             |> Markup.find "#click-display"
@@ -54,7 +55,7 @@ mapCommand =
         let
           initialState = Elmer.componentState App.defaultParentModel App.parentView App.parentUpdate
           mapCommand = Cmd.map DoFun subTask
-          parentMapCommand = Cmd.map MsgAWrapper mapCommand
+          parentMapCommand = \() -> Cmd.map MsgAWrapper mapCommand
         in
           Command.send parentMapCommand initialState
             |> Markup.find "#child-view"
@@ -64,7 +65,7 @@ mapCommand =
         let
           initialState = Elmer.componentState App.defaultParentModel App.parentView App.parentUpdate
           mapCommand = Cmd.map DoFun subTask
-          parentMapCommand = Cmd.map MsgAWrapper mapCommand
+          parentMapCommand = \() -> Cmd.map MsgAWrapper mapCommand
         in
           Command.send parentMapCommand initialState
             |> Markup.find "#click-display"
@@ -74,16 +75,12 @@ mapCommand =
     , describe "when the mapped command has a custom update method"
       [ test "it handles a mapped message from the child view" <|
         \() ->
-          let
-            initialState = ElmerNav.navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
-          in
-            initialState
-              |> Command.use [ ElmerNav.spy ] (
-                Markup.find "#change-location"
-                  >> Event.click
-                  >> Markup.find "#fun-stuff"
-                )
-              |> Markup.expectElement (Matchers.hasText "Fun things!")
+          ElmerNav.navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
+            |> Elmer.Platform.use [ ElmerNav.spy ]
+            |> Markup.find "#change-location"
+            |> Event.click
+            |> Markup.find "#fun-stuff"
+            |> Markup.expectElement (Matchers.hasText "Fun things!")
       ]
     ]
   ]

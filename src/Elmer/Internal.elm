@@ -58,9 +58,24 @@ mapToExpectation mapper componentStateResult =
   case componentStateResult of
     Ready componentState ->
       mapper componentState
+        |> restoreOverrides
+        |> clearSpies
     Failed message ->
       Expect.fail message
 
+restoreOverrides : Expect.Expectation -> Expect.Expectation
+restoreOverrides expectation =
+  if Native.Platform.restoreSwizzled () then
+    expectation
+  else
+    Expect.fail "Failed to restore swizzled functions! (This should never happen)"
+
+clearSpies : Expect.Expectation -> Expect.Expectation
+clearSpies expectation =
+  if Native.Platform.clearSpies () then
+    expectation
+  else
+    Expect.fail "Failed to clear spies! (This should never happen)"
 
 boolToString : Bool -> String
 boolToString bool =

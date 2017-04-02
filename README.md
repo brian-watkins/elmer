@@ -263,19 +263,19 @@ We first create a function in our test with the same signature as `Task.perform`
 ```
 fakeTaskPerform : Time -> (Time -> msg) -> Task Never Time -> Cmd msg
 fakeTaskPerform time tagger _ =
-  Command.stub (tagger time)
+  Command.fake (tagger time)
 ```
 
-Here, we use `Elmer.Platform.Command.stub` to create a command whose effect is the message we provide.
+Here, we use `Elmer.Platform.Command.fake` to create a command whose effect is the message we provide.
 This lets us specify exactly what time should be returned for the purpose of our test.
 
 Now we update our test to override `Task.perform` with `fakeTaskPerform`. We use
 two functions to do this:
 
-- `Elmer.Platform.Command.override` allows us to specify which `Cmd`-generating function to
+- `Elmer.Platform.stub` allows us to specify which `Cmd`-generating function to
 override and provide the alternate implementation.
-- `Elmer.Platform.Command.use` ensures that, during the appropriate portion of our test,
-`Cmd`-generating functions will be replaced with the alternate implementations we specify.
+- `Elmer.Platform.use` ensures that, during our test, the relevant
+`Cmd`-generating function will be replaced with the alternate implementation we specify.
 
 ```
 timeAppTests : Test
@@ -285,10 +285,11 @@ timeAppTests =
     \() ->
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskPerformOverride = Elmer.Platform.Command.override (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
+        taskPerformStub = Elmer.Platform.stub (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
       in
         Elmer.Html.find ".button" initialState
-          |> Elmer.Platform.Command.use [ taskPerformOverride ] Event.click
+          |> Elmer.Platform.use [ taskPerformOverride ]
+          |> Event.click
           |> Elmer.Html.find "#currentTime"
           |> Elmer.Html.expectElement (Matchers.hasText "Time: 3000")
   ]
@@ -361,7 +362,7 @@ In this case, a GET request to the given route will result in a response with th
 See `Elmer.Http.Stub` for the full list of builder functions. (With more on the way ...)
 
 Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.serve` function
-along with `Elmer.Platform.Command.use` to override `Http.send` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during a portion of your test.
+along with `Elmer.Platform.use` to override `Http.send` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during your test.
 When your application code calls `Http.send`, the request will be checked against the
 provided stubs and if a match occurs, the given response will be returned.
 
@@ -372,10 +373,11 @@ that a request is made to a specific route with the search terms in the query st
 
 ```
 initialComponentState
+  |> Elmer.Platform.use [ Elmer.Http.serve [ stubbedResponse ] ]
   |> Elmer.Html.find "input[name='query']"
   |> Elmer.Html.Event.input "Fun Stuff"
   |> Elmer.Html.find "#search-button"
-  |> Elmer.Platform.Command.use [ Elmer.Http.serve stubbedResponse ] Elmer.Html.Event.click
+  |> Elmer.Html.Event.click
   |> Elmer.Http.expectGET "http://fake.com/search" (
     Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
   )
@@ -383,7 +385,7 @@ initialComponentState
 
 If you don't care to describe the behavior of your app after the response from a request is
 received -- that is, if you don't care to create a stubbed response for some request -- you
-can provide `Elmer.Http.spy` to `Elmer.Platform.Command.use` and it will override the `Http.send`
+can provide `Elmer.Http.spy` to `Elmer.Platform.use` and it will override the `Http.send`
 function, merely recording any requests it receives.
 
 See `Elmer.Http` and `Elmer.Http.Matchers` for more.
@@ -401,7 +403,7 @@ Elmer with the information it needs to process location updates as they occur in
 
 You can send a command to update the location manually with the `Elmer.Navigation.setLocation` function.
 If your component produces commands to update the location using `Navigation.newUrl` or
-`Navigation.modifyUrl`, your tests you should provide `Elmer.Platform.Command.use` with `Elmer.Navigation.spy`
+`Navigation.modifyUrl`, your tests you should provide `Elmer.Platform.use` with `Elmer.Navigation.spy`
 so that Elmer will be able to record and process location updates.
 
 You can write an expectation about the current location with `Elmer.Navigation.expectLocation`.
@@ -438,11 +440,12 @@ to expect that the command was sent.
 ### Subscriptions
 
 Using subscriptions, your component can register to be notified when certain effects occur.
-To describe the behavior of a component that has subscriptions, you'll need to do two things:
+To describe the behavior of a component that has subscriptions, you'll need to do these things:
 
-1. Override the function that generates the subscription using `Elmer.Platform.Subscription.use` and
-`Elmer.Platform.Subscription.override` and replace it with a `Elmer.Platform.Subscription.spy`
-2. Simulate the effect you've subscribed to receive with `Subscription.send`
+1. Override the function that generates the subscription using `Elmer.Platform.stub`
+and replace it with a fake subscription using `Elmer.Platform.Subscription.fake`
+2. Register the subscriptions using `Elmer.Platform.Subscription.with`
+2. Simulate the effect you've subscribed to receive with `Elmer.Platform.Subscription.send`
 
 Let's test-drive a component that subscribes to receive the time every second. We'll
 begin by writing a test to drive out the basics of our component.
@@ -496,12 +499,13 @@ timeSubscriptionTest =
   [ test "it prints the number of seconds" <|
     \() ->
       let
-        timeOverride = Elmer.Platform.Subscription.override (\_ -> Time.every) (\_ tagger ->
-            Elmer.Platform.Subscription.spy "timeEffect" tagger
+        timeStub = Elmer.Platform.stub (\_ -> Time.every) (\_ tagger ->
+            Elmer.Platform.Subscription.fake "timeEffect" tagger
           )
       in
         Elmer.componentState App.defaultModel App.view App.update
-          |> Elmer.Platform.Subscription.use [ timeOverride ] App.subscriptions
+          |> Elmer.Platform.use [ timeOverride ]
+          |> Elmer.Platform.Subscription.with (\() -> App.subscriptions)
           |> Elmer.Platform.Subscription.send "timeEffect" (3 * 1000)
           |> Elmer.Html.find "#num-seconds"
           |> Elmer.Html.expectElement ( Matchers.hasText "3 seconds" )
@@ -546,6 +550,56 @@ subscriptions =
 And now our test should pass! Notice that we were able to test drive our component without
 our tests knowing how that component actually deals with the effect from the Time
 subscription.
+
+### Spies and Stubs
+
+Elmer generalizes the pattern for managing the effects of `Subs` and `Cmds`, allowing
+you to spy on or stub any function you like.
+
+Suppose you need to write a test that expects a certain function to be called, but
+you don't need to describe the resulting behavior. You can spy on a function with
+`Elmer.Platform.spy` and make expectations about it with `Elmer.Platform.expectSpy`.
+
+For example, suppose you want to ensure that a component is calling a specific
+function in another module for parsing some string. You have tests for the
+parsing function itself; you just need to know that your component is using it.
+
+```
+parseTest : Test
+parseTest =
+  describe "when the string is submitted"
+  [ test "it passes it to the parsing module" <|
+    \() ->
+      Elmer.componentState App.defaultModel App.view App.update
+        |> Elmer.Platform.spy "parser-spy" (\() -> MyParserModule.parse)
+        |> Elmer.Html.find "input[type='text']"
+        |> Elmer.Html.Event.input "A string to be parsed"
+        |> Elmer.Platform.expectSpy "parser-spy" (wasCalled 1)
+  ]
+```
+
+Elmer also allows you to stub any function. Suppose that you are testing a routing
+module. Given a certain route, you want to see that the result of a certain
+component's view function is displayed. You could write the test like so:
+
+```
+routeTest : Test
+routeTest =
+  describe "when the /things route is accessed"
+  [ test "it shows the things" <|
+    \() ->
+      let
+        thingViewStub = Elmer.Platform.stub
+          (\() -> ThingsModule.view)
+          (\_ -> Html.div [ Html.Attributes.id "thingsView" ] [])
+      in
+        Elmer.navigationComponentState App.defaultModel App.view App.update App.locationParser
+          |> Elmer.Platform.use [ thingViewStub ]
+          |> Elmer.Navigation.setLocation "http://fun.com/things"
+          |> Elmer.Html.find "#thingsView"
+          |> Elmer.Html.expectElementExists
+  ]
+```
 
 ### Development
 

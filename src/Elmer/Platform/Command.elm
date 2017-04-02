@@ -1,14 +1,11 @@
 module Elmer.Platform.Command exposing
   ( fail
-  , stub
+  , fake
   , defer
   , resolveDeferred
   , dummy
   , expectDummy
   , send
-  , use
-  , override
-  , batchOverride
   )
 
 {-| Functions for dealing with commands during your tests.
@@ -18,7 +15,7 @@ describe the behavior of a component under whatever conditions you need.
 
 To manage the effects of a command, you'll need to do two things.
 
-1. Override the function in your code that produces the command and replace
+1. Stub the function in your code that produces the command and replace
 it with a function that returns one of the fake commands described below.
 
 2. Enjoy.
@@ -32,10 +29,7 @@ and [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigati
 -- See `Elmer.Http` and `Elmer.Navigation`, respectively.
 
 # Fake Commands
-@docs stub, dummy, expectDummy, fail
-
-# Override a Command
-@docs override, batchOverride, use
+@docs fake, dummy, expectDummy, fail
 
 # Defer a Command
 @docs defer, resolveDeferred
@@ -49,65 +43,9 @@ import Elmer exposing (Matcher)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
-import Elmer.Platform as Platform exposing (PlatformOverride)
+import Elmer.Platform.Internal as Platform
 import Expect
 
-{-| Combine a List of PlatformOverrides into a single override.
--}
-batchOverride : List Elmer.PlatformOverride -> Elmer.PlatformOverride
-batchOverride overrides =
-  Platform.batchOverride overrides
-
-{-| Override a function that generates a command.
-
-The first argument is a function that simply returns the function you want to
-override. The second argument is a function with the same signature as the function
-to override. It should return one of the fake commands described above, so that
-Elmer will know what to do.
-
-Note: This function merely creates a description of the override; the function
-is not actually overridden until you call `Command.use`.
-
-You could override `Task.perform` with a stubbed command that tags some data like so:
-
-    override (\_ -> Task.perform) (\tagger task ->
-      stub (tagger "some data")
-    )
-
--}
-override : (() -> a) -> (b -> c) -> Elmer.PlatformOverride
-override namingFunc overridingFunc =
-  Platform.override namingFunc overridingFunc
-
-{-| Use command overrides during a segment of your test.
-
-Suppose your component contains a button that,
-when clicked, issues a command to get the current date and updates the view. To
-get the current date, in your code you'll need to create a `Task` with `Date.now` and then
-generate a command with `Task.perform`. To describe this behavior in your test
-, you could do something like the following:
-
-    let
-      taskOverride = override (\_ -> Task.perform) (\tagger task ->
-        stub (tagger (toDate "11/12/2016 5:30 pm"))
-      )
-    in
-      componentState
-        |> find "#get-date"
-        |> use [ taskOverride ] click
-        |> find "#current-date"
-        |> expectElement (hasText "11/12/2016 5:30 pm")
-
--}
-use : List Elmer.PlatformOverride
-  -> (Elmer.ComponentState model msg -> Elmer.ComponentState model msg)
-  -> Elmer.ComponentState model msg
-  -> Elmer.ComponentState model msg
-use overrides mapper =
-  Platform.mapWithOverrides "commands" overrides (\componentState ->
-    Ready componentState
-      |> mapper
-  )
 
 {-| Generate a command that will cause the test to fail with the specified message.
 -}
@@ -120,8 +58,8 @@ fail message =
 When this command is processed, the message will be passed
 to the component's `update` function.
 -}
-stub : msg -> Cmd msg
-stub message =
+fake : msg -> Cmd msg
+fake message =
   Platform.toCmd "Elmer_Stub" message
 
 {-| Generate a dummy command.
@@ -159,11 +97,11 @@ expectDummy expectedIdentifier =
 {-| Defer a command for later processing.
 
 You might want to describe the behavior that occurs after a command
-in sent but before its effect is processed -- for example, the component could
+is sent but before its effect is processed -- for example, the component could
 indicate that network activity is occurring while waiting for a request to complete.
 
 When a deferred command is processed, any effect associated with that command will *not* be sent
-to he component's `update` function until `resolveDeferred` is called.
+to the component's `update` function until `resolveDeferred` is called.
 -}
 defer : Cmd msg -> Cmd msg
 defer command =
@@ -198,11 +136,21 @@ resolveDeferred =
 Use this function to send a command to your component. Any effect associated with this
 command will be processed accordingly. Elmer only knows how to process the fake commands
 described above.
+
+The first argument is a function that returns the command to be sent.
+We do this to allow Elmer to evaluate the command-generating function lazily,
+in case any stubbed functions need to be applied.
+
+    componentState
+      |> send (\() -> MyComponent.generateSomeCommand)
+      |> Elmer.Html.find ".some-class"
+      |> Elmer.Html.expectElementExists
+
 -}
-send : Cmd msg -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-send command =
+send : (() -> Cmd msg) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+send commandThunk =
     Internal.map (\state ->
-      Runtime.performCommand command state
+      Runtime.performCommand (commandThunk ()) state
         |> asComponentState
     )
 

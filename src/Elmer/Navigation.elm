@@ -20,8 +20,9 @@ module Elmer.Navigation
 
 -}
 
+import Elmer.Platform
 import Elmer.Platform.Command as Command
-import Elmer.Platform as Platform exposing (PlatformOverride)
+import Elmer.Platform.Internal as Platform
 import Elmer.Internal as Internal exposing (..)
 import Elmer exposing (Matcher)
 import Expect
@@ -55,25 +56,27 @@ navigationComponentState model view update parser =
         , subscriptions = Sub.none
         }
 
-{-| Override `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
+{-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
 records the location as it is set.
 
-You must use this function with `Elmer.Platform.Command.use` in order to make expectations
-about the location. Suppose you want to test a home button that sets the
+You must use this function with `Elmer.Platform.use` in order to make expectations
+about the location.
+
+Suppose you want to test a home button that sets the
 location to `/home` when clicked:
 
     componentState
-      |> Command.use [ Navigation.spy ] (\state ->
-        find "#home-button" state
-          |> click
-      )
+      |> Elmer.Platform.use [ Navigation.spy ]
+      |> Elmer.Html.find "#home-button"
+      |> Elmer.Html.Event.click
       |> Navigation.expectLocation "/home"
+
 -}
-spy : Elmer.PlatformOverride
+spy : Elmer.Platform.Stub
 spy =
-  Command.batchOverride
-    [ Command.override (\_ -> Navigation.newUrl) fakeNavigateCommand
-    , Command.override (\_ -> Navigation.modifyUrl) fakeNavigateCommand
+  Elmer.Platform.batchStub
+    [ Elmer.Platform.stub (\_ -> Navigation.newUrl) fakeNavigateCommand
+    , Elmer.Platform.stub (\_ -> Navigation.modifyUrl) fakeNavigateCommand
     ]
 
 fakeNavigateCommand : String -> Cmd msg
@@ -91,7 +94,7 @@ generateCommandForLocation url componentState =
       let
         message = handleLocationUpdate url locationParser
       in
-        Command.stub message
+        Command.fake message
     Nothing ->
       Cmd.none
 
@@ -131,9 +134,9 @@ setLocation location =
     case componentState.locationParser of
         Just locationParser ->
           let
-              command = fakeNavigateCommand location
+              commandThunk = \() -> fakeNavigateCommand location
           in
-              Command.send command (Ready componentState)
+              Command.send commandThunk (Ready componentState)
         Nothing ->
             Failed "setLocation failed because no locationParser was set"
   )

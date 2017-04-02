@@ -36,8 +36,9 @@ import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Internal as Internal exposing (..)
+import Elmer.Platform
 import Elmer.Platform.Command as Command
-import Elmer.Platform as Platform exposing (PlatformOverride)
+import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
@@ -56,7 +57,7 @@ type alias HttpRequestData
 
 {-| Override `Http.send` and register HttpResponseStubs to be returned
 when the appropriate request is received. Used in conjunction with
-`Elmer.Platform.Command.use`.
+`Elmer.Platform.use`.
 
 Suppose you have a component that requests information about a user when
 a button is clicked. You could register a stub for that request like so
@@ -67,31 +68,33 @@ a button is clicked. You could register a stub for that request like so
           "{\"name\":\"Super User\",\"type\":\"admin\"}"
     in
       componentState
+        |> Elmer.Platform.use [ serve [ stubbedResponse ] ]
         |> Markup.find "#request-data-button"
-        |> Elmer.Platform.Command.use [ serve [ stubbedResponse ] ] click
+        |> Elmer.Html.Event.click
         |> Markup.find "#data-result"
         |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
 
 -}
-serve : List HttpResponseStub -> Elmer.PlatformOverride
+serve : List HttpResponseStub -> Elmer.Platform.Stub
 serve responseStubs =
-  Command.override (\_ -> Http.send) (Server.stubbedSend responseStubs)
+  Elmer.Platform.stub (\_ -> Http.send) (Server.stubbedSend responseStubs)
 
 {-| Override `Http.send` and record requests as they are received.
-Used in conjunction with `Elmer.Platform.Command.use`.
+Used in conjunction with `Elmer.Platform.use`.
 
 Suppose you simply want to make an expectation about a request without
 describing the behavior that results when its response is received.
 
     componentState
+      |> Elmer.Platform.use [ spy ]
       |> Markup.find "#request-data-button"
-      |> Elmer.Platform.Command.use [ spy ] click
+      |> Elmer.Http.Event.click
       |> expectGET "http://fun.com/user" Elmer.Http.Matchers.hasBeenRequested
 
 -}
-spy : Elmer.PlatformOverride
+spy : Elmer.Platform.Stub
 spy =
-  Command.override (\_ -> Http.send) Server.dummySend
+  Elmer.Platform.stub (\_ -> Http.send) Server.dummySend
 
 
 {-| Clear any Http requests that may have been recorded at an earlier point

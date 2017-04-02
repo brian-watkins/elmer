@@ -9,7 +9,7 @@ import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Platform.Command as Command
-import Elmer.Platform as Platform exposing (PlatformOverride)
+import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
@@ -165,7 +165,7 @@ processResponse httpRequest tagger stub =
 generateCommand : HttpStub -> (Result Http.Error a -> msg) -> a -> Cmd msg
 generateCommand stub tagger data =
   let
-    command = Command.stub (tagger (Ok data))
+    command = Command.fake (tagger (Ok data))
   in
     if stub.deferResponse then
       Command.defer command
@@ -184,7 +184,7 @@ mapResponseError httpRequest tagger error =
         , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
         ]
     _ ->
-      Command.stub (tagger (Err error))
+      Command.fake (tagger (Err error))
 
 
 handleResponseError : HttpResponseResult -> Result Http.Error (Http.Response String)

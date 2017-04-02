@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer
 import Elmer.Internal exposing (..)
+import Elmer.Platform
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
@@ -14,20 +15,20 @@ import Time
 all : Test
 all =
   describe "Subscription Tests"
-  [ useTests
+  [ withTests
   , sendTests
   ]
 
-useTests : Test
-useTests =
-  describe "use"
+withTests : Test
+withTests =
+  describe "with"
   [ describe "when there is an upstream failure"
     [ test "it fails" <|
       \() ->
         let
           initialState = Failed "You Failed!"
         in
-          Subscription.use [] (\_ -> Sub.none) initialState
+          Subscription.with (\() _ -> Sub.none) initialState
             |> Expect.equal (Failed "You Failed!")
     ]
   , describe "when the override is not a function"
@@ -35,10 +36,11 @@ useTests =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          override = Subscription.override (\_ -> "Huh?") (\_ -> Sub.none)
+          override = Elmer.Platform.stub (\_ -> "Huh?") (\_ -> Sub.none)
         in
-          Subscription.use [ override ] (\_ -> Sub.none) initialState
-            |> Expect.equal (Failed "Failed to override subscriptions!")
+          Elmer.Platform.use [ override ] initialState
+            |> Subscription.with (\() _ -> Sub.none)
+            |> Expect.equal (Failed "Failed to install stubs!")
     ]
   ]
 
@@ -73,11 +75,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Subscription.override (\_ -> Time.every) (\interval tagger ->
-                  Subscription.spy ("my-spy-" ++ (toString interval)) tagger
+            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+                  Subscription.fake ("my-spy-" ++ (toString interval)) tagger
                 )
           in
-            Subscription.use [ override ] App.mappedSubscriptions initialState
+            Elmer.Platform.use [ override ] initialState
+              |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "someOtherSub" 37
               |> Expect.equal (Failed (
                 format
@@ -93,11 +96,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Subscription.override (\_ -> Time.every) (\interval tagger ->
-                  Subscription.spy ("fakeTime-" ++ (toString interval)) tagger
+            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+                  Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
-            Subscription.use [ override ] App.subscriptions initialState
+            Elmer.Platform.use [ override ] initialState
+              |> Subscription.with (\() -> App.subscriptions)
               |> Subscription.send "fakeTime-1000" 23000
               |> Markup.find "#time"
               |> Markup.expectElement ( Matchers.hasText "23 seconds" )
@@ -107,11 +111,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Subscription.override (\_ -> Time.every) (\interval tagger ->
-                  Subscription.spy ("fakeTime-" ++ (toString interval)) tagger
+            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+                  Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
-            Subscription.use [ override ] App.batchedSubscriptions initialState
+            Elmer.Platform.use [ override ] initialState
+              |> Subscription.with (\() -> App.batchedSubscriptions)
               |> Subscription.send "fakeTime-60000" (1000 * 60 * 37)
               |> Markup.find "#minute"
               |> Markup.expectElement ( Matchers.hasText "37 minutes" )
@@ -121,11 +126,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Subscription.override (\_ -> Time.every) (\interval tagger ->
-                  Subscription.spy ("fakeTime-" ++ (toString interval)) tagger
+            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+                  Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
-            Subscription.use [ override ] App.mappedSubscriptions initialState
+            Elmer.Platform.use [ override ] initialState
+              |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "fakeTime-3600000" (1000 * 60 * 60 * 18)
               |> Markup.find "#child-hours"
               |> Markup.expectElement ( Matchers.hasText "18 hours" )

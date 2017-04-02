@@ -60,6 +60,10 @@ update msg model =
     OtherWebServiceResponse (Err _) ->
       ( { model | otherDataResult = "Error!" }, Cmd.none )
 
+sendRequest : Model -> Cmd Msg
+sendRequest model =
+  Http.send WebServiceResponse <| fetchDataRequest model
+
 fetchDataRequest : Model -> Http.Request String
 fetchDataRequest model =
   Http.request

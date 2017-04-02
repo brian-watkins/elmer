@@ -6,7 +6,7 @@ module Elmer.Runtime
 
 import Elmer.Internal exposing (..)
 import Elmer.Printer exposing (..)
-import Elmer.Platform as Platform exposing (..)
+import Elmer.Platform.Internal as Platform exposing (..)
 import Dict exposing (Dict)
 
 type CommandResult model msg

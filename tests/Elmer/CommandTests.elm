@@ -21,7 +21,6 @@ all =
   , resolveDeferredCommandsTest
   , sendCommandTest
   , dummyCommandTests
-  , useTests
   ]
 
 elmerFailureCommandTest : Test
@@ -31,7 +30,7 @@ elmerFailureCommandTest =
     \() ->
       let
         initialState = Elmer.componentState App.defaultModel App.view App.update
-        result = Command.send (Command.fail "You failed!") initialState
+        result = Command.send (\() -> Command.fail "You failed!") initialState
       in
         Expect.equal (Failed "You failed!") result
   ]
@@ -45,7 +44,7 @@ elmerStubbedCommandTest =
         initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
         msg = MessageApp.RenderFirstMessage "Hey this is the message!"
       in
-        Command.send (Command.stub msg) initialState
+        Command.send (\() -> Command.fake msg) initialState
           |> Markup.find "#first-message"
           |> Markup.expectElement (Matchers.hasText "Hey this is the message!")
   ]
@@ -73,11 +72,12 @@ resolveDeferredCommandsTest =
     ]
   , let
       initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
-      deferredClickCommand = Command.stub ClickApp.DoClick
-                              |> Command.defer
-      state = Command.send deferredClickCommand initialState
-                |> Command.send deferredClickCommand
-                |> Command.send deferredClickCommand
+      deferredClickCommandThunk = \() ->
+        Command.fake ClickApp.DoClick
+          |> Command.defer
+      state = Command.send deferredClickCommandThunk initialState
+                |> Command.send deferredClickCommandThunk
+                |> Command.send deferredClickCommandThunk
     in
       describe "when there are deferred commands"
         [ test "it doesn't process deferred commands immediately" <|
@@ -108,7 +108,7 @@ sendCommandTest =
         let
           initialState = Failed "upstream failure"
         in
-          Command.send Cmd.none initialState
+          Command.send (\() -> Cmd.none) initialState
             |> Expect.equal initialState
     ]
   , describe "when there is no upstream failure"
@@ -116,7 +116,7 @@ sendCommandTest =
         \() ->
           let
             initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
-            result = Command.send (Command.stub (MessageApp.RenderFirstMessage "Did it!")) initialState
+            result = Command.send (\() -> Command.fake (MessageApp.RenderFirstMessage "Did it!")) initialState
           in
             case result of
               Ready updatedState ->
@@ -146,7 +146,7 @@ dummyCommandTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
           dummyCommand = Command.dummy "someCommand"
         in
-          Command.send dummyCommand initialState
+          Command.send (\() -> dummyCommand) initialState
             |> Command.expectDummy "fakeCommand"
             |> Expect.equal (Expect.fail (format [message "No dummy commands sent with identifier" "fakeCommand"]))
     ]
@@ -157,33 +157,8 @@ dummyCommandTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
           dummyCommand = Command.dummy "fakeCommand"
         in
-          Command.send dummyCommand initialState
+          Command.send (\() -> dummyCommand) initialState
             |> Command.expectDummy "fakeCommand"
             |> Expect.equal Expect.pass
-    ]
-  ]
-
-useTests : Test
-useTests =
-  describe "use"
-  [ describe "when there is an upstream failure"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Failed "You failed!"
-          override = Command.override (\_ -> Task.perform) (\_ _ -> Command.dummy "dummy")
-        in
-          Command.use [ override ] (Markup.find "#root") initialState
-            |> Expect.equal (Failed "You failed!")
-    ]
-  , describe "when the override is not a function"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-          override = Command.override (\_ -> "Huh?") (\_ _ -> Command.dummy "dummy")
-        in
-          Command.use [ override ] (Markup.find "#root") initialState
-            |> Expect.equal (Failed "Failed to override commands!")
     ]
   ]
