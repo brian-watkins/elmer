@@ -88,7 +88,7 @@ initTests =
       , test "it sends the command" <|
         \() ->
           state
-            |> Elmer.Http.expectGET "http://fun.com/api/token" HttpMatchers.hasBeenRequested
+            |> Elmer.Http.expectGET "http://fun.com/api/token" HttpMatchers.wasSent
       ]
   , describe "when the command fails"
     [ test "it fails" <|

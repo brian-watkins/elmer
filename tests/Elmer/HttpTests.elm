@@ -264,7 +264,7 @@ spyTests =
     describe "spy"
     [ test "it records any request" <|
       \() ->
-        ElmerHttp.expectGET "http://fun.com/fun.html" hasBeenRequested requestedState
+        ElmerHttp.expectGET "http://fun.com/fun.html" wasSent requestedState
     , test "it is as if the response never returned" <|
       \() ->
         Markup.find "#data-result" requestedState
@@ -312,7 +312,7 @@ expectRequestTests method func =
   [ describe "when there is an upstream error"
     [ test "it fails with the upstream error" <|
       \() ->
-        func "http://fun.com/fun" hasBeenRequested (Failed "Failed!")
+        func "http://fun.com/fun" wasSent (Failed "Failed!")
           |> Expect.equal (Expect.fail "Failed!")
     ]
   , describe "when the expected route contains a query string"
@@ -321,7 +321,7 @@ expectRequestTests method func =
         let
           initialState = componentStateWithRequests []
         in
-          func "http://fun.com/fun?type=amazing" hasBeenRequested initialState
+          func "http://fun.com/fun?type=amazing" wasSent initialState
             |> Expect.equal (Expect.fail (format
               [ message "The expected route contains a query string" "http://fun.com/fun?type=amazing"
               , description "Use the hasQueryParam matcher instead"
@@ -334,7 +334,7 @@ expectRequestTests method func =
         let
           initialState = componentStateWithRequests []
         in
-          func "http://fun.com/fun" hasBeenRequested initialState
+          func "http://fun.com/fun" wasSent initialState
             |> Expect.equal (Expect.fail (format
               [ message "Expected request for" (method ++ " http://fun.com/fun")
               , description "but no requests have been made"
@@ -350,7 +350,7 @@ expectRequestTests method func =
             request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
             initialState = componentStateWithRequests [ request1, request2 ]
           in
-            func "http://fun.com/awesome" hasBeenRequested initialState
+            func "http://fun.com/awesome" wasSent initialState
               |> Expect.equal (Expect.fail (format
                 [ message "Expected request for" (method ++ " http://fun.com/awesome")
                 , message "but only found these requests" "POST http://fun.com/fun\n\n\tGET http://awesome.com/awesome.html?stuff=fun"
@@ -364,7 +364,7 @@ expectRequestTests method func =
             request1 = testRequest "OTHER_METHOD" "http://fun.com/fun"
             initialState = componentStateWithRequests [ request1 ]
           in
-            func "http://fun.com/fun" hasBeenRequested initialState
+            func "http://fun.com/fun" wasSent initialState
               |> Expect.equal (Expect.fail (format
                 [ message "Expected request for" (method ++ " http://fun.com/fun")
                 , message "but only found these requests" "OTHER_METHOD http://fun.com/fun"
@@ -390,7 +390,7 @@ expectRequestTests method func =
               request1 = testRequest method "http://fun.com/fun.html"
               initialState = componentStateWithRequests [ request1 ]
             in
-              func "http://fun.com/fun.html" hasBeenRequested initialState
+              func "http://fun.com/fun.html" wasSent initialState
                 |> Expect.equal (Expect.pass)
         , describe "when the request has a query string"
           [ test "it passes" <|
@@ -437,7 +437,7 @@ resolveTests =
     [ describe "before resolve is called"
       [ test "it records the request" <|
         \() ->
-          ElmerHttp.expectGET "http://fun.com/fun.html" hasBeenRequested requestedState
+          ElmerHttp.expectGET "http://fun.com/fun.html" wasSent requestedState
       , test "it does not yet resolve the response" <|
         \() ->
           Markup.find "#data-result" requestedState

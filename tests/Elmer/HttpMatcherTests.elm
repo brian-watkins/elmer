@@ -11,7 +11,7 @@ all =
   describe "http matcher tests"
   [ hasAnyBodyTests
   , hasBodyTests
-  , hasBeenRequestedTests
+  , wasSentTests
   , hasQueryParamTests
   , hasHeaderTests
   ]
@@ -74,13 +74,13 @@ hasBodyTests =
     ]
   ]
 
-hasBeenRequestedTests : Test
-hasBeenRequestedTests =
-  describe "hasBeenRequested"
+wasSentTests : Test
+wasSentTests =
+  describe "wasSent"
   [ describe "when the request has been made"
     [ test "it passes" <|
       \() ->
-        Matchers.hasBeenRequested requestWithNoBody
+        Matchers.wasSent requestWithNoBody
           |> Expect.equal Expect.pass
     ]
   ]

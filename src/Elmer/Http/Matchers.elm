@@ -1,7 +1,7 @@
 module Elmer.Http.Matchers exposing
   ( hasAnyBody
   , hasBody
-  , hasBeenRequested
+  , wasSent
   , hasQueryParam
   , hasHeader
   )
@@ -15,7 +15,7 @@ appropriate time to allow Elmer to record the requests sent by the component
 under test.
 
 # Matchers
-@docs hasBeenRequested, hasAnyBody, hasBody, hasQueryParam, hasHeader
+@docs wasSent, hasAnyBody, hasBody, hasQueryParam, hasHeader
 -}
 
 import Expect
@@ -30,11 +30,11 @@ import Elmer.Printer exposing (..)
 {-| Match any request with the proper method and route as specified in
 `Elmer.Http.expectGET` etc.
 
-    expectGET "http://fake.com/fake" hasBeenRequested
+    expectGET "http://fake.com/fake" wasSent
 
 -}
-hasBeenRequested : Matcher Elmer.Http.HttpRequestData
-hasBeenRequested request =
+wasSent : Matcher Elmer.Http.HttpRequestData
+wasSent request =
   Expect.pass
 
 

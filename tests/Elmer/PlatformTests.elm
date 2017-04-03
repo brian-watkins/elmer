@@ -250,7 +250,7 @@ stubTests =
           Elmer.componentState HttpApp.defaultModel HttpApp.view HttpApp.update
             |> Elmer.Platform.use [ Elmer.Http.spy ]
             |> Command.send (\() -> HttpApp.sendRequest HttpApp.defaultModel)
-            |> Elmer.Http.expectGET "http://fun.com/fun.html" HttpMatchers.hasBeenRequested
+            |> Elmer.Http.expectGET "http://fun.com/fun.html" HttpMatchers.wasSent
       ]
     ]
   ]

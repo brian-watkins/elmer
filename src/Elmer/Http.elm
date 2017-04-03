@@ -89,7 +89,7 @@ describing the behavior that results when its response is received.
       |> Elmer.Platform.use [ spy ]
       |> Markup.find "#request-data-button"
       |> Elmer.Http.Event.click
-      |> expectGET "http://fun.com/user" Elmer.Http.Matchers.hasBeenRequested
+      |> expectGET "http://fun.com/user" Elmer.Http.Matchers.wasSent
 
 -}
 spy : Elmer.Platform.Stub
