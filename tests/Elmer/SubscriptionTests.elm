@@ -36,7 +36,8 @@ withTests =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          override = Elmer.Platform.stub (\_ -> "Huh?") (\_ -> Sub.none)
+          override = Elmer.Platform.spy "bad" (\_ -> "Huh?")
+            |> Elmer.Platform.andCallFake (\_ -> Sub.none)
         in
           Elmer.Platform.use [ override ] initialState
             |> Subscription.with (\() _ -> Sub.none)
@@ -75,7 +76,8 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
+             |> Elmer.Platform.andCallFake (\interval tagger ->
                   Subscription.fake ("my-spy-" ++ (toString interval)) tagger
                 )
           in
@@ -96,7 +98,8 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
+              |> Elmer.Platform.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
@@ -111,7 +114,8 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
+              |> Elmer.Platform.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
@@ -126,7 +130,8 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.stub (\_ -> Time.every) (\interval tagger ->
+            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
+              |> Elmer.Platform.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in

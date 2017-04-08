@@ -36,7 +36,7 @@ import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Internal as Internal exposing (..)
-import Elmer.Platform
+import Elmer.Platform exposing (andCallFake)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
@@ -75,9 +75,11 @@ a button is clicked. You could register a stub for that request like so
         |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
 
 -}
-serve : List HttpResponseStub -> Elmer.Platform.Stub
+serve : List HttpResponseStub -> Elmer.Platform.Spy
 serve responseStubs =
-  Elmer.Platform.stub (\_ -> Http.send) (Server.stubbedSend responseStubs)
+  Elmer.Platform.spy "Http.send" (\_ -> Http.send)
+    |> andCallFake (Server.stubbedSend responseStubs)
+
 
 {-| Override `Http.send` and record requests as they are received.
 Used in conjunction with `Elmer.Platform.use`.
@@ -92,9 +94,10 @@ describing the behavior that results when its response is received.
       |> expectGET "http://fun.com/user" Elmer.Http.Matchers.wasSent
 
 -}
-spy : Elmer.Platform.Stub
+spy : Elmer.Platform.Spy
 spy =
-  Elmer.Platform.stub (\_ -> Http.send) Server.dummySend
+  Elmer.Platform.spy "Http.send" (\_ -> Http.send)
+    |> andCallFake Server.dummySend
 
 
 {-| Clear any Http requests that may have been recorded at an earlier point

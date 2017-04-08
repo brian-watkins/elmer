@@ -16,7 +16,7 @@ import Elmer.Printer exposing (..)
 
 {-| Expect that a spy was called some number of times.
 -}
-wasCalled : Int -> Matcher Elmer.Platform.Spy
+wasCalled : Int -> Matcher Elmer.Platform.Calls
 wasCalled times spy =
   if spy.calls == times then
     Expect.pass

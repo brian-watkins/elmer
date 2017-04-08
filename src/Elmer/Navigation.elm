@@ -20,7 +20,7 @@ module Elmer.Navigation
 
 -}
 
-import Elmer.Platform
+import Elmer.Platform exposing (andCallFake)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Internal as Internal exposing (..)
@@ -72,11 +72,13 @@ location to `/home` when clicked:
       |> Navigation.expectLocation "/home"
 
 -}
-spy : Elmer.Platform.Stub
+spy : Elmer.Platform.Spy
 spy =
-  Elmer.Platform.batchStub
-    [ Elmer.Platform.stub (\_ -> Navigation.newUrl) fakeNavigateCommand
-    , Elmer.Platform.stub (\_ -> Navigation.modifyUrl) fakeNavigateCommand
+  Platform.batchSpy
+    [ Elmer.Platform.spy "Navigation.newUrl" (\_ -> Navigation.newUrl)
+        |> andCallFake fakeNavigateCommand
+    , Elmer.Platform.spy "Navigation.modifyUrl" (\_ -> Navigation.modifyUrl)
+        |> andCallFake fakeNavigateCommand
     ]
 
 fakeNavigateCommand : String -> Cmd msg

@@ -272,9 +272,9 @@ This lets us specify exactly what time should be returned for the purpose of our
 Now we update our test to override `Task.perform` with `fakeTaskPerform`. We use
 two functions to do this:
 
-- `Elmer.Platform.stub` allows us to specify which `Cmd`-generating function to
-override and provide the alternate implementation.
-- `Elmer.Platform.use` ensures that, during our test, the relevant
+- `Elmer.Platform.spy` with `Elmer.Platform.andCallFake` allows us to specify
+which `Cmd`-generating function to override and provide the alternate implementation.
+- `Elmer.Platform.use` registers our spy, ensuring that, during our test, the relevant
 `Cmd`-generating function will be replaced with the alternate implementation we specify.
 
 ```
@@ -285,7 +285,8 @@ timeAppTests =
     \() ->
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskPerformStub = Elmer.Platform.stub (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
+        taskPerformStub = Elmer.Platform.spy "fake-perform" (\_ -> Task.perform)
+          |> Elmer.Platform.andCallFake (fakeTaskPerform (3 * Time.second))
       in
         Elmer.Html.find ".button" initialState
           |> Elmer.Platform.use [ taskPerformOverride ]
@@ -442,7 +443,8 @@ to expect that the command was sent.
 Using subscriptions, your component can register to be notified when certain effects occur.
 To describe the behavior of a component that has subscriptions, you'll need to do these things:
 
-1. Override the function that generates the subscription using `Elmer.Platform.stub`
+1. Override the function that generates the subscription using `Elmer.Platform.spy` along with
+`Elmer.Platform.andCallFake`
 and replace it with a fake subscription using `Elmer.Platform.Subscription.fake`
 2. Register the subscriptions using `Elmer.Platform.Subscription.with`
 2. Simulate the effect you've subscribed to receive with `Elmer.Platform.Subscription.send`
@@ -499,12 +501,13 @@ timeSubscriptionTest =
   [ test "it prints the number of seconds" <|
     \() ->
       let
-        timeStub = Elmer.Platform.stub (\_ -> Time.every) (\_ tagger ->
+        timeSpy = Elmer.Platform.spy "fake-time" (\_ -> Time.every)
+          |> Elmer.Platform.andCallFake (\_ tagger ->
             Elmer.Platform.Subscription.fake "timeEffect" tagger
           )
       in
         Elmer.componentState App.defaultModel App.view App.update
-          |> Elmer.Platform.use [ timeOverride ]
+          |> Elmer.Platform.use [ timeSpy ]
           |> Elmer.Platform.Subscription.with (\() -> App.subscriptions)
           |> Elmer.Platform.Subscription.send "timeEffect" (3 * 1000)
           |> Elmer.Html.find "#num-seconds"
@@ -554,7 +557,7 @@ subscription.
 ### Spies and Stubs
 
 Elmer generalizes the pattern for managing the effects of `Subs` and `Cmds`, allowing
-you to spy on or stub any function you like.
+you to spy on any function you like.
 
 Suppose you need to write a test that expects a certain function to be called, but
 you don't need to describe the resulting behavior. You can spy on a function with
@@ -570,15 +573,19 @@ parseTest =
   describe "when the string is submitted"
   [ test "it passes it to the parsing module" <|
     \() ->
-      Elmer.componentState App.defaultModel App.view App.update
-        |> Elmer.Platform.spy "parser-spy" (\() -> MyParserModule.parse)
-        |> Elmer.Html.find "input[type='text']"
-        |> Elmer.Html.Event.input "A string to be parsed"
-        |> Elmer.Platform.expectSpy "parser-spy" (wasCalled 1)
+      let
+        spy = Elmer.Platform.spy "parser-spy" (\_ -> MyParserModule.parse)
+      in
+        Elmer.componentState App.defaultModel App.view App.update
+          |> Elmer.Platform.use [ spy ]
+          |> Elmer.Html.find "input[type='text']"
+          |> Elmer.Html.Event.input "A string to be parsed"
+          |> Elmer.Platform.expectSpy "parser-spy" (wasCalled 1)
   ]
 ```
 
-Elmer also allows you to stub any function. Suppose that you are testing a routing
+Elmer also allows you to provide a fake implementation for any function.
+Suppose that you are testing a routing
 module. Given a certain route, you want to see that the result of a certain
 component's view function is displayed. You could write the test like so:
 
@@ -589,12 +596,13 @@ routeTest =
   [ test "it shows the things" <|
     \() ->
       let
-        thingViewStub = Elmer.Platform.stub
-          (\() -> ThingsModule.view)
-          (\_ -> Html.div [ Html.Attributes.id "thingsView" ] [])
+        thingsViewSpy = Elmer.Platform.spy "things-view" (\() -> ThingsModule.view)
+          |> Elmer.Platform.andCallFake (\_ ->
+            Html.div [ Html.Attributes.id "thingsView" ] []
+          )
       in
         Elmer.navigationComponentState App.defaultModel App.view App.update App.locationParser
-          |> Elmer.Platform.use [ thingViewStub ]
+          |> Elmer.Platform.use [ thingsViewSpy ]
           |> Elmer.Navigation.setLocation "http://fun.com/things"
           |> Elmer.Html.find "#thingsView"
           |> Elmer.Html.expectElementExists

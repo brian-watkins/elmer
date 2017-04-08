@@ -19,45 +19,56 @@ import Elmer.Platform.Command as Command
 all : Test
 all =
   describe "Platform Tests"
-  [ spyTests
+  [ useTests
+  , spyTests
   , expectSpyTests
   , calledTests
   , restoreTests
   , stubTests
   ]
 
-spyTests : Test
-spyTests =
-  describe "spy"
+useTests : Test
+useTests =
+  describe "use"
   [ describe "when there is an upstream failure"
     [ test "it fails" <|
       \() ->
         let
           initialState = Failed "You failed!"
+          spy = Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
         in
-          Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) initialState
+          Elmer.Platform.use [ spy ] initialState
             |> Expect.equal (Failed "You failed!")
     ]
-  , describe "when the argument does not reference a function"
+  ]
+
+spyTests : Test
+spyTests =
+  describe "spy"
+  [ describe "when the argument does not reference a function"
     [ test "it fails" <|
       \() ->
         let
           initialState = Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          spy = Elmer.Platform.spy "my-spy" (\_ -> "Huh?")
         in
-          Elmer.Platform.spy "my-spy" (\_ -> "Huh?") initialState
+          Elmer.Platform.use [ spy ] initialState
             |> Expect.equal (Failed "Failed to install stubs!")
     ]
   , describe "when the argument references a function"
     [ describe "when the function is called"
       [ test "it still functions normally" <|
         \() ->
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
-            |> Markup.find "#button"
-            |> Event.click
-            |> Elmer.expectModel (\model ->
-                Expect.equal model.name (Just "Default Name")
-              )
+          let
+            spy = Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+          in
+            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+              |> Elmer.Platform.use [ spy ]
+              |> Markup.find "#button"
+              |> Event.click
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.name (Just "Default Name")
+                )
       ]
     ]
   ]
@@ -84,19 +95,19 @@ expectSpyTests =
           ))
     ]
   , describe "when the function has been registered as a spy"
-    [ test "it sets the name on the spyData and passes it to the matcher" <|
+    [ test "it sets the name and passes it to the matcher" <|
       \() ->
         Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+          |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
           |> Markup.find "#button"
           |> Event.click
           |> Elmer.Platform.expectSpy "clearName" (\spy ->
               Expect.equal spy.name "clearName"
             )
-    , test "it sets the number of calls on the spyData and passes it to the matcher" <|
+    , test "it sets the number of calls and passes it to the matcher" <|
       \() ->
         Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+          |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
           |> Markup.find "#button"
           |> Event.click
           |> Event.click
@@ -114,7 +125,7 @@ calledTests =
     [ test "it fails with the message" <|
       \() ->
         Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+          |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
           |> Elmer.Platform.expectSpy "clearName" (Matchers.wasCalled 2)
           |> Expect.equal (Expect.fail <|
             format
@@ -125,7 +136,7 @@ calledTests =
     , test "it fails with a properly depluralized message" <|
       \() ->
         Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+          |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
           |> Elmer.Platform.expectSpy "clearName" (Matchers.wasCalled 1)
           |> Expect.equal (Expect.fail <|
             format
@@ -139,7 +150,7 @@ calledTests =
       [ test "it fails" <|
         \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+            |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
             |> Markup.find "#button"
             |> Event.click
             |> Elmer.Platform.expectSpy "clearName" (Matchers.wasCalled 2)
@@ -152,7 +163,7 @@ calledTests =
       , test "it fails" <|
         \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+            |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
             |> Markup.find "#button"
             |> Event.click
             |> Event.click
@@ -168,7 +179,7 @@ calledTests =
       [ test "it passes" <|
         \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+            |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
             |> Markup.find "#button"
             |> Event.click
             |> Event.click
@@ -185,17 +196,18 @@ restoreTests =
     [ test "it gets set by Elmer.Platform.spy" <|
       \() ->
         Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName)
+          |> Elmer.Platform.use [ Elmer.Platform.spy "clearName" (\_ -> SpyApp.clearName) ]
           |> Elmer.Platform.expectSpy "clearName" (Matchers.wasCalled 0)
     , test "it gets cleared before the next test" <|
       \() ->
-        Expect.equal (Native.Platform.spyData "clearName") Nothing
+        Expect.equal (Native.Platform.callsForSpy "clearName") Nothing
     ]
   , describe "when a stub is used"
     [ test "the stub is set" <|
       \() ->
         let
-          stub = Elmer.Platform.stub (\_ -> SpyApp.titleText) (\_ -> "Test Title")
+          stub = Elmer.Platform.spy "my-spy" (\_ -> SpyApp.titleText)
+            |> Elmer.Platform.andCallFake (\_ -> "Test Title")
         in
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Elmer.Platform.use [ stub ]
@@ -212,45 +224,24 @@ restoreTests =
 stubTests : Test
 stubTests =
   describe "stub"
-  [ describe "when there is an upstream failure"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Failed "You failed!"
-          stub = Elmer.Platform.stub (\_ -> SpyApp.titleText) (\_ -> "Test Title")
-        in
-          Elmer.Platform.use [ stub ] initialState
-            |> Expect.equal (Failed "You failed!")
-    ]
-  , describe "when the argument does not reference a function"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          stub = Elmer.Platform.stub (\_ -> "Huh?") (\_ -> "Test Title")
-        in
-           Elmer.Platform.use [ stub ] initialState
-            |> Expect.equal (Failed "Failed to install stubs!")
-    ]
-  , describe "when the argument references a function"
-    [ describe "when the function is called"
-      [ test "it calls the mocked version" <|
-        \() ->
-          let
-            stub = Elmer.Platform.stub (\_ -> SpyApp.titleText) (\_ -> "Test Title")
-          in
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-              |> Elmer.Platform.use [ stub ]
-              |> Markup.find "#title"
-              |> Markup.expectElement (hasText "Test Title")
-      ]
-    , describe "when a command is sent"
-      [ test "it uses the mocked version" <|
-        \() ->
-          Elmer.componentState HttpApp.defaultModel HttpApp.view HttpApp.update
-            |> Elmer.Platform.use [ Elmer.Http.spy ]
-            |> Command.send (\() -> HttpApp.sendRequest HttpApp.defaultModel)
-            |> Elmer.Http.expectGET "http://fun.com/fun.html" HttpMatchers.wasSent
-      ]
+  [ describe "when the argument references a function"
+    [ let
+        stub = Elmer.Platform.spy "titleText" (\_ -> SpyApp.titleText)
+          |> Elmer.Platform.andCallFake (\_ -> "Test Title")
+
+        stateThunk = \() ->
+          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            |> Elmer.Platform.use [ stub ]
+            |> Markup.find "#title"
+      in
+        describe "when the function is called"
+          [ test "it calls the mocked version" <|
+            \() ->
+              Markup.find "#title" (stateThunk ())
+                |> Markup.expectElement (hasText "Test Title")
+          , test "it records the call" <|
+            \() ->
+              Elmer.Platform.expectSpy "titleText" (Matchers.wasCalled 1) (stateThunk ())
+          ]
     ]
   ]

@@ -112,7 +112,8 @@ timeAppTests =
     \() ->
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskOverride = Elmer.Platform.stub (\_ -> Task.perform) (fakeTaskPerform (3 * Time.second))
+        taskOverride = Elmer.Platform.spy "Task.perform" (\_ -> Task.perform)
+          |> Elmer.Platform.andCallFake (fakeTaskPerform (3 * Time.second))
       in
         Markup.find ".button" initialState
           |> Elmer.Platform.use [ taskOverride ]

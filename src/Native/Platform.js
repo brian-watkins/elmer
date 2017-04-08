@@ -46,18 +46,8 @@ var _brian_watkins$elmer$Native_Platform = function() {
     return _elm_lang$core$Native_Platform.leaf(home)(data)
   }
 
-  var swizzledFunctions = {}
 
-  var restoreSwizzled = function(x) {
-    for (var func in swizzledFunctions) {
-      eval(func + " = swizzledFunctions[func]");
-    }
-    swizzledFunctions = {}
-
-    return true
-  }
-
-  var findFunctionToSwizzle = function(fun) {
+  var findSpyFunction = function(fun) {
     var name = null;
     try {
       var re = /return ([\w$]+);/
@@ -67,63 +57,62 @@ var _brian_watkins$elmer$Native_Platform = function() {
     return name;
   }
 
-  var swizzle = function(fun1, fun2) {
-    var methodToSwizzle = findFunctionToSwizzle(fun1)
-
-    if (!methodToSwizzle) {
-      return false
-    }
-
-    swizzledFunctions[methodToSwizzle] = eval(methodToSwizzle)
-    eval(methodToSwizzle + " = fun2")
-
-    return true
-  }
-
-  var countCalls = function(name, funcName) {
+  var createSpyCall = function(name, funcName) {
     return function () {
       spies[name].calls += 1
-      return swizzledFunctions[funcName](arguments[0])
+      return spies[name].fake.apply(this, arguments)
     }
-  };
+  }
 
   var spies = {}
 
   var spy = function(name, fun) {
-    var methodToSpyOn = findFunctionToSwizzle(fun)
+    var functionToSpyOn = findSpyFunction(fun)
 
-    if (!methodToSpyOn) {
-      return false
+    if (!functionToSpyOn) {
+      return _elm_lang$core$Maybe$Nothing;
     }
 
     spies[name] =
       { name: name
       , calls: 0
+      , functionName: functionToSpyOn
+      , original: eval(functionToSpyOn)
+      , fake: eval(functionToSpyOn)
       }
 
-    swizzledFunctions[methodToSpyOn] = eval(methodToSpyOn)
-    eval(methodToSpyOn + " = countCalls(name, methodToSpyOn)")
+    eval(functionToSpyOn + " = createSpyCall(name, functionToSpyOn)")
 
-    return true;
+    return _elm_lang$core$Maybe$Just(name);
   }
 
-  var spyData = function(name) {
+  var registerFake = function(name, fakeFun) {
+    spies[name].fake = fakeFun
+
+    return _elm_lang$core$Maybe$Just(name);
+  }
+
+  var callsForSpy = function(name) {
     var data = spies[name]
 
-    if (data) {
-      var spyData = (A2)(_brian_watkins$elmer$Elmer_Platform_Internal$Spy,
-        data.name,
-        data.calls
-      );
-
-      return _elm_lang$core$Maybe$Just(spyData);
+    if (!data) {
+      return _elm_lang$core$Maybe$Nothing;
     }
 
-    return _elm_lang$core$Maybe$Nothing;
+    var spyCalls = (A2)(_brian_watkins$elmer$Elmer_Platform_Internal$Calls,
+      data.name,
+      data.calls
+    );
+
+    return _elm_lang$core$Maybe$Just(spyCalls);
   }
 
   var clearSpies = function() {
-    spies = {};
+    for (var spyName in spies) {
+      eval(spies[spyName].functionName + " = spies[spyName].original")
+    }
+
+    spies = {}
 
     return true;
   }
@@ -132,11 +121,10 @@ var _brian_watkins$elmer$Native_Platform = function() {
       asIntention: asIntention,
       intentionValue: intentionValue,
       toIntention: F2(toIntention),
-      swizzle: F2(swizzle),
-      restoreSwizzled: restoreSwizzled,
       spy: F2(spy),
-      spyData: spyData,
-      clearSpies: clearSpies
+      callsForSpy: callsForSpy,
+      clearSpies: clearSpies,
+      registerFake: F2(registerFake)
   };
 
 }();
