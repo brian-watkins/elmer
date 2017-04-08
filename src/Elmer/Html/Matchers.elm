@@ -5,11 +5,12 @@ module Elmer.Html.Matchers exposing
   , hasAttribute
   , hasId
   , hasStyle
+  , listensForEvent
   )
 
 {-| Make expectations about an Html element.
 
-@docs hasText, hasId, hasClass, hasStyle, hasAttribute, hasProperty
+@docs hasText, hasId, hasClass, hasStyle, hasAttribute, hasProperty, listensForEvent
 
 -}
 
@@ -134,6 +135,33 @@ hasStyle (name, value) element =
         [ message "Expected element to have style" <| name ++ ": " ++ value
         , description "but it has no style"
         ]
+
+{-| Expect that an element listens for an event of the given type.
+
+    listensForEvent "click" element
+
+Note: This will not consider event handlers on the element's ancestors.
+
+-}
+listensForEvent : String -> Matcher (Elmer.Html.HtmlElement msg)
+listensForEvent event element =
+  if List.isEmpty element.eventHandlers then
+    Expect.fail <| format
+      [ message "Expected element to listen for event" event
+      , description "but it has no event listeners"
+      ]
+  else
+    if List.any (\eventHandler -> eventHandler.eventType == event) element.eventHandlers then
+      Expect.pass
+    else
+      Expect.fail <| format
+        [ message "Expected element to listen for event" event
+        , message "but it listens for" <| (
+          List.map .eventType element.eventHandlers
+            |> String.join "\n"
+          )
+        ]
+
 
 -- Private functions
 

@@ -19,6 +19,7 @@ all =
     , hasIdTests
     , hasStyleTests
     , hasAttributeTests
+    , listensForEventTests
     ]
 
 hasTextTests : Test
@@ -240,3 +241,37 @@ elementWithStyles styles =
   in
     Native.Html.asHtmlElement html
       |> Maybe.withDefault (nodeWithId "fail")
+
+
+listensForEventTests : Test
+listensForEventTests =
+  describe "listensForEvent"
+  [ describe "when the element has no event listeners"
+    [ test "it fails" <|
+      \() ->
+        Matchers.listensForEvent "click" (emptyNode "div")
+          |> Expect.equal (Expect.fail <|
+            format
+              [ message "Expected element to listen for event" "click"
+              , description "but it has no event listeners"
+              ]
+            )
+    ]
+  , describe "when the element does not have the correct event listener"
+    [ test "it fails" <|
+      \() ->
+        Matchers.listensForEvent "click" (nodeWithEvents [ "mouseup", "mousedown" ])
+          |> Expect.equal (Expect.fail <|
+            format
+              [ message "Expected element to listen for event" "click"
+              , message "but it listens for" "mouseup\nmousedown"
+              ]
+            )
+    ]
+  , describe "when the element has the expected event listener"
+    [ test "it passes" <|
+      \() ->
+        Matchers.listensForEvent "click" (nodeWithEvents [ "mouseup", "click", "mousedown" ])
+          |> Expect.equal Expect.pass
+    ]
+  ]

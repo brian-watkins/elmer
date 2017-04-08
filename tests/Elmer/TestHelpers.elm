@@ -2,6 +2,7 @@ module Elmer.TestHelpers exposing (..)
 
 import Elmer.Html.Types exposing (..)
 import Dict
+import Json.Decode as Json
 
 emptyNode : String -> HtmlElement msg
 emptyNode tagName =
@@ -91,3 +92,21 @@ nodeWithBooleanProperty (name, value) =
     node = emptyNode "div"
   in
     { node | facts = "{\"" ++ name ++ "\":" ++ (String.toLower (toString value)) ++ "}" }
+
+nodeWithEvents : List String -> HtmlElement String
+nodeWithEvents events =
+  let
+    node = emptyNode "div"
+    eventHandlers = List.map eventHandler events
+  in
+    { node | eventHandlers = eventHandlers }
+
+eventHandler : String -> HtmlEventHandler String
+eventHandler event =
+  { eventType = event
+  , options =
+    { stopPropagation = False
+    , preventDefault = False
+    }
+  , decoder = Json.succeed "fakeEvent"
+  }
