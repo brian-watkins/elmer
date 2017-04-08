@@ -97,7 +97,7 @@ customEventTests =
     keyUpEventJson = "{\"keyCode\":65}"
   in
     describe "custom event tests"
-    [ standardEventBehavior (Event.on "keyup" keyUpEventJson)
+    [ standardEventBehavior (Event.trigger "keyup" keyUpEventJson)
     , describe "when the event succeeds"
       [ test "it updates the model accordingly" <|
         \() ->

@@ -12,7 +12,6 @@ module Elmer.Html.Event
         , check
         , uncheck
         , select
-        , on
         , trigger
         )
 
@@ -41,7 +40,7 @@ for more.
 @docs focus, blur
 
 # Custom Events
-@docs on, trigger
+@docs trigger
 
 -}
 
@@ -298,11 +297,6 @@ findOption value element =
   Elmer.Html.findChildren ("option[value='" ++ value ++ "']") element
     |> List.head
 
-{-| Deprecated. Use `trigger` instead.
--}
-on : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-on =
-  trigger
 
 {-| Trigger a custom event on the targeted element. Provide the name of the event
 and the proper representation of the event object in JSON format.
