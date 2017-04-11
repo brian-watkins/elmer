@@ -33,14 +33,14 @@ import Elmer.Printer exposing (..)
     expectGET "http://fake.com/fake" wasSent
 
 -}
-wasSent : Matcher Elmer.Http.HttpRequestData
+wasSent : Matcher Elmer.Http.HttpRequest
 wasSent request =
   Expect.pass
 
 
 {-| Match any request that has a body.
 -}
-hasAnyBody : Matcher Elmer.Http.HttpRequestData
+hasAnyBody : Matcher Elmer.Http.HttpRequest
 hasAnyBody request =
   case request.body of
     Just _ ->
@@ -56,7 +56,7 @@ hasAnyBody request =
     )
 
 -}
-hasBody : String -> Matcher Elmer.Http.HttpRequestData
+hasBody : String -> Matcher Elmer.Http.HttpRequest
 hasBody expectedBody request =
   case request.body of
     Just body ->
@@ -77,7 +77,7 @@ Note: You don't need to worry about url encoding the name or value.
     )
 
 -}
-hasQueryParam : ( String, String ) -> Matcher Elmer.Http.HttpRequestData
+hasQueryParam : ( String, String ) -> Matcher Elmer.Http.HttpRequest
 hasQueryParam ( key, value ) request =
   let
     query = queryString request
@@ -91,7 +91,7 @@ hasQueryParam ( key, value ) request =
     else
       Expect.fail (format [ message "Expected request to have query param" ( key ++ " = " ++ value), message "but it has" query ])
 
-queryString : HttpRequestData -> String
+queryString : HttpRequest -> String
 queryString request =
   String.split "?" request.url
     |> List.drop 1
@@ -106,7 +106,7 @@ queryString request =
     )
 
 -}
-hasHeader : ( String, String ) -> Matcher Elmer.Http.HttpRequestData
+hasHeader : ( String, String ) -> Matcher Elmer.Http.HttpRequest
 hasHeader ( name, value ) request =
   if List.isEmpty request.headers then
     Expect.fail (format [ message "Expected request to have header" (name ++ " = " ++ value), description "but no headers have been set" ])

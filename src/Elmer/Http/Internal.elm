@@ -1,23 +1,23 @@
 module Elmer.Http.Internal exposing
   ( HttpHeader
-  , HttpRequestData
   , HttpRequestFunction
+  , HttpRequestHandler
   , HttpRequest
   , HttpStub
   , HttpResponseStub(..)
   , HttpResponseResult(..)
   , HttpStatus(..)
-  , asHttpRequest
+  , asHttpRequestHandler
   , route
   )
 
 import Http
 
-type alias HttpRequestData =
+type alias HttpRequest =
   { method: String
   , url: String
-  , body: Maybe String
   , headers: List HttpHeader
+  , body: Maybe String
   }
 
 type alias HttpRequestFunction a b =
@@ -28,11 +28,8 @@ type alias HttpHeader =
   , value: String
   }
 
-type alias HttpRequest a =
-  { method: String
-  , url: String
-  , headers: List HttpHeader
-  , body: Maybe String
+type alias HttpRequestHandler a =
+  { request: HttpRequest
   , responseHandler: (Http.Response String -> Result String a)
   }
 
@@ -60,9 +57,9 @@ type alias Status =
   }
 
 
-asHttpRequest : Http.Request a -> HttpRequest a
-asHttpRequest request =
-  Native.Http.asHttpRequest request
+asHttpRequestHandler : Http.Request a -> HttpRequestHandler a
+asHttpRequestHandler request =
+  Native.Http.asHttpRequestHandler request
 
 
 route : String -> String

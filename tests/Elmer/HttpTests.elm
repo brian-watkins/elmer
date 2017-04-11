@@ -53,25 +53,25 @@ requestRecordTests =
       , timeout = Nothing
       , withCredentials = False
       }
-    httpRequest = HttpInternal.asHttpRequest request
+    httpRequestHandler = HttpInternal.asHttpRequestHandler request
   in
     describe "RequestRecord"
     [ test "it has the method" <|
       \() ->
-        Expect.equal httpRequest.method "GET"
+        Expect.equal httpRequestHandler.request.method "GET"
     , test "it has the url" <|
       \() ->
-        Expect.equal httpRequest.url "http://myapp.com/fun.html"
+        Expect.equal httpRequestHandler.request.url "http://myapp.com/fun.html"
     , test "it has the body" <|
       \() ->
-        Expect.equal httpRequest.body (Just "{\"name\":\"cool person\"}")
+        Expect.equal httpRequestHandler.request.body (Just "{\"name\":\"cool person\"}")
     , test "it has the headers" <|
       \() ->
         let
           funHeader = { name = "x-fun", value = "fun" }
           awesomeHeader = { name = "x-awesome", value = "awesome" }
         in
-          Expect.equal httpRequest.headers [funHeader, awesomeHeader]
+          Expect.equal httpRequestHandler.request.headers [funHeader, awesomeHeader]
     ]
 
 noBodyRequestTests : Test
@@ -86,12 +86,12 @@ noBodyRequestTests =
       , timeout = Nothing
       , withCredentials = False
       }
-    httpRequest = HttpInternal.asHttpRequest request
+    httpRequestHandler = HttpInternal.asHttpRequestHandler request
   in
     describe "No Body RequestRecord"
     [ test "it has Nothing for the body" <|
       \() ->
-        Expect.equal httpRequest.body Nothing
+        Expect.equal httpRequestHandler.request.body Nothing
     ]
 
 serveTests : Test
@@ -290,7 +290,7 @@ errorResponseTests =
   ]
 
 
-componentStateWithRequests : List HttpRequestData -> ComponentState SimpleApp.Model SimpleApp.Msg
+componentStateWithRequests : List HttpRequest -> ComponentState SimpleApp.Model SimpleApp.Msg
 componentStateWithRequests requestData =
   let
     defaultState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
@@ -298,7 +298,7 @@ componentStateWithRequests requestData =
     defaultState
       |> Internal.map (\state -> Ready { state | httpRequests = requestData })
 
-testRequest : String -> String -> HttpRequestData
+testRequest : String -> String -> HttpRequest
 testRequest method url =
   { method = method
   , url = url
@@ -306,7 +306,7 @@ testRequest method url =
   , headers = []
   }
 
-expectRequestTests : String -> (String -> (HttpRequestData -> Expect.Expectation) -> ComponentState SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
+expectRequestTests : String -> (String -> (HttpRequest -> Expect.Expectation) -> ComponentState SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
 expectRequestTests method func =
   describe ("expect" ++ method)
   [ describe "when there is an upstream error"

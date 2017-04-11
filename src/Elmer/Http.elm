@@ -1,6 +1,6 @@
 module Elmer.Http exposing
   ( HttpResponseStub
-  , HttpRequestData
+  , HttpRequest
   , expectPOST
   , expectGET
   , expectDELETE
@@ -26,7 +26,7 @@ component. What to do?
 @docs HttpResponseStub, serve, spy
 
 # Make Expectations about Http Requests
-@docs HttpRequestData, expectGET, expectPOST, expectPUT, expectPATCH, expectDELETE, clearRequestHistory
+@docs HttpRequest, expectGET, expectPOST, expectPUT, expectPATCH, expectDELETE, clearRequestHistory
 
 -}
 
@@ -52,8 +52,8 @@ type alias HttpResponseStub
 
 {-| Represents a recorded request about which expectations may be made.
 -}
-type alias HttpRequestData
-  = HttpInternal.HttpRequestData
+type alias HttpRequest
+  = HttpInternal.HttpRequest
 
 {-| Override `Http.send` and register HttpResponseStubs to be returned
 when the appropriate request is received. Used in conjunction with
@@ -120,7 +120,7 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectPOST : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectPOST : String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectPOST =
   expectRequest "POST"
 
@@ -131,7 +131,7 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectGET : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectGET : String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectGET =
   expectRequest "GET"
 
@@ -142,7 +142,7 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectDELETE : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectDELETE : String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectDELETE =
   expectRequest "DELETE"
 
@@ -153,7 +153,7 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectPUT : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectPUT : String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectPUT =
   expectRequest "PUT"
 
@@ -164,11 +164,11 @@ including the query string. See `Elmer.Http.Matchers` for request matchers.
 
 Note: This requires the use of `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectPATCH : String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectPATCH : String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectPATCH =
   expectRequest "PATCH"
 
-expectRequest : String -> String -> Matcher HttpRequestData -> Matcher (Elmer.ComponentState model msg)
+expectRequest : String -> String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectRequest method url requestMatcher =
   Internal.mapToExpectation <|
     \componentState ->
@@ -197,7 +197,7 @@ expectRequest method url requestMatcher =
                   ]
 
 
-hasRequest : List HttpRequestData -> String -> String -> Maybe HttpRequestData
+hasRequest : List HttpRequest -> String -> String -> Maybe HttpRequest
 hasRequest requests method url =
   List.filter (\r -> r.method == method && (HttpInternal.route r.url) == url) requests
     |> List.head

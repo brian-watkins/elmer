@@ -9,7 +9,7 @@ module Elmer.Internal exposing
   , boolToString
   )
 
-import Elmer.Http.Internal exposing (HttpRequestData)
+import Elmer.Http.Internal exposing (HttpRequest)
 import Elmer.Html.Types exposing (HtmlElement)
 import Html exposing (Html)
 import Navigation
@@ -31,7 +31,7 @@ type alias Component model msg =
     , targetSelector : Maybe String
     , locationParser : Maybe (LocationParserFunction msg)
     , location : Maybe String
-    , httpRequests : List HttpRequestData
+    , httpRequests : List HttpRequest
     , deferredCommands : List (Cmd msg)
     , dummyCommands : List String
     , subscriptions : Sub msg

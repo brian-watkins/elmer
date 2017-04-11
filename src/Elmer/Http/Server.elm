@@ -17,22 +17,22 @@ import Expect exposing (Expectation)
 stubbedSend : List HttpResponseStub -> HttpRequestFunction a msg
 stubbedSend responseStubs tagger request =
   let
-    httpRequest = HttpInternal.asHttpRequest request
+    httpRequestHandler = HttpInternal.asHttpRequestHandler request
   in
     unwrapResponseStubs responseStubs
       |> responseStubsAreValid
-      |> Result.andThen (matchFirstRequest httpRequest)
-      |> Result.andThen (processResponse httpRequest tagger)
+      |> Result.andThen (matchFirstRequest httpRequestHandler)
+      |> Result.andThen (processResponse httpRequestHandler tagger)
       |> collapseToCommand
-      |> toHttpCommand httpRequest
+      |> toHttpCommand httpRequestHandler
 
 
 dummySend : HttpRequestFunction a msg
 dummySend _ request =
   let
-    httpRequest = HttpInternal.asHttpRequest request
+    httpRequestHandler = HttpInternal.asHttpRequestHandler request
   in
-    toHttpCommand httpRequest Cmd.none
+    toHttpCommand httpRequestHandler Cmd.none
 
 
 
@@ -50,23 +50,17 @@ collapseToCommand responseResult =
       errorCommand
 
 
-toHttpCommand : HttpRequest a -> Cmd msg -> Cmd msg
-toHttpCommand request command =
+toHttpCommand : HttpRequestHandler a -> Cmd msg -> Cmd msg
+toHttpCommand requestHandler command =
   let
-    requestData =
-      { method = request.method
-      , url = request.url
-      , body = request.body
-      , headers = request.headers
-      }
-    httpCommand = Platform.mapStateCommand <| updateComponentState requestData
+    httpCommand = Platform.mapStateCommand <| updateComponentState requestHandler.request
   in
     Cmd.batch [ httpCommand, command ]
 
 
-updateComponentState : HttpRequestData -> Component model msg -> Component model msg
-updateComponentState requestData componentState =
-  { componentState | httpRequests = requestData :: componentState.httpRequests }
+updateComponentState : HttpRequest -> Component model msg -> Component model msg
+updateComponentState request componentState =
+  { componentState | httpRequests = request :: componentState.httpRequests }
 
 
 responseStubsAreValid : List HttpStub -> Result (Cmd msg) (List HttpStub)
@@ -96,21 +90,21 @@ responseStubIsValid responseStub =
     Ok responseStub
 
 
-matchFirstRequest : HttpRequest a -> List HttpStub -> Result (Cmd msg) HttpStub
-matchFirstRequest httpRequest responseStubs =
-  case List.head <| List.filterMap (matchRequest httpRequest) responseStubs of
+matchFirstRequest : HttpRequestHandler a -> List HttpStub -> Result (Cmd msg) HttpStub
+matchFirstRequest httpRequestHandler responseStubs =
+  case List.head <| List.filterMap (matchRequest httpRequestHandler) responseStubs of
     Just matchingResponseStub ->
       Ok matchingResponseStub
     Nothing ->
       Err <| Command.fail <| format
-        [ message "Received a request for" (printRequest httpRequest)
+        [ message "Received a request for" (printRequest httpRequestHandler)
         , message "but it does not match any of the stubbed requests" (printStubs responseStubs)
         ]
 
 
-printRequest : HttpRequest a -> String
-printRequest request =
-  request.method ++ " " ++ request.url
+printRequest : HttpRequestHandler a -> String
+printRequest requestHandler =
+  requestHandler.request.method ++ " " ++ requestHandler.request.url
 
 
 printStubs : List HttpStub -> String
@@ -123,23 +117,23 @@ printStub responseStub =
   responseStub.method ++ " " ++ responseStub.url
 
 
-matchRequest : HttpRequest a -> HttpStub -> Maybe HttpStub
-matchRequest httpRequest stub =
-  matchRequestUrl httpRequest stub
-    |> Maybe.andThen (matchRequestMethod httpRequest)
+matchRequest : HttpRequestHandler a -> HttpStub -> Maybe HttpStub
+matchRequest httpRequestHandler stub =
+  matchRequestUrl httpRequestHandler stub
+    |> Maybe.andThen (matchRequestMethod httpRequestHandler)
 
 
-matchRequestUrl : HttpRequest a -> HttpStub -> Maybe HttpStub
-matchRequestUrl httpRequest stub =
-  if (HttpInternal.route httpRequest.url) == stub.url then
+matchRequestUrl : HttpRequestHandler a -> HttpStub -> Maybe HttpStub
+matchRequestUrl httpRequestHandler stub =
+  if (HttpInternal.route httpRequestHandler.request.url) == stub.url then
     Just stub
   else
     Nothing
 
 
-matchRequestMethod : HttpRequest a -> HttpStub -> Maybe HttpStub
-matchRequestMethod httpRequest stub =
-  if httpRequest.method == stub.method then
+matchRequestMethod : HttpRequestHandler a -> HttpStub -> Maybe HttpStub
+matchRequestMethod httpRequestHandler stub =
+  if httpRequestHandler.request.method == stub.method then
     Just stub
   else
     Nothing
@@ -152,13 +146,13 @@ generateResponse stub =
   stub.response
 
 
-processResponse : HttpRequest a -> (Result Http.Error a -> msg) -> HttpStub -> Result (Cmd msg) (Cmd msg)
-processResponse httpRequest tagger stub =
+processResponse : HttpRequestHandler a -> (Result Http.Error a -> msg) -> HttpStub -> Result (Cmd msg) (Cmd msg)
+processResponse httpRequestHandler tagger stub =
   generateResponse stub
     |> handleResponseError
     |> Result.andThen handleResponseStatus
-    |> Result.andThen (handleResponse httpRequest)
-    |> Result.mapError (mapResponseError httpRequest tagger)
+    |> Result.andThen (handleResponse httpRequestHandler)
+    |> Result.mapError (mapResponseError httpRequestHandler tagger)
     |> Result.map (generateCommand stub tagger)
 
 
@@ -173,12 +167,12 @@ generateCommand stub tagger data =
       command
 
 
-mapResponseError : HttpRequest a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
-mapResponseError httpRequest tagger error =
+mapResponseError : HttpRequestHandler a -> (Result Http.Error a -> msg) -> Http.Error -> Cmd msg
+mapResponseError httpRequestHandler tagger error =
   case error of
     Http.BadPayload msg response ->
       Command.fail <| format
-        [ message "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
+        [ message "Parsing a stubbed response" (httpRequestHandler.request.method ++ " " ++ httpRequestHandler.request.url)
         , description ("\t" ++ response.body)
         , message "failed with error" msg
         , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
@@ -204,9 +198,9 @@ handleResponseStatus response =
     Err (Http.BadStatus response)
 
 
-handleResponse : HttpRequest a -> Http.Response String -> Result Http.Error a
-handleResponse httpRequest response =
-  case httpRequest.responseHandler response of
+handleResponse : HttpRequestHandler a -> Http.Response String -> Result Http.Error a
+handleResponse httpRequestHandler response =
+  case httpRequestHandler.responseHandler response of
     Ok data ->
       Ok data
     Err err ->

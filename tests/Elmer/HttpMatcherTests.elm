@@ -16,7 +16,7 @@ all =
   , hasHeaderTests
   ]
 
-requestWithBody : String -> HttpRequestData
+requestWithBody : String -> HttpRequest
 requestWithBody body =
   { method = "POST"
   , url = "http://fun.com/fun"
@@ -24,7 +24,7 @@ requestWithBody body =
   , headers = []
   }
 
-requestWithNoBody : HttpRequestData
+requestWithNoBody : HttpRequest
 requestWithNoBody =
   { method = "POST"
   , url = "http://fun.com/fun"
@@ -85,7 +85,7 @@ wasSentTests =
     ]
   ]
 
-getWithQuery : Maybe String -> HttpRequestData
+getWithQuery : Maybe String -> HttpRequest
 getWithQuery maybeQuery =
   { method = "GET"
   , url = "http://fun.com/fun" ++ (Maybe.withDefault "" maybeQuery)
@@ -122,7 +122,7 @@ hasQueryParamTests =
     ]
   ]
 
-getWithHeader : Maybe HttpHeader -> HttpRequestData
+getWithHeader : Maybe HttpHeader -> HttpRequest
 getWithHeader header =
   let
     headers = case header of

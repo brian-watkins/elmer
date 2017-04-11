@@ -26,19 +26,24 @@ var _brian_watkins$elmer$Native_Http = function() {
     return _elm_lang$core$Native_List.fromArray(headers)
   }
 
-  var asHttpRequest = function(request) {
+  var asHttpRequestHandler = function(request) {
     var requestData = request._0
 
-    return A5(_brian_watkins$elmer$Elmer_Http_Internal$HttpRequest,
+    var httpRequest = A4(_brian_watkins$elmer$Elmer_Http_Internal$HttpRequest,
       requestData.method,
       requestData.url,
       getHttpHeaders(requestData),
-      getHttpRequestBody(requestData),
-      requestData.expect.responseToResult)
+      getHttpRequestBody(requestData)
+    );
+
+    return A2(_brian_watkins$elmer$Elmer_Http_Internal$HttpRequestHandler,
+      httpRequest,
+      requestData.expect.responseToResult
+    );
   }
 
   return {
-      asHttpRequest: asHttpRequest
+      asHttpRequestHandler: asHttpRequestHandler
   };
 
 }();
