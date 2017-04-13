@@ -5,7 +5,7 @@ module Elmer.Http.Internal exposing
   , HttpRequest
   , HttpStub
   , HttpResponseStub(..)
-  , HttpResponseResult(..)
+  , HttpResult(..)
   , HttpStatus(..)
   , asHttpRequestHandler
   , route
@@ -39,11 +39,11 @@ type HttpResponseStub
 type alias HttpStub =
   { url: String
   , method: String
-  , response: HttpResponseResult
+  , resultBuilder : (HttpRequest -> HttpResult)
   , deferResponse: Bool
   }
 
-type HttpResponseResult
+type HttpResult
   = Response (Http.Response String)
   | Error Http.Error
 

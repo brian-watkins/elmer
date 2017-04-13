@@ -141,14 +141,14 @@ matchRequestMethod httpRequestHandler stub =
 
 
 
-generateResponse : HttpStub -> HttpResponseResult
-generateResponse stub =
-  stub.response
+generateResult : HttpRequest -> HttpStub -> HttpResult
+generateResult request stub =
+  stub.resultBuilder request
 
 
 processResponse : HttpRequestHandler a -> (Result Http.Error a -> msg) -> HttpStub -> Result (Cmd msg) (Cmd msg)
 processResponse httpRequestHandler tagger stub =
-  generateResponse stub
+  generateResult httpRequestHandler.request stub
     |> handleResponseError
     |> Result.andThen handleResponseStatus
     |> Result.andThen (handleResponse httpRequestHandler)
@@ -181,7 +181,7 @@ mapResponseError httpRequestHandler tagger error =
       Command.fake (tagger (Err error))
 
 
-handleResponseError : HttpResponseResult -> Result Http.Error (Http.Response String)
+handleResponseError : HttpResult -> Result Http.Error (Http.Response String)
 handleResponseError responseResult =
   case responseResult of
     Response response ->

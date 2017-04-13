@@ -1,6 +1,5 @@
 module Elmer.Http exposing
   ( HttpResponseStub
-  , HttpRequest
   , expectPOST
   , expectGET
   , expectDELETE
@@ -26,7 +25,7 @@ component. What to do?
 @docs HttpResponseStub, serve, spy
 
 # Make Expectations about Http Requests
-@docs HttpRequest, expectGET, expectPOST, expectPUT, expectPATCH, expectDELETE, clearRequestHistory
+@docs expectGET, expectPOST, expectPUT, expectPATCH, expectDELETE, clearRequestHistory
 
 -}
 
@@ -49,11 +48,6 @@ Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
 -}
 type alias HttpResponseStub
   = HttpInternal.HttpResponseStub
-
-{-| Represents a recorded request about which expectations may be made.
--}
-type alias HttpRequest
-  = HttpInternal.HttpRequest
 
 {-| Override `Http.send` and register HttpResponseStubs to be returned
 when the appropriate request is received. Used in conjunction with

@@ -6,6 +6,7 @@ import Elmer.Http as ElmerHttp
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Stub as HttpStub
 import Elmer.Http.Status as Status
+import Elmer.Http.Result as HttpResult
 import Http
 import Dict
 
@@ -14,6 +15,7 @@ all =
   describe "http stub tests"
   [ requestBuilderTests
   , responseBuilderTests
+  , resultBuilderTests
   ]
 
 requestBuilderTests : Test
@@ -40,7 +42,7 @@ describeRequestMethod method builder =
         let
           (HttpResponseStub responseStub) = builder "http://fake.com"
         in
-          case responseStub.response of
+          case responseStub.resultBuilder testRequest of
             Response response ->
               Expect.equal { code = 200, message = "Ok" } response.status
             Error _ ->
@@ -50,7 +52,7 @@ describeRequestMethod method builder =
         let
           (HttpResponseStub responseStub) = builder "http://fake.com"
         in
-          case responseStub.response of
+          case responseStub.resultBuilder testRequest of
             Response response ->
               Expect.equal "http://fake.com" response.url
             Error _ ->
@@ -66,7 +68,7 @@ responseBuilderTests =
         let
           (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.withError Http.Timeout
         in
-          case updatedResponse.response of
+          case updatedResponse.resultBuilder testRequest of
             Response _ ->
               Expect.fail "Should be an error response"
             Error error ->
@@ -81,7 +83,7 @@ responseBuilderTests =
             body = "{\"name\":\"fun\"}"
             (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.withBody body
           in
-            case updatedResponse.response of
+            case updatedResponse.resultBuilder testRequest of
               Response response ->
                 Expect.equal body response.body
               Error _ ->
@@ -96,7 +98,7 @@ responseBuilderTests =
           let
             (HttpResponseStub updatedResponse) = defaultResponseStub |> HttpStub.withStatus Status.notFound
           in
-            case updatedResponse.response of
+            case updatedResponse.resultBuilder testRequest of
               Response response ->
                 Expect.equal { code = 404, message = "Not Found" } response.status
               Error _ ->
@@ -119,28 +121,71 @@ responseBuilderTests =
     ]
   ]
 
+resultBuilderTests : Test
+resultBuilderTests =
+  describe "withResult"
+  [ test "it builds upon the given result" <|
+    \() ->
+      let
+        (HttpResponseStub updatedResponse) = defaultResponseStub
+          |> HttpStub.withResult (\_ result ->
+              HttpResult.withBody "fake-body" result
+            )
+      in
+        case updatedResponse.resultBuilder testRequest of
+          Response response ->
+            Expect.equal response.url "http://fake.com"
+          Error _ ->
+            Expect.fail "Should be a response!"
+  , test "it uses the result returned by the function" <|
+    \() ->
+      let
+        (HttpResponseStub updatedResponse) = defaultResponseStub
+          |> HttpStub.withResult (\_ result ->
+              HttpResult.withBody "fake-body" result
+            )
+      in
+        case updatedResponse.resultBuilder testRequest of
+          Response response ->
+            Expect.equal response.body "fake-body"
+          Error _ ->
+            Expect.fail "Should be a response!"
+  ]
+
 testDoesNotUpdateResponseStatus : (HttpInternal.HttpResponseStub -> HttpInternal.HttpResponseStub) -> Test
 testDoesNotUpdateResponseStatus builder =
   describe "when the stubbed response is set to return an error"
     [ test "it does not update the response status" <|
       \() ->
         let
-          updatedResponse = defaultErrorResponseStub |> builder
+          (HttpResponseStub updatedResponse) = defaultErrorResponseStub |> builder
         in
-          Expect.equal defaultErrorResponseStub updatedResponse
+          Expect.equal (Error Http.Timeout) <| updatedResponse.resultBuilder testRequest
     ]
+
+testRequest : HttpRequest
+testRequest =
+  { method = "GET"
+  , url = "http://fake.com"
+  , headers = []
+  , body = Nothing
+  }
+
+defaultResult : HttpResult
+defaultResult =
+  Response
+    { url = "http://fake.com"
+    , status = { code = 200, message = "Ok" }
+    , headers = Dict.empty
+    , body = ""
+    }
 
 defaultResponseStub : HttpResponseStub
 defaultResponseStub =
   HttpResponseStub
     { url = "http://fake.com"
     , method = "GET"
-    , response = Response
-      { url = "http://fake.com"
-      , status = { code = 200, message = "Ok" }
-      , headers = Dict.empty
-      , body = ""
-      }
+    , resultBuilder = (\_ -> defaultResult)
     , deferResponse = False
     }
 
@@ -149,6 +194,6 @@ defaultErrorResponseStub =
   HttpResponseStub
     { url = "http://fake.com"
     , method = "GET"
-    , response = Error Http.Timeout
+    , resultBuilder = (\_ -> Error Http.Timeout)
     , deferResponse = False
     }
