@@ -49,7 +49,9 @@ import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
 import Elmer.Html
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.Component exposing (Component)
+import Elmer.Internal as Internal
 import Elmer
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
@@ -120,12 +122,10 @@ triggerClick clickType componentState =
           componentState
 
 viewForState : ComponentState model msg -> Maybe (Html msg)
-viewForState componentState =
-  case componentState of
-    Ready component ->
-      Just <| component.view component.model
-    Failed _ ->
-      Nothing
+viewForState =
+  ComponentState.abstractMap (\_ -> Nothing) (\component ->
+    Just <| component.view component.model
+  )
 
 submitHandlerQuery : Maybe (Html msg) -> EventHandlerQuery msg
 submitHandlerQuery maybeDom element =
@@ -256,7 +256,7 @@ The argument specifies the option to select by its `value` property.
 -}
 select : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 select value =
-  Internal.map (\component ->
+  ComponentState.map (\component ->
     let
       eventPropagations = [ eventPropagation (eventHandlerQuery "input") (inputEvent value) ]
     in
@@ -339,7 +339,7 @@ elementEventHandlerQuery eventName element =
 
 updateComponentState : List (EventPropagation msg) -> ComponentState model msg -> ComponentState model msg
 updateComponentState eventPropagations =
-  Internal.map (\component ->
+  ComponentState.map (\component ->
     targetedElement component
       |> Result.andThen (hasHandlersFor eventPropagations)
       |> Result.andThen (apply eventPropagations component)
@@ -404,9 +404,9 @@ toComponentState : Result String (Component model msg) -> ComponentState model m
 toComponentState componentResult =
   case componentResult of
     Ok component ->
-      Ready component
+      ComponentState.withComponent component
     Err message ->
-      Failed message
+      ComponentState.failure message
 
 
 takeUpTo : (a -> Bool) -> List a -> List a

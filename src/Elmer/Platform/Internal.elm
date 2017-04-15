@@ -10,7 +10,7 @@ module Elmer.Platform.Internal exposing
   , generateCommand
   )
 
-import Elmer.Internal as Internal exposing (..)
+import Elmer.Component as Component exposing (Component)
 
 
 type Intention a msg subMsg

@@ -5,7 +5,7 @@ import Elmer.TestApps.MouseTestApp as App
 import Elmer.EventTests as EventTests
 import Expect
 import Elmer
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -47,28 +47,25 @@ clickTests =
       describe "when the click succeeds"
       [ test "it records a click" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.clicks 0
-                |> andExpect (Expect.equal updatedState.model.clicks 1)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.clicks 0
+                  |> andExpect (Expect.equal model.clicks 1)
+              )
       , test "it records a mouse down" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.mouseDowns 0
-                |> andExpect (Expect.equal updatedState.model.mouseDowns 1)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.mouseUps 0
+                  |> andExpect (Expect.equal model.mouseDowns 1)
+              )
       , test "it records a mouse up" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.mouseUps 0
-                |> andExpect (Expect.equal updatedState.model.mouseUps 1)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.mouseUps 0
+                  |> andExpect (Expect.equal model.mouseUps 1)
+              )
       ]
   ]
 
@@ -85,36 +82,32 @@ doubleClickTests =
       describe "when the double click succeeds"
       [ test "it records the double click" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.doubleClicks 0
-                |> andExpect (Expect.equal updatedState.model.doubleClicks 1)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.doubleClicks 0
+                  |> andExpect (Expect.equal model.doubleClicks 1)
+              )
       , test "it records two clicks" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.clicks 0
-                |> andExpect (Expect.equal updatedState.model.clicks 2)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.clicks 0
+                  |> andExpect (Expect.equal model.clicks 2)
+              )
       , test "it records two mouse downs" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.mouseDowns 0
-                |> andExpect (Expect.equal updatedState.model.mouseDowns 2)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.mouseDowns 0
+                  |> andExpect (Expect.equal model.mouseDowns 2)
+              )
       , test "it records two mouse ups" <|
         \() ->
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal initialModel.mouseUps 0
-                |> andExpect (Expect.equal updatedState.model.mouseUps 2)
-            Failed msg ->
-              Expect.fail msg
+          updatedStateResult
+            |> Elmer.expectModel (\model ->
+                Expect.equal initialModel.mouseUps 0
+                  |> andExpect (Expect.equal model.mouseUps 2)
+              )
       ]
   ]
 
@@ -132,15 +125,11 @@ pressTests =
           Expect.equal initialModel.mouseDowns 0
       , test "the event updates the model" <|
         \() ->
-          let
-            updatedStateResult = Markup.find ".button" initialState
-                                  |> Event.press
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.mouseDowns 1
-              Failed msg ->
-                Expect.fail msg
+          Markup.find ".button" initialState
+            |> Event.press
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.mouseDowns 1
+              )
       ]
   ]
 
@@ -158,15 +147,11 @@ releaseTests =
           Expect.equal initialModel.mouseUps 0
       , test "the event updates the model" <|
         \() ->
-          let
-            updatedStateResult = Markup.find ".button" initialState
-                                  |> Event.release
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.mouseUps 1
-              Failed msg ->
-                Expect.fail msg
+          Markup.find ".button" initialState
+            |> Event.release
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.mouseUps 1
+              )
       ]
   ]
 
@@ -196,7 +181,7 @@ mouseEnterTests =
           \() ->
             Markup.find "li[data-option='2']" initialState
               |> Event.moveMouseIn
-              |> Expect.equal (Failed ("No relevant event handler found"))
+              |> Expect.equal (ComponentState.failure "No relevant event handler found")
         ]
       , describe "when the element has a mouse enter event handler"
         [ test "at first no mouse enter is recorded" <|
@@ -204,28 +189,20 @@ mouseEnterTests =
             Expect.equal initialModel.mouseEnters 0
         , test "the event updates the model" <|
           \() ->
-            let
-              updatedStateResult = Markup.find "#event-parent" initialState
-                                    |> Event.moveMouseIn
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseEnters 1
-                Failed msg ->
-                  Expect.fail msg
+            Markup.find "#event-parent" initialState
+              |> Event.moveMouseIn
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.mouseEnters 1
+                )
         ]
       , describe "when the element and its ancestor have a mouse enter event handler"
         [ test "it triggers only the handler on the element" <|
           \() ->
-            let
-              updatedStateResult = Markup.find "li[data-option='1']" initialState
-                                    |> Event.moveMouseIn
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseEnters 1
-                Failed msg ->
-                  Expect.fail msg
+            Markup.find "li[data-option='1']" initialState
+              |> Event.moveMouseIn
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.mouseEnters 1
+                )
         ]
       ]
   ]
@@ -242,7 +219,7 @@ mouseLeaveTests =
           \() ->
             Markup.find "li[data-option='2']" initialState
               |> Event.moveMouseOut
-              |> Expect.equal (Failed ("No relevant event handler found"))
+              |> Expect.equal (ComponentState.failure "No relevant event handler found")
         ]
       , describe "when the element has the mouse leave event handler"
         [ test "at first no mouse leave is recorded" <|
@@ -250,28 +227,20 @@ mouseLeaveTests =
             Expect.equal initialModel.mouseLeaves 0
         , test "the event updates the model" <|
           \() ->
-            let
-              updatedStateResult = Markup.find "#event-parent" initialState
-                                    |> Event.moveMouseOut
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseLeaves 1
-                Failed msg ->
-                  Expect.fail msg
+            Markup.find "#event-parent" initialState
+              |> Event.moveMouseOut
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.mouseLeaves 1
+                )
         ]
       , describe "when the element and its ancestor have a mouse leave event handler"
         [ test "it triggers only the handler on the element" <|
           \() ->
-            let
-              updatedStateResult = Markup.find "li[data-option='1']" initialState
-                                    |> Event.moveMouseOut
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseLeaves 1
-                Failed msg ->
-                  Expect.fail msg
+            Markup.find "li[data-option='1']" initialState
+              |> Event.moveMouseOut
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.mouseLeaves 1
+                )
         ]
       ]
 
@@ -290,15 +259,11 @@ mouseOverTests =
             Expect.equal initialModel.mouseOvers 0
         , test "the event updates the model" <|
           \() ->
-            let
-              updatedStateResult = Markup.find ".button" initialState
-                                    |> Event.moveMouseIn
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseOvers 1
-                Failed msg ->
-                  Expect.fail msg
+            Markup.find ".button" initialState
+              |> Event.moveMouseIn
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.mouseOvers 1
+                )
         ]
       ]
   ]
@@ -316,15 +281,11 @@ mouseOutTests =
             Expect.equal initialModel.mouseOuts 0
         , test "the event updates the model" <|
           \() ->
-            let
-              updatedStateResult = Markup.find ".button" initialState
-                                    |> Event.moveMouseOut
-            in
-              case updatedStateResult of
-                Ready updatedState ->
-                  Expect.equal updatedState.model.mouseOuts 1
-                Failed msg ->
-                  Expect.fail msg
+            Markup.find ".button" initialState
+              |> Event.moveMouseOut
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.mouseOuts 1
+                )
         ]
       ]
   ]

@@ -9,7 +9,6 @@ module Elmer.Spy.Internal exposing
   , clearSpies
   )
 
-import Elmer.Internal exposing (..)
 
 type alias Calls =
   { name : String
@@ -43,9 +42,9 @@ installSpies : List Spy -> Maybe SpyId
 installSpies =
   List.foldl (\(Spy func) cur -> Maybe.andThen (\_ -> func ()) cur) (Just "")
 
-clearSpies : ComponentState model msg -> ComponentState model msg
-clearSpies stateResult =
+clearSpies : a -> a
+clearSpies subject =
   if Native.Spy.clearSpies () then
-    stateResult
+    subject
   else
-    Failed "Failed to restore swizzled functions! (This should never happen)"
+    Debug.crash "Failed to clear spies! This should never happen!?"

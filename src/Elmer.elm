@@ -32,15 +32,14 @@ import Native.Html
 import Native.Spy
 
 import Expect
-import Elmer.Internal as Internal
-import Elmer.Platform.Internal as Platform
+import Elmer.ComponentState as ComponentState
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 
 {-| Represents the current state of the component under test.
 -}
 type alias ComponentState model msg
-  = Internal.ComponentState model msg
+  = ComponentState.ComponentState model msg
 
 {-| Generic type for functions that pass or fail.
 
@@ -58,19 +57,8 @@ componentState
   -> ( model -> Html msg )
   -> ( msg -> model -> ( model, Cmd msg ) )
   -> ComponentState model msg
-componentState model view update =
-    Internal.Ready
-        { model = model
-        , view = view
-        , update = update
-        , targetSelector = Nothing
-        , locationParser = Nothing
-        , location = Nothing
-        , httpRequests = []
-        , deferredCommands = []
-        , dummyCommands = []
-        , subscriptions = Sub.none
-        }
+componentState =
+  ComponentState.create
 
 {-| Operator for conjoining matchers.
 If one fails, then the conjoined matcher fails, otherwise it passes.
@@ -107,7 +95,7 @@ elm-test to describe how the model should look in that state.
 -}
 expectModel : Matcher model -> Matcher (ComponentState model msg)
 expectModel matcher =
-  Internal.mapToExpectation (\component ->
+  ComponentState.mapToExpectation (\component ->
     matcher component.model
   )
 
@@ -199,14 +187,14 @@ in case any stubs need to be applied.
 -}
 init : (() -> (model, Cmd msg)) -> ComponentState model msg -> ComponentState model msg
 init initThunk =
-  Internal.map (\component ->
+  ComponentState.map (\component ->
     let
       (initModel, initCommand) = initThunk ()
       updatedComponent = { component | model = initModel }
     in
       case Runtime.performCommand initCommand updatedComponent of
         Ok initializedComponent ->
-          Internal.Ready initializedComponent
+          ComponentState.withComponent initializedComponent
         Err message ->
-          Internal.Failed message
+          ComponentState.failure message
   )

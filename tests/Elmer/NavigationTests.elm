@@ -4,7 +4,7 @@ import Test exposing (..)
 import Elmer.TestApps.NavigationTestApp as App
 import Expect
 import Elmer exposing (..)
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
@@ -29,7 +29,7 @@ expectLocationTests =
     [ test "it reports the failure" <|
       \() ->
         let
-          initialState = Failed "Nothing found!"
+          initialState = ComponentState.failure "Nothing found!"
         in
           ElmerNav.expectLocation "http://blah.com" initialState
             |> Expect.equal (Expect.fail "Nothing found!")
@@ -105,7 +105,7 @@ setLocationTests =
     [ test "it shows the message" <|
       \() ->
         let
-          failureState = Failed "failed"
+          failureState = ComponentState.failure "failed"
         in
           ElmerNav.setLocation "http://fun.com/fun.html" failureState
             |> Markup.find ".error"
@@ -116,7 +116,7 @@ setLocationTests =
     [ test "it fails with a message" <|
       \() ->
         let
-          stateWithoutParser = Internal.map (\s -> Ready { s | locationParser = Nothing }) fullState
+          stateWithoutParser = ComponentState.map (\s -> ComponentState.withComponent { s | locationParser = Nothing }) fullState
         in
           ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutParser
             |> Markup.find ".error"

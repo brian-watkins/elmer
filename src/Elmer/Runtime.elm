@@ -4,7 +4,7 @@ module Elmer.Runtime
         , performCommand
         )
 
-import Elmer.Internal exposing (..)
+import Elmer.Component as Component exposing (Component)
 import Elmer.Printer exposing (..)
 import Elmer.Platform.Internal as Platform exposing (..)
 import Dict exposing (Dict)

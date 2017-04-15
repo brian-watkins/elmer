@@ -35,7 +35,7 @@ component as expected.
 -}
 
 import Elmer
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Printer exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Platform.Command as Command
@@ -71,11 +71,11 @@ could do the following:
 -}
 with : (() -> (model -> Sub msg)) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 with subsThunk =
-  Internal.map (\component ->
+  ComponentState.map (\component ->
     let
       subscription = subsThunk () <| component.model
     in
-      Ready { component | subscriptions = subscription }
+      ComponentState.withComponent { component | subscriptions = subscription }
   )
 
 
@@ -118,7 +118,7 @@ the component's `update` function for processing.
 -}
 send : String -> a -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 send subName data =
-  Internal.map (\componentState ->
+  ComponentState.map (\componentState ->
     case findSubDescription subName componentState.subscriptions of
       Just subDesc ->
         let
@@ -126,21 +126,21 @@ send subName data =
         in
           case Runtime.performCommand command componentState of
             Ok updatedState ->
-              Ready updatedState
+              ComponentState.withComponent updatedState
             Err message ->
-              Failed message
+              ComponentState.failure message
 
       Nothing ->
         let
           spies = subscriptionSpyNames componentState.subscriptions
         in
           if List.isEmpty spies then
-            Failed <| format
+            ComponentState.failure <| format
               [ message "No subscription spy found with name" subName
               , description "because there are no subscription spies"
               ]
           else
-            Failed <| format
+            ComponentState.failure <| format
               [ message "No subscription spy found with name" subName
               , message "These are the current subscription spies" (String.join "\n" spies)
               ]

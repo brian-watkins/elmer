@@ -40,7 +40,8 @@ and [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigati
 -}
 
 import Elmer exposing (Matcher)
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.Component exposing (Component)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Platform.Internal as Platform
@@ -84,7 +85,7 @@ updateComponentStateWithDummyCommand identifier componentState =
 -}
 expectDummy : String -> Matcher (Elmer.ComponentState model msg)
 expectDummy expectedIdentifier =
-  Internal.mapToExpectation (\componentState ->
+  ComponentState.mapToExpectation (\componentState ->
     let
       dummyCommands = List.filter (\identifier -> identifier == expectedIdentifier) componentState.dummyCommands
     in
@@ -119,9 +120,9 @@ sent to the component's `update` function.
 -}
 resolveDeferred : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 resolveDeferred =
-  Internal.map (\componentState ->
+  ComponentState.map (\componentState ->
     if List.isEmpty componentState.deferredCommands then
-      Failed "No deferred commands found"
+      ComponentState.failure "No deferred commands found"
     else
       let
         deferredCommands = Cmd.batch componentState.deferredCommands
@@ -149,16 +150,16 @@ in case any stubbed functions need to be applied.
 -}
 send : (() -> Cmd msg) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 send commandThunk =
-    Internal.map (\state ->
-      Runtime.performCommand (commandThunk ()) state
-        |> asComponentState
-    )
+  ComponentState.map (\state ->
+    Runtime.performCommand (commandThunk ()) state
+      |> asComponentState
+  )
 
 
 asComponentState : Result String (Component model msg) -> ComponentState model msg
 asComponentState commandResult =
   case commandResult of
-    Ok updatedComponentState ->
-      Ready updatedComponentState
+    Ok component ->
+      ComponentState.withComponent component
     Err message ->
-      Failed message
+      ComponentState.failure message

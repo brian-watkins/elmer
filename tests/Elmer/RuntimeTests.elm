@@ -5,7 +5,7 @@ import Expect
 
 import Html exposing (Html)
 import Elmer exposing (..)
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Html.Matchers as Matchers
@@ -70,7 +70,7 @@ batchCommandFailureTest =
     describe "when a batched command fails"
     [ test "it reports the failure" <|
       \() ->
-          Expect.equal (Failed "It failed!") result
+          Expect.equal (ComponentState.failure "It failed!") result
     ]
 
 mappedBatchCommandTest : Test
@@ -127,7 +127,7 @@ unknownCommandTest =
         unknownCommandThunk = \() -> Task.perform App.RenderFirstMessage (Task.succeed "hello")
       in
         Command.send unknownCommandThunk initialState
-          |> Expect.equal (Failed ( format
+          |> Expect.equal (ComponentState.failure ( format
             [ message "Elmer encountered a command it does not know how to run" "Task"
             , description "Try sending a stubbed or dummy command instead"
             ]

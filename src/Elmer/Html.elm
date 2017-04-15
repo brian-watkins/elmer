@@ -18,7 +18,8 @@ module Elmer.Html exposing
 -}
 
 import Elmer exposing (Matcher)
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.Component exposing (Component)
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
@@ -81,7 +82,7 @@ You can add as many selectors as you want.
 -}
 find : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 find selector =
-    Internal.map (updateTargetSelector selector)
+  ComponentState.map (updateTargetSelector selector)
 
 
 {-| Find the descendents of an element that match the given selector string.
@@ -115,7 +116,7 @@ will be applied to the matcher.
 -}
 expectElement : Matcher (HtmlElement msg) -> Matcher (Elmer.ComponentState model msg)
 expectElement expectFunction =
-  Internal.mapToExpectation <|
+  ComponentState.mapToExpectation <|
     \component ->
       case Query.targetedElement component of
         Just element ->
@@ -133,7 +134,7 @@ expectElement expectFunction =
 -}
 expectElements : Matcher (List (HtmlElement msg)) -> Matcher (Elmer.ComponentState model msg)
 expectElements listMatcher =
-  Internal.mapToExpectation <|
+  ComponentState.mapToExpectation <|
     \component ->
       case Query.targetedElements component of
         Just elements ->
@@ -151,20 +152,20 @@ expectElementExists componentStateResult =
 -- Private methods
 
 updateTargetSelector : String -> Component model msg -> ComponentState model msg
-updateTargetSelector selector componentState =
+updateTargetSelector selector component =
   let
-    currentView = componentState.view componentState.model
+    currentView = component.view component.model
   in
     case Query.findElement selector currentView of
         Just element ->
-            Ready { componentState | targetSelector = Just selector }
+            ComponentState.withComponent { component | targetSelector = Just selector }
 
         Nothing ->
           let
-            failure = "No html node found with selector: " ++ selector ++ "\n\nThe current view is:\n\n"
+            message = "No html node found with selector: " ++ selector ++ "\n\nThe current view is:\n\n"
               ++ (htmlToString currentView)
           in
-            Failed failure
+            ComponentState.failure message
 
 
 htmlToString : Html msg -> String

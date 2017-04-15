@@ -6,7 +6,7 @@ import Elmer.TestApps.InitTestApp as InitApp
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html
 import Elmer.Html.Matchers as Matchers
 import Elmer.Spy as Spy
@@ -19,8 +19,7 @@ import Task
 all : Test
 all =
   describe "Elmer Tests"
-    [ mapToExpectationTests
-    , initTests
+    [ initTests
     , matchAllTests
     , matchOneTests
     , hasSizeTests
@@ -29,38 +28,6 @@ all =
     , expectModelTests
     ]
 
-mapToExpectationTests =
-  describe "mapToExpectaion"
-  [ describe "when there is an upstream error"
-    [ test "it fails with the upstream error" <|
-      \() ->
-        Internal.mapToExpectation (\_ -> Expect.pass) (Failed "Failed!")
-          |> Expect.equal (Expect.fail "Failed!")
-    ]
-  , describe "when there is no upstream failure"
-    [ describe "when the mapper fails"
-      [ test "it fails" <|
-        \() ->
-          let
-            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-          in
-            Internal.mapToExpectation (\_ -> Expect.fail "I failed!") initialState
-              |> Expect.equal (Expect.fail "I failed!")
-      ]
-    , describe "when the mapper passes"
-      [ test "it passes" <|
-        \() ->
-          let
-            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-          in
-            Internal.mapToExpectation (
-              \componentState ->
-                Expect.equal Nothing componentState.targetSelector
-            ) initialState
-              |> Expect.equal (Expect.pass)
-      ]
-    ]
-  ]
 
 initTests : Test
 initTests =
@@ -69,10 +36,10 @@ initTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Failed "You failed!"
+          initialState = ComponentState.failure "You failed!"
         in
           Elmer.init (\() -> (InitApp.defaultModel "", Cmd.none)) initialState
-            |> Expect.equal (Failed "You failed!")
+            |> Expect.equal (ComponentState.failure "You failed!")
     ]
   , let
       state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
@@ -97,12 +64,12 @@ initTests =
           state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
             |> Elmer.init (\() -> (InitApp.defaultModel "", Task.perform InitApp.Tag (Task.succeed "Yo")) )
         in
-          case state of
-            Ready _ ->
-              Expect.fail "Should have failed!"
-            Failed message ->
-              Expect.equal True <|
-                String.contains "Elmer encountered a command it does not know how to run" message
+          Expect.equal state (ComponentState.failure <|
+            format
+              [ message "Elmer encountered a command it does not know how to run" "Task"
+              , description "Try sending a stubbed or dummy command instead"
+              ]
+          )
     ]
   ]
 
@@ -230,7 +197,7 @@ expectModelTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Failed "You failed!"
+          initialState = ComponentState.failure "You failed!"
         in
           Elmer.expectModel (\model -> Expect.fail "Shouldn't get here") initialState
             |> Expect.equal (Expect.fail "You failed!")

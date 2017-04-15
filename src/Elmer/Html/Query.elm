@@ -8,7 +8,7 @@ module Elmer.Html.Query exposing
 
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Internal
-import Elmer.Internal exposing (Component)
+import Elmer.Component exposing (Component)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json

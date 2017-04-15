@@ -7,7 +7,7 @@ import Dict
 import Elmer
 import Html
 import Elmer exposing ((<&&>))
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers as Matchers
 import Elmer.Http as ElmerHttp
@@ -296,7 +296,7 @@ componentStateWithRequests requestData =
     defaultState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
   in
     defaultState
-      |> Internal.map (\state -> Ready { state | httpRequests = requestData })
+      |> ComponentState.map (\component -> ComponentState.withComponent { component | httpRequests = requestData })
 
 testRequest : String -> String -> HttpRequest
 testRequest method url =
@@ -312,7 +312,7 @@ expectRequestTests method func =
   [ describe "when there is an upstream error"
     [ test "it fails with the upstream error" <|
       \() ->
-        func "http://fun.com/fun" wasSent (Failed "Failed!")
+        func "http://fun.com/fun" wasSent (ComponentState.failure "Failed!")
           |> Expect.equal (Expect.fail "Failed!")
     ]
   , describe "when the expected route contains a query string"
@@ -459,9 +459,9 @@ clearRequestsTests =
     [ test "it shows the failure" <|
       \() ->
         let
-          result = ElmerHttp.clearRequestHistory (Failed "You Failed!")
+          result = ElmerHttp.clearRequestHistory (ComponentState.failure "You Failed!")
         in
-          Expect.equal (Failed "You Failed!") result
+          Expect.equal (ComponentState.failure "You Failed!") result
     ]
   , describe "when there are no requests to clear"
     [ test "it fails" <|
@@ -470,7 +470,7 @@ clearRequestsTests =
           initialState = componentStateWithRequests []
         in
           ElmerHttp.clearRequestHistory initialState
-            |> Expect.equal (Failed "No HTTP requests to clear")
+            |> Expect.equal (ComponentState.failure "No HTTP requests to clear")
     ]
   , describe "when there are requests to clear"
     [ test "it clears the requests" <|
@@ -480,10 +480,9 @@ clearRequestsTests =
           request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
           initialState = componentStateWithRequests [ request1, request2 ]
         in
-          case ElmerHttp.clearRequestHistory initialState of
-            Ready state ->
-              Expect.equal True (List.isEmpty state.httpRequests)
-            Failed _ ->
-              Expect.fail "Should find a component state!"
+          ElmerHttp.clearRequestHistory initialState
+            |> ComponentState.mapToExpectation (\component ->
+              Expect.equal True (List.isEmpty component.httpRequests)
+            )
     ]
   ]

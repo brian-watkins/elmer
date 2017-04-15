@@ -2,7 +2,7 @@ module Elmer.HtmlTests exposing (all)
 
 import Test exposing (..)
 import Expect
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html as Markup
 import Elmer
 import Elmer.Html.Matchers as Matchers
@@ -36,7 +36,7 @@ findTests =
     [ test "it returns the failure" <|
       \() ->
         let
-          initialState = Failed "upstream failure"
+          initialState = ComponentState.failure "upstream failure"
         in
           Markup.find ".button" initialState
             |> Expect.equal initialState
@@ -49,7 +49,7 @@ findTests =
             initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
             Markup.find ".blah" initialState
-              |> Expect.equal (Failed "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
+              |> Expect.equal (ComponentState.failure "No html node found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
       ]
     , describe "when there is only text" <|
       [ test "it returns the failure message and prints that there are no nodes" <|
@@ -58,25 +58,15 @@ findTests =
             initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.textView SimpleApp.update
           in
             Markup.find ".blah" initialState
-              |> Expect.equal (Failed "No html node found with selector: .blah\n\nThe current view is:\n\n<No Nodes>")
+              |> Expect.equal (ComponentState.failure "No html node found with selector: .blah\n\nThe current view is:\n\n<No Nodes>")
       ]
     ]
   , describe "when the element is found"
-    [ test "it updates the state with the target selector" <|
+    [ test "it finds the element" <|
       \() ->
-        let
-          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-          stateResult = Markup.find ".styled" initialState
-        in
-          case stateResult of
-            Ready state ->
-              case state.targetSelector of
-                Just selector ->
-                  Expect.equal ".styled" selector
-                Nothing ->
-                  Expect.fail "No target selector!"
-            Failed message ->
-              Expect.fail message
+        Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+          |> Markup.find ".styled"
+          |> Markup.expectElementExists
     ]
   ]
 
@@ -441,7 +431,7 @@ expectElementTests =
     [ test "it fails with the error message" <|
       \() ->
         let
-          initialState = Failed "upstream failure"
+          initialState = ComponentState.failure "upstream failure"
         in
           Markup.expectElement (
             \node -> Expect.fail "Should not get here"
@@ -479,7 +469,7 @@ expectElementExistsTests =
     [ test "it fails with the upstream error message" <|
       \() ->
         let
-          initialState = Failed "upstream failure"
+          initialState = ComponentState.failure "upstream failure"
         in
           Markup.expectElementExists initialState
             |> Expect.equal (Expect.fail "upstream failure")
@@ -512,7 +502,7 @@ expectElementsTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Failed "You failed!"
+          initialState = ComponentState.failure "You failed!"
         in
           Markup.expectElements (\elements -> Expect.fail "Should not get here!") initialState
             |> Expect.equal (Expect.fail "You failed!")

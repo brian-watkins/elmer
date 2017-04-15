@@ -24,7 +24,8 @@ import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.Component exposing (Component)
 import Elmer exposing (Matcher)
 import Expect
 import Elmer.Printer exposing (..)
@@ -44,18 +45,10 @@ navigationComponentState
   -> ( Navigation.Location -> msg )
   -> Elmer.ComponentState model msg
 navigationComponentState model view update parser =
-    Ready
-        { model = model
-        , view = view
-        , update = update
-        , targetSelector = Nothing
-        , locationParser = Just parser
-        , location = Nothing
-        , httpRequests = []
-        , deferredCommands = []
-        , dummyCommands = []
-        , subscriptions = Sub.none
-        }
+  ComponentState.create model view update
+    |> ComponentState.map (\component ->
+      ComponentState.withComponent { component | locationParser = Just parser }
+    )
 
 {-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
 records the location as it is set.
@@ -115,7 +108,7 @@ Note: This expectation must be used in conjunction with `spy` above.
 -}
 expectLocation : String -> Matcher (Elmer.ComponentState model msg)
 expectLocation expectedURL =
-  Internal.mapToExpectation <|
+  ComponentState.mapToExpectation <|
       \componentState ->
           case componentState.location of
               Just location ->
@@ -133,13 +126,13 @@ will be passed to the component's `update` function for processing.
 -}
 setLocation : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 setLocation location =
-  Internal.map (\componentState ->
-    case componentState.locationParser of
+  ComponentState.map (\component ->
+    case component.locationParser of
         Just locationParser ->
           let
               commandThunk = \() -> fakeNavigateCommand location
           in
-              Command.send commandThunk (Ready componentState)
+              Command.send commandThunk <| ComponentState.withComponent component
         Nothing ->
-            Failed "setLocation failed because no locationParser was set"
+            ComponentState.failure "setLocation failed because no locationParser was set"
   )

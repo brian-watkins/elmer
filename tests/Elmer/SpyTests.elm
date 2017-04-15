@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer.TestApps.SpyTestApp as SpyApp
 import Elmer.TestApps.HttpTestApp as HttpApp
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Spy as Spy
 import Elmer.Spy.Matchers as Matchers
 import Elmer.Html as Markup
@@ -34,11 +34,11 @@ useTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Failed "You failed!"
+          initialState = ComponentState.failure "You failed!"
           spy = Spy.create "clearName" (\_ -> SpyApp.clearName)
         in
           Spy.use [ spy ] initialState
-            |> Expect.equal (Failed "You failed!")
+            |> Expect.equal (ComponentState.failure "You failed!")
     ]
   ]
 
@@ -53,7 +53,7 @@ spyTests =
           spy = Spy.create "my-spy" (\_ -> "Huh?")
         in
           Spy.use [ spy ] initialState
-            |> Expect.equal (Failed "Failed to install stubs!")
+            |> Expect.equal (ComponentState.failure "Failed to install stubs!")
     ]
   , describe "when the argument references a function"
     [ describe "when the function is called"
@@ -79,7 +79,7 @@ expectSpyTests =
   [ describe "when there is a failure upstream"
     [ test "it fails" <|
       \() ->
-        Failed "Upstream Failure"
+        ComponentState.failure "Upstream Failure"
           |> Spy.expect "some-spy" (\_ -> Expect.pass)
           |> Expect.equal (Expect.fail "Upstream Failure")
     ]

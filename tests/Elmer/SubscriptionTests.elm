@@ -3,7 +3,7 @@ module Elmer.SubscriptionTests exposing (all)
 import Test exposing (..)
 import Expect
 import Elmer
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (..)
 import Elmer.Spy as Spy
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
@@ -26,10 +26,10 @@ withTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Failed "You Failed!"
+          initialState = ComponentState.failure "You Failed!"
         in
           Subscription.with (\() _ -> Sub.none) initialState
-            |> Expect.equal (Failed "You Failed!")
+            |> Expect.equal (ComponentState.failure "You Failed!")
     ]
   , describe "when the override is not a function"
     [ test "it fails" <|
@@ -41,7 +41,7 @@ withTests =
         in
           Spy.use [ override ] initialState
             |> Subscription.with (\() _ -> Sub.none)
-            |> Expect.equal (Failed "Failed to install stubs!")
+            |> Expect.equal (ComponentState.failure "Failed to install stubs!")
     ]
   ]
 
@@ -52,10 +52,10 @@ sendTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Failed "You Failed!"
+          initialState = ComponentState.failure "You Failed!"
         in
           Subscription.send "mySub" 37 initialState
-            |> Expect.equal (Failed "You Failed!")
+            |> Expect.equal (ComponentState.failure "You Failed!")
     ]
   , describe "when no subscription is found"
     [ describe "when there are no subscriptions spies"
@@ -65,7 +65,7 @@ sendTests =
             initialState = Elmer.componentState App.defaultModel App.view App.update
           in
             Subscription.send "someOtherSub" 37 initialState
-              |> Expect.equal (Failed (
+              |> Expect.equal (ComponentState.failure (
                 format
                   [ message "No subscription spy found with name" "someOtherSub"
                   , description "because there are no subscription spies"]
@@ -84,7 +84,7 @@ sendTests =
             Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "someOtherSub" 37
-              |> Expect.equal (Failed (
+              |> Expect.equal (ComponentState.failure (
                 format
                   [ message "No subscription spy found with name" "someOtherSub"
                   , message "These are the current subscription spies" "my-spy-3600000\nmy-spy-1"

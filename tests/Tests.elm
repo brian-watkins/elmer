@@ -24,11 +24,13 @@ import Elmer.PrinterTests
 import Elmer.SubscriptionTests
 import Elmer.SpyTests
 import Elmer.PortTests
+import Elmer.ComponentStateTests
 
 all : Test
 all =
   describe "Elmer"
     [ Elmer.ElmerTests.all
+    , Elmer.ComponentStateTests.all
     , Elmer.HtmlTests.all
     , Elmer.ElementTests.all
     , Elmer.MatcherTests.all

@@ -5,7 +5,7 @@ import Elmer.TestApps.FocusTestApp as App
 import Expect
 import Elmer
 import Elmer.EventTests as EventTests
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -32,15 +32,11 @@ focusTests =
           Expect.equal initialModel.isFocused False
       , test "the event updates the model" <|
         \() ->
-          let
-            updatedStateResult = Markup.find "#name-field" initialState
-                                  |> Event.focus
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.isFocused True
-              Failed msg ->
-                Expect.fail msg
+          Markup.find "#name-field" initialState
+            |> Event.focus
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isFocused True
+              )
       ]
   ]
 
@@ -59,14 +55,10 @@ blurTests =
           Expect.equal initialModel.isBlurred False
       , test "the event updates the model" <|
         \() ->
-          let
-            updatedStateResult = Markup.find "#name-field" initialState
-                                  |> Event.blur
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.isBlurred True
-              Failed msg ->
-                Expect.fail msg
+          Markup.find "#name-field" initialState
+            |> Event.blur
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isBlurred True
+              )
       ]
   ]

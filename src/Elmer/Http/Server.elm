@@ -7,7 +7,7 @@ import Http
 import Dict
 import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
-import Elmer.Internal as Internal exposing (..)
+import Elmer.Component exposing (Component)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)

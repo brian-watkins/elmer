@@ -11,7 +11,7 @@ import Elmer.TestApps.InputTestApp as InputApp
 import Elmer.TestApps.EventPropagationTestApp as EventApp
 import Expect
 import Elmer
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -29,7 +29,7 @@ standardEventBehavior eventFunction =
     [ test "it passes on the error" <|
       \() ->
         let
-          initialState = Failed "upstream failure"
+          initialState = ComponentState.failure "upstream failure"
         in
           eventFunction initialState
             |> Expect.equal initialState
@@ -41,7 +41,7 @@ standardEventBehavior eventFunction =
           initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
         in
           eventFunction initialState
-           |> Expect.equal (Failed "No target element specified")
+           |> Expect.equal (ComponentState.failure "No target element specified")
     ]
   , describe "when the event handler is not found"
     [ test "it returns an event not found error" <|
@@ -51,7 +51,7 @@ standardEventBehavior eventFunction =
         in
           Markup.find ".no-events" initialState
             |> eventFunction
-            |> Expect.equal (Failed ("No relevant event handler found"))
+            |> Expect.equal (ComponentState.failure ("No relevant event handler found"))
     ]
   ]
 
@@ -66,11 +66,9 @@ multiEventPropagationBehavior allEvents nonPropagatingEvents eventFunc eventName
                     |> Markup.find "#no-events"
                     |> eventFunc
         in
-          case state of
-            Ready s ->
-              Expect.equal s.model.eventCount allEvents
-            Failed msg ->
-              Expect.fail msg
+          Elmer.expectModel (\model ->
+            Expect.equal model.eventCount allEvents
+          ) state
     ]
   , describe "when an event handler has stopPropagation set to True"
     [ test "the event stops at the non-propagating event handler" <|
@@ -80,11 +78,9 @@ multiEventPropagationBehavior allEvents nonPropagatingEvents eventFunc eventName
                     |> Markup.find "#no-events"
                     |> eventFunc
         in
-          case state of
-            Ready s ->
-              Expect.equal s.model.eventCount nonPropagatingEvents
-            Failed msg ->
-              Expect.fail msg
+          Elmer.expectModel (\model ->
+            Expect.equal model.eventCount nonPropagatingEvents
+          ) state
     ]
   ]
 
@@ -106,10 +102,9 @@ customEventTests =
             updatedStateResult = Markup.find "input[name='first-name']" initialState
                                   |> Event.trigger "keyup" keyUpEventJson
           in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.lastLetter 65
-              Failed msg ->
-                Expect.fail msg
+            updatedStateResult
+              |> Elmer.expectModel (\model ->
+                Expect.equal model.lastLetter 65
+              )
       ]
     ]

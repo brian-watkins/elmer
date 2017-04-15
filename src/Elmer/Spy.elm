@@ -22,7 +22,7 @@ module Elmer.Spy exposing
 
 import Expect
 import Elmer exposing (Matcher)
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState
 import Elmer.Spy.Internal as Spy_
 import Elmer.Printer exposing (..)
 
@@ -109,7 +109,7 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
 -}
 expect : String -> Matcher Calls -> Elmer.ComponentState model msg -> Expect.Expectation
 expect name matcher =
-  Internal.mapToExpectation (\component ->
+  ComponentState.mapToExpectation (\component ->
     case Spy_.callsForSpy name of
       Just spyCalls ->
         matcher spyCalls
@@ -148,11 +148,11 @@ you could do something like the following:
 -}
 use : List Spy -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 use stubs =
-  Internal.map (\component ->
+  ComponentState.map (\component ->
     case Spy_.installSpies stubs of
       Just _ ->
-        Ready component
+        ComponentState.withComponent component
       Nothing ->
-        Failed "Failed to install stubs!"
+        ComponentState.failure "Failed to install stubs!"
           |> Spy_.clearSpies
   )

@@ -5,7 +5,7 @@ import Expect
 import Elmer
 import Elmer.TestApps.InputTestApp as App
 import Elmer.EventTests as EventTests
-import Elmer.Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Html as Markup
 import Elmer.Printer exposing (..)
@@ -28,16 +28,12 @@ inputTests =
   , describe "when the input succeeds"
     [ test "it updates the model accordingly" <|
       \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-          updatedStateResult = Markup.find "input[name='first-name']" initialState
-                                |> Event.input "Mr. Fun Stuff"
-        in
-          case updatedStateResult of
-            Ready updatedState ->
-              Expect.equal updatedState.model.name "Mr. Fun Stuff"
-            Failed msg ->
-              Expect.fail msg
+        Elmer.componentState App.defaultModel App.view App.update
+          |> Markup.find "input[name='first-name']"
+          |> Event.input "Mr. Fun Stuff"
+          |> Elmer.expectModel (\model ->
+              Expect.equal model.name "Mr. Fun Stuff"
+            )
     ]
   ]
 
@@ -57,15 +53,11 @@ checkTests =
           Expect.equal initialModel.isChecked False
       , test "the event updates the model" <|
         \() ->
-          let
-            updatedStateResult = Markup.find "input[name='is-cool']" initialState
-                                  |> Event.check
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.isChecked True
-              Failed msg ->
-                Expect.fail msg
+          Markup.find "input[name='is-cool']" initialState
+            |> Event.check
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isChecked True
+              )
       ]
   ]
 
@@ -85,16 +77,12 @@ uncheckTests =
           Expect.equal initialModel.isChecked False
       , test "the event updates the model" <|
         \() ->
-          let
-            updatedStateResult = Markup.find "input[name='is-cool']" initialState
-                                  |> Event.check
-                                  |> Event.uncheck
-          in
-            case updatedStateResult of
-              Ready updatedState ->
-                Expect.equal updatedState.model.isChecked False
-              Failed msg ->
-                Expect.fail msg
+          Markup.find "input[name='is-cool']" initialState
+            |> Event.check
+            |> Event.uncheck
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isChecked False
+              )
       ]
   ]
 
@@ -109,11 +97,7 @@ triggersSubmit selector =
             |> Markup.find selector
             |> Event.click
         in
-          case state of
-            Ready component ->
-              Expect.fail "Should fail!"
-            Failed msg ->
-              Expect.equal msg "No relevant event handler found"
+          Expect.equal state <| ComponentState.failure "No relevant event handler found"
     ]
   , let
       initialModel = App.defaultModel
@@ -127,11 +111,10 @@ triggersSubmit selector =
           Expect.equal initialModel.isSubmitted False
       , test "it handles the event" <|
         \() ->
-          case state of
-            Ready component ->
-              Expect.equal component.model.isSubmitted True
-            Failed msg ->
-              Expect.fail msg
+          state
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isSubmitted True
+              )
       ]
   , let
       initialModel = App.defaultModel
@@ -145,11 +128,10 @@ triggersSubmit selector =
           Expect.equal initialModel.isSubmitted False
       , test "it handles the event" <|
         \() ->
-          case state of
-            Ready component ->
-              Expect.equal component.model.isSubmitted True
-            Failed msg ->
-              Expect.fail msg
+          state
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isSubmitted True
+              )
       ]
   , describe "when the submit button references a form that does not exist"
     [ let
@@ -164,11 +146,7 @@ triggersSubmit selector =
             Expect.equal initialModel.isSubmitted False
         , test "it does nothing" <|
           \() ->
-            case state of
-              Ready component ->
-                Expect.fail "Should fail!"
-              Failed msg ->
-                Expect.equal msg "No relevant event handler found"
+            Expect.equal state <| ComponentState.failure "No relevant event handler found"
         ]
       , let
           initialModel = App.defaultModel
@@ -182,11 +160,7 @@ triggersSubmit selector =
               Expect.equal initialModel.isSubmitted False
           , test "it does nothing" <|
             \() ->
-              case state of
-                Ready component ->
-                  Expect.fail "Should fail!"
-                Failed msg ->
-                  Expect.equal msg "No relevant event handler found"
+              Expect.equal state <| ComponentState.failure "No relevant event handler found"
           ]
       ]
   ]
@@ -205,11 +179,10 @@ doesNotTriggerSubmit selector =
           Expect.equal initialModel.isSubmitted False
       , test "it does not trigger a submit event" <|
         \() ->
-          case state of
-            Ready component ->
-              Expect.equal component.model.isSubmitted False
-            Failed msg ->
-              Expect.fail msg
+          state
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isSubmitted False
+              )
       ]
 
 submitTests : Test
@@ -239,7 +212,7 @@ selectTests =
     [ test "it passes on the error" <|
       \() ->
         let
-          initialState = Failed "upstream failure"
+          initialState = ComponentState.failure "upstream failure"
         in
           Event.select "some-value" initialState
             |> Expect.equal initialState
@@ -251,7 +224,7 @@ selectTests =
           initialState = Elmer.componentState App.defaultModel App.view App.update
         in
           Event.select "some-value" initialState
-           |> Expect.equal (Failed "No target element specified")
+           |> Expect.equal (ComponentState.failure "No target element specified")
     ]
   , describe "when the element is not a select"
     [ test "it fails" <|
@@ -261,7 +234,7 @@ selectTests =
             |> Markup.find "#root"
             |> Event.select "some-value"
         in
-          Expect.equal state (Failed "The targeted element is not selectable")
+          Expect.equal state (ComponentState.failure "The targeted element is not selectable")
     ]
   , describe "when the element is a select"
     [ describe "when no input event handler is found"
@@ -272,7 +245,7 @@ selectTests =
               |> Markup.find "select"
               |> Event.select "some-value"
           in
-            Expect.equal state (Failed "No relevant event handler found")
+            Expect.equal state (ComponentState.failure "No relevant event handler found")
       ]
     , describe "when the select has no options"
       [ test "it fails" <|
@@ -282,7 +255,7 @@ selectTests =
               |> Markup.find "select"
               |> Event.select "some-value"
           in
-            Expect.equal state (Failed (format [ message "No option found with value" "some-value" ]))
+            Expect.equal state (ComponentState.failure (format [ message "No option found with value" "some-value" ]))
       ]
     , describe "when the select has options"
       [ describe "when no option matches the specified value"
@@ -294,7 +267,7 @@ selectTests =
                 |> Event.select "bad-value"
             in
               Expect.equal state (
-                Failed <| format
+                ComponentState.failure <| format
                   [ message "No option found with value" "bad-value"
                   , message "These are the options" "- select  [ input ]\n  - option { value = 'cat' } \n    - Cat\n  - option { value = 'dog' } \n    - Dog\n  - option { value = 'mouse' } \n    - Mouse"
                   ]
@@ -303,16 +276,12 @@ selectTests =
       , describe "when an option matches the specified value"
         [ test "it triggers the event handler" <|
           \() ->
-            let
-              state = Elmer.componentState App.defaultModel App.selectView App.update
-                |> Markup.find "select"
-                |> Event.select "mouse"
-            in
-              case state of
-                Ready component ->
-                  Expect.equal component.model.selectedValue "mouse"
-                Failed msg ->
-                  Expect.fail msg
+            Elmer.componentState App.defaultModel App.selectView App.update
+              |> Markup.find "select"
+              |> Event.select "mouse"
+              |> Elmer.expectModel (\model ->
+                  Expect.equal model.selectedValue "mouse"
+                )
         ]
       ]
     ]

@@ -34,7 +34,7 @@ import Dict
 import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Server as Server
-import Elmer.Internal as Internal exposing (..)
+import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
@@ -99,11 +99,11 @@ in the history of this ComponentState.
 -}
 clearRequestHistory : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 clearRequestHistory =
-  Internal.map (\componentState ->
-    if List.isEmpty componentState.httpRequests then
-      Failed "No HTTP requests to clear"
+  ComponentState.map (\component ->
+    if List.isEmpty component.httpRequests then
+      ComponentState.failure "No HTTP requests to clear"
     else
-      Ready { componentState | httpRequests = [] }
+      ComponentState.withComponent { component | httpRequests = [] }
   )
 
 
@@ -164,26 +164,26 @@ expectPATCH =
 
 expectRequest : String -> String -> Matcher HttpRequest -> Matcher (Elmer.ComponentState model msg)
 expectRequest method url requestMatcher =
-  Internal.mapToExpectation <|
-    \componentState ->
+  ComponentState.mapToExpectation <|
+    \component ->
       if String.contains "?" url then
         Expect.fail <| format
           [ message "The expected route contains a query string" url
           , description "Use the hasQueryParam matcher instead"
           ]
       else
-        case hasRequest componentState.httpRequests method url of
+        case hasRequest component.httpRequests method url of
           Just request ->
             requestMatcher request
           Nothing ->
-            if List.isEmpty componentState.httpRequests then
+            if List.isEmpty component.httpRequests then
               Expect.fail <| format
                 [ message "Expected request for" (method ++ " " ++ url)
                 , description "but no requests have been made"
                 ]
             else
               let
-                requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) componentState.httpRequests)
+                requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) component.httpRequests)
               in
                 Expect.fail <| format
                   [ message "Expected request for" (method ++ " " ++ url)
