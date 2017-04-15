@@ -23,6 +23,7 @@ import Elmer.CommandTests
 import Elmer.PrinterTests
 import Elmer.SubscriptionTests
 import Elmer.PlatformTests
+import Elmer.PortTests
 
 all : Test
 all =
@@ -48,4 +49,5 @@ all =
     , Elmer.SubscriptionTests.all
     , Elmer.PrinterTests.all
     , Elmer.PlatformTests.all
+    , Elmer.PortTests.all
     ]
