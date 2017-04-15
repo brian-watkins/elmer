@@ -47,7 +47,7 @@ navigationComponentState
 navigationComponentState model view update parser =
   ComponentState.create model view update
     |> ComponentState.map (\component ->
-      ComponentState.withComponent { component | locationParser = Just parser }
+      ComponentState.with { component | locationParser = Just parser }
     )
 
 {-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
@@ -132,7 +132,7 @@ setLocation location =
           let
               commandThunk = \() -> fakeNavigateCommand location
           in
-              Command.send commandThunk <| ComponentState.withComponent component
+              Command.send commandThunk <| ComponentState.with component
         Nothing ->
             ComponentState.failure "setLocation failed because no locationParser was set"
   )

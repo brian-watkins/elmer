@@ -158,7 +158,7 @@ updateTargetSelector selector component =
   in
     case Query.findElement selector currentView of
         Just element ->
-            ComponentState.withComponent { component | targetSelector = Just selector }
+            ComponentState.with { component | targetSelector = Just selector }
 
         Nothing ->
           let

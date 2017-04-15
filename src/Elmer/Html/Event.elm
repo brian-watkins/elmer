@@ -404,7 +404,7 @@ toComponentState : Result String (Component model msg) -> ComponentState model m
 toComponentState componentResult =
   case componentResult of
     Ok component ->
-      ComponentState.withComponent component
+      ComponentState.with component
     Err message ->
       ComponentState.failure message
 

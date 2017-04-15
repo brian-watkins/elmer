@@ -4,7 +4,7 @@ module Elmer.ComponentState exposing
   , abstractMap
   , map
   , mapToExpectation
-  , withComponent
+  , with
   , failure
   )
 
@@ -32,8 +32,8 @@ create model view update =
     , subscriptions = Sub.none
     }
 
-withComponent : Component model msg -> ComponentState model msg
-withComponent component =
+with : Component model msg -> ComponentState model msg
+with component =
   Ready component
 
 failure : String -> ComponentState model msg

@@ -160,6 +160,6 @@ asComponentState : Result String (Component model msg) -> ComponentState model m
 asComponentState commandResult =
   case commandResult of
     Ok component ->
-      ComponentState.withComponent component
+      ComponentState.with component
     Err message ->
       ComponentState.failure message

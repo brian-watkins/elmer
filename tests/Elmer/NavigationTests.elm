@@ -116,7 +116,7 @@ setLocationTests =
     [ test "it fails with a message" <|
       \() ->
         let
-          stateWithoutParser = ComponentState.map (\s -> ComponentState.withComponent { s | locationParser = Nothing }) fullState
+          stateWithoutParser = ComponentState.map (\s -> ComponentState.with { s | locationParser = Nothing }) fullState
         in
           ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutParser
             |> Markup.find ".error"

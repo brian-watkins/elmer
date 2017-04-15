@@ -296,7 +296,7 @@ componentStateWithRequests requestData =
     defaultState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
   in
     defaultState
-      |> ComponentState.map (\component -> ComponentState.withComponent { component | httpRequests = requestData })
+      |> ComponentState.map (\component -> ComponentState.with { component | httpRequests = requestData })
 
 testRequest : String -> String -> HttpRequest
 testRequest method url =

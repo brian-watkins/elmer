@@ -151,7 +151,7 @@ use stubs =
   ComponentState.map (\component ->
     case Spy_.installSpies stubs of
       Just _ ->
-        ComponentState.withComponent component
+        ComponentState.with component
       Nothing ->
         ComponentState.failure "Failed to install stubs!"
           |> Spy_.clearSpies

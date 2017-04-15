@@ -75,7 +75,7 @@ with subsThunk =
     let
       subscription = subsThunk () <| component.model
     in
-      ComponentState.withComponent { component | subscriptions = subscription }
+      ComponentState.with { component | subscriptions = subscription }
   )
 
 
@@ -126,7 +126,7 @@ send subName data =
         in
           case Runtime.performCommand command componentState of
             Ok updatedState ->
-              ComponentState.withComponent updatedState
+              ComponentState.with updatedState
             Err message ->
               ComponentState.failure message
 

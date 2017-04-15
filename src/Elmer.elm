@@ -194,7 +194,7 @@ init initThunk =
     in
       case Runtime.performCommand initCommand updatedComponent of
         Ok initializedComponent ->
-          ComponentState.withComponent initializedComponent
+          ComponentState.with initializedComponent
         Err message ->
           ComponentState.failure message
   )

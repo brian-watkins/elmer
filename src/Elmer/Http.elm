@@ -103,7 +103,7 @@ clearRequestHistory =
     if List.isEmpty component.httpRequests then
       ComponentState.failure "No HTTP requests to clear"
     else
-      ComponentState.withComponent { component | httpRequests = [] }
+      ComponentState.with { component | httpRequests = [] }
   )
 
 
