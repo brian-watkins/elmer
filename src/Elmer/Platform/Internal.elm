@@ -1,13 +1,5 @@
 module Elmer.Platform.Internal exposing
   ( Intention(..)
-  , Spy(..)
-  , Calls
-  , SpyId
-  , spyOn
-  , callsForSpy
-  , installSpies
-  , batchSpy
-  , clearSpies
   , cmdValue
   , subValue
   , toCmd
@@ -20,16 +12,6 @@ module Elmer.Platform.Internal exposing
 
 import Elmer.Internal as Internal exposing (..)
 
-type alias Calls =
-  { name : String
-  , calls : Int
-  }
-
-type alias SpyId =
-  String
-
-type Spy =
-  Spy (() -> Maybe SpyId)
 
 type Intention a msg subMsg
     = Leaf (LeafData a)
@@ -47,32 +29,6 @@ type alias LeafData a =
     , home : String
     }
 
-spyOn : String -> (() -> a) -> Maybe SpyId
-spyOn name namingFunc =
-  Native.Platform.spy name namingFunc
-
-callsForSpy : String -> Maybe Calls
-callsForSpy name =
-  Native.Platform.callsForSpy name
-
-{-| Note: Calling a fake method on a batch spy is not supported
--}
-batchSpy : List Spy -> Spy
-batchSpy overrides =
-  Spy <|
-    \() ->
-      installSpies overrides
-
-installSpies : List Spy -> Maybe SpyId
-installSpies =
-  List.foldl (\(Spy func) cur -> Maybe.andThen (\_ -> func ()) cur) (Just "")
-
-clearSpies : ComponentState model msg -> ComponentState model msg
-clearSpies stateResult =
-  if Native.Platform.clearSpies () then
-    stateResult
-  else
-    Failed "Failed to restore swizzled functions! (This should never happen)"
 
 cmdData : Cmd msg -> Intention a msg subMsg
 cmdData command =

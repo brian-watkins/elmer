@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer
 import Elmer.Internal exposing (..)
-import Elmer.Platform
+import Elmer.Spy as Spy
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
@@ -36,10 +36,10 @@ withTests =
       \() ->
         let
           initialState = Elmer.componentState App.defaultModel App.view App.update
-          override = Elmer.Platform.spy "bad" (\_ -> "Huh?")
-            |> Elmer.Platform.andCallFake (\_ -> Sub.none)
+          override = Spy.create "bad" (\_ -> "Huh?")
+            |> Spy.andCallFake (\_ -> Sub.none)
         in
-          Elmer.Platform.use [ override ] initialState
+          Spy.use [ override ] initialState
             |> Subscription.with (\() _ -> Sub.none)
             |> Expect.equal (Failed "Failed to install stubs!")
     ]
@@ -76,12 +76,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
-             |> Elmer.Platform.andCallFake (\interval tagger ->
+            override = Spy.create "Time.every" (\_ -> Time.every)
+             |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("my-spy-" ++ (toString interval)) tagger
                 )
           in
-            Elmer.Platform.use [ override ] initialState
+            Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "someOtherSub" 37
               |> Expect.equal (Failed (
@@ -98,12 +98,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
-              |> Elmer.Platform.andCallFake (\interval tagger ->
+            override = Spy.create "Time.every" (\_ -> Time.every)
+              |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
-            Elmer.Platform.use [ override ] initialState
+            Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.subscriptions)
               |> Subscription.send "fakeTime-1000" 23000
               |> Markup.find "#time"
@@ -114,12 +114,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
-              |> Elmer.Platform.andCallFake (\interval tagger ->
+            override = Spy.create "Time.every" (\_ -> Time.every)
+              |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
-            Elmer.Platform.use [ override ] initialState
+            Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.batchedSubscriptions)
               |> Subscription.send "fakeTime-60000" (1000 * 60 * 37)
               |> Markup.find "#minute"
@@ -130,12 +130,12 @@ sendTests =
         \() ->
           let
             initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Elmer.Platform.spy "Time.every" (\_ -> Time.every)
-              |> Elmer.Platform.andCallFake (\interval tagger ->
+            override = Spy.create "Time.every" (\_ -> Time.every)
+              |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
                 )
           in
-            Elmer.Platform.use [ override ] initialState
+            Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "fakeTime-3600000" (1000 * 60 * 60 * 18)
               |> Markup.find "#child-hours"

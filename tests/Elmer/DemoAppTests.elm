@@ -12,7 +12,7 @@ import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
-import Elmer.Platform
+import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
@@ -41,7 +41,7 @@ appFlowTests =
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
         ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
-          |> Elmer.Platform.use [ Elmer.Http.serve [ (successStub "Ok" ) ] ]
+          |> Spy.use [ Elmer.Http.serve [ (successStub "Ok" ) ] ]
           |> ElmerNav.setLocation "/click"
           |> Markup.find ".button"
           |> Event.click
@@ -64,7 +64,7 @@ appFlowTests =
     , let
         initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
-          |> Elmer.Platform.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ]
+          |> Spy.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ]
           |> ElmerNav.setLocation "/request"
           |> Markup.find "#requestButton"
           |> Event.click
@@ -82,7 +82,7 @@ appFlowTests =
     , let
         initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
-          |> Elmer.Platform.use [ Elmer.Http.serve [ failureStub ] ]
+          |> Spy.use [ Elmer.Http.serve [ failureStub ] ]
           |> ElmerNav.setLocation "/request"
           |> Markup.find "#requestButton"
           |> Event.click
@@ -112,11 +112,11 @@ timeAppTests =
     \() ->
       let
         initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskOverride = Elmer.Platform.spy "Task.perform" (\_ -> Task.perform)
-          |> Elmer.Platform.andCallFake (fakeTaskPerform (3 * Time.second))
+        taskOverride = Spy.create "Task.perform" (\_ -> Task.perform)
+          |> Spy.andCallFake (fakeTaskPerform (3 * Time.second))
       in
         Markup.find ".button" initialState
-          |> Elmer.Platform.use [ taskOverride ]
+          |> Spy.use [ taskOverride ]
           |> Event.click
           |> Markup.find "#currentTime"
           |> Markup.expectElement (Matchers.hasText "Time: 3000")

@@ -7,7 +7,7 @@ import Elmer exposing (..)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html.Matchers as Matchers
-import Elmer.Platform
+import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 import Elmer.Navigation as ElmerNav
@@ -76,7 +76,7 @@ mapCommand =
       [ test "it handles a mapped message from the child view" <|
         \() ->
           ElmerNav.navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
-            |> Elmer.Platform.use [ ElmerNav.spy ]
+            |> Spy.use [ ElmerNav.spy ]
             |> Markup.find "#change-location"
             |> Event.click
             |> Markup.find "#fun-stuff"

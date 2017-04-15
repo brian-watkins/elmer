@@ -62,7 +62,7 @@ could do the following:
         )
     in
       componentState
-        |> Elmer.Platform.use [ fakeSub ]
+        |> Spy.use [ fakeSub ]
         |> with (\() -> Component.subscriptions)
         |> send "everySecond" 3000
         |> find "#current-time"
@@ -102,7 +102,7 @@ and sends some data through it.
         )
     in
       Elmer.componentState defaultModel view update
-        |> Elmer.Platform.use [ subSpy ]
+        |> Spy.use [ subSpy ]
         |> with (\() -> subscriptions)
         |> send "mouseUps" { x = 10, y = 50 }
 

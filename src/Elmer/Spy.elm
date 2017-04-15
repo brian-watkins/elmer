@@ -1,16 +1,16 @@
-module Elmer.Platform exposing
+module Elmer.Spy exposing
   ( Spy
   , Calls
-  , spy
+  , create
   , andCallFake
-  , expectSpy
+  , expect
   , use
   )
 
 {-| Functions for spying during tests.
 
 # Spy on a Function
-@docs Spy, Calls, spy, expectSpy
+@docs Spy, Calls, create, expect
 
 # Provide a Fake Implementation
 @docs andCallFake
@@ -23,48 +23,48 @@ module Elmer.Platform exposing
 import Expect
 import Elmer exposing (Matcher)
 import Elmer.Internal as Internal exposing (..)
-import Elmer.Platform.Internal as Platform
+import Elmer.Spy.Internal as Spy_
 import Elmer.Printer exposing (..)
 
 {-| Represents a function that has been spied on.
 -}
 type alias Spy =
-  Platform.Spy
+  Spy_.Spy
 
 {-| Represents the calls made to a spy.
 -}
 type alias Calls =
-  Platform.Calls
+  Spy_.Calls
 
-{-| Spy on a function
-
-Use a spy when you want to know that a function was called.
+{-| Create a spy for a function.
 
 To create a spy, pass in a string to identify the spy and a function that returns the
 function you want spy on.
+
+Use a spy when you want to know that a function was called.
 
 To use the spy, pass the `Spy` to `use`. When the spied upon function is called,
 Elmer will record that it has been called. By defalut, Elmer will then call
 through to the original function.
 
     let
-      mySpy = spy "my-spy" (\_ -> MyComponent.someFunction)
+      mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
     in
       use [ mySpy ] componentState
-        |> expectSpy "my-spy" (wasCalled 0)
+        |> expect "my-spy" (wasCalled 0)
 
 -}
-spy : String -> (() -> a) -> Spy
-spy name namingFunc =
-  Platform.Spy <|
+create : String -> (() -> a) -> Spy
+create name namingFunc =
+  Spy_.Spy <|
     \() ->
-      Platform.spyOn name namingFunc
+      Spy_.spyOn name namingFunc
 
 {-| Call the provided function when a Spy is called.
 
 Once you've created a `Spy`, you can provide a fake implementation like so:
 
-    mySpy = spy "my-spy" (\_ -> MyComponent.someFunction)
+    mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
       |> andCallFake testImplementation
 
 where `testImplementation` is some function with the very same signature as
@@ -76,7 +76,7 @@ should return one of the fake commands described in `Elmer.Platform.Command`.
 For example, you could override `Task.perform` with a fake command that tags
 some data like so:
 
-    spy "fake-perform" (\_ -> Task.perform)
+    create "fake-perform" (\_ -> Task.perform)
       |> andCallFake (\tagger task ->
           Elmer.Platform.Command.fake (tagger "some data")
         )
@@ -89,28 +89,28 @@ via `use`.
 
 -}
 andCallFake : (a -> b) -> Spy -> Spy
-andCallFake fakeFunction (Platform.Spy spyFunc) =
-  Platform.Spy <|
+andCallFake fakeFunction (Spy_.Spy spyFunc) =
+  Spy_.Spy <|
     \() ->
       spyFunc ()
-        |> Maybe.andThen (\spyId -> Native.Platform.registerFake spyId fakeFunction)
+        |> Maybe.andThen (\spyId -> Native.Spy.registerFake spyId fakeFunction)
 
 
 {-| Make an expectation about a spy.
 
-See `Elmer.Platform.Matchers` for matchers to use with this function.
+See `Elmer.Spy.Matchers` for matchers to use with this function.
 
     let
-      mySpy = spy "my-spy" (\_ -> MyComponent.someFunction)
+      mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
     in
       use [ mySpy ] componentState
-        |> expectSpy "my-spy" (wasCalled 0)
+        |> expect "my-spy" (wasCalled 0)
 
 -}
-expectSpy : String -> Matcher Calls -> Elmer.ComponentState model msg -> Expect.Expectation
-expectSpy name matcher =
+expect : String -> Matcher Calls -> Elmer.ComponentState model msg -> Expect.Expectation
+expect name matcher =
   Internal.mapToExpectation (\component ->
-    case Platform.callsForSpy name of
+    case Spy_.callsForSpy name of
       Just spyCalls ->
         matcher spyCalls
       Nothing ->
@@ -131,7 +131,7 @@ generate a command with `Task.perform`. To describe this behavior in your test,
 you could do something like the following:
 
     let
-      taskOverride = spy "fake-perform" (\_ -> Task.perform)
+      taskOverride = create "fake-perform" (\_ -> Task.perform)
         |> andCallFake (\tagger task ->
             Elmer.Platform.Command.fake (tagger (toDate "11/12/2016 5:30 pm"))
           )
@@ -149,10 +149,10 @@ you could do something like the following:
 use : List Spy -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 use stubs =
   Internal.map (\component ->
-    case Platform.installSpies stubs of
+    case Spy_.installSpies stubs of
       Just _ ->
         Ready component
       Nothing ->
         Failed "Failed to install stubs!"
-          |> Platform.clearSpies
+          |> Spy_.clearSpies
   )

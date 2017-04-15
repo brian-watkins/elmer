@@ -20,7 +20,8 @@ module Elmer.Navigation
 
 -}
 
-import Elmer.Platform exposing (andCallFake)
+import Elmer.Spy as Spy exposing (Spy, andCallFake)
+import Elmer.Spy.Internal as Spy_
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Internal as Internal exposing (..)
@@ -59,25 +60,25 @@ navigationComponentState model view update parser =
 {-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
 records the location as it is set.
 
-You must use this function with `Elmer.Platform.use` in order to make expectations
+You must use this function with `Elmer.Spy.use` in order to make expectations
 about the location.
 
 Suppose you want to test a home button that sets the
 location to `/home` when clicked:
 
     componentState
-      |> Elmer.Platform.use [ Navigation.spy ]
+      |> Spy.use [ Navigation.spy ]
       |> Elmer.Html.find "#home-button"
       |> Elmer.Html.Event.click
       |> Navigation.expectLocation "/home"
 
 -}
-spy : Elmer.Platform.Spy
+spy : Spy
 spy =
-  Platform.batchSpy
-    [ Elmer.Platform.spy "Navigation.newUrl" (\_ -> Navigation.newUrl)
+  Spy_.batch
+    [ Spy.create "Navigation.newUrl" (\_ -> Navigation.newUrl)
         |> andCallFake fakeNavigateCommand
-    , Elmer.Platform.spy "Navigation.modifyUrl" (\_ -> Navigation.modifyUrl)
+    , Spy.create "Navigation.modifyUrl" (\_ -> Navigation.modifyUrl)
         |> andCallFake fakeNavigateCommand
     ]
 

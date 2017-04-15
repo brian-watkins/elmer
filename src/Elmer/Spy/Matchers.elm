@@ -1,4 +1,4 @@
-module Elmer.Platform.Matchers exposing
+module Elmer.Spy.Matchers exposing
   ( wasCalled
   )
 
@@ -10,13 +10,13 @@ module Elmer.Platform.Matchers exposing
 
 import Expect
 import Elmer exposing (Matcher)
-import Elmer.Platform
+import Elmer.Spy exposing (Calls)
 import Elmer.Printer exposing (..)
 
 
 {-| Expect that a spy was called some number of times.
 -}
-wasCalled : Int -> Matcher Elmer.Platform.Calls
+wasCalled : Int -> Matcher Calls
 wasCalled times spy =
   if spy.calls == times then
     Expect.pass

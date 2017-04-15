@@ -9,7 +9,7 @@ import Elmer exposing (..)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Html
 import Elmer.Html.Matchers as Matchers
-import Elmer.Platform
+import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
@@ -76,7 +76,7 @@ initTests =
     ]
   , let
       state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
-        |> Elmer.Platform.use [ Elmer.Http.spy ]
+        |> Spy.use [ Elmer.Http.spy ]
         |> Elmer.init (\() -> InitApp.init { baseUrl = "http://fun.com/api" })
     in
       describe "when there is no failure"

@@ -29,6 +29,7 @@ import Html exposing (Html)
 import Native.Platform
 import Native.Http
 import Native.Html
+import Native.Spy
 
 import Expect
 import Elmer.Internal as Internal

@@ -35,7 +35,7 @@ import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Internal as Internal exposing (..)
-import Elmer.Platform exposing (andCallFake)
+import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
@@ -51,7 +51,7 @@ type alias HttpResponseStub
 
 {-| Override `Http.send` and register HttpResponseStubs to be returned
 when the appropriate request is received. Used in conjunction with
-`Elmer.Platform.use`.
+`Elmer.Spy.use`.
 
 Suppose you have a component that requests information about a user when
 a button is clicked. You could register a stub for that request like so
@@ -62,35 +62,35 @@ a button is clicked. You could register a stub for that request like so
           "{\"name\":\"Super User\",\"type\":\"admin\"}"
     in
       componentState
-        |> Elmer.Platform.use [ serve [ stubbedResponse ] ]
+        |> Spy.use [ serve [ stubbedResponse ] ]
         |> Markup.find "#request-data-button"
         |> Elmer.Html.Event.click
         |> Markup.find "#data-result"
         |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
 
 -}
-serve : List HttpResponseStub -> Elmer.Platform.Spy
+serve : List HttpResponseStub -> Spy
 serve responseStubs =
-  Elmer.Platform.spy "Http.send" (\_ -> Http.send)
+  Spy.create "Http.send" (\_ -> Http.send)
     |> andCallFake (Server.stubbedSend responseStubs)
 
 
 {-| Override `Http.send` and record requests as they are received.
-Used in conjunction with `Elmer.Platform.use`.
+Used in conjunction with `Elmer.Spy.use`.
 
 Suppose you simply want to make an expectation about a request without
 describing the behavior that results when its response is received.
 
     componentState
-      |> Elmer.Platform.use [ spy ]
+      |> Spy.use [ spy ]
       |> Markup.find "#request-data-button"
       |> Elmer.Http.Event.click
       |> expectGET "http://fun.com/user" Elmer.Http.Matchers.wasSent
 
 -}
-spy : Elmer.Platform.Spy
+spy : Spy
 spy =
-  Elmer.Platform.spy "Http.send" (\_ -> Http.send)
+  Spy.create "Http.send" (\_ -> Http.send)
     |> andCallFake Server.dummySend
 
 

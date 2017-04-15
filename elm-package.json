@@ -13,8 +13,6 @@
         "Elmer.Html.Event",
         "Elmer.Html.Element",
         "Elmer.Navigation",
-        "Elmer.Platform",
-        "Elmer.Platform.Matchers",
         "Elmer.Platform.Command",
         "Elmer.Platform.Subscription",
         "Elmer.Http",
@@ -22,7 +20,9 @@
         "Elmer.Http.Matchers",
         "Elmer.Http.Status",
         "Elmer.Http.Result",
-        "Elmer.Http.Request"
+        "Elmer.Http.Request",
+        "Elmer.Spy",
+        "Elmer.Spy.Matchers"
     ],
     "native-modules": true,
     "dependencies": {

@@ -6,7 +6,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.Internal as Internal exposing (..)
 import Elmer.Html.Event as Event
-import Elmer.Platform
+import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Navigation as ElmerNav
 import Elmer.Navigation.Location as Location
@@ -49,7 +49,7 @@ expectLocationTests =
       [ test "it passes" <|
           \() ->
             Elmer.componentState App.defaultModel App.view App.update
-              |> Elmer.Platform.use [ ElmerNav.spy ]
+              |> Spy.use [ ElmerNav.spy ]
               |> Markup.find "#navigateButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://fun.com/fun.html"
@@ -60,7 +60,7 @@ expectLocationTests =
         [ test "it explains the failure" <|
           \() ->
             Elmer.componentState App.defaultModel App.view App.update
-              |> Elmer.Platform.use [ ElmerNav.spy ]
+              |> Spy.use [ ElmerNav.spy ]
               |> Markup.find "#navigateButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
@@ -74,7 +74,7 @@ expectLocationTests =
       [ test "it passes" <|
           \() ->
             Elmer.componentState App.defaultModel App.view App.update
-              |> Elmer.Platform.use [ ElmerNav.spy ]
+              |> Spy.use [ ElmerNav.spy ]
               |> Markup.find "#modifyLocationButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://fun.com/awesome.html"
@@ -85,7 +85,7 @@ expectLocationTests =
         [ test "it explains the failure" <|
           \() ->
             Elmer.componentState App.defaultModel App.view App.update
-              |> Elmer.Platform.use [ ElmerNav.spy ]
+              |> Spy.use [ ElmerNav.spy ]
               |> Markup.find "#modifyLocationButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"

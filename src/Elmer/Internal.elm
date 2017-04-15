@@ -64,7 +64,7 @@ mapToExpectation mapper componentStateResult =
 
 clearSpies : Expect.Expectation -> Expect.Expectation
 clearSpies expectation =
-  if Native.Platform.clearSpies () then
+  if Native.Spy.clearSpies () then
     expectation
   else
     Expect.fail "Failed to clear spies! (This should never happen)"
