@@ -19,7 +19,7 @@ module Elmer.Html exposing
 
 import Elmer exposing (Matcher)
 import Elmer.ComponentState as ComponentState exposing (ComponentState)
-import Elmer.Component exposing (Component)
+import Elmer.Component as Component exposing (Component)
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
@@ -154,7 +154,7 @@ expectElementExists componentStateResult =
 updateTargetSelector : String -> Component model msg -> ComponentState model msg
 updateTargetSelector selector component =
   let
-    currentView = component.view component.model
+    currentView = Component.render component
   in
     case Query.findElement selector currentView of
         Just element ->

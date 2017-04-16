@@ -58,7 +58,7 @@ create : String -> (() -> a) -> Spy
 create name namingFunc =
   Spy_.Uninstalled <|
     \() ->
-      Spy_.install name namingFunc
+      Spy_.create name namingFunc
 
 {-| Call the provided function when a Spy is called.
 
@@ -131,7 +131,7 @@ expect name matcher =
             ]
   )
 
-{-| Install stubs for use during the test.
+{-| Install spies for use during the test.
 
 Suppose your component contains a button that,
 when clicked, issues a command to get the current date and updates the view. To
@@ -159,15 +159,15 @@ use : List Spy -> Elmer.ComponentState model msg -> Elmer.ComponentState model m
 use spies =
   ComponentState.map (\component ->
     let
-      installed = Spy_.installAll spies
-      errors = takeErrors installed
+      activated = Spy_.activate spies
+      errors = takeErrors activated
     in
       if List.isEmpty errors then
-        ComponentState.with { component | spies = installed }
+        ComponentState.with { component | spies = Spy_.deactivate activated }
       else
         ComponentState.failure <|
           format
-            [ message "Failed to install spies" <| failedSpies errors ]
+            [ message "Failed to activate spies" <| failedSpies errors ]
   )
 
 failedSpies : List Spy -> String

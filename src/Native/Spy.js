@@ -17,31 +17,42 @@ var _brian_watkins$elmer$Native_Spy = function() {
     }
   }
 
-  var install = function(name, fun) {
+  var create = function(name, fun) {
     var functionToSpyOn = findSpyFunction(fun)
 
     if (!functionToSpyOn) {
-      return _brian_watkins$elmer$Elmer_Spy_Internal$Error({ name: name });
+      return _brian_watkins$elmer$Elmer_Spy_Internal$Error({ name: name, calls: -1 });
     }
 
     var spyValue =
       { name: name
       , calls: 0
-      , installer: fun
       , functionName: functionToSpyOn
       , original: eval(functionToSpyOn)
       , fake: eval(functionToSpyOn)
       }
 
-    eval(functionToSpyOn + " = createSpyCall(spyValue)")
-
-    return _brian_watkins$elmer$Elmer_Spy_Internal$Active(spyValue);
+    return activate(spyValue)
   }
 
-  var uninstall = function (spyValue) {
+  var deactivate = function (spyValue) {
     eval(spyValue.functionName + " = spyValue.original")
 
-    _brian_watkins$elmer$Elmer_Spy_Internal$Uninstalled(spyValue.installer)
+    return _brian_watkins$elmer$Elmer_Spy_Internal$Inactive(spyValue)
+  }
+
+  var activate = function(spyValue) {
+    var spyValueCopy = {
+      name: spyValue.name,
+      calls: spyValue.calls,
+      functionName: spyValue.functionName,
+      original: spyValue.original,
+      fake: spyValue.fake
+    }
+
+    eval(spyValue.functionName + " = createSpyCall(spyValueCopy)")
+
+    return _brian_watkins$elmer$Elmer_Spy_Internal$Active(spyValueCopy)
   }
 
   var registerFake = function(spyValue, fakeFun) {
@@ -60,8 +71,9 @@ var _brian_watkins$elmer$Native_Spy = function() {
   }
 
   return {
-      install: F2(install),
-      uninstall: uninstall,
+      create: F2(create),
+      deactivate: deactivate,
+      activate: activate,
       calls: calls,
       registerFake: F2(registerFake)
   };

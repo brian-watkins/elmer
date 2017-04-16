@@ -8,7 +8,7 @@ module Elmer.Html.Query exposing
 
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Internal
-import Elmer.Component exposing (Component)
+import Elmer.Component as Component exposing (Component)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
@@ -19,7 +19,7 @@ targetedElement : Component model msg -> Maybe (HtmlElement msg)
 targetedElement component =
   case component.targetSelector of
     Just selector ->
-      findElement selector <| component.view component.model
+      findElement selector <| Component.render component
     Nothing ->
       Nothing
 
@@ -27,7 +27,7 @@ targetedElements : Component model msg -> Maybe (List (HtmlElement msg))
 targetedElements component =
   case component.targetSelector of
     Just selector ->
-      findElements selector <| component.view component.model
+      findElements selector <| Component.render component
     Nothing ->
       Nothing
 

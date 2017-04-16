@@ -72,6 +72,10 @@ submitOutsideFormView model =
     , Html.button [ Attr.id "default-type-button", Attr.form "my-form" ] [ Html.text "Submit My Form By Default" ]
     ]
 
+spyTestView : Model -> Html Msg
+spyTestView model =
+  submitBadFormDescendentView model
+
 submitBadFormDescendentView : Model -> Html Msg
 submitBadFormDescendentView model =
   Html.div [ Attr.id "root" ]

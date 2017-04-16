@@ -50,7 +50,7 @@ import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
 import Elmer.Html
 import Elmer.ComponentState as ComponentState exposing (ComponentState)
-import Elmer.Component exposing (Component)
+import Elmer.Component as Component exposing (Component)
 import Elmer.Internal as Internal
 import Elmer
 import Elmer.Runtime as Runtime
@@ -60,7 +60,7 @@ import Html exposing (Html)
 
 
 type alias EventHandlerQuery msg =
-  HtmlElement msg -> List (HtmlEventHandler msg)
+  Html msg -> HtmlElement msg -> List (HtmlEventHandler msg)
 
 type alias EventHandler msg =
   EventJson -> EventResult msg
@@ -110,7 +110,7 @@ triggerClick clickType componentState =
       [ basicEventPropagation "click"
       , basicEventPropagation "mousedown"
       , basicEventPropagation "mouseup"
-      , eventPropagation (submitHandlerQuery (viewForState componentState)) "{}"
+      , eventPropagation submitHandlerQuery "{}"
       ]
   in
     case clickType of
@@ -121,28 +121,18 @@ triggerClick clickType componentState =
           ( eventPropagations ++ [ basicEventPropagation "dblclick" ] )
           componentState
 
-viewForState : ComponentState model msg -> Maybe (Html msg)
-viewForState =
-  ComponentState.abstractMap (\_ -> Nothing) (\component ->
-    Just <| component.view component.model
-  )
-
-submitHandlerQuery : Maybe (Html msg) -> EventHandlerQuery msg
-submitHandlerQuery maybeDom element =
+submitHandlerQuery : EventHandlerQuery msg
+submitHandlerQuery view element =
   if triggersSubmit element then
-    Maybe.withDefault [] <|
-      ( maybeDom |> Maybe.map (\dom ->
-          case HtmlInternal.attribute "form" element of
-            Just formId ->
-              case formFor formId dom of
-                Just formElement ->
-                  elementEventHandlerQuery "submit" formElement
-                Nothing ->
-                  []
-            Nothing ->
-              eventHandlerQuery "submit" element
-          )
-      )
+    case HtmlInternal.attribute "form" element of
+      Just formId ->
+        case formFor formId view of
+          Just formElement ->
+            elementEventHandlerQuery "submit" view formElement
+          Nothing ->
+            []
+      Nothing ->
+        eventHandlerQuery "submit" view element
   else
     []
 
@@ -263,7 +253,7 @@ select value =
       targetedElement component
         |> Result.andThen isSelectable
         |> Result.andThen (hasOption value)
-        |> Result.andThen (hasHandlersFor eventPropagations)
+        |> Result.andThen (hasHandlersFor component eventPropagations)
         |> Result.andThen (apply eventPropagations component)
         |> toComponentState
   )
@@ -329,27 +319,27 @@ processBasicElementEvent eventName =
   updateComponentState [ basicElementEventPropagation eventName ]
 
 eventHandlerQuery : String -> EventHandlerQuery msg
-eventHandlerQuery eventName element =
+eventHandlerQuery eventName _ element =
   List.append element.eventHandlers element.inheritedEventHandlers
     |> List.filter (\e -> e.eventType == eventName)
 
 elementEventHandlerQuery : String -> EventHandlerQuery msg
-elementEventHandlerQuery eventName element =
+elementEventHandlerQuery eventName _ element =
   List.filter (\e -> e.eventType == eventName) element.eventHandlers
 
 updateComponentState : List (EventPropagation msg) -> ComponentState model msg -> ComponentState model msg
 updateComponentState eventPropagations =
   ComponentState.map (\component ->
     targetedElement component
-      |> Result.andThen (hasHandlersFor eventPropagations)
+      |> Result.andThen (hasHandlersFor component eventPropagations)
       |> Result.andThen (apply eventPropagations component)
       |> toComponentState
   )
 
-hasHandlersFor : List (EventPropagation msg) -> HtmlElement msg -> Result String (HtmlElement msg)
-hasHandlersFor eventPropagations element =
+hasHandlersFor : Component model msg -> List (EventPropagation msg) -> HtmlElement msg -> Result String (HtmlElement msg)
+hasHandlersFor component eventPropagations element =
   let
-    handlers = List.map (\ep -> ep.handlerQuery element) eventPropagations
+    handlers = List.map (\ep -> ep.handlerQuery (Component.render component) element) eventPropagations
       |> List.concat
   in
     if List.isEmpty handlers then
@@ -362,7 +352,7 @@ apply eventPropagationList component element =
   List.foldl (\ep result ->
     case result of
       Ok component ->
-        collectEventHandlers ep.handlerQuery element
+        collectEventHandlers ep.handlerQuery component element
           |> propagateEvent ep.event component
       Err _ ->
         result
@@ -380,9 +370,9 @@ prepareHandler : HtmlEventHandler msg -> EventHandler msg
 prepareHandler eventHandler =
   Json.decodeString eventHandler.decoder
 
-collectEventHandlers : EventHandlerQuery msg -> HtmlElement msg -> List (EventHandler msg)
-collectEventHandlers eventHandlerQuery element =
-  eventHandlerQuery element
+collectEventHandlers : EventHandlerQuery msg -> Component model msg -> HtmlElement msg -> List (EventHandler msg)
+collectEventHandlers eventHandlerQuery component element =
+  eventHandlerQuery (Component.render component) element
     |> takeUpTo (\handler -> handler.options.stopPropagation)
     |> List.map prepareHandler
 

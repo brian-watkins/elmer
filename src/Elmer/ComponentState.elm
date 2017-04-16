@@ -1,7 +1,6 @@
 module Elmer.ComponentState exposing
   ( ComponentState
   , create
-  , abstractMap
   , map
   , mapToExpectation
   , with
@@ -9,7 +8,7 @@ module Elmer.ComponentState exposing
   )
 
 import Elmer.Component exposing (..)
-import Elmer.Spy.Internal as Spy_
+import Elmer.Spy.Internal as Spy_ exposing (Spy)
 import Expect
 import Html exposing (Html)
 
@@ -53,19 +52,50 @@ abstractMap failureMapper mapper componentState =
 
 map : (Component model msg -> ComponentState model msg) -> ComponentState model msg -> ComponentState model msg
 map mapper =
-  abstractMap Failed mapper
+  abstractMap Failed
+    (\component ->
+      let
+        componentWithSpies =
+          { component
+          | spies = Spy_.activate component.spies
+          }
+      in
+        mapper componentWithSpies
+          |> updateComponentWithDeactivatedSpies componentWithSpies
+    )
+
+updateComponentWithDeactivatedSpies : Component model msg -> ComponentState model msg -> ComponentState model msg
+updateComponentWithDeactivatedSpies componentWithSpies =
+  abstractMap
+    (\message ->
+      Failed message
+        |> deactivateSpies componentWithSpies
+    )
+    (\component ->
+      with
+        { component
+        | spies = Spy_.deactivate component.spies
+        }
+    )
 
 
 mapToExpectation : (Component model msg -> Expect.Expectation) -> ComponentState model msg -> Expect.Expectation
 mapToExpectation mapper =
-  abstractMap Expect.fail (\component ->
-    mapper component
-      |> uninstallSpies component
-  )
+  abstractMap Expect.fail
+    (\component ->
+      let
+        componentWithSpies =
+          { component
+          | spies = Spy_.activate component.spies
+          }
+      in
+        mapper componentWithSpies
+          |> deactivateSpies componentWithSpies
+    )
 
-uninstallSpies : Component model msg -> a -> a
-uninstallSpies component subject =
+deactivateSpies : Component model msg -> a -> a
+deactivateSpies component subject =
   let
-    uninstalled = Spy_.uninstallAll component.spies
+    uninstalled = Spy_.deactivate component.spies
   in
     subject

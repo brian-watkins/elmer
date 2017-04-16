@@ -55,7 +55,7 @@ spyTests =
           Spy.use [ spy ] initialState
             |> Expect.equal (ComponentState.failure <|
               format
-                [ message "Failed to install spies" "my-spy"
+                [ message "Failed to activate spies" "my-spy"
                 ]
             )
     ]
@@ -209,9 +209,27 @@ restoreTests =
             |> Markup.expectElement (hasText "Test Title")
     , test "it is not active for the next test" <|
       \() ->
+        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          |> Markup.find "#title"
+          |> Markup.expectElement (hasText "A Title: Some Title")
+    ]
+  , describe "when a component state map results in a failure"
+    [ test "the spy is set" <|
+      \() ->
+        let
+          stub = Spy.create "my-spy" (\_ -> SpyApp.titleText)
+            |> Spy.andCallFake (\_ -> "Test Title")
+        in
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            |> Spy.use [ stub ]
             |> Markup.find "#title"
-            |> Markup.expectElement (hasText "A Title: Some Title")
+            |> Event.click
+            |> Expect.equal (ComponentState.failure "No relevant event handler found")
+    , test "the spy is not active for the next test" <|
+      \() ->
+        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          |> Markup.find "#title"
+          |> Markup.expectElement (hasText "A Title: Some Title")
     ]
   ]
 
@@ -223,7 +241,7 @@ andCallFakeTests =
         spy = Spy.create "titleText" (\_ -> SpyApp.titleText)
           |> Spy.andCallFake (\_ -> "Test Title")
 
-        stateThunk = \() ->
+        state =
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ spy ]
             |> Markup.find "#title"
@@ -231,11 +249,11 @@ andCallFakeTests =
         describe "when the spied on function is called"
           [ test "it calls the fake version" <|
             \() ->
-              Markup.find "#title" (stateThunk ())
+              state
                 |> Markup.expectElement (hasText "Test Title")
           , test "it records the call" <|
             \() ->
-              Spy.expect "titleText" (Matchers.wasCalled 1) (stateThunk ())
+              Spy.expect "titleText" (Matchers.wasCalled 1) state
           ]
     ]
   ]

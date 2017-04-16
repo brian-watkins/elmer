@@ -8,6 +8,8 @@ import Elmer.EventTests as EventTests
 import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html.Event as Event
 import Elmer.Html as Markup
+import Elmer.Spy as Spy exposing (andCallFake)
+import Elmer.Spy.Matchers exposing (wasCalled)
 import Elmer.Printer exposing (..)
 
 all : Test
@@ -17,6 +19,7 @@ all =
     , checkTests
     , uncheckTests
     , submitTests
+    , submitWithSpyTests
     , selectTests
     ]
 
@@ -202,6 +205,27 @@ submitTests =
     ]
   , describe "button with type other than submit"
     [ doesNotTriggerSubmit "button[type='button']"
+    ]
+  ]
+
+submitWithSpyTests : Test
+submitWithSpyTests =
+  describe "submit with a view spy"
+  [ describe "when the view is faked by a spy"
+    [ test "it does the right thing" <|
+      \() ->
+        let
+          viewSpy =
+            Spy.create "outside-form-spy" (\_ -> App.submitBadFormDescendentView)
+              |> andCallFake (\model -> App.submitOutsideFormView model)
+        in
+          Elmer.componentState App.defaultModel App.spyTestView App.update
+            |> Spy.use [ viewSpy ]
+            |> Markup.find "#default-type-button"
+            |> Event.click
+            |> Elmer.expectModel (\model ->
+                Expect.equal model.isSubmitted True
+              )
     ]
   ]
 

@@ -63,13 +63,14 @@ sendTests =
       [ test "it fails and lists the spies" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
-            override = Spy.create "Time.every" (\_ -> Time.every)
-             |> Spy.andCallFake (\interval tagger ->
+            override =
+              Spy.create "Time.every" (\_ -> Time.every)
+                |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("my-spy-" ++ (toString interval)) tagger
                 )
           in
-            Spy.use [ override ] initialState
+            Elmer.componentState App.defaultModel App.view App.update
+              |> Spy.use [ override ]
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "someOtherSub" 37
               |> Expect.equal (ComponentState.failure (

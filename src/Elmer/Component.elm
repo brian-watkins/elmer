@@ -3,6 +3,7 @@ module Elmer.Component exposing
   , ViewFunction
   , UpdateFunction
   , LocationParserFunction
+  , render
   )
 
 import Elmer.Http.Internal exposing (HttpRequest)
@@ -32,3 +33,7 @@ type alias Component model msg =
     , subscriptions : Sub msg
     , spies : List Spy
     }
+
+render : Component model msg -> Html msg
+render component =
+  component.view component.model
