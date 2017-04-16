@@ -30,6 +30,7 @@ create model view update =
     , deferredCommands = []
     , dummyCommands = []
     , subscriptions = Sub.none
+    , spies = []
     }
 
 with : Component model msg -> ComponentState model msg
@@ -59,5 +60,12 @@ mapToExpectation : (Component model msg -> Expect.Expectation) -> ComponentState
 mapToExpectation mapper =
   abstractMap Expect.fail (\component ->
     mapper component
-      |> Spy_.clearSpies
+      |> uninstallSpies component
   )
+
+uninstallSpies : Component model msg -> a -> a
+uninstallSpies component subject =
+  let
+    uninstalled = Spy_.uninstallAll component.spies
+  in
+    subject

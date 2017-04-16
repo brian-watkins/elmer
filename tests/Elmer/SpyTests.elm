@@ -24,7 +24,7 @@ all =
   , expectSpyTests
   , calledTests
   , restoreTests
-  , stubTests
+  , andCallFakeTests
   ]
 
 useTests : Test
@@ -53,7 +53,11 @@ spyTests =
           spy = Spy.create "my-spy" (\_ -> "Huh?")
         in
           Spy.use [ spy ] initialState
-            |> Expect.equal (ComponentState.failure "Failed to install stubs!")
+            |> Expect.equal (ComponentState.failure <|
+              format
+                [ message "Failed to install spies" "my-spy"
+                ]
+            )
     ]
   , describe "when the argument references a function"
     [ describe "when the function is called"
@@ -192,18 +196,8 @@ calledTests =
 restoreTests : Test
 restoreTests =
   describe "restore"
-  [ describe "when a spy is registered"
-    [ test "it gets set by Spy.create" <|
-      \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
-          |> Spy.expect "clearName" (Matchers.wasCalled 0)
-    , test "it gets cleared before the next test" <|
-      \() ->
-        Expect.equal (Native.Spy.callsForSpy "clearName") Nothing
-    ]
-  , describe "when a stub is used"
-    [ test "the stub is set" <|
+  [ describe "when a spy is used"
+    [ test "the spy is set" <|
       \() ->
         let
           stub = Spy.create "my-spy" (\_ -> SpyApp.titleText)
@@ -213,7 +207,7 @@ restoreTests =
             |> Spy.use [ stub ]
             |> Markup.find "#title"
             |> Markup.expectElement (hasText "Test Title")
-    , test "it gets cleared before the next test" <|
+    , test "it is not active for the next test" <|
       \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Markup.find "#title"
@@ -221,21 +215,21 @@ restoreTests =
     ]
   ]
 
-stubTests : Test
-stubTests =
-  describe "stub"
-  [ describe "when the argument references a function"
+andCallFakeTests : Test
+andCallFakeTests =
+  describe "andCallFake"
+  [ describe "when a fake function is specified"
     [ let
-        stub = Spy.create "titleText" (\_ -> SpyApp.titleText)
+        spy = Spy.create "titleText" (\_ -> SpyApp.titleText)
           |> Spy.andCallFake (\_ -> "Test Title")
 
         stateThunk = \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Spy.use [ stub ]
+            |> Spy.use [ spy ]
             |> Markup.find "#title"
       in
-        describe "when the function is called"
-          [ test "it calls the mocked version" <|
+        describe "when the spied on function is called"
+          [ test "it calls the fake version" <|
             \() ->
               Markup.find "#title" (stateThunk ())
                 |> Markup.expectElement (hasText "Test Title")

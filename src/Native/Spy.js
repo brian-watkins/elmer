@@ -10,70 +10,59 @@ var _brian_watkins$elmer$Native_Spy = function() {
     return name;
   }
 
-  var createSpyCall = function(name, funcName) {
+  var createSpyCall = function(spyValue) {
     return function () {
-      spies[name].calls += 1
-      return spies[name].fake.apply(this, arguments)
+      spyValue.calls += 1
+      return spyValue.fake.apply(this, arguments)
     }
   }
 
-  var spies = {}
-
-  var spy = function(name, fun) {
+  var install = function(name, fun) {
     var functionToSpyOn = findSpyFunction(fun)
 
     if (!functionToSpyOn) {
-      return _elm_lang$core$Maybe$Nothing;
+      return _brian_watkins$elmer$Elmer_Spy_Internal$Error({ name: name });
     }
 
-    spies[name] =
+    var spyValue =
       { name: name
       , calls: 0
+      , installer: fun
       , functionName: functionToSpyOn
       , original: eval(functionToSpyOn)
       , fake: eval(functionToSpyOn)
       }
 
-    eval(functionToSpyOn + " = createSpyCall(name, functionToSpyOn)")
+    eval(functionToSpyOn + " = createSpyCall(spyValue)")
 
-    return _elm_lang$core$Maybe$Just(name);
+    return _brian_watkins$elmer$Elmer_Spy_Internal$Active(spyValue);
   }
 
-  var registerFake = function(name, fakeFun) {
-    spies[name].fake = fakeFun
+  var uninstall = function (spyValue) {
+    eval(spyValue.functionName + " = spyValue.original")
 
-    return _elm_lang$core$Maybe$Just(name);
+    _brian_watkins$elmer$Elmer_Spy_Internal$Uninstalled(spyValue.installer)
   }
 
-  var callsForSpy = function(name) {
-    var data = spies[name]
+  var registerFake = function(spyValue, fakeFun) {
+    spyValue.fake = fakeFun
 
-    if (!data) {
-      return _elm_lang$core$Maybe$Nothing;
-    }
+    return _brian_watkins$elmer$Elmer_Spy_Internal$Active(spyValue);
+  }
 
+  var calls = function(spyValue) {
     var spyCalls = (A2)(_brian_watkins$elmer$Elmer_Spy_Internal$Calls,
-      data.name,
-      data.calls
+      spyValue.name,
+      spyValue.calls
     );
 
-    return _elm_lang$core$Maybe$Just(spyCalls);
-  }
-
-  var clearSpies = function() {
-    for (var spyName in spies) {
-      eval(spies[spyName].functionName + " = spies[spyName].original")
-    }
-
-    spies = {}
-
-    return true;
+    return spyCalls;
   }
 
   return {
-      spy: F2(spy),
-      callsForSpy: callsForSpy,
-      clearSpies: clearSpies,
+      install: F2(install),
+      uninstall: uninstall,
+      calls: calls,
       registerFake: F2(registerFake)
   };
 

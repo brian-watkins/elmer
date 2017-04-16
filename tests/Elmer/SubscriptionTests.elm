@@ -31,18 +31,6 @@ withTests =
           Subscription.with (\() _ -> Sub.none) initialState
             |> Expect.equal (ComponentState.failure "You Failed!")
     ]
-  , describe "when the override is not a function"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
-          override = Spy.create "bad" (\_ -> "Huh?")
-            |> Spy.andCallFake (\_ -> Sub.none)
-        in
-          Spy.use [ override ] initialState
-            |> Subscription.with (\() _ -> Sub.none)
-            |> Expect.equal (ComponentState.failure "Failed to install stubs!")
-    ]
   ]
 
 sendTests : Test

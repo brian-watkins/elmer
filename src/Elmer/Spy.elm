@@ -23,7 +23,7 @@ module Elmer.Spy exposing
 import Expect
 import Elmer exposing (Matcher)
 import Elmer.ComponentState as ComponentState
-import Elmer.Spy.Internal as Spy_
+import Elmer.Spy.Internal as Spy_ exposing (Spy(..))
 import Elmer.Printer exposing (..)
 
 {-| Represents a function that has been spied on.
@@ -56,9 +56,9 @@ through to the original function.
 -}
 create : String -> (() -> a) -> Spy
 create name namingFunc =
-  Spy_.Spy <|
+  Spy_.Uninstalled <|
     \() ->
-      Spy_.spyOn name namingFunc
+      Spy_.install name namingFunc
 
 {-| Call the provided function when a Spy is called.
 
@@ -89,11 +89,21 @@ via `use`.
 
 -}
 andCallFake : (a -> b) -> Spy -> Spy
-andCallFake fakeFunction (Spy_.Spy spyFunc) =
-  Spy_.Spy <|
-    \() ->
-      spyFunc ()
-        |> Maybe.andThen (\spyId -> Native.Spy.registerFake spyId fakeFunction)
+andCallFake fakeFunction spy =
+  case spy of
+    Uninstalled installer ->
+      Spy_.Uninstalled <|
+        \() ->
+          let
+            installed = installer ()
+          in
+            case installed of
+              Active spyValue ->
+                Native.Spy.registerFake spyValue fakeFunction
+              _ ->
+                installed
+    _ ->
+      spy
 
 
 {-| Make an expectation about a spy.
@@ -110,9 +120,9 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
 expect : String -> Matcher Calls -> Elmer.ComponentState model msg -> Expect.Expectation
 expect name matcher =
   ComponentState.mapToExpectation (\component ->
-    case Spy_.callsForSpy name of
-      Just spyCalls ->
-        matcher spyCalls
+    case Spy_.calls name component.spies of
+      Just calls ->
+        matcher calls
       Nothing ->
         Expect.fail <|
           format
@@ -120,7 +130,6 @@ expect name matcher =
             , description "but it has not been registered as a spy"
             ]
   )
-
 
 {-| Install stubs for use during the test.
 
@@ -147,12 +156,39 @@ you could do something like the following:
 
 -}
 use : List Spy -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-use stubs =
+use spies =
   ComponentState.map (\component ->
-    case Spy_.installSpies stubs of
-      Just _ ->
-        ComponentState.with component
-      Nothing ->
-        ComponentState.failure "Failed to install stubs!"
-          |> Spy_.clearSpies
+    let
+      installed = Spy_.installAll spies
+      errors = takeErrors installed
+    in
+      if List.isEmpty errors then
+        ComponentState.with { component | spies = installed }
+      else
+        ComponentState.failure <|
+          format
+            [ message "Failed to install spies" <| failedSpies errors ]
+  )
+
+failedSpies : List Spy -> String
+failedSpies spies =
+  List.filterMap (\spy ->
+    case spy of
+      Error spyValue ->
+        Native.Spy.calls spyValue
+          |> .name
+          |> Just
+      _ ->
+        Nothing
+  ) spies
+    |> String.join "\n"
+
+takeErrors : List Spy -> List Spy
+takeErrors =
+  List.filter (\spy ->
+    case spy of
+      Error spyValue ->
+        True
+      _ ->
+        False
   )

@@ -6,6 +6,7 @@ module Elmer.Component exposing
   )
 
 import Elmer.Http.Internal exposing (HttpRequest)
+import Elmer.Spy.Internal exposing (Spy)
 import Navigation
 import Html exposing (Html)
 
@@ -29,4 +30,5 @@ type alias Component model msg =
     , deferredCommands : List (Cmd msg)
     , dummyCommands : List String
     , subscriptions : Sub msg
+    , spies : List Spy
     }

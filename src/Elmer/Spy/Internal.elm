@@ -1,12 +1,11 @@
 module Elmer.Spy.Internal exposing
   ( Spy(..)
   , Calls
-  , SpyId
-  , spyOn
-  , callsForSpy
-  , installSpies
+  , install
+  , installAll
+  , uninstallAll
+  , calls
   , batch
-  , clearSpies
   )
 
 
@@ -15,36 +14,64 @@ type alias Calls =
   , calls : Int
   }
 
-type alias SpyId =
-  String
+type Spy
+  = Uninstalled (() -> Spy)
+  | Active SpyValue
+  | Error SpyValue
+  | Batch (List Spy)
 
-type Spy =
-  Spy (() -> Maybe SpyId)
+type SpyValue
+  = SpyValue
 
 
-spyOn : String -> (() -> a) -> Maybe SpyId
-spyOn name namingFunc =
-  Native.Spy.spy name namingFunc
+install : String -> (() -> a) -> Spy
+install name namingFunc =
+  Native.Spy.install name namingFunc
 
-callsForSpy : String -> Maybe Calls
-callsForSpy name =
-  Native.Spy.callsForSpy name
+calls : String -> List Spy -> Maybe Calls
+calls name spies =
+  List.filterMap (\spy ->
+    case spy of
+      Active spyValue ->
+        let
+          calls = Native.Spy.calls spyValue
+        in
+          if calls.name == name then
+            Just calls
+          else
+            Nothing
+      _ ->
+        Nothing
+  ) spies
+    |> List.head
 
 {-| Note: Calling a fake method on a batch spy is not supported
 -}
 batch : List Spy -> Spy
-batch overrides =
-  Spy <|
-    \() ->
-      installSpies overrides
+batch spies =
+  Batch spies
 
-installSpies : List Spy -> Maybe SpyId
-installSpies =
-  List.foldl (\(Spy func) cur -> Maybe.andThen (\_ -> func ()) cur) (Just "")
+installAll : List Spy -> List Spy
+installAll spies =
+  List.map (\spy ->
+    case spy of
+      Uninstalled installer ->
+        installer () :: []
+      Batch spies ->
+        installAll spies
+      _ ->
+        spy :: []
+  ) spies
+    |> List.concat
 
-clearSpies : a -> a
-clearSpies subject =
-  if Native.Spy.clearSpies () then
-    subject
-  else
-    Debug.crash "Failed to clear spies! This should never happen!?"
+uninstall : Spy -> Spy
+uninstall spy =
+  case spy of
+    Active spyValue ->
+      Native.Spy.uninstall spyValue
+    _ ->
+      spy
+
+uninstallAll : List Spy -> List Spy
+uninstallAll =
+  List.map uninstall
