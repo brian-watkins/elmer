@@ -591,18 +591,21 @@ subscriptions model =
 ```
 
 We can create a spy for this subscription-generating function and provide a
-subscription spy that will allow us to send data tagged with the appropriate message
+fake subscription that will allow us to send data tagged with the appropriate message
 during our test.
 
 ```
 let
-  spy = Elmer.Spy.create "port-spy" (\_ -> MyModule.receiveData)
-    |> Elmer.Spy.andCallFake (\tagger -> Elmer.Subscription.spy "fake-receive" tagger)
+  spy =
+    Elmer.Spy.create "port-spy" (\_ -> MyModule.receiveData)
+      |> Elmer.Spy.andCallFake (\tagger ->
+           Elmer.Platform.Subscription.fake "fake-receive" tagger
+         )
 in
   Elmer.componentState MyModule.defaultModel MyModule.view MyModule.update
     |> Elmer.Spy.use [ spy ]
-    |> Elmer.Subscription.with (\_ -> MyModule.subscriptions)
-    |> Elmer.Subscription.send "fake-receive" "some fake data"
+    |> Elmer.Platform.Subscription.with (\_ -> MyModule.subscriptions)
+    |> Elmer.Platform.Subscription.send "fake-receive" "some fake data"
     |> ...
 ```
 
