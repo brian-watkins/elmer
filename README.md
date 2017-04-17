@@ -554,6 +554,58 @@ And now our test should pass! Notice that we were able to test drive our compone
 our tests knowing how that component actually deals with the effect from the Time
 subscription.
 
+### Ports
+
+You can manage ports during your test in just the same way you would manage any
+command or subscription.
+
+Suppose you have a port that sends data to Javascript:
+
+```
+port module MyModule exposing (..)
+
+port sendData : String -> Cmd msg
+```
+
+You can create a spy for this function just like you would for any command-generating
+function:
+
+```
+Elmer.Spy.create "port-spy" (\_ -> MyModule.sendData)
+  |> Elmer.Spy.andCallFake (\_ -> Cmd.none)
+```
+
+Note that you will need to provide a fake implementation of this method since
+otherwise Elmer will not know how to handle the generated command.
+
+A port that receives data from Javascript works just the same as any subscription.
+
+```
+port receiveData : (String -> msg) -> Sub msg
+
+type Msg = ReceivedData String
+
+subscriptions : Module -> Sub Msg
+subscriptions model =
+  receiveData ReceivedData
+```
+
+We can create a spy for this subscription-generating function and provide a
+subscription spy that will allow us to send data tagged with the appropriate message
+during our test.
+
+```
+let
+  spy = Elmer.Spy.create "port-spy" (\_ -> MyModule.receiveData)
+    |> Elmer.Spy.andCallFake (\tagger -> Elmer.Subscription.spy "fake-receive" tagger)
+in
+  Elmer.componentState MyModule.defaultModel MyModule.view MyModule.update
+    |> Elmer.Spy.use [ spy ]
+    |> Elmer.Subscription.with (\_ -> MyModule.subscriptions)
+    |> Elmer.Subscription.send "fake-receive" "some fake data"
+    |> ...
+```
+
 ### Spies and Stubs
 
 Elmer generalizes the pattern for managing the effects of `Subs` and `Cmds`, allowing

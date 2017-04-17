@@ -4,27 +4,42 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 
-port sendJsCommand : String -> Cmd msg
+port sendJsData : String -> Cmd msg
+
+port receiveJsData : (String -> msg) -> Sub msg
 
 type alias Model =
-  { name : String }
+  { name : String
+  , jsData : String
+  }
 
 type Msg
   = HandleClick
+  | ReceivedData String
 
 defaultModel : Model
 defaultModel =
-  { name = "Cool Person" }
+  { name = "Cool Person"
+  , jsData = ""
+  }
 
 view : Model -> Html Msg
 view model =
   Html.div [ Attr.id "root" ]
     [ Html.div [ Attr.id "send-port-command-button", Events.onClick HandleClick ]
       [ Html.text "Click me!" ]
+    , Html.div [ Attr.id "js-data" ]
+      [ Html.text model.jsData ]
     ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     HandleClick ->
-      ( model, sendJsCommand "Hey!" )
+      ( model, sendJsData "Hey!" )
+    ReceivedData message ->
+      ( { model | jsData = message }, Cmd.none )
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  receiveJsData ReceivedData
