@@ -609,7 +609,7 @@ in
     |> ...
 ```
 
-### Spies and Stubs
+### Spies and Fakes
 
 Elmer generalizes the pattern for managing the effects of `Subs` and `Cmds`, allowing
 you to spy on any function you like.
@@ -663,6 +663,26 @@ routeTest =
           |> Elmer.Html.expectElementExists
   ]
 ```
+
+For any spy, you can make an expectation about how many times it was called like so:
+
+```
+Elmer.Spy.expect "my-spy" (wasCalled 3)
+```
+
+You can also expect that the spy was called with some list of arguments at least once:
+
+```
+Elmer.Spy.expect "my-spy" (
+  Elmer.Spy.Matchers.wasCalledWith
+    [ Elmer.Spy.Matchers.stringArg "someString"
+    , Elmer.Spy.Matchers.anyArg
+    , Elmer.Spy.Matcher.intArg 23
+    ]
+)
+```
+
+See `Elmer.Spy.Matchers` for a full list of argument matchers.
 
 ### Development
 

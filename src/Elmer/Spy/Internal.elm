@@ -1,6 +1,7 @@
 module Elmer.Spy.Internal exposing
   ( Spy(..)
   , Calls
+  , Arg(..)
   , create
   , activate
   , deactivate
@@ -11,8 +12,16 @@ module Elmer.Spy.Internal exposing
 
 type alias Calls =
   { name : String
-  , calls : Int
+  , calls : List (List Arg)
   }
+
+type Arg
+  = StringArg String
+  | IntArg Int
+  | FloatArg Float
+  | BoolArg Bool
+  | TypedArg String
+  | AnyArg
 
 type Spy
   = Uninstalled (() -> Spy)

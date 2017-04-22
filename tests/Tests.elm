@@ -23,6 +23,7 @@ import Elmer.CommandTests
 import Elmer.PrinterTests
 import Elmer.SubscriptionTests
 import Elmer.SpyTests
+import Elmer.SpyMatcherTests
 import Elmer.PortTests
 import Elmer.ComponentStateTests
 
@@ -51,5 +52,6 @@ all =
     , Elmer.SubscriptionTests.all
     , Elmer.PrinterTests.all
     , Elmer.SpyTests.all
+    , Elmer.SpyMatcherTests.all
     , Elmer.PortTests.all
     ]
