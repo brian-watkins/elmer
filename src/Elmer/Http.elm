@@ -183,7 +183,7 @@ expectRequest method url requestMatcher =
                 ]
             else
               let
-                requests = String.join "\n\n\t" (List.map (\r -> r.method ++ " " ++ r.url) component.httpRequests)
+                requests = String.join "\n" (List.map (\r -> r.method ++ " " ++ r.url) component.httpRequests)
               in
                 Expect.fail <| format
                   [ message "Expected request for" (method ++ " " ++ url)

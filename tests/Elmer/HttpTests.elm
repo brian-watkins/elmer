@@ -353,7 +353,7 @@ expectRequestTests method func =
             func "http://fun.com/awesome" wasSent initialState
               |> Expect.equal (Expect.fail (format
                 [ message "Expected request for" (method ++ " http://fun.com/awesome")
-                , message "but only found these requests" "POST http://fun.com/fun\n\n\tGET http://awesome.com/awesome.html?stuff=fun"
+                , message "but only found these requests" "POST http://fun.com/fun\nGET http://awesome.com/awesome.html?stuff=fun"
                 ]
               ))
       ]
