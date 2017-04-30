@@ -31,6 +31,10 @@ trigger a handler attached to the targeted element. See `moveMouseIn` and `moveM
 for more.
 
 # Mouse Events
+
+All mouse events occur at a simulated position of `{ pageX = 0, pageY = 0}`. If your
+test needs a mouse event to occur at a specific position, use `trigger`.
+
 @docs click, doubleClick, press, release, moveMouseIn, moveMouseOut
 
 # Form Events
@@ -107,9 +111,9 @@ triggerClick : ClickType -> Elmer.ComponentState model msg -> Elmer.ComponentSta
 triggerClick clickType componentState =
   let
     eventPropagations =
-      [ basicEventPropagation "click"
-      , basicEventPropagation "mousedown"
-      , basicEventPropagation "mouseup"
+      [ mouseEventPropagation "click"
+      , mouseEventPropagation "mousedown"
+      , mouseEventPropagation "mouseup"
       , eventPropagation submitHandlerQuery "{}"
       ]
   in
@@ -161,13 +165,17 @@ doubleClick =
 -}
 press : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 press =
-    processBasicEvent "mousedown"
+  updateComponentState
+    [ mouseEventPropagation "mousedown"
+    ]
 
 {-| Trigger a mouse up event on the targeted element.
 -}
 release : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 release =
-    processBasicEvent "mouseup"
+  updateComponentState
+    [ mouseEventPropagation "mouseup"
+    ]
 
 {-| Simulate moving the mouse into the targeted element.
 
@@ -179,8 +187,8 @@ trigger an event handler that is registered by the targeted element.
 moveMouseIn : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 moveMouseIn =
   updateComponentState
-    [ basicElementEventPropagation "mouseenter"
-    , basicEventPropagation "mouseover"
+    [ mouseElementEventPropagation "mouseenter"
+    , mouseEventPropagation "mouseover"
     ]
 
 {-| Simulate moving the mouse out of the targeted element.
@@ -193,8 +201,8 @@ trigger an event handler that is registered by the targeted element.
 moveMouseOut : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 moveMouseOut =
   updateComponentState
-    [ basicElementEventPropagation "mouseleave"
-    , basicEventPropagation "mouseout"
+    [ mouseElementEventPropagation "mouseleave"
+    , mouseEventPropagation "mouseout"
     ]
 
 {-| Trigger a focus event on the targeted element.
@@ -301,7 +309,7 @@ The following will trigger a `keyup` event:
     componentState
       |> trigger "keyup" "{\"keyCode\":65}"
 -}
-trigger : String -> EventJson -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+trigger : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 trigger eventName eventJson =
   updateComponentState [ eventPropagation (eventHandlerQuery eventName) eventJson ]
 
@@ -311,9 +319,21 @@ processBasicEvent : String -> ComponentState model msg -> ComponentState model m
 processBasicEvent eventName =
   trigger eventName "{}"
 
+mouseEventJson : String
+mouseEventJson =
+  "{\"pageX\":0,\"pageY\":0}"
+
+mouseEventPropagation : String -> EventPropagation msg
+mouseEventPropagation eventName =
+  eventPropagation (eventHandlerQuery eventName) mouseEventJson
+
 basicEventPropagation : String -> EventPropagation msg
 basicEventPropagation eventName =
   eventPropagation (eventHandlerQuery eventName) "{}"
+
+mouseElementEventPropagation : String -> EventPropagation msg
+mouseElementEventPropagation eventName =
+  eventPropagation (elementEventHandlerQuery eventName) mouseEventJson
 
 basicElementEventPropagation : String -> EventPropagation msg
 basicElementEventPropagation eventName =

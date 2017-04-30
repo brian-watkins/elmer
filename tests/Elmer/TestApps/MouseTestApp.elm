@@ -2,7 +2,7 @@ module Elmer.TestApps.MouseTestApp exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Html.Events exposing
+import Html.Events as Events exposing
   ( onClick
   , onDoubleClick
   , onMouseDown
@@ -12,6 +12,8 @@ import Html.Events exposing
   , onMouseOver
   , onMouseOut
   )
+import Mouse
+import Json.Decode as Json
 
 type alias Model =
   { clicks : Int
@@ -22,6 +24,7 @@ type alias Model =
   , mouseLeaves : Int
   , mouseOvers : Int
   , mouseOuts : Int
+  , position : Maybe Mouse.Position
   }
 
 type Msg
@@ -33,6 +36,7 @@ type Msg
   | DoMouseLeave
   | DoMouseOver
   | DoMouseOut
+  | RecordPosition Mouse.Position
 
 defaultModel : Model
 defaultModel =
@@ -44,6 +48,7 @@ defaultModel =
   , mouseLeaves = 0
   , mouseOvers = 0
   , mouseOuts = 0
+  , position = Nothing
   }
 
 view : Model -> Html Msg
@@ -59,6 +64,29 @@ view model =
       , onMouseOut DoMouseOut
       ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
+    ]
+
+viewForPosition : Model -> Html Msg
+viewForPosition model =
+  Html.div
+    [ Attr.id "root"
+    ]
+    [ Html.div
+      [ Attr.class "button"
+      , onMouseEvent "click" RecordPosition
+      , onMouseEvent "mousedown" RecordPosition
+      , onMouseEvent "mouseup" RecordPosition
+      , onMouseEvent "mouseover" RecordPosition
+      , onMouseEvent "mouseout" RecordPosition
+      ]
+      [ Html.text "Click me!" ]
+    , Html.div [ Attr.id "click-counter" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
+    , Html.div
+      [ Attr.id "enter-leave-element"
+      , onMouseEvent "mouseenter" RecordPosition
+      , onMouseEvent "mouseleave" RecordPosition
+      ]
+      [ Html.div [ Attr.id "child-element" ] [ Html.text "Mouse over me please!" ] ]
     ]
 
 viewForMouseEnterLeave : Model -> Html Msg
@@ -78,11 +106,17 @@ viewForMouseEnterLeave model =
       ]
     ]
 
+onMouseEvent : String -> (Mouse.Position -> Msg) -> Html.Attribute Msg
+onMouseEvent eventType tagger =
+  Events.on eventType <| Json.map tagger Mouse.position
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     DoClick ->
       ( { model | clicks = model.clicks + 1 }, Cmd.none )
+    RecordPosition position ->
+      ( { model | position = Just position }, Cmd.none )
     DoDoubleClick ->
       ( { model | doubleClicks = model.doubleClicks + 1 }, Cmd.none )
     DoMouseDown ->
