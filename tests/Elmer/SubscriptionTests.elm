@@ -8,7 +8,7 @@ import Elmer.Spy as Spy
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
-import Elmer.Html.Matchers as Matchers
+import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.TestApps.SubscriptionTestApp as App
 import Time
 
@@ -95,8 +95,8 @@ sendTests =
             Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.subscriptions)
               |> Subscription.send "fakeTime-1000" 23000
-              |> Markup.find "#time"
-              |> Markup.expectElement ( Matchers.hasText "23 seconds" )
+              |> Markup.target "#time"
+              |> Markup.expect ( element <| hasText "23 seconds" )
       ]
     , describe "when the subscription is a batch of Subs"
       [ test "the data is tagged and processed" <|
@@ -111,8 +111,8 @@ sendTests =
             Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.batchedSubscriptions)
               |> Subscription.send "fakeTime-60000" (1000 * 60 * 37)
-              |> Markup.find "#minute"
-              |> Markup.expectElement ( Matchers.hasText "37 minutes" )
+              |> Markup.target "#minute"
+              |> Markup.expect ( element <| hasText "37 minutes" )
       ]
     , describe "when the subscription is a mapped Sub"
       [ test "the data is tagged and processed" <|
@@ -127,8 +127,8 @@ sendTests =
             Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "fakeTime-3600000" (1000 * 60 * 60 * 18)
-              |> Markup.find "#child-hours"
-              |> Markup.expectElement ( Matchers.hasText "18 hours" )
+              |> Markup.target "#child-hours"
+              |> Markup.expect ( element <| hasText "18 hours" )
       ]
     ]
   ]

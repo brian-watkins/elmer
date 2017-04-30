@@ -8,7 +8,7 @@ import Expect
 import Elmer exposing (..)
 import Elmer.ComponentState as ComponentState exposing (ComponentState)
 import Elmer.Html
-import Elmer.Html.Matchers as Matchers
+import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Http
@@ -50,8 +50,8 @@ initTests =
       [ test "it sets the model" <|
         \() ->
           state
-            |> Elmer.Html.find "#base-url"
-            |> Elmer.Html.expectElement (Matchers.hasText "http://fun.com/api")
+            |> Elmer.Html.target "#base-url"
+            |> Elmer.Html.expect (element <| hasText "http://fun.com/api")
       , test "it sends the command" <|
         \() ->
           state

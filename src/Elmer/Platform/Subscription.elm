@@ -65,8 +65,8 @@ could do the following:
         |> Spy.use [ fakeSub ]
         |> with (\() -> Component.subscriptions)
         |> send "everySecond" 3000
-        |> find "#current-time"
-        |> expectElement (hasText "3 seconds")
+        |> target "#current-time"
+        |> Elmer.Html.expect (element <| hasText "3 seconds")
 
 -}
 with : (() -> (model -> Sub msg)) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg

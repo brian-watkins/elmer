@@ -144,8 +144,8 @@ in case any stubbed functions need to be applied.
 
     componentState
       |> send (\() -> MyComponent.generateSomeCommand)
-      |> Elmer.Html.find ".some-class"
-      |> Elmer.Html.expectElementExists
+      |> Elmer.Html.target ".some-class"
+      |> Elmer.Html.expect Elmer.Html.Matchers.elementExists
 
 -}
 send : (() -> Cmd msg) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg

@@ -29,7 +29,7 @@ portCommandTests =
       in
         Elmer.componentState App.defaultModel App.view App.update
           |> Spy.use [ spy ]
-          |> Markup.find "#send-port-command-button"
+          |> Markup.target "#send-port-command-button"
           |> Event.click
           |> Spy.expect "port-spy" (wasCalled 1)
   ]
@@ -47,6 +47,6 @@ portSubscriptionTests =
           |> Spy.use [ spy ]
           |> Subscription.with (\_ -> App.subscriptions)
           |> Subscription.send "fakeReceive" "some fake data"
-          |> Markup.find "#js-data"
-          |> Markup.expectElement (hasText "some fake data")
+          |> Markup.target "#js-data"
+          |> Markup.expect (element <| hasText "some fake data")
   ]

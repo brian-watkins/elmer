@@ -1,13 +1,14 @@
 module Elmer.Html.Query exposing
-  ( findElement
-  , takeElements
-  , targetedElement
-  , targetedElements
-  , findAll
+  ( HtmlTarget
+  , forHtml
+  , forElement
+  , forComponent
+  , findElement
+  , findElements
   )
 
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Internal as Internal
+import Elmer.Html.Internal as Html_
 import Elmer.Component as Component exposing (Component)
 import Dict exposing (Dict)
 import Html exposing (Html)
@@ -15,34 +16,57 @@ import Json.Decode as Json
 import Regex exposing (Regex)
 
 
-targetedElement : Component model msg -> Maybe (HtmlElement msg)
-targetedElement component =
-  case component.targetSelector of
-    Just selector ->
-      findElement selector <| Component.render component
-    Nothing ->
-      Nothing
+type HtmlTarget msg =
+  HtmlTarget (Selection msg)
 
-targetedElements : Component model msg -> Maybe (List (HtmlElement msg))
-targetedElements component =
-  case component.targetSelector of
-    Just selector ->
-      findElements selector <| Component.render component
-    Nothing ->
-      Nothing
+type alias Selection msg =
+  { selector : String
+  , element : Maybe (HtmlElement msg)
+  }
 
-findElement : String -> Html msg -> Maybe (HtmlElement msg)
-findElement selector html =
-  Native.Html.asHtmlElement html
-    |> Maybe.andThen (\rootElement ->
-        findAll selector rootElement
-          |> List.head
+
+forHtml : String -> Html msg -> HtmlTarget msg
+forHtml selector html =
+  HtmlTarget
+    { selector = selector
+    , element = Native.Html.asHtmlElement html
+    }
+
+forElement : String -> HtmlElement msg -> HtmlTarget msg
+forElement selector element =
+  HtmlTarget
+    { selector = selector
+    , element = Just element
+    }
+
+
+forComponent : Component model msg -> Maybe (HtmlTarget msg)
+forComponent component =
+  component.targetSelector |>
+    Maybe.map (\selector ->
+      forHtml selector <| Component.render component
     )
 
-findElements : String -> Html msg -> Maybe (List (HtmlElement msg))
-findElements selector html =
-  Native.Html.asHtmlElement html
-    |> Maybe.map (findAll selector)
+
+findElement : HtmlTarget msg -> Result String (HtmlElement msg)
+findElement query =
+  let
+    (HtmlTarget selection) = query
+  in
+    selection.element
+      |> Maybe.andThen (\rootElement ->
+          findAll selection.selector rootElement
+            |> List.head
+        )
+      |> Result.fromMaybe (queryErrorMessage query)
+
+
+findElements : HtmlTarget msg -> List (HtmlElement msg)
+findElements (HtmlTarget selection) =
+  selection.element
+    |> Maybe.map (findAll selection.selector)
+    |> Maybe.withDefault []
+
 
 findAll : String -> HtmlElement msg -> List (HtmlElement msg)
 findAll selector element =
@@ -164,12 +188,12 @@ notEmpty maybeEmpty =
 
 matchesId : String -> HtmlElement msg -> Bool
 matchesId selector node =
-    Maybe.withDefault False (Maybe.map ((==) selector) (Internal.elementId node))
+    Maybe.withDefault False (Maybe.map ((==) selector) (Html_.elementId node))
 
 
 matchesClass : String -> HtmlElement msg -> Bool
 matchesClass selector node =
-    List.member selector (Internal.classList node)
+    List.member selector (Html_.classList node)
 
 
 matchesTag : String -> HtmlElement msg -> Bool
@@ -190,7 +214,7 @@ matchesCharacteristic charName maybeCharValue node =
 
 allCharacteristics : HtmlElement msg -> Dict String String
 allCharacteristics node =
-  Dict.union (Internal.attributes node) (Internal.properties node)
+  Dict.union (Html_.attributes node) (Html_.properties node)
 
 
 takeElements : List (HtmlNode msg) -> List (HtmlElement msg)
@@ -204,3 +228,20 @@ takeElements =
                 _ ->
                     Nothing
         )
+
+
+queryErrorMessage : HtmlTarget msg -> String
+queryErrorMessage (HtmlTarget selection) =
+  "No html element found with selector: "
+    ++ selection.selector
+    ++ "\n\nThe current view is:\n\n"
+    ++ (elementToString selection.element)
+
+
+elementToString : Maybe (HtmlElement msg) -> String
+elementToString maybeElement =
+  case maybeElement of
+    Just element ->
+      Html_.toString element
+    Nothing ->
+      "<No Elements>"

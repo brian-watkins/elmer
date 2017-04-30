@@ -4,7 +4,8 @@ import Test exposing (..)
 
 import Elmer.ElmerTests
 import Elmer.HtmlTests
-import Elmer.MatcherTests
+import Elmer.HtmlQueryTests
+import Elmer.HtmlMatcherTests
 import Elmer.EventTests
 import Elmer.MouseEventTests
 import Elmer.FocusEventTests
@@ -33,8 +34,9 @@ all =
     [ Elmer.ElmerTests.all
     , Elmer.ComponentStateTests.all
     , Elmer.HtmlTests.all
+    , Elmer.HtmlQueryTests.all
     , Elmer.ElementTests.all
-    , Elmer.MatcherTests.all
+    , Elmer.HtmlMatcherTests.all
     , Elmer.EventTests.all
     , Elmer.MouseEventTests.all
     , Elmer.FocusEventTests.all

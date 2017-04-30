@@ -137,8 +137,10 @@ submitHandlerQuery view element =
     []
 
 formFor : String -> Html msg -> Maybe (HtmlElement msg)
-formFor formId dom =
-  Query.findElement ("#" ++ formId) dom
+formFor formId html =
+  Query.forHtml ("#" ++ formId) html
+    |> Query.findElement
+    |> Result.toMaybe
 
 triggersSubmit : HtmlElement msg -> Bool
 triggersSubmit element =
@@ -268,7 +270,9 @@ isSelectable element =
 hasOption : String -> HtmlElement msg -> Result String (HtmlElement msg)
 hasOption value element =
   let
-    options = Elmer.Html.findChildren "option" element
+    options =
+      Query.forElement "option" element
+        |> Query.findElements
   in
     if List.isEmpty options then
       Err <| format [ message "No option found with value" value ]
@@ -284,7 +288,8 @@ hasOption value element =
 
 findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)
 findOption value element =
-  Elmer.Html.findChildren ("option[value='" ++ value ++ "']") element
+  Query.forElement ("option[value='" ++ value ++ "']") element
+    |> Query.findElements
     |> List.head
 
 
@@ -360,11 +365,11 @@ apply eventPropagationList component element =
 
 targetedElement : Component model msg -> Result String (HtmlElement msg)
 targetedElement component =
-  case Query.targetedElement component of
-    Just element ->
-      Ok element
+  case component.targetSelector of
+    Just selector ->
+      Query.findElement <| Query.forHtml selector (Component.render component)
     Nothing ->
-      Err "No target element specified"
+      Err "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
 
 prepareHandler : HtmlEventHandler msg -> EventHandler msg
 prepareHandler eventHandler =

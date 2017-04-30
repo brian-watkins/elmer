@@ -32,7 +32,7 @@ focusTests =
           Expect.equal initialModel.isFocused False
       , test "the event updates the model" <|
         \() ->
-          Markup.find "#name-field" initialState
+          Markup.target "#name-field" initialState
             |> Event.focus
             |> Elmer.expectModel (\model ->
                 Expect.equal model.isFocused True
@@ -55,7 +55,7 @@ blurTests =
           Expect.equal initialModel.isBlurred False
       , test "the event updates the model" <|
         \() ->
-          Markup.find "#name-field" initialState
+          Markup.target "#name-field" initialState
             |> Event.blur
             |> Elmer.expectModel (\model ->
                 Expect.equal model.isBlurred True

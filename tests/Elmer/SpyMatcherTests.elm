@@ -72,7 +72,7 @@ wasCalledTests =
         \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
-            |> Markup.find "#button"
+            |> Markup.target "#button"
             |> Event.click
             |> Spy.expect "clearName" (Matchers.wasCalled 2)
             |> Expect.equal (Expect.fail <|
@@ -85,7 +85,7 @@ wasCalledTests =
         \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
-            |> Markup.find "#button"
+            |> Markup.target "#button"
             |> Event.click
             |> Event.click
             |> Spy.expect "clearName" (Matchers.wasCalled 3)
@@ -101,7 +101,7 @@ wasCalledTests =
         \() ->
           Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
-            |> Markup.find "#button"
+            |> Markup.target "#button"
             |> Event.click
             |> Event.click
             |> Spy.expect "clearName" (Matchers.wasCalled 2)

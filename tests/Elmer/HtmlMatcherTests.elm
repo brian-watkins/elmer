@@ -1,11 +1,13 @@
-module Elmer.MatcherTests exposing (all)
+module Elmer.HtmlMatcherTests exposing (all)
 
 import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
+import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Expect
 import Elmer exposing (..)
 import Elmer.Html exposing (HtmlElement)
 import Elmer.Html.Matchers as Matchers
+import Elmer.Html.Query as Query exposing (HtmlTarget(..))
 import Elmer.Printer exposing (..)
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -13,7 +15,10 @@ import Html.Attributes as Attr
 all : Test
 all =
   describe "Matcher Tests"
-    [ hasTextTests
+    [ elementTests
+    , elementsTests
+    , elementExistsTests
+    , hasTextTests
     , hasClassTests
     , hasPropertyTests
     , hasIdTests
@@ -21,6 +26,84 @@ all =
     , hasAttributeTests
     , listensForEventTests
     ]
+
+
+testHtmlContext : String -> HtmlTarget SimpleApp.Msg
+testHtmlContext selector =
+  Query.forHtml selector <| SimpleApp.view SimpleApp.defaultModel
+
+testTextHtmlContext : String -> HtmlTarget SimpleApp.Msg
+testTextHtmlContext selector =
+  Query.forHtml selector <| SimpleApp.textView SimpleApp.defaultModel
+
+testChildrenHtmlContext : String -> HtmlTarget SimpleApp.Msg
+testChildrenHtmlContext selector =
+  Query.forHtml selector <| SimpleApp.viewWithChildren SimpleApp.defaultModel
+
+
+elementTests : Test
+elementTests =
+  describe "element"
+  [ describe "when the targeted element does not exist"
+    [ test "it returns the failure message and prints the view" <|
+      \() ->
+        Matchers.element (\el -> Expect.fail "Should not get here") (testHtmlContext ".blah")
+          |> Expect.equal (Expect.fail "No html element found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
+    ]
+  , describe "when there are no elements in the html"
+    [ test "it shows there are no elements found" <|
+      \() ->
+        Matchers.element (\el -> Expect.fail "Should not get here") (testTextHtmlContext ".blah")
+          |> Expect.equal (Expect.fail "No html element found with selector: .blah\n\nThe current view is:\n\n<No Elements>")
+    ]
+  , describe "when the targeted element exists"
+    [ test "it passes the element to the matcher" <|
+      \() ->
+        Matchers.element (Matchers.hasText "Some text") (testHtmlContext "#root")
+          |> Expect.equal Expect.pass
+    ]
+  ]
+
+elementsTests : Test
+elementsTests =
+  describe "elements"
+  [ describe "when the targeted element does not exist"
+    [ test "it passes an empty list to the matcher" <|
+      \() ->
+        testChildrenHtmlContext "blah"
+          |> Matchers.elements (\els ->
+            Expect.equal True <| List.isEmpty els
+          )
+          |> Expect.equal Expect.pass
+    ]
+  , describe "when the targeted element exists"
+    [ test "it passes the matching elements to the matcher" <|
+      \() ->
+        testChildrenHtmlContext "div"
+          |> Matchers.elements (\els ->
+            Expect.equal 4 <| List.length els
+          )
+          |> Expect.equal Expect.pass
+    ]
+  ]
+
+elementExistsTests : Test
+elementExistsTests =
+  describe "elementExists"
+  [ describe "when the targeted element does not exist"
+    [ test "it fails" <|
+      \() ->
+        Matchers.elementExists (testHtmlContext ".blah")
+          |> Expect.equal (Expect.fail "No html element found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
+    ]
+  , describe "when the targeted element exists"
+    [ test "it passes" <|
+      \() ->
+        Matchers.elementExists (testHtmlContext "#root")
+          |> Expect.equal Expect.pass
+    ]
+  ]
+
 
 hasTextTests : Test
 hasTextTests =

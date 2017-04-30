@@ -147,11 +147,12 @@ you could do something like the following:
     in
       componentState
         |> use [ taskOverride ]
-        |> Elmer.Html.find "#get-date"
+        |> Elmer.Html.target "#get-date"
         |> Elmer.Html.Event.click
-        |> Elmer.Html.find "#current-date"
-        |> Elmer.Html.expectElement (
-          Elmer.Html.Matchers.hasText "11/12/2016 5:30 pm"
+        |> Elmer.Html.target "#current-date"
+        |> Elmer.Html.expect (
+          Elmer.Html.Matchers.element <|
+            Elmer.Html.Matchers.hasText "11/12/2016 5:30 pm"
         )
 
 -}

@@ -84,7 +84,7 @@ If one fails, then the conjoined matcher fails, otherwise it passes.
 {-| Make expectations about the model in its current state.
 
     Elmer.componentState defaultModel view update
-      |> Elmer.Html.find "button"
+      |> Elmer.Html.target "button"
       |> Elmer.Html.Event.click
       |> Elmer.expectModel (\model ->
         Expect.equal model.clickCount 1
@@ -181,7 +181,7 @@ in case any stubs need to be applied.
 
     Elmer.componentState MyComponent.defaultModel MyComponent.view MyComponent.update
       |> init (\() -> MyComponent.init)
-      |> Elmer.Html.find "#title"
+      |> Elmer.Html.target "#title"
       |> Elmer.Html.expectElementExists
 
 -}

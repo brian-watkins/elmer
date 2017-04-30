@@ -7,7 +7,7 @@ import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
 import Elmer.Html.Event as Event
-import Elmer.Html.Matchers as Matchers
+import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
@@ -43,11 +43,11 @@ appFlowTests =
         ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
           |> Spy.use [ Elmer.Http.serve [ (successStub "Ok" ) ] ]
           |> ElmerNav.setLocation "/click"
-          |> Markup.find ".button"
+          |> Markup.target ".button"
           |> Event.click
           |> Event.click
-          |> Markup.find "#clickCount"
-          |> Markup.expectElement (Matchers.hasText "2 clicks!")
+          |> Markup.target "#clickCount"
+          |> Markup.expect (element <| hasText "2 clicks!")
           |> Expect.equal (Expect.pass)
     , test "it makes multiple expectations about a node" <|
       \() ->
@@ -55,48 +55,48 @@ appFlowTests =
           initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         in
           ElmerNav.setLocation "/text" initialState
-            |> Markup.find "ul"
-            |> Markup.expectElement (
-              Matchers.hasText "Fun Item 1"
-              <&&> Matchers.hasText "Fun Item 2"
-              <&&> Matchers.hasText "Fun Item 3"
+            |> Markup.target "ul"
+            |> Markup.expect (element <|
+                hasText "Fun Item 1" <&&>
+                hasText "Fun Item 2" <&&>
+                hasText "Fun Item 3"
               )
     , let
         initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
           |> Spy.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ]
           |> ElmerNav.setLocation "/request"
-          |> Markup.find "#requestButton"
+          |> Markup.target "#requestButton"
           |> Event.click
       in
         describe "successful http request"
         [ test "it displays the response body" <|
             \() ->
-              Markup.find "#requestOutput" resultState
-                |> Markup.expectElement (Matchers.hasText "Response: A message from the server!")
+              Markup.target "#requestOutput" resultState
+                |> Markup.expect (element <| hasText "Response: A message from the server!")
         , test "it does not display an error" <|
             \() ->
-              Markup.find "#requestError" resultState
-                |> Markup.expectElement (Matchers.hasText "Got request error: No error!")
+              Markup.target "#requestError" resultState
+                |> Markup.expect (element <| hasText "Got request error: No error!")
         ]
     , let
         initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
           |> Spy.use [ Elmer.Http.serve [ failureStub ] ]
           |> ElmerNav.setLocation "/request"
-          |> Markup.find "#requestButton"
+          |> Markup.target "#requestButton"
           |> Event.click
       in
         describe "unsuccessful http request"
         [ test "it does not display a request output" <|
             \() ->
-              Markup.find "#requestOutput" resultState
-                |> Markup.expectElement (Matchers.hasText "Response: Error!")
+              Markup.target "#requestOutput" resultState
+                |> Markup.expect (element <| hasText "Response: Error!")
         , test "it does display an error" <|
             \() ->
-              Markup.find "#requestError" resultState
-                |> Markup.expectElement (
-                    Matchers.hasText "Got request error: Bad Status: 500 Internal Server Error"
+              Markup.target "#requestError" resultState
+                |> Markup.expect (
+                    element <| hasText "Got request error: Bad Status: 500 Internal Server Error"
                 )
         ]
     ]
@@ -115,9 +115,9 @@ timeAppTests =
         taskOverride = Spy.create "Task.perform" (\_ -> Task.perform)
           |> Spy.andCallFake (fakeTaskPerform (3 * Time.second))
       in
-        Markup.find ".button" initialState
+        Markup.target ".button" initialState
           |> Spy.use [ taskOverride ]
           |> Event.click
-          |> Markup.find "#currentTime"
-          |> Markup.expectElement (Matchers.hasText "Time: 3000")
+          |> Markup.target "#currentTime"
+          |> Markup.expect (element <| hasText "Time: 3000")
   ]

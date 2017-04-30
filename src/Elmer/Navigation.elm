@@ -61,7 +61,7 @@ location to `/home` when clicked:
 
     componentState
       |> Spy.use [ Navigation.spy ]
-      |> Elmer.Html.find "#home-button"
+      |> Elmer.Html.target "#home-button"
       |> Elmer.Html.Event.click
       |> Navigation.expectLocation "/home"
 

@@ -63,10 +63,10 @@ a button is clicked. You could register a stub for that request like so
     in
       componentState
         |> Spy.use [ serve [ stubbedResponse ] ]
-        |> Markup.find "#request-data-button"
+        |> Markup.target "#request-data-button"
         |> Elmer.Html.Event.click
-        |> Markup.find "#data-result"
-        |> Markup.expectElement (Matchers.hasText "Hello, Super User!")
+        |> Markup.target "#data-result"
+        |> Markup.expect (Matchers.element <| Matchers.hasText "Hello, Super User!")
 
 -}
 serve : List HttpResponseStub -> Spy
@@ -83,7 +83,7 @@ describing the behavior that results when its response is received.
 
     componentState
       |> Spy.use [ spy ]
-      |> Markup.find "#request-data-button"
+      |> Markup.target "#request-data-button"
       |> Elmer.Http.Event.click
       |> expectGET "http://fun.com/user" Elmer.Http.Matchers.wasSent
 
