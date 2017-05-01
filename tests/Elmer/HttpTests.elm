@@ -188,11 +188,31 @@ serveTests =
                   |> Markup.expect (element <| hasText "Name: Super Fun Person")
                   |> Expect.equal (Expect.fail (format
                     [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
-                    , description ("\t{}")
+                    , description ("\tWith body: \"{}\"")
                     , message "failed with error" "Expecting an object with a field named `name` but instead got: {}"
                     , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
                     ]
                   ))
+          , describe "when the stub does not specify a body at all"
+            [ test "it fails with a message" <|
+              \() ->
+                let
+                  stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+                in
+                  Elmer.componentState App.defaultModel App.view App.update
+                    |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
+                    |> Markup.target "#request-data-click"
+                    |> Event.click
+                    |> Markup.target "#data-result"
+                    |> Markup.expect (element <| hasText "Name: Super Fun Person")
+                    |> Expect.equal (Expect.fail (format
+                      [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
+                      , description ("\tWith body: \"\"")
+                      , message "failed with error" "Given an invalid JSON: Unexpected end of JSON input"
+                      , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+                      ]
+                    ))
+            ]
           ]
         , describe "when the requested url has a query string"
           [ test "it matches the stubbed path" <|

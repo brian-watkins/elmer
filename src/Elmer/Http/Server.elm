@@ -173,13 +173,16 @@ mapResponseError httpRequestHandler tagger error =
     Http.BadPayload msg response ->
       Command.fail <| format
         [ message "Parsing a stubbed response" (httpRequestHandler.request.method ++ " " ++ httpRequestHandler.request.url)
-        , description ("\t" ++ response.body)
+        , description <| "\tWith body: " ++ (printBody response.body)
         , message "failed with error" msg
         , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
         ]
     _ ->
       Command.fake (tagger (Err error))
 
+printBody : String -> String
+printBody body =
+  "\"" ++ body ++ "\""
 
 handleResponseError : HttpResult -> Result Http.Error (Http.Response String)
 handleResponseError responseResult =
