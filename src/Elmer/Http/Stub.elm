@@ -175,7 +175,7 @@ You could create a stub that echoes back the posted body like so:
 
     post "http://fake.com/fake"
       |> withResult (\request result ->
-        Elmer.Http.Result.body (Elmer.Http.Request.body request) result
+        Elmer.Http.Result.withBody (Elmer.Http.Request.body request) result
       )
 
 -}
