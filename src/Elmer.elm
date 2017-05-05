@@ -64,9 +64,10 @@ componentState =
 {-| Operator for conjoining matchers.
 If one fails, then the conjoined matcher fails, otherwise it passes.
 
-    Elmer.Html.expectElement (
-      Elmer.Html.Matchers.hasText "Awesome" <&&>
-      Elmer.Html.Matchers.hasClass "cool"
+    Elmer.Html.expect (
+      Elmer.Html.Matchers.element <|
+        Elmer.Html.Matchers.hasText "Awesome" <&&>
+        Elmer.Html.Matchers.hasClass "cool"
     ) componentState
 -}
 (<&&>) : Matcher a -> Matcher a -> Matcher a
@@ -158,7 +159,7 @@ expectAny matcher =
         testResult
   ) (Expect.fail "Nothing")
 
-{-| Expect that exactly some number of items in a list satisfies the given matcher.
+{-| Expect that exactly some number of items in a list satisfy the given matcher.
 -}
 exactly : Int -> Matcher a -> Matcher (List a)
 exactly expectedCount matcher list =

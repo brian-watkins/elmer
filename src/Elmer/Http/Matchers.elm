@@ -24,7 +24,7 @@ import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Printer exposing (..)
 
 
-{-| Expect that some number of requests have been recorded.
+{-| Expect that exactly some number of requests have been recorded.
 
     Elmer.Http.expectThat (Elmer.Http.Route.get "http://fun.com/fun.html") (
       wasRequested 3
