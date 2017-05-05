@@ -9,12 +9,12 @@ module Elmer.Http.Request exposing
 
 -}
 
-import Elmer.Http.Internal as Internal
+import Elmer.Http.Internal as Http_
 
 {-| Represents a recorded HTTP request about which expectations may be made.
 -}
 type alias HttpRequest
-  = Internal.HttpRequest
+  = Http_.HttpRequest
 
 
 {-| Get the body of a recorded HTTP request.

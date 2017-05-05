@@ -12,6 +12,7 @@ import Elmer.Navigation as ElmerNav
 import Elmer.Http
 import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
+import Elmer.Http.Route as Route
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -28,12 +29,12 @@ all =
 
 successStub : String -> Elmer.Http.HttpResponseStub
 successStub apiMessage =
-  Stub.get "/api/request"
+  Stub.for (Route.get "/api/request")
     |> Stub.withBody apiMessage
 
 failureStub : Elmer.Http.HttpResponseStub
 failureStub =
-  Stub.get "/api/request"
+  Stub.for (Route.get "/api/request")
     |> Stub.withStatus Status.serverError
 
 appFlowTests =

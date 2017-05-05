@@ -364,8 +364,8 @@ for constructing an `HttpResponseStub` that describes how to respond to some req
 
 ```
 let
-  stubbedResponse = HttpStub.get "http://fake.com/search"
-    |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
+  stubbedResponse = Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fake.com/search")
+    |> Elmer.Http.Stub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
 in
 ```
 
@@ -389,8 +389,8 @@ initialComponentState
   |> Elmer.Html.Event.input "Fun Stuff"
   |> Elmer.Html.target "#search-button"
   |> Elmer.Html.Event.click
-  |> Elmer.Http.expectGET "http://fake.com/search" (
-    Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
+  |> Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/search") (
+    Elmer.some <| Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
   )
 ```
 

@@ -20,8 +20,7 @@ stubbedSend responseStubs tagger request =
     httpRequestHandler = HttpInternal.asHttpRequestHandler request
   in
     unwrapResponseStubs responseStubs
-      |> responseStubsAreValid
-      |> Result.andThen (matchFirstRequest httpRequestHandler)
+      |> matchFirstRequest httpRequestHandler
       |> Result.andThen (processResponse httpRequestHandler tagger)
       |> collapseToCommand
       |> toHttpCommand httpRequestHandler
@@ -61,33 +60,6 @@ toHttpCommand requestHandler command =
 updateComponentState : HttpRequest -> Component model msg -> Component model msg
 updateComponentState request componentState =
   { componentState | httpRequests = request :: componentState.httpRequests }
-
-
-responseStubsAreValid : List HttpStub -> Result (Cmd msg) (List HttpStub)
-responseStubsAreValid responseStubs =
-  List.map responseStubIsValid responseStubs
-    |> List.foldl (\result totalResult ->
-      case result of
-        Ok result ->
-          case totalResult of
-            Ok validStubs ->
-              Ok (result :: validStubs)
-            Err cmd ->
-              Err cmd
-        Err cmd ->
-          Err cmd
-    ) (Ok [])
-
-
-responseStubIsValid : HttpStub -> Result (Cmd msg) HttpStub
-responseStubIsValid responseStub =
-  if String.contains "?" responseStub.url then
-    Err <| Command.fail <| format
-      [ message "Sent a request where a stubbed route contains a query string" responseStub.url
-      , description "Stubbed routes may not contain a query string"
-      ]
-  else
-    Ok responseStub
 
 
 matchFirstRequest : HttpRequestHandler a -> List HttpStub -> Result (Cmd msg) HttpStub

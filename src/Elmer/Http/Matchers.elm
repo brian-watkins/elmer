@@ -1,7 +1,6 @@
 module Elmer.Http.Matchers exposing
-  ( hasAnyBody
+  ( wasRequested
   , hasBody
-  , wasSent
   , hasQueryParam
   , hasHeader
   )
@@ -15,7 +14,7 @@ appropriate time to allow Elmer to record the requests sent by the component
 under test.
 
 # Matchers
-@docs wasSent, hasAnyBody, hasBody, hasQueryParam, hasHeader
+@docs wasRequested, hasBody, hasQueryParam, hasHeader
 -}
 
 import Expect
@@ -25,32 +24,38 @@ import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Printer exposing (..)
 
 
-{-| Match any request with the proper method and route as specified in
-`Elmer.Http.expectGET` etc.
+{-| Expect that some number of requests have been recorded.
 
-    expectGET "http://fake.com/fake" wasSent
-
+    Elmer.Http.expectThat (Elmer.Http.Route.get "http://fun.com/fun.html") (
+      wasRequested 3
+    )
 -}
-wasSent : Matcher HttpRequest
-wasSent request =
-  Expect.pass
+wasRequested : Int -> Matcher (List HttpRequest)
+wasRequested times requests =
+  if List.length requests == times then
+    Expect.pass
+  else
+    Expect.fail <|
+      "Expected "
+        ++ (toString times)
+        ++ " "
+        ++ (pluralize "request" times)
+        ++ ", but recorded "
+        ++ (toString <| List.length requests)
+        ++ " "
+        ++ (pluralize "request" (List.length requests))
 
-
-{-| Match any request that has a body.
--}
-hasAnyBody : Matcher HttpRequest
-hasAnyBody request =
-  case request.body of
-    Just _ ->
-      Expect.pass
-    Nothing ->
-      Expect.fail (formatMessage (description "Expected request to have a body but it does not"))
-
+pluralize : String -> Int -> String
+pluralize word num =
+  if num > 1 || num == 0 then
+    word ++ "s"
+  else
+    word
 
 {-| Match a request with the specified body.
 
-    expectPOST "http://fake.com/fake" (
-      hasBody "{\"name\":\"Fun Person\"}"
+    Elmer.Http.expectThat (Elmer.Http.Route.post "http://fake.com/fake") (
+      Elmer.some <| hasBody "{\"name\":\"Fun Person\"}"
     )
 
 -}
@@ -70,8 +75,8 @@ hasBody expectedBody request =
 
 Note: You don't need to worry about url encoding the name or value.
 
-    expectGET "http://fake.com/fake" (
-      hasQueryParam ( "name", "Fun Person" )
+    Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/fake") (
+      Elmer.some <| hasQueryParam ( "name", "Fun Person" )
     )
 
 -}
@@ -99,8 +104,8 @@ queryString request =
 
 {-| Match a request with the specified header name and value.
 
-    expectGET "http://fake.com/fake" (
-      hasHeader ( "x-auth-token", "xxxxx" )
+    Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/fake") (
+      Elmer.some <| hasHeader ( "x-auth-token", "xxxxx" )
     )
 
 -}

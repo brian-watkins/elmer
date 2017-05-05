@@ -21,6 +21,7 @@
         "Elmer.Http.Status",
         "Elmer.Http.Result",
         "Elmer.Http.Request",
+        "Elmer.Http.Route",
         "Elmer.Spy",
         "Elmer.Spy.Matchers"
     ],

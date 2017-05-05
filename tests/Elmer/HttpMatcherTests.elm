@@ -9,9 +9,8 @@ import Elmer.Printer exposing (..)
 all : Test
 all =
   describe "http matcher tests"
-  [ hasAnyBodyTests
+  [ wasRequestedTests
   , hasBodyTests
-  , wasSentTests
   , hasQueryParamTests
   , hasHeaderTests
   ]
@@ -32,19 +31,58 @@ requestWithNoBody =
   , headers = []
   }
 
-hasAnyBodyTests : Test
-hasAnyBodyTests =
-  describe "hasAnyBody"
-  [ describe "when there is no body"
+
+wasRequestedTests : Test
+wasRequestedTests =
+  describe "wasCalled"
+  [ describe "when the list of requests is empty"
     [ test "it fails" <|
       \() ->
-        Matchers.hasAnyBody requestWithNoBody
-          |> Expect.equal (Expect.fail "Expected request to have a body but it does not")
+        Matchers.wasRequested 3 []
+          |> Expect.equal (Expect.fail "Expected 3 requests, but recorded 0 requests")
+    , describe "when the expected call count is 1"
+      [ test "it prints a grammatic message" <|
+        \() ->
+          Matchers.wasRequested 1 []
+            |> Expect.equal (Expect.fail "Expected 1 request, but recorded 0 requests")
+      ]
+    , describe "when the expected call count is 0"
+      [ test "it passes" <|
+        \() ->
+          Matchers.wasRequested 0 []
+            |> Expect.equal Expect.pass
+      ]
     ]
-  , describe "when there is a body"
+  , describe "when the number of requests does not match the expected count"
+    [ describe "when 1 request is recorded"
+      [ test "it fails with a grammatical message" <|
+        \() ->
+          Matchers.wasRequested 3 [ requestWithBody "{}" ]
+            |> Expect.equal (Expect.fail "Expected 3 requests, but recorded 1 request")
+      ]
+    , describe "when mutiple requests are recorded"
+      [ test "it fails with a grammatical message" <|
+        \() ->
+          Matchers.wasRequested 3 [ requestWithBody "{}", requestWithBody "{}" ]
+            |> Expect.equal (Expect.fail "Expected 3 requests, but recorded 2 requests")
+      ]
+    , describe "when the expected call count is 0"
+      [ test "it prints a grammatical message" <|
+        \() ->
+          Matchers.wasRequested 0 [ requestWithBody "{}" ]
+            |> Expect.equal (Expect.fail "Expected 0 requests, but recorded 1 request")
+      ]
+    , describe "when the expected call count is 1"
+      [ test "it prints a grammatical message" <|
+        \() ->
+          Matchers.wasRequested 1 [ requestWithBody "{}", requestWithBody "{}" ]
+            |> Expect.equal (Expect.fail "Expected 1 request, but recorded 2 requests")
+      ]
+    ]
+  , describe "when the number of requests matches the expected count"
     [ test "it passes" <|
       \() ->
-        Matchers.hasAnyBody (requestWithBody "{}")
+        Matchers.wasRequested 2 [ requestWithBody "{}", requestWithBody "{}" ]
           |> Expect.equal Expect.pass
     ]
   ]
@@ -74,16 +112,6 @@ hasBodyTests =
     ]
   ]
 
-wasSentTests : Test
-wasSentTests =
-  describe "wasSent"
-  [ describe "when the request has been made"
-    [ test "it passes" <|
-      \() ->
-        Matchers.wasSent requestWithNoBody
-          |> Expect.equal Expect.pass
-    ]
-  ]
 
 getWithQuery : Maybe String -> HttpRequest
 getWithQuery maybeQuery =

@@ -12,6 +12,7 @@ import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Http
+import Elmer.Http.Route as Route
 import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Printer exposing (..)
 import Task
@@ -55,7 +56,7 @@ initTests =
       , test "it sends the command" <|
         \() ->
           state
-            |> Elmer.Http.expectGET "http://fun.com/api/token" HttpMatchers.wasSent
+            |> Elmer.Http.expect (Route.get "http://fun.com/api/token")
       ]
   , describe "when the command fails"
     [ test "it fails" <|

@@ -18,6 +18,7 @@ import Elmer.HttpStubTests
 import Elmer.HttpMatcherTests
 import Elmer.HttpResultTests
 import Elmer.HttpRequestTests
+import Elmer.HttpRouteTests
 import Elmer.RuntimeTests
 import Elmer.ElementTests
 import Elmer.CommandTests
@@ -49,6 +50,7 @@ all =
     , Elmer.HttpMatcherTests.all
     , Elmer.HttpResultTests.all
     , Elmer.HttpRequestTests.all
+    , Elmer.HttpRouteTests.all
     , Elmer.RuntimeTests.all
     , Elmer.CommandTests.all
     , Elmer.SubscriptionTests.all

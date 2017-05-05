@@ -1,9 +1,5 @@
 module Elmer.Http.Stub exposing
-  ( get
-  , post
-  , delete
-  , put
-  , patch
+  ( for
   , withError
   , withStatus
   , withBody
@@ -13,8 +9,8 @@ module Elmer.Http.Stub exposing
 
 {-| Functions for building stubbed responses to Http requests.
 
-# Specify the Method and Route
-@docs get, post, put, patch, delete
+# Create a stubbed response
+@docs for
 
 # Describe the Response body
 @docs withBody
@@ -34,66 +30,19 @@ import Elmer.Http
 import Elmer.Http.Internal exposing (..)
 import Elmer.Http.Status as Status
 import Elmer.Http.Result as HttpResult
+import Elmer.Http.Route as Route
 import Http
 import Dict
 
-
-{-| Stub the response to a GET request at the specified route.
-
-By default, this response will return an empty body with a status of
-`200 OK`.
-
-Note: The route should not contain a query string.
--}
-get : String -> Elmer.Http.HttpResponseStub
-get url =
-  defaultResponseStub "GET" url
-
-
-{-| Stub the response to a POST request at the specified route.
+{-| Stub the response for a request to the specified route.
 
 By default, this response will return an empty body with a status of
 `200 OK`.
-
-Note: The route should not contain a query string.
 -}
-post : String -> Elmer.Http.HttpResponseStub
-post url =
-  defaultResponseStub "POST" url
+for : HttpRoute -> HttpResponseStub
+for route =
+  defaultResponseStub route.method route.url
 
-
-{-| Stub the response to a DELETE request at the specified route.
-
-By default, this response will return an empty body with a status of
-`200 OK`.
-
-Note: The route should not contain a query string.
--}
-delete : String -> Elmer.Http.HttpResponseStub
-delete url =
-  defaultResponseStub "DELETE" url
-
-{-| Stub the response to a PUT request at the specified route.
-
-By default, this response will return an empty body with a status of
-`200 OK`.
-
-Note: The route should not contain a query string.
--}
-put : String -> Elmer.Http.HttpResponseStub
-put url =
-  defaultResponseStub "PUT" url
-
-{-| Stub the response to a PATCH request at the specified route.
-
-By default, this response will return an empty body with a status of
-`200 OK`.
-
-Note: The route should not contain a query string.
--}
-patch : String -> Elmer.Http.HttpResponseStub
-patch url =
-  defaultResponseStub "PATCH" url
 
 defaultResponseStub : String -> String -> HttpResponseStub
 defaultResponseStub method url =
@@ -121,7 +70,7 @@ defaultResult url =
 Suppose you want to describe the behavior that should result when a request
 times out. You could create a stubbed response like so:
 
-    get "http://fake.com/fake"
+    Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fake.com/fake")
       |> withError Http.Error.Timout
 
 -}
@@ -137,7 +86,7 @@ withError error =
 Suppose you want to describe the behavior that should result when a request
 returns a `500 Internal Server Error`. You could create a stubbed response like so:
 
-    get "http://fake.com/fake"
+    Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fake.com/fake")
       |> withStatus Elmer.Http.Status.serverError
 
 -}
@@ -157,7 +106,7 @@ withStatus (HttpStatus newStatus) =
 Suppose you want to describe the behavior that results when a response body is
 parsed. You could create a stub like so:
 
-    post "http://fake.com/fake"
+    Elmer.Http.Stub.for (Elmer.Http.Route.post "http://fake.com/fake")
       |> withBody "{\"name\":\"Fun Person\"}"
 
 -}
@@ -173,7 +122,7 @@ HttpRequest.
 
 You could create a stub that echoes back the posted body like so:
 
-    post "http://fake.com/fake"
+    Elmer.Http.Stub.for (Elmer.Http.Route.post "http://fake.com/fake")
       |> withResult (\request result ->
         Elmer.Http.Result.withBody (Elmer.Http.Request.body request) result
       )

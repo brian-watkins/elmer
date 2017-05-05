@@ -15,6 +15,7 @@ import Elmer.Http.Stub as HttpStub
 import Elmer.Http.Status as Status
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Matchers exposing (..)
+import Elmer.Http.Route as Route
 import Elmer.Spy as Spy
 import Elmer.Printer exposing (..)
 import Elmer.Platform.Command as Command
@@ -31,11 +32,8 @@ all =
   , requestRecordTests
   , noBodyRequestTests
   , errorResponseTests
-  , expectRequestTests "GET" ElmerHttp.expectGET
-  , expectRequestTests "POST" ElmerHttp.expectPOST
-  , expectRequestTests "PUT" ElmerHttp.expectPUT
-  , expectRequestTests "DELETE" ElmerHttp.expectDELETE
-  , expectRequestTests "PATCH" ElmerHttp.expectPATCH
+  , expectTests
+  , expectThatTests
   , expectRequestDataTests
   , resolveTests
   , clearRequestsTests
@@ -101,9 +99,9 @@ serveTests =
     [ test "it fails with a message" <|
       \() ->
         let
-          stubbedResponse = HttpStub.get "http://wrongUrl.com"
+          stubbedResponse = HttpStub.for (Route.get "http://wrongUrl.com")
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-          anotherStubbedResponse = HttpStub.post "http://whatUrl.com"
+          anotherStubbedResponse = HttpStub.for (Route.post "http://whatUrl.com")
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
         in
           Elmer.componentState App.defaultModel App.view App.update
@@ -114,26 +112,7 @@ serveTests =
             |> Markup.expect (element <| hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format
               [ message "Received a request for" "GET http://fun.com/fun.html"
-              , message "but it does not match any of the stubbed requests" "POST http://whatUrl.com\nGET http://wrongUrl.com"
-              ]
-            ))
-    ]
-  , describe "when the stubbed route contains a query string"
-    [ test "it fails with a message" <|
-      \() ->
-        let
-          stubbedResponse = HttpStub.get "http://wrongUrl.com?type=fun"
-            |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-        in
-          Elmer.componentState App.defaultModel App.view App.update
-            |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-            |> Markup.target "#request-data-click"
-            |> Event.click
-            |> Markup.target "#data-result"
-            |> Markup.expect (element <| hasText "Name: Super Fun Person")
-            |> Expect.equal (Expect.fail (format
-              [ message "Sent a request where a stubbed route contains a query string" "http://wrongUrl.com?type=fun"
-              , description "Stubbed routes may not contain a query string"
+              , message "but it does not match any of the stubbed requests" "GET http://wrongUrl.com\nPOST http://whatUrl.com"
               ]
             ))
     ]
@@ -142,7 +121,7 @@ serveTests =
       [ test "it fails with a message" <|
         \() ->
           let
-            stubbedResponse = HttpStub.post "http://fun.com/fun.html"
+            stubbedResponse = HttpStub.for (Route.post "http://fun.com/fun.html")
               |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
           in
             Elmer.componentState App.defaultModel App.view App.update
@@ -162,7 +141,7 @@ serveTests =
         [ test "it sends a BadStatus message" <|
           \() ->
             let
-              stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+              stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                 |> HttpStub.withStatus Status.notFound
             in
               Elmer.componentState App.defaultModel App.view App.update
@@ -177,7 +156,7 @@ serveTests =
           [ test "it fails with a message" <|
             \() ->
               let
-                stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+                stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                   |> HttpStub.withBody "{}"
               in
                 Elmer.componentState App.defaultModel App.view App.update
@@ -197,7 +176,7 @@ serveTests =
             [ test "it fails with a message" <|
               \() ->
                 let
-                  stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+                  stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                 in
                   Elmer.componentState App.defaultModel App.view App.update
                     |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
@@ -219,7 +198,7 @@ serveTests =
             \() ->
               let
                 defaultModel = App.defaultModel
-                stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+                stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                   |> HttpStub.withBody "{\"name\":\"awesome things\"}"
                 testModel = { defaultModel | query = "?type=awesome" }
               in
@@ -235,7 +214,7 @@ serveTests =
           [ test "it decodes the response" <|
             \() ->
               let
-                stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+                stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                   |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
               in
                 Elmer.componentState App.defaultModel App.view App.update
@@ -247,9 +226,9 @@ serveTests =
                   |> Expect.equal Expect.pass
           ]
         , let
-            stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+            stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
               |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
-            otherStub = HttpStub.get "http://fun.com/super.html"
+            otherStub = HttpStub.for (Route.get "http://fun.com/super.html")
               |> HttpStub.withBody "{\"message\":\"This is great!\"}"
             state = Elmer.componentState App.defaultModel App.view App.update
               |> Spy.use [ ElmerHttp.serve [ stubbedResponse, otherStub ] ]
@@ -284,7 +263,7 @@ spyTests =
     describe "spy"
     [ test "it records any request" <|
       \() ->
-        ElmerHttp.expectGET "http://fun.com/fun.html" wasSent requestedState
+        ElmerHttp.expect (Route.get "http://fun.com/fun.html") requestedState
     , test "it is as if the response never returned" <|
       \() ->
         Markup.target "#data-result" requestedState
@@ -298,7 +277,7 @@ errorResponseTests =
   [ test "it returns the error" <|
     \() ->
       let
-        stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+        stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
           |> HttpStub.withError Http.Timeout
       in
         Elmer.componentState App.defaultModel App.view App.update
@@ -309,6 +288,164 @@ errorResponseTests =
           |> Markup.expect (element <| hasText "Timeout Error")
   ]
 
+
+expectTests : Test
+expectTests =
+  let
+    getRoute = Route.get "http://fun.com/fun.html"
+  in
+  describe "expect"
+  [ describe "when there is an upstream failure"
+    [ test "it fails with the upstream failure" <|
+      \() ->
+        let
+          stubbedResponse = HttpStub.for getRoute
+        in
+          ComponentState.failure "You failed!"
+            |> ElmerHttp.expect getRoute
+            |> Expect.equal (Expect.fail "You failed!")
+    ]
+  , describe "when the stub was not requested"
+    [ describe "when there are no requests"
+      [ test "it fails with a message" <|
+        \() ->
+          let
+            stubbedResponse = HttpStub.for getRoute
+          in
+            Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+              |> ElmerHttp.expect getRoute
+              |> Expect.equal (Expect.fail <| format
+                [ message "Expected request for" "GET http://fun.com/fun.html"
+                , description "but no requests have been made"
+                ]
+              )
+      ]
+    , describe "when there are other requests"
+      [ test "it fails with a message" <|
+        \() ->
+          let
+            request1 = testRequest "POST" "http://fun.com/fun"
+            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+            stubbedResponse = HttpStub.for getRoute
+            initialState = componentStateWithRequests [ request1, request2 ]
+          in
+            ElmerHttp.expect getRoute initialState
+              |> Expect.equal (Expect.fail (format
+                [ message "Expected request for" "GET http://fun.com/fun.html"
+                , message "but only found these requests" "POST http://fun.com/fun\nGET http://awesome.com/awesome.html?stuff=fun"
+                ]
+              ))
+      ]
+    ]
+  , describe "when the stub was requested"
+    [ describe "when the url matches but not the method or the method matches but not the url"
+      [ test "it fails" <|
+        \() ->
+          let
+            request1 = testRequest "POST" "http://fun.com/fun"
+            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+            route = Route.get "http://fun.com/fun"
+            stubbedResponse = HttpStub.for route
+            initialState = componentStateWithRequests [ request1, request2 ]
+          in
+            ElmerHttp.expect route initialState
+              |> Expect.equal (Expect.fail (format
+                [ message "Expected request for" "GET http://fun.com/fun"
+                , message "but only found these requests" "POST http://fun.com/fun\nGET http://awesome.com/awesome.html?stuff=fun"
+                ]
+              ))
+      ]
+    , describe "when the url and the method match"
+      [ test "it passes" <|
+        \() ->
+          let
+            request1 = testRequest "POST" "http://fun.com/fun"
+            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+            requestForStub = testRequest "GET" "http://fun.com/fun.html"
+            stubbedResponse = HttpStub.for getRoute
+            initialState = componentStateWithRequests [ request1, requestForStub ,request2 ]
+          in
+            ElmerHttp.expect getRoute initialState
+              |> Expect.equal Expect.pass
+      ]
+    ]
+  ]
+
+expectThatTests : Test
+expectThatTests =
+  let
+    getRoute = Route.get "http://fun.com/fun.html"
+  in
+    describe "expectThat"
+    [ describe "when there is an upstream failure"
+      [ test "it fails with the upstream failure" <|
+        \() ->
+          let
+            stubbedResponse = HttpStub.for getRoute
+          in
+            ComponentState.failure "You failed!"
+              |> ElmerHttp.expectThat getRoute (\rs -> Expect.fail "NO")
+              |> Expect.equal (Expect.fail "You failed!")
+      ]
+    , describe "when no requests have been made"
+      [ test "it passes empty list to the matcher" <|
+        \() ->
+          let
+            stubbedResponse = HttpStub.for getRoute
+          in
+            Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+              |> ElmerHttp.expectThat getRoute (\rs -> Expect.equal [] rs)
+              |> Expect.equal (Expect.pass)
+      ]
+    , describe "when there are requests"
+      [ describe "when no requests match the stub"
+        [ test "it passes an empty list to the matcher" <|
+          \() ->
+            let
+              request1 = testRequest "POST" "http://fun.com/fun"
+              request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+              stubbedResponse = HttpStub.for getRoute
+              initialState = componentStateWithRequests [ request1 ,request2 ]
+            in
+              ElmerHttp.expectThat getRoute (\rs -> Expect.equal [] rs) initialState
+                |> Expect.equal Expect.pass
+        ]
+      , describe "when requests match the stub"
+        [ test "it passes a list of the matching requests to the matcher" <|
+          \() ->
+            let
+              request1 = testRequest "POST" "http://fun.com/fun"
+              request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+              stubbedResponse = HttpStub.for getRoute
+              requestForStub = testRequest "GET" "http://fun.com/fun.html"
+              requestForStub2 = testRequest "GET" "http://fun.com/fun.html"
+              requestForStub3 = testRequest "GET" "http://fun.com/fun.html"
+              initialState = componentStateWithRequests [ request1, requestForStub, request2, requestForStub2, requestForStub3 ]
+            in
+              ElmerHttp.expectThat getRoute (\rs -> Expect.equal [ requestForStub, requestForStub2, requestForStub3 ] rs) initialState
+                |> Expect.equal Expect.pass
+        , describe "when the matcher fails"
+          [ test "it fails with a message" <|
+            \() ->
+              let
+                request1 = testRequest "POST" "http://fun.com/fun"
+                request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
+                stubbedResponse = HttpStub.for getRoute
+                requestForStub = testRequest "GET" "http://fun.com/fun.html"
+                initialState = componentStateWithRequests [ request1, requestForStub, request2 ]
+              in
+                ElmerHttp.expectThat getRoute (\rs -> Expect.fail "Failed!") initialState
+                  |> Expect.equal (Expect.fail (format
+                    [ message "Requests matching" "GET http://fun.com/fun.html"
+                    , description "failed to meet the expectations:"
+                    , description "Failed!"
+                    ]
+                  ))
+
+          ]
+        ]
+      ]
+    ]
 
 componentStateWithRequests : List HttpRequest -> ComponentState SimpleApp.Model SimpleApp.Msg
 componentStateWithRequests requestData =
@@ -326,107 +463,6 @@ testRequest method url =
   , headers = []
   }
 
-expectRequestTests : String -> (String -> (HttpRequest -> Expect.Expectation) -> ComponentState SimpleApp.Model SimpleApp.Msg -> Expect.Expectation) -> Test
-expectRequestTests method func =
-  describe ("expect" ++ method)
-  [ describe "when there is an upstream error"
-    [ test "it fails with the upstream error" <|
-      \() ->
-        func "http://fun.com/fun" wasSent (ComponentState.failure "Failed!")
-          |> Expect.equal (Expect.fail "Failed!")
-    ]
-  , describe "when the expected route contains a query string"
-    [ test "it fails with an error" <|
-      \() ->
-        let
-          initialState = componentStateWithRequests []
-        in
-          func "http://fun.com/fun?type=amazing" wasSent initialState
-            |> Expect.equal (Expect.fail (format
-              [ message "The expected route contains a query string" "http://fun.com/fun?type=amazing"
-              , description "Use the hasQueryParam matcher instead"
-              ]
-            ))
-    ]
-  , describe "when no requests have been recorded"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = componentStateWithRequests []
-        in
-          func "http://fun.com/fun" wasSent initialState
-            |> Expect.equal (Expect.fail (format
-              [ message "Expected request for" (method ++ " http://fun.com/fun")
-              , description "but no requests have been made"
-              ]
-            ))
-    ]
-  , describe "when requests have been recorded"
-    [ describe "when the url does not match any requests"
-      [ test "it fails" <|
-        \() ->
-          let
-            request1 = testRequest "POST" "http://fun.com/fun"
-            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-            initialState = componentStateWithRequests [ request1, request2 ]
-          in
-            func "http://fun.com/awesome" wasSent initialState
-              |> Expect.equal (Expect.fail (format
-                [ message "Expected request for" (method ++ " http://fun.com/awesome")
-                , message "but only found these requests" "POST http://fun.com/fun\nGET http://awesome.com/awesome.html?stuff=fun"
-                ]
-              ))
-      ]
-    , describe "when the url matches but not the method"
-      [ test "it fails" <|
-        \() ->
-          let
-            request1 = testRequest "OTHER_METHOD" "http://fun.com/fun"
-            initialState = componentStateWithRequests [ request1 ]
-          in
-            func "http://fun.com/fun" wasSent initialState
-              |> Expect.equal (Expect.fail (format
-                [ message "Expected request for" (method ++ " http://fun.com/fun")
-                , message "but only found these requests" "OTHER_METHOD http://fun.com/fun"
-                ]
-              ))
-      ]
-    , describe "when a matching request occurs"
-      [ describe "when the request expectations fail"
-        [ test "it fails" <|
-          \() ->
-            let
-              request1 = testRequest method "http://fun.com/fun.html"
-              initialState = componentStateWithRequests [ request1 ]
-              failRequest = (\_ -> Expect.fail "It failed!")
-            in
-              func "http://fun.com/fun.html" failRequest initialState
-                |> Expect.equal (Expect.fail "It failed!")
-        ]
-      , describe "when the request expectations pass"
-        [ test "it passes" <|
-          \() ->
-            let
-              request1 = testRequest method "http://fun.com/fun.html"
-              initialState = componentStateWithRequests [ request1 ]
-            in
-              func "http://fun.com/fun.html" wasSent initialState
-                |> Expect.equal (Expect.pass)
-        , describe "when the request has a query string"
-          [ test "it passes" <|
-            \() ->
-              let
-                request1 = testRequest method "http://awesome.com/awesome.html?stuff=fun"
-                initialState = componentStateWithRequests [ request1 ]
-              in
-                func "http://awesome.com/awesome.html" (hasQueryParam ("stuff", "fun")) initialState
-                  |> Expect.equal (Expect.pass)
-          ]
-        ]
-      ]
-    ]
-  ]
-
 expectRequestDataTests : Test
 expectRequestDataTests =
   describe "Request Data Tests"
@@ -436,16 +472,16 @@ expectRequestDataTests =
         |> Spy.use [ ElmerHttp.spy ]
         |> Markup.target "#request-data-click"
         |> Event.click
-        |> ElmerHttp.expectGET "http://fun.com/fun.html" (
-          hasHeader ("x-fun", "fun") <&&>
-          hasHeader ("x-awesome", "awesome")
-        )
+        |> ElmerHttp.expectThat (Route.get "http://fun.com/fun.html") (Elmer.some <|
+            hasHeader ("x-fun", "fun") <&&>
+            hasHeader ("x-awesome", "awesome")
+          )
   ]
 
 resolveTests : Test
 resolveTests =
   let
-    stubbedResponse = HttpStub.get "http://fun.com/fun.html"
+    stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
       |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
       |> HttpStub.deferResponse
     requestedState = Elmer.componentState App.defaultModel App.view App.update
@@ -457,7 +493,7 @@ resolveTests =
     [ describe "before resolve is called"
       [ test "it records the request" <|
         \() ->
-          ElmerHttp.expectGET "http://fun.com/fun.html" wasSent requestedState
+          ElmerHttp.expect (Route.get "http://fun.com/fun.html") requestedState
       , test "it does not yet resolve the response" <|
         \() ->
           Markup.target "#data-result" requestedState

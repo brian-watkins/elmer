@@ -7,11 +7,17 @@ module Elmer.Http.Internal exposing
   , HttpResponseStub(..)
   , HttpResult(..)
   , HttpStatus(..)
+  , HttpRoute
   , asHttpRequestHandler
   , route
   )
 
 import Http
+
+type alias HttpRoute =
+  { method : String
+  , url : String
+  }
 
 type alias HttpRequest =
   { method: String

@@ -7,57 +7,50 @@ import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Stub as HttpStub
 import Elmer.Http.Status as Status
 import Elmer.Http.Result as HttpResult
+import Elmer.Http.Route as Route
 import Http
 import Dict
 
 all : Test
 all =
   describe "http stub tests"
-  [ requestBuilderTests
+  [ forTests
   , responseBuilderTests
   , resultBuilderTests
   ]
 
-requestBuilderTests : Test
-requestBuilderTests =
-  describe "request builders"
-  [ describeRequestMethod "GET" HttpStub.get
-  , describeRequestMethod "POST" HttpStub.post
-  , describeRequestMethod "DELETE" HttpStub.delete
-  , describeRequestMethod "PUT" HttpStub.put
-  , describeRequestMethod "PATCH" HttpStub.patch
-  ]
+testRoute : String -> String -> HttpRoute
+testRoute method url =
+  { method = method
+  , url = url
+  }
 
-describeRequestMethod : String -> (String -> HttpResponseStub) -> Test
-describeRequestMethod method builder =
-  describe method
-    [ test ("it creates a " ++ method ++ " response") <|
+forTests : Test
+forTests =
+  let
+    (HttpResponseStub responseStub) = HttpStub.for <| testRoute "FAKE-METHOD" "FAKE-URL"
+  in
+    describe "for"
+    [ test ("it creates a stubbed response with the right method") <|
       \() ->
-        let
-          (HttpResponseStub responseStub) = builder "http://fake.com"
-        in
-          Expect.equal method responseStub.method
+        Expect.equal "FAKE-METHOD" responseStub.method
     , test "it has a status of 200 Ok" <|
       \() ->
-        let
-          (HttpResponseStub responseStub) = builder "http://fake.com"
-        in
-          case responseStub.resultBuilder testRequest of
-            Response response ->
-              Expect.equal { code = 200, message = "Ok" } response.status
-            Error _ ->
-              Expect.fail "Should be a response"
+        case responseStub.resultBuilder testRequest of
+          Response response ->
+            Expect.equal { code = 200, message = "Ok" } response.status
+          Error _ ->
+            Expect.fail "Should be a response"
     , test "it has the right url" <|
       \() ->
-        let
-          (HttpResponseStub responseStub) = builder "http://fake.com"
-        in
-          case responseStub.resultBuilder testRequest of
-            Response response ->
-              Expect.equal "http://fake.com" response.url
-            Error _ ->
-              Expect.fail "Should be a response"
+        case responseStub.resultBuilder testRequest of
+          Response response ->
+            Expect.equal "FAKE-URL" response.url
+          Error _ ->
+            Expect.fail "Should be a response"
+
     ]
+
 
 responseBuilderTests : Test
 responseBuilderTests =
