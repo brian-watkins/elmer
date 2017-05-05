@@ -23,7 +23,8 @@ all =
     [ initTests
     , matchAllTests
     , matchOneTests
-    , hasSizeTests
+    , matchExactlyTests
+    , hasLengthTests
     , expectNotTests
     , andThenTests
     , expectModelTests
@@ -120,16 +121,43 @@ matchOneTests =
       ]
     ]
 
-hasSizeTests : Test
-hasSizeTests =
-  describe "hasSize"
+matchExactlyTests : Test
+matchExactlyTests =
+  describe "exactly"
+  [ describe "when exactly the right number of items match"
+    [ test "it passes" <|
+      \() ->
+        let
+          items = [ 2, 4, 4, 6, 4, 8, 10 ]
+        in
+          exactly 3 (\n -> Expect.equal 4 n) items
+            |> Expect.equal Expect.pass
+    ]
+  , describe "when an unexpected number of items match"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = [ 2, 4, 4, 6, 4, 8, 10 ]
+        in
+          exactly 2 (\n -> Expect.equal 4 n) items
+            |> Expect.equal (Expect.fail <| format
+              [ message "Expected number of matches" "2"
+              , message "But the actual number of matches is" "3"
+              ]
+            )
+    ]
+  ]
+
+hasLengthTests : Test
+hasLengthTests =
+  describe "hasLength"
   [ describe "when the list has the expected size"
     [ test "it passes" <|
       \() ->
         let
           items = [ 2, 4, 6, 8, 10 ]
         in
-          hasSize 5 items
+          hasLength 5 items
             |> Expect.equal Expect.pass
     ]
   , describe "when the list does not have the expected size"
@@ -138,7 +166,7 @@ hasSizeTests =
         let
           items = [ 2, 4, 6, 8, 10 ]
         in
-          hasSize 3 items
+          hasLength 3 items
             |> Expect.equal (Expect.fail (format [ message "Expected list to have size" "3", message "but it has size" "5"]))
     ]
   ]

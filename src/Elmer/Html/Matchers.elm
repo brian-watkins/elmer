@@ -74,7 +74,7 @@ If the selector fails to match any elements, an empty list will
 be passed to the given matcher.
 
     Elmer.Html.target "li" componentState
-      |> Elmer.Html.expect (elements <| Elmer.hasSize 4)
+      |> Elmer.Html.expect (elements <| Elmer.hasLength 4)
 
 -}
 elements : Matcher (List (Elmer.Html.HtmlElement msg)) -> Matcher (Elmer.Html.HtmlTarget msg)

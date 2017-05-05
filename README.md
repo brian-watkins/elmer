@@ -96,7 +96,7 @@ Make expectations about a list of elements like so:
 
 ```
 Elmer.Html.target "div" componentState
-  |> Elmer.Html.expect (elements <| Elmer.hasSize 4)
+  |> Elmer.Html.expect (elements <| Elmer.hasLength 4)
 ```
 
 ### Example

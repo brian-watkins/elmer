@@ -7,7 +7,8 @@ module Elmer
         , expectNot
         , each
         , some
-        , hasSize
+        , exactly
+        , hasLength
         , init
         , expectModel
         )
@@ -21,7 +22,7 @@ module Elmer
 @docs Matcher, (<&&>), expectNot
 
 # List Matchers
-@docs each, some, hasSize
+@docs each, exactly, some, hasLength
 
 -}
 
@@ -157,10 +158,34 @@ expectAny matcher =
         testResult
   ) (Expect.fail "Nothing")
 
-{-| Expect that a list has the given size.
+{-| Expect that exactly some number of items in a list satisfies the given matcher.
 -}
-hasSize : Int -> Matcher (List a)
-hasSize expectedCount list =
+exactly : Int -> Matcher a -> Matcher (List a)
+exactly expectedCount matcher list =
+  let
+    matchCount = countMatches matcher list
+  in
+    if matchCount == expectedCount then
+      Expect.pass
+    else
+      Expect.fail <| format
+        [ message "Expected number of matches" (toString expectedCount)
+        , message "But the actual number of matches is" (toString matchCount)
+        ]
+
+countMatches : Matcher a -> List a -> Int
+countMatches matcher list =
+  List.foldl (\item times ->
+    if (matcher item) == Expect.pass then
+      times + 1
+    else
+      times
+  ) 0 list
+
+{-| Expect that a list has the given length.
+-}
+hasLength : Int -> Matcher (List a)
+hasLength expectedCount list =
   if List.length list == expectedCount then
     Expect.pass
   else
