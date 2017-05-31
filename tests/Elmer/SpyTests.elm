@@ -304,6 +304,7 @@ spyArgumentTests =
                 , boolArg = True
                 , recordArg = { kind = "Flowers", duration = 77.3 }
                 , unionTypeArg = SpyApp.Fruit "Apple"
+                , unionTypeTagger = SpyApp.Game
                 }
             )
           |> Spy.expect "fake-makeModel" (\spy ->
@@ -314,6 +315,7 @@ spyArgumentTests =
                   , BoolArg True
                   , TypedArg "{ kind = \"Flowers\", duration = 77.3 }"
                   , TypedArg "Fruit \"Apple\""
+                  , FunctionArg
                   ]
                 ]
             )

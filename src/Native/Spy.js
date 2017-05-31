@@ -74,6 +74,10 @@ var _brian_watkins$elmer$Native_Spy = function() {
         case "object":
           argValue = _brian_watkins$elmer$Elmer_Spy_Internal$TypedArg(_elm_lang$core$Native_Utils.toString(arg))
           break
+
+        case "function":
+          argValue = _brian_watkins$elmer$Elmer_Spy_Internal$FunctionArg
+          break
       }
 
       args.push(argValue)

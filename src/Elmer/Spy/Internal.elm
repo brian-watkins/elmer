@@ -21,6 +21,7 @@ type Arg
   | FloatArg Float
   | BoolArg Bool
   | TypedArg String
+  | FunctionArg
   | AnyArg
 
 type Spy

@@ -5,6 +5,7 @@ module Elmer.Spy.Matchers exposing
   , floatArg
   , boolArg
   , typedArg
+  , functionArg
   , anyArg
   , wasCalled
   , wasCalledWith
@@ -15,7 +16,7 @@ module Elmer.Spy.Matchers exposing
 @docs wasCalled, wasCalledWith
 
 # Argument Matchers
-@docs Arg, stringArg, intArg, floatArg, boolArg, typedArg, anyArg
+@docs Arg, anyArg, stringArg, intArg, floatArg, boolArg, typedArg, functionArg
 
 -}
 
@@ -86,6 +87,12 @@ Note: You may not match what you want if your typed value contains a function re
 typedArg : a -> Arg
 typedArg item =
   Spy_.TypedArg (toString item)
+
+{-| Matches an argument that is a function.
+-}
+functionArg : Arg
+functionArg =
+  Spy_.FunctionArg
 
 {-| Matches any argument.
 -}
@@ -162,5 +169,7 @@ printArg arg =
        Internal.boolToString bool
     Spy_.TypedArg str ->
       str
+    Spy_.FunctionArg ->
+      "<FUNCTION>"
     Spy_.AnyArg ->
-      "(ANY)"
+      "<ANY>"

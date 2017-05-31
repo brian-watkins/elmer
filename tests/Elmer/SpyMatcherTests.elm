@@ -23,6 +23,8 @@ all =
   , argumentTests "Typed Record" (Matchers.typedArg <| funStuff "Beach") "{ name = \"Beach\" }" (TypedArg "{ name = \"Beach\" }")
   , argumentTests "Typed Union" (Matchers.typedArg <| Bird "Owl") "Bird \"Owl\"" (TypedArg "Bird \"Owl\"")
   , argumentTests "Typed List" (Matchers.typedArg <| [ "Fun", "Sun", "Beach" ]) "[\"Fun\",\"Sun\",\"Beach\"]" (TypedArg "[\"Fun\",\"Sun\",\"Beach\"]")
+  , argumentTests "Function" (Matchers.functionArg) "<FUNCTION>" FunctionArg
+  , anyArgumentTests
   ]
 
 
@@ -180,5 +182,20 @@ argumentTests name expected output actual =
       \() ->
         Matchers.wasCalledWith [ Matchers.anyArg ] (testCalls "test-spy" [ [ actual ] ])
           |> Expect.equal Expect.pass
+    ]
+  ]
+
+anyArgumentTests : Test
+anyArgumentTests =
+  describe "Any arg"
+  [ describe "when the match fails and an any argument is used"
+    [ test "it prints the proper message" <|
+      \() ->
+        Matchers.wasCalledWith [ stringArg "huh", Matchers.anyArg ] (testCalls "test-spy" [ [ StringArg "blah", StringArg "something" ] ])
+          |> Expect.equal (Expect.fail <|
+            format
+              [ message "Expected spy test-spy to have been called with" <| "[ \"huh\"\n, <ANY>\n]"
+              , message "but it was called with" "[ \"blah\"\n, \"something\"\n]"
+              ])
     ]
   ]

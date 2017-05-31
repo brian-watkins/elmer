@@ -73,14 +73,15 @@ type alias Flags =
   , boolArg : Bool
   , recordArg : TestRecord
   , unionTypeArg : FunKind
+  , unionTypeTagger : (String -> FunKind)
   }
 
-makeModel : String -> Int -> Float -> Bool -> TestRecord -> FunKind -> Model
-makeModel name times floatArg boolArg recordArg unionArg =
+makeModel : String -> Int -> Float -> Bool -> TestRecord -> FunKind -> (String -> FunKind) -> Model
+makeModel name times floatArg boolArg recordArg unionArg tagger =
   { name = name
   , anotherName = name
   }
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-  ( makeModel flags.name flags.times flags.floatArg flags.boolArg flags.recordArg flags.unionTypeArg, Cmd.none )
+  ( makeModel flags.name flags.times flags.floatArg flags.boolArg flags.recordArg flags.unionTypeArg flags.unionTypeTagger, Cmd.none )
