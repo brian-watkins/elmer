@@ -339,6 +339,28 @@ restoreTests =
           |> Markup.target "#title"
           |> Markup.expect (element <| hasText "A Title: Some Title")
     ]
+  , describe "when a spy is used multiple times in the same test"
+    [ test "the spy is set each time" <|
+      \() ->
+        let
+          stub =
+            Spy.create "my-spy" (\_ -> SpyApp.titleText)
+              |> Spy.andCallFake (\_ -> "Test Title")
+          anotherStub =
+            Spy.create "my-spy" (\_ -> SpyApp.titleText)
+              |> Spy.andCallFake (\_ -> "Another test title")
+        in
+          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            |> Spy.use [ stub ]
+            |> Spy.use [ anotherStub ]
+            |> Markup.target "#title"
+            |> Markup.expect (element <| hasText "Another test title")
+    , test "the spy is not set in the next test" <|
+      \() ->
+        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          |> Markup.target "#title"
+          |> Markup.expect (element <| hasText "A Title: Some Title")
+    ]
   , describe "when a component state map results in a failure"
     [ test "the spy is set" <|
       \() ->

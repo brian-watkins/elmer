@@ -2,6 +2,7 @@ module Elmer.ComponentState exposing
   ( ComponentState
   , create
   , map
+  , mapWithoutSpies
   , mapToExpectation
   , with
   , failure
@@ -62,6 +63,13 @@ map mapper =
       in
         mapper componentWithSpies
           |> updateComponentWithDeactivatedSpies componentWithSpies
+    )
+
+mapWithoutSpies : (Component model msg -> ComponentState model msg) -> ComponentState model msg -> ComponentState model msg
+mapWithoutSpies mapper =
+  abstractMap Failed
+    (\component ->
+      mapper component
     )
 
 updateComponentWithDeactivatedSpies : Component model msg -> ComponentState model msg -> ComponentState model msg

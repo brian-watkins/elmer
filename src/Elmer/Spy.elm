@@ -155,10 +155,14 @@ you could do something like the following:
             Elmer.Html.Matchers.hasText "11/12/2016 5:30 pm"
         )
 
+Note: If you need to replace a spy during the course of a test, you may
+call `use` again with the new spy. Each time you call `use` *all* spies
+will be removed. So be sure that each time you call `use` you register all
+the spies you need. 
 -}
 use : List Spy -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
 use spies =
-  ComponentState.map (\component ->
+  ComponentState.mapWithoutSpies (\component ->
     let
       activated = Spy_.activate spies
       errors = takeErrors activated
