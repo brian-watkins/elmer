@@ -120,68 +120,62 @@ expectNot matcher =
 -}
 each : Matcher a -> Matcher (List a)
 each matcher list =
-  case Expect.getFailure <| expectAll matcher list of
-    Just failure ->
-      Expect.fail <| format [ message "An item failed to match" failure.message ]
-    Nothing ->
+  let
+    failures = failureMessages matcher list
+  in
+    if List.length failures == 0 then
       Expect.pass
-
-expectAll : Matcher a -> Matcher (List a)
-expectAll matcher list =
-  case list of
-    [] ->
-      Expect.pass
-    x :: xs ->
-      List.foldl (\item r ->
-        if r == Expect.pass then
-          matcher item
-        else
-          r
-      ) (matcher x) xs
+    else
+      Expect.fail <| format
+        [ description "Expected all to pass but some failed:"
+        , description <| printMessages failures
+        ]
 
 {-| Expect that at least one item in a list satisfies the given matcher.
 -}
 some : Matcher a -> Matcher (List a)
 some matcher list =
-  case Expect.getFailure <| expectAny matcher list of
-    Just _ ->
-      Expect.fail "No items matched"
-    Nothing ->
+  let
+    failures = failureMessages matcher list
+  in
+    if List.length failures < List.length list then
       Expect.pass
-
-expectAny : Matcher a -> Matcher (List a)
-expectAny matcher =
-  List.foldl (\item testResult ->
-    case Expect.getFailure testResult of
-      Just _ ->
-        matcher item
-      Nothing ->
-        testResult
-  ) (Expect.fail "Nothing")
+    else
+      Expect.fail <| format
+        [ description "Expected some to pass but found none. Here are the failures:"
+        , description <| printMessages failures
+        ]
 
 {-| Expect that exactly some number of items in a list satisfy the given matcher.
 -}
 exactly : Int -> Matcher a -> Matcher (List a)
 exactly expectedCount matcher list =
   let
-    matchCount = countMatches matcher list
+    failures = failureMessages matcher list
+    matchCount = List.length list - List.length failures
   in
     if matchCount == expectedCount then
       Expect.pass
     else
       Expect.fail <| format
-        [ message "Expected number of matches" (toString expectedCount)
-        , message "But the actual number of matches is" (toString matchCount)
+        [ description <| "Expected exactly " ++ (toString expectedCount) ++
+          " to pass but found " ++ (toString matchCount) ++ ". Here are the failures:"
+        , description <| printMessages failures
         ]
 
-countMatches : Matcher a -> List a -> Int
-countMatches matcher list =
-  List.foldl (\item times ->
-    if (matcher item) == Expect.pass then
-      times + 1
-    else
-      times
-  ) 0 list
+printMessages : List String -> String
+printMessages messages =
+  String.join "\n\n" messages
+
+failureMessages : Matcher a -> List a -> List String
+failureMessages matcher =
+  List.filterMap (\item ->
+    case Expect.getFailure <| matcher item of
+      Just failure ->
+        Just failure.message
+      Nothing ->
+        Nothing
+  )
 
 {-| Expect that a list has the given length.
 -}

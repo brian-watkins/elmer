@@ -91,10 +91,14 @@ matchAllTests =
     [ test "it fails" <|
       \() ->
         let
-          items = [ 2, 4, 5, 6, 8, 10]
+          items = [ 2, 4, 5, 6, 8, 9, 10]
         in
           each (\n -> Expect.equal (n % 2) 0) items
-            |> Expect.equal (Expect.fail (format [ message "An item failed to match" "0\n╷\n│ Expect.equal\n╵\n1" ]))
+            |> Expect.equal (Expect.fail <| format
+              [ description "Expected all to pass but some failed:"
+              , description "0\n╷\n│ Expect.equal\n╵\n1\n\n0\n╷\n│ Expect.equal\n╵\n1"
+              ]
+            )
     ]
   ]
 
@@ -105,10 +109,14 @@ matchOneTests =
       [ test "it fails" <|
         \() ->
           let
-            items = [ 2, 4, 6, 8, 10 ]
+            items = [ 2, 4 ]
           in
             some (\n -> Expect.equal (n % 17) 0) items
-              |> Expect.equal (Expect.fail "No items matched")
+              |> Expect.equal (Expect.fail <| format
+                [ description "Expected some to pass but found none. Here are the failures:"
+                , description "0\n╷\n│ Expect.equal\n╵\n2\n\n0\n╷\n│ Expect.equal\n╵\n4"
+                ]
+              )
       ]
     , describe "when one item matches"
       [ test "it passes" <|
@@ -137,12 +145,13 @@ matchExactlyTests =
     [ test "it fails" <|
       \() ->
         let
-          items = [ 2, 4, 4, 6, 4, 8, 10 ]
+          items = [ 2, 4, 4, 6, 4 ]
         in
           exactly 2 (\n -> Expect.equal 4 n) items
             |> Expect.equal (Expect.fail <| format
-              [ message "Expected number of matches" "2"
-              , message "But the actual number of matches is" "3"
+              [ description "Expected exactly 2 to pass but found 3. Here are the failures:"
+              , description
+                "2\n╷\n│ Expect.equal\n╵\n4\n\n6\n╷\n│ Expect.equal\n╵\n4"
               ]
             )
     ]
