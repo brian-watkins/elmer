@@ -8,6 +8,7 @@ module Elmer
         , each
         , some
         , exactly
+        , atIndex
         , hasLength
         , init
         , expectModel
@@ -22,7 +23,7 @@ module Elmer
 @docs Matcher, (<&&>), expectNot
 
 # List Matchers
-@docs each, exactly, some, hasLength
+@docs each, exactly, some, atIndex, hasLength
 
 -}
 
@@ -36,6 +37,7 @@ import Expect
 import Elmer.ComponentState as ComponentState
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
+import Array
 
 {-| Represents the current state of the component under test.
 -}
@@ -161,6 +163,25 @@ exactly expectedCount matcher list =
         [ description <| "Expected exactly " ++ (toString expectedCount) ++
           " to pass but found " ++ (toString matchCount) ++ ". Here are the failures:"
         , description <| printMessages failures
+        ]
+
+{-| Expect that the item at the given index satisfies the given matcher.
+-}
+atIndex : Int -> Matcher a -> Matcher (List a)
+atIndex index matcher list =
+  case Array.fromList list |> Array.get index of
+    Just item ->
+      case Expect.getFailure <| matcher item of
+        Just failure ->
+          Expect.fail <| format
+            [ description <| "Expected item at index " ++ (toString index) ++ " to pass but it failed:"
+            , description failure.message
+            ]
+        Nothing ->
+          Expect.pass
+    Nothing ->
+      Expect.fail <| format
+        [ description <| "Expected item at index " ++ (toString index) ++ " to pass but there is no item at that index"
         ]
 
 printMessages : List String -> String

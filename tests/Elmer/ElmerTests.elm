@@ -28,6 +28,7 @@ all =
     , expectNotTests
     , andThenTests
     , expectModelTests
+    , atIndexTests
     ]
 
 
@@ -152,6 +153,45 @@ matchExactlyTests =
               [ description "Expected exactly 2 to pass but found 3. Here are the failures:"
               , description
                 "2\n╷\n│ Expect.equal\n╵\n4\n\n6\n╷\n│ Expect.equal\n╵\n4"
+              ]
+            )
+    ]
+  ]
+
+atIndexTests : Test
+atIndexTests =
+  describe "atIndex"
+  [ describe "when the item at the index matches"
+    [ test "it passes" <|
+      \() ->
+        let
+          items = [ 2, 3, 4 ]
+        in
+          atIndex 1 (Expect.equal 3) items
+            |> Expect.equal Expect.pass
+    ]
+  , describe "when the item at the index does not match"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = [ 2, 3, 4 ]
+        in
+          atIndex 1 (Expect.equal 2) items
+            |> Expect.equal (Expect.fail <| format
+              [ description "Expected item at index 1 to pass but it failed:"
+              , description "3\n╷\n│ Expect.equal\n╵\n2"
+              ]
+            )
+    ]
+  , describe "when there is no item at that index"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = [ 2, 3, 4 ]
+        in
+          atIndex 17 (Expect.equal 2) items
+            |> Expect.equal (Expect.fail <| format
+              [ description "Expected item at index 17 to pass but there is no item at that index"
               ]
             )
     ]
