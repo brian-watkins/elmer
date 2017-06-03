@@ -1,5 +1,6 @@
 module Elmer.Spy.Matchers exposing
   ( Arg
+  , Call
   , stringArg
   , intArg
   , floatArg
@@ -9,11 +10,17 @@ module Elmer.Spy.Matchers exposing
   , anyArg
   , wasCalled
   , wasCalledWith
+  , calls
+  , hasArgs
   )
 
-{-| Matchers for making expectations about Spies
+{-| Matchers for making expectations about Spies.
 
+# General Expectations
 @docs wasCalled, wasCalledWith
+
+# Expectations About Calls
+@docs Call, calls, hasArgs
 
 # Argument Matchers
 @docs Arg, anyArg, stringArg, intArg, floatArg, boolArg, typedArg, functionArg
@@ -32,7 +39,17 @@ import Elmer.Printer exposing (..)
 type alias Arg =
   Spy_.Arg
 
+{-| Represents a particular call to a spy.
+-}
+type alias Call =
+  List Arg
+
 {-| Expect that a spy was called some number of times.
+
+This is shorthand for:
+
+    Spy.expect "my-spy" (calls <| hasLength 2)
+
 -}
 wasCalled : Int -> Matcher Calls
 wasCalled times spy =
@@ -100,6 +117,43 @@ anyArg : Arg
 anyArg =
   Spy_.AnyArg
 
+{-| Make expectations about the calls recorded by this spy.
+
+Here's how you would expect that exactly 2 of the calls had a certain argument.
+
+    Spy.expect "my-spy" (
+      calls <| exactly 2 <|
+        hasArgs
+        [ stringArg "some argument"
+        ]
+    )
+
+-}
+calls : Matcher (List Call) -> Matcher Calls
+calls callMatcher spy =
+  case Expect.getFailure <| callMatcher spy.calls of
+    Just error ->
+      Expect.fail <|
+        format
+          [ description <| "Expectation for " ++ spy.name ++ " failed."
+          , description error.message
+          ]
+    Nothing ->
+      Expect.pass
+
+{-| Expect that a call has some arguments.
+
+Used in conjunction with `calls`.
+-}
+hasArgs : List Arg -> Matcher Call
+hasArgs args call =
+  if argListMatches args call then
+    Expect.pass
+  else
+    Expect.fail <| format
+      [ message ("Expected spy to have been called with") <| argsString args
+      , message "but it was called with" <| String.join "\n\n" (List.map argsString [ call ])
+      ]
 
 {-| Expect that a spy was called at least once with the given arguments.
 
@@ -109,6 +163,16 @@ anyArg =
         , typedArg someTypedValue
         ]
     )
+
+This is shorthand for:
+
+    Spy.expect "my-spy" (
+      calls <| some <| hasArgs
+        [ stringArg "Some String"
+        , typedArg someTypedValue
+        ]
+    )
+
 -}
 wasCalledWith : List Arg -> Matcher Calls
 wasCalledWith args spy =

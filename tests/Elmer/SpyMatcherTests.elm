@@ -25,6 +25,8 @@ all =
   , argumentTests "Typed List" (Matchers.typedArg <| [ "Fun", "Sun", "Beach" ]) "[\"Fun\",\"Sun\",\"Beach\"]" (TypedArg "[\"Fun\",\"Sun\",\"Beach\"]")
   , argumentTests "Function" (Matchers.functionArg) "<FUNCTION>" FunctionArg
   , anyArgumentTests
+  , callsTests
+  , hasArgsTests
   ]
 
 
@@ -197,5 +199,72 @@ anyArgumentTests =
               [ message "Expected spy test-spy to have been called with" <| "[ \"huh\"\n, <ANY>\n]"
               , message "but it was called with" "[ \"blah\"\n, \"something\"\n]"
               ])
+    ]
+  ]
+
+callsTests : Test
+callsTests =
+  describe "calls"
+  [ describe "when the list matcher passes"
+    [ test "it makes the calls available to the matcher" <|
+      \() ->
+        let
+          sampleCalls = testCalls "test-spy" [ [ StringArg "blah" ], [ StringArg "what"] ]
+        in
+          sampleCalls
+            |> Matchers.calls (Elmer.hasLength 2)
+            |> Expect.equal (Expect.pass)
+    ]
+  , describe "when the list matcher fails"
+    [ test "it prints an error message with the spy name" <|
+      \() ->
+        let
+          sampleCalls = testCalls "test-spy" [ [ StringArg "blah" ], [ StringArg "what"] ]
+        in
+          sampleCalls
+            |> Matchers.calls (Elmer.hasLength 14)
+            |> Expect.equal (Expect.fail <|
+              format
+                [ description "Expectation for test-spy failed."
+                , message "Expected list to have size" "14"
+                , message "but it has size" "2"
+                ])
+    ]
+  ]
+
+hasArgsTests : Test
+hasArgsTests =
+  describe "hasArgs"
+  [ describe "when the call has the args"
+    [ test "it matches " <|
+      \() ->
+        let
+          sampleCalls = testCalls "test-spy" [ [ StringArg "blah" ], [ StringArg "what"] ]
+        in
+          sampleCalls
+            |> Matchers.calls (Elmer.exactly 1 <| Matchers.hasArgs [ StringArg "what" ])
+            |> Expect.equal (Expect.pass)
+    ]
+  , describe "when the call does not have the args"
+    [ test "it fails with the message" <|
+      \() ->
+        let
+          sampleCalls = testCalls "test-spy" [ [ StringArg "blah" ], [ StringArg "what"] ]
+        in
+          sampleCalls
+            |> Matchers.calls (Elmer.exactly 1 <| Matchers.hasArgs [ StringArg "something else" ])
+            |> Expect.equal (Expect.fail <|
+              format
+                [ description "Expectation for test-spy failed."
+                , description <| format
+                  [ description "Expected exactly 1 to pass but found 0. Here are the failures:"
+                  , description <| format
+                    [ message "Expected spy to have been called with" "[ \"something else\"\n]"
+                    , message "but it was called with" "[ \"blah\"\n]"
+                    , message "Expected spy to have been called with" "[ \"something else\"\n]"
+                    , message "but it was called with" "[ \"what\"\n]"
+                    ]
+                  ]
+                ])
     ]
   ]
