@@ -93,11 +93,11 @@ hasText text node =
             flattenTexts node.children
     in
         if List.length texts == 0 then
-            Expect.fail (format [ message "Expected node to have text" text, description "but it has no text" ])
+            Expect.fail (format [ message "Expected element to have text" text, description "but it has no text" ])
         else if List.member text texts then
             Expect.pass
         else
-            Expect.fail (format [ message "Expected node to have text" text, message "but it has" (printList texts) ])
+            Expect.fail (format [ message "Expected element to have text" text, message "but it has" (printList texts) ])
 
 {-| Expect that an element has the specified class. No need to prepend the class name with a dot.
 -}
@@ -111,9 +111,9 @@ hasClass className node =
             if List.member className classList then
                 Expect.pass
             else
-                Expect.fail (format [message "Expected node to have class" className, message "but it has" (printList classList) ])
+                Expect.fail (format [message "Expected element to have class" className, message "but it has" (printList classList) ])
         else
-            Expect.fail (format [message "Expected node to have class" className, description "but it has no classes" ])
+            Expect.fail (format [message "Expected element to have class" className, description "but it has no classes" ])
 
 {-| Expect that an element has the specified property with the specified value.
 
@@ -161,9 +161,9 @@ hasId expectedId node =
       if nodeId == expectedId then
         Expect.pass
       else
-        Expect.fail (format [message "Expected node to have id" expectedId, message "but it has id" nodeId ])
+        Expect.fail (format [message "Expected element to have id" expectedId, message "but it has id" nodeId ])
     Nothing ->
-      Expect.fail (format [message "Expected node to have id" expectedId, description "but it has no id" ])
+      Expect.fail (format [message "Expected element to have id" expectedId, description "but it has no id" ])
 
 {-| Expect that an element has the specified style.
 

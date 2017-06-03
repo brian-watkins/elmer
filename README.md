@@ -41,7 +41,7 @@ Elmer functions generally pass around `ComponentStates`. To get started describi
 behavior with Elmer, you'll need to generate an initial component state with the `Elmer.componentState`
 function. Just pass it your model, view method, and update method.
 
-#### Finding a node
+#### Finding an Element
 
 Use `Elmer.Html.target` to target an `HtmlElement`, which describes an HTML element in your view. The `target`
 function takes a selector and a `ComponentState` as arguments. The selector can take the following

@@ -256,7 +256,7 @@ andThenTests =
         (nodeWithClass "myClass")
           |> (Matchers.hasId "root"
                 <&&> Matchers.hasClass "myClass")
-          |> Expect.equal (Expect.fail "Expected node to have id\n\n\troot\n\nbut it has no id")
+          |> Expect.equal (Expect.fail "Expected element to have id\n\n\troot\n\nbut it has no id")
     ]
   , describe "when the second matcher fails"
     [ test "it fails with the second failure" <|
@@ -264,7 +264,7 @@ andThenTests =
         (nodeWithId "root")
           |> (Matchers.hasId "root"
                 <&&> Matchers.hasClass "myClass")
-          |> Expect.equal (Expect.fail "Expected node to have class\n\n\tmyClass\n\nbut it has no classes")
+          |> Expect.equal (Expect.fail "Expected element to have class\n\n\tmyClass\n\nbut it has no classes")
     ]
   ]
 
