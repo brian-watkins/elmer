@@ -1,4 +1,4 @@
-module Elmer.HtmlMatcherTests exposing (all)
+module Elmer.HtmlMatcherTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
@@ -11,21 +11,6 @@ import Elmer.Html.Query as Query exposing (HtmlTarget(..))
 import Elmer.Printer exposing (..)
 import Html exposing (Html)
 import Html.Attributes as Attr
-
-all : Test
-all =
-  describe "Matcher Tests"
-    [ elementTests
-    , elementsTests
-    , elementExistsTests
-    , hasTextTests
-    , hasClassTests
-    , hasPropertyTests
-    , hasIdTests
-    , hasStyleTests
-    , hasAttributeTests
-    , listensForEventTests
-    ]
 
 
 testHtmlContext : String -> HtmlTarget SimpleApp.Msg

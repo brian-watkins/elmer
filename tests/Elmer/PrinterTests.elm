@@ -1,15 +1,9 @@
-module Elmer.PrinterTests exposing (all)
+module Elmer.PrinterTests exposing (..)
 
 import Test exposing (..)
 import Expect
 import Elmer.Printer as Printer
 
-all : Test
-all =
-  describe "Printer tests"
-  [ formatMessageTests
-  , formatMessageListTests
-  ]
 
 formatMessageTests : Test
 formatMessageTests =

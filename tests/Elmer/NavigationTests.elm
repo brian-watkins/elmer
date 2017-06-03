@@ -1,4 +1,4 @@
-module Elmer.NavigationTests exposing (all)
+module Elmer.NavigationTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestApps.NavigationTestApp as App
@@ -15,13 +15,6 @@ import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
 import Navigation
 
-all : Test
-all =
-  describe "Navigation Tests"
-    [ expectLocationTests
-    , setLocationTests
-    , asLocationTests
-    ]
 
 expectLocationTests =
   describe "location tests"

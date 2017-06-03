@@ -1,4 +1,4 @@
-module Elmer.ElmerTests exposing (all)
+module Elmer.ElmerTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
@@ -16,20 +16,6 @@ import Elmer.Http.Route as Route
 import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Printer exposing (..)
 import Task
-
-all : Test
-all =
-  describe "Elmer Tests"
-    [ initTests
-    , matchAllTests
-    , matchOneTests
-    , matchExactlyTests
-    , hasLengthTests
-    , expectNotTests
-    , andThenTests
-    , expectModelTests
-    , atIndexTests
-    ]
 
 
 initTests : Test

@@ -1,4 +1,4 @@
-module Elmer.HttpRouteTests exposing (all)
+module Elmer.HttpRouteTests exposing (..)
 
 import Test exposing (..)
 import Expect

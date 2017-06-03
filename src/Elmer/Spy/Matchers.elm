@@ -28,6 +28,7 @@ module Elmer.Spy.Matchers exposing
 -}
 
 import Expect
+import Test.Runner
 import Elmer exposing (Matcher)
 import Elmer.Internal as Internal
 import Elmer.Spy exposing (Calls)
@@ -131,7 +132,7 @@ Here's how you would expect that exactly 2 of the calls had a certain argument.
 -}
 calls : Matcher (List Call) -> Matcher Calls
 calls callMatcher spy =
-  case Expect.getFailure <| callMatcher spy.calls of
+  case Test.Runner.getFailure <| callMatcher spy.calls of
     Just error ->
       Expect.fail <|
         format

@@ -1,4 +1,4 @@
-module Elmer.SubscriptionTests exposing (all)
+module Elmer.SubscriptionTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -12,12 +12,6 @@ import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.TestApps.SubscriptionTestApp as App
 import Time
 
-all : Test
-all =
-  describe "Subscription Tests"
-  [ withTests
-  , sendTests
-  ]
 
 withTests : Test
 withTests =

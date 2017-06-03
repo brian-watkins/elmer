@@ -1,4 +1,4 @@
-module Elmer.CommandTests exposing (all)
+module Elmer.CommandTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -13,15 +13,6 @@ import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
 import Task
 
-all : Test
-all =
-  describe "Command Tests"
-  [ elmerFailureCommandTest
-  , elmerStubbedCommandTest
-  , resolveDeferredCommandsTest
-  , sendCommandTest
-  , dummyCommandTests
-  ]
 
 elmerFailureCommandTest : Test
 elmerFailureCommandTest =

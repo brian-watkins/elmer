@@ -1,4 +1,4 @@
-module Elmer.SpyTests exposing (all)
+module Elmer.SpyTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -17,16 +17,6 @@ import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Platform.Command as Command
 
-all : Test
-all =
-  describe "Spy Tests"
-  [ useTests
-  , spyTests
-  , expectSpyTests
-  , spyArgumentTests
-  , restoreTests
-  , andCallFakeTests
-  ]
 
 useTests : Test
 useTests =

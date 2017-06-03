@@ -1,4 +1,4 @@
-module Elmer.PortTests exposing (all)
+module Elmer.PortTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -11,12 +11,6 @@ import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (..)
 
-all : Test
-all =
-  describe "Port Tests"
-  [ portCommandTests
-  , portSubscriptionTests
-  ]
 
 portCommandTests : Test
 portCommandTests =

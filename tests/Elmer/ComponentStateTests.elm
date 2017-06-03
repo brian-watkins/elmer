@@ -1,16 +1,10 @@
-module Elmer.ComponentStateTests exposing (all)
+module Elmer.ComponentStateTests exposing (..)
 
 import Test exposing (..)
 import Expect
 import Elmer.ComponentState as ComponentState
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer
-
-all : Test
-all =
-  describe "ComponentState"
-  [ mapToExpectationTests
-  ]
 
 
 mapToExpectationTests =

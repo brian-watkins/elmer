@@ -1,4 +1,4 @@
-module Elmer.HtmlTests exposing (all)
+module Elmer.HtmlTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -15,14 +15,6 @@ import Elmer.Spy.Matchers exposing (wasCalled, wasCalledWith, typedArg)
 import Html.Attributes as Attr
 import Html exposing (Html)
 
-all : Test
-all =
-  describe "Html Tests"
-  [ selectTests
-  , expectTests
-  , childNodeTests
-  , renderTests
-  ]
 
 selectTests =
   describe "select"

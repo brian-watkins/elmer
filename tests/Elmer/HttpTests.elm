@@ -1,4 +1,4 @@
-module Elmer.HttpTests exposing (all)
+module Elmer.HttpTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -24,20 +24,6 @@ import Elmer.Html as Markup
 import Elmer.TestApps.HttpTestApp as App
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 
-all : Test
-all =
-  describe "Http Tests"
-  [ serveTests
-  , spyTests
-  , requestRecordTests
-  , noBodyRequestTests
-  , errorResponseTests
-  , expectTests
-  , expectThatTests
-  , expectRequestDataTests
-  , resolveTests
-  , clearRequestsTests
-  ]
 
 requestRecordTests : Test
 requestRecordTests =

@@ -34,6 +34,7 @@ import Native.Html
 import Native.Spy
 
 import Expect
+import Test.Runner
 import Elmer.ComponentState as ComponentState
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
@@ -171,7 +172,7 @@ atIndex : Int -> Matcher a -> Matcher (List a)
 atIndex index matcher list =
   case Array.fromList list |> Array.get index of
     Just item ->
-      case Expect.getFailure <| matcher item of
+      case Test.Runner.getFailure <| matcher item of
         Just failure ->
           Expect.fail <| format
             [ description <| "Expected item at index " ++ (toString index) ++ " to pass but it failed:"
@@ -191,7 +192,7 @@ printMessages messages =
 failureMessages : Matcher a -> List a -> List String
 failureMessages matcher =
   List.filterMap (\item ->
-    case Expect.getFailure <| matcher item of
+    case Test.Runner.getFailure <| matcher item of
       Just failure ->
         Just failure.message
       Nothing ->

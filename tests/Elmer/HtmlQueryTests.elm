@@ -1,4 +1,4 @@
-module Elmer.HtmlQueryTests exposing (all)
+module Elmer.HtmlQueryTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -9,19 +9,6 @@ import Elmer.TestHelpers exposing (..)
 import Html.Attributes as Attr
 import Html exposing (Html)
 
-
-all : Test
-all =
-  describe "Html Query"
-  [ noElementFound
-  , findById
-  , findByClass
-  , findByTag
-  , findByAttribute
-  , findByProperty
-  , descendantTests
-  , findDescendantsTests
-  ]
 
 
 noElementFound : Test

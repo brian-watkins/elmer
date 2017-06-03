@@ -1,4 +1,4 @@
-module Elmer.MouseEventTests exposing (all)
+module Elmer.MouseEventTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestApps.MouseTestApp as App
@@ -10,20 +10,6 @@ import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
-all : Test
-all =
-  describe "Event Tests"
-    [ clickTests
-    , doubleClickTests
-    , pressTests
-    , releaseTests
-    , moveMouseInTests
-    , moveMouseOutTests
-    , mouseEnterTests
-    , mouseLeaveTests
-    , mouseOverTests
-    , mouseOutTests
-    ]
 
 andExpect : Expect.Expectation -> Expect.Expectation -> Expect.Expectation
 andExpect leftResult rightResult =

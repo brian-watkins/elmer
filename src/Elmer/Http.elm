@@ -38,6 +38,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
+import Test.Runner
 
 
 {-| Represents a stubbed HttpResponse
@@ -155,7 +156,7 @@ expectThat route matcher =
           List.filter (matchesRequest route.method route.url) component.httpRequests
             |> matcher
       in
-        case Expect.getFailure result of
+        case Test.Runner.getFailure result of
           Just failure ->
             Expect.fail <| format
               [ message "Requests matching" (route.method ++ " " ++ route.url)

@@ -1,4 +1,4 @@
-module Elmer.FocusEventTests exposing (all)
+module Elmer.FocusEventTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestApps.FocusTestApp as App
@@ -10,12 +10,6 @@ import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
-all : Test
-all =
-  describe "Focus Event Tests"
-    [ focusTests
-    , blurTests
-    ]
 
 focusTests : Test
 focusTests =

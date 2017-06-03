@@ -1,4 +1,4 @@
-module Elmer.HttpMatcherTests exposing (all)
+module Elmer.HttpMatcherTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -6,14 +6,6 @@ import Elmer.Http.Internal exposing (..)
 import Elmer.Http.Matchers as Matchers
 import Elmer.Printer exposing (..)
 
-all : Test
-all =
-  describe "http matcher tests"
-  [ wasRequestedTests
-  , hasBodyTests
-  , hasQueryParamTests
-  , hasHeaderTests
-  ]
 
 requestWithBody : String -> HttpRequest
 requestWithBody body =
@@ -132,11 +124,7 @@ hasQueryParamTests =
     ]
   , describe "when there is a query string"
     [ describe "when the param is not present"
-      [ test "it fails" <|
-        \() ->
-          Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery (Just "?something=else"))
-            |> Expect.equal (Expect.fail (format [ message "Expected request to have query param" "name = fun person", message "but it has" "something=else" ]))
-      , test "it fails" <|
+      [ test "it fails and reports the actual raw query string" <|
         \() ->
           Matchers.hasQueryParam ( "name", "fun person" ) (getWithQuery (Just "?name=fun%20persons"))
             |> Expect.equal (Expect.fail (format [ message "Expected request to have query param" "name = fun person", message "but it has" "name=fun%20persons" ]))

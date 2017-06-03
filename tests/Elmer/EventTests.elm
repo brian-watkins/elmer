@@ -1,9 +1,4 @@
-module Elmer.EventTests exposing
-  ( all
-  , standardEventBehavior
-  , propagationBehavior
-  , multiEventPropagationBehavior
-  )
+module Elmer.EventTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
@@ -16,11 +11,6 @@ import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
-all : Test
-all =
-  describe "Event Tests"
-    [ customEventTests
-    ]
 
 standardEventBehavior : (ComponentState SimpleApp.Model SimpleApp.Msg -> ComponentState SimpleApp.Model SimpleApp.Msg) -> Test
 standardEventBehavior eventFunction =
@@ -69,7 +59,7 @@ standardEventBehavior eventFunction =
 
 multiEventPropagationBehavior : Int -> Int -> (ComponentState EventApp.Model EventApp.Msg -> ComponentState EventApp.Model EventApp.Msg) -> String -> Test
 multiEventPropagationBehavior allEvents nonPropagatingEvents eventFunc eventName =
-  describe "event propagation tests"
+  describe (eventName ++ " event propagation tests")
   [ describe "when there is no event handler on the target element"
     [ test "the event bubbles up through all the ancestors" <|
       \() ->

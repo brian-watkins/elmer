@@ -1,4 +1,4 @@
-module Elmer.ElementTests exposing (all)
+module Elmer.ElementTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -8,16 +8,6 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Elmer.TestHelpers exposing (..)
-
-all : Test
-all =
-  describe "element tests"
-  [ classListTests
-  , idTests
-  , propertyTests
-  , boolPropertyTests
-  , toStringTests
-  ]
 
 
 classListTests : Test

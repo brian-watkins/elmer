@@ -1,4 +1,4 @@
-module Elmer.DemoAppTests exposing (all)
+module Elmer.DemoAppTests exposing (..)
 
 import Test exposing (..)
 import Elmer.TestApps.DemoTestApp as App
@@ -20,12 +20,6 @@ import Elmer.Html as Markup
 import Time exposing (Time)
 import Task exposing (Task)
 
-all : Test
-all =
-  describe "App Flow tests"
-    [ appFlowTests
-    , timeAppTests
-    ]
 
 successStub : String -> Elmer.Http.HttpResponseStub
 successStub apiMessage =

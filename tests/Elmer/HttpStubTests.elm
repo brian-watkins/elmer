@@ -1,4 +1,4 @@
-module Elmer.HttpStubTests exposing (all)
+module Elmer.HttpStubTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -11,13 +11,6 @@ import Elmer.Http.Route as Route
 import Http
 import Dict
 
-all : Test
-all =
-  describe "http stub tests"
-  [ forTests
-  , responseBuilderTests
-  , resultBuilderTests
-  ]
 
 testRoute : String -> String -> HttpRoute
 testRoute method url =

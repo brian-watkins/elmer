@@ -1,4 +1,4 @@
-module Elmer.ComponentTests exposing (all)
+module Elmer.ComponentTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -13,11 +13,6 @@ import Elmer.Html as Markup
 import Elmer.Navigation as ElmerNav
 
 import Elmer.TestApps.ComponentTestApp as App exposing (..)
-
-all =
-  describe "Component tests"
-  [ mapCommand
-  ]
 
 
 subTask : Cmd App.MsgB

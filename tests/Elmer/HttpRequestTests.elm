@@ -1,4 +1,4 @@
-module Elmer.HttpRequestTests exposing (all)
+module Elmer.HttpRequestTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -7,11 +7,6 @@ import Elmer.Http.Request as HttpRequest
 import Http
 import Dict
 
-all : Test
-all =
-  describe "HttpRequest"
-  [ bodyTests
-  ]
 
 bodyTests : Test
 bodyTests =

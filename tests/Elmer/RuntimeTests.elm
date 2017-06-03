@@ -1,4 +1,4 @@
-module Elmer.RuntimeTests exposing (all)
+module Elmer.RuntimeTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -16,14 +16,6 @@ import Elmer.Html as Markup
 import Elmer.Printer exposing (..)
 import Task
 
-all : Test
-all =
-  describe "Runtime Tests"
-  [ batchCommandTest
-  , batchCommandFailureTest
-  , mappedBatchCommandTest
-  , unknownCommandTest
-  ]
 
 sendFirstMessage : String -> Cmd App.Msg
 sendFirstMessage str =

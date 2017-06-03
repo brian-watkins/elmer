@@ -1,4 +1,4 @@
-module Elmer.InputEventTests exposing (all)
+module Elmer.InputEventTests exposing (..)
 
 import Test exposing (..)
 import Expect
@@ -11,17 +11,6 @@ import Elmer.Html as Markup
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalled)
 import Elmer.Printer exposing (..)
-
-all : Test
-all =
-  describe "Input Event Tests"
-    [ inputTests
-    , checkTests
-    , uncheckTests
-    , submitTests
-    , submitWithSpyTests
-    , selectTests
-    ]
 
 
 inputTests =
