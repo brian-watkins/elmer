@@ -1,6 +1,6 @@
 module Elmer.Navigation
     exposing
-        ( navigationTestState
+        ( withLocationParser
         , setLocation
         , expectLocation
         , spy
@@ -9,8 +9,8 @@ module Elmer.Navigation
 {-| Functions for describing the behavior of components that use
 [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/latest/Navigation).
 
-# Create a TestState
-@docs navigationTestState
+# Register the location parser
+@docs withLocationParser
 
 # Update the Location
 @docs setLocation
@@ -33,22 +33,17 @@ import Elmer.Navigation.Location as Location
 import Navigation
 import Html exposing (Html)
 
-{-| Create a `TestState` with a location parser function.
+
+{-| Register a location parser with the current test context.
 
 The location parser function is the function you would provide to
 `Navigation.program` when you initialize your app.
 -}
-navigationTestState
-  :  model
-  -> ( model -> Html msg )
-  -> ( msg -> model -> ( model, Cmd msg ) )
-  -> ( Navigation.Location -> msg )
-  -> Elmer.TestState model msg
-navigationTestState model view update parser =
-  TestState.create model view update
-    |> TestState.map (\context ->
-      TestState.with { context | locationParser = Just parser }
-    )
+withLocationParser : ( Navigation.Location -> msg ) -> Elmer.TestState model msg -> Elmer.TestState model msg
+withLocationParser parser =
+  TestState.map (\context ->
+    TestState.with { context | locationParser = Just parser }
+  )
 
 {-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
 records the location as it is set.

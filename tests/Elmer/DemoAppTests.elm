@@ -35,7 +35,8 @@ appFlowTests =
   describe "app flow"
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
-        ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
+        Elmer.given App.defaultModel App.view App.update
+          |> ElmerNav.withLocationParser App.urlParser
           |> Spy.use [ Elmer.Http.serve [ (successStub "Ok" ) ] ]
           |> ElmerNav.setLocation "/click"
           |> Markup.target ".button"
@@ -47,7 +48,9 @@ appFlowTests =
     , test "it makes multiple expectations about a node" <|
       \() ->
         let
-          initialState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
+          initialState =
+            Elmer.given App.defaultModel App.view App.update
+              |> ElmerNav.withLocationParser App.urlParser
         in
           ElmerNav.setLocation "/text" initialState
             |> Markup.target "ul"
@@ -57,7 +60,9 @@ appFlowTests =
                 hasText "Fun Item 3"
               )
     , let
-        initialState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
+        initialState =
+          Elmer.given App.defaultModel App.view App.update
+            |> ElmerNav.withLocationParser App.urlParser
         resultState = initialState
           |> Spy.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ]
           |> ElmerNav.setLocation "/request"
@@ -75,7 +80,9 @@ appFlowTests =
                 |> Markup.expect (element <| hasText "Got request error: No error!")
         ]
     , let
-        initialState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
+        initialState =
+          Elmer.given App.defaultModel App.view App.update
+            |> ElmerNav.withLocationParser App.urlParser
         resultState = initialState
           |> Spy.use [ Elmer.Http.serve [ failureStub ] ]
           |> ElmerNav.setLocation "/request"

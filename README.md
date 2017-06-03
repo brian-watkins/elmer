@@ -406,10 +406,8 @@ See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 Elmer provides support for functions in the [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/2.0.1/)
 module that allow you to handle navigation for single-page web applications.
 
-To simulate location updates, you must construct a `TestState` using
-`Elmer.Navigation.navigationTestState`. This function is just like `Elmer.given`
-except that it also takes the location parser function (`Navigation.Location -> msg`)
-that you provide to `Navigation.program` when you initialize your app. This provides
+To simulate location updates, you must construct a `TestState` and
+set the location parser function (`Navigation.Location -> msg`) that you provide to `Navigation.program` when you initialize your app using `Elmer.Navigation.withLocationParser`. This provides
 Elmer with the information it needs to process location updates as they occur in a test.
 
 You can send a command to update the location manually with the `Elmer.Navigation.setLocation` function.
@@ -672,7 +670,8 @@ routeTest =
             Html.div [ Html.Attributes.id "thingsView" ] []
           )
       in
-        Elmer.navigationTestState App.defaultModel App.view App.update App.locationParser
+        Elmer.given App.defaultModel App.view App.update
+          |> Elmer.Navigation.withLocationParser App.locationParser
           |> Elmer.Spy.use [ thingsViewSpy ]
           |> Elmer.Navigation.setLocation "http://fun.com/things"
           |> Elmer.Html.target "#thingsView"

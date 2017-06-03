@@ -91,7 +91,9 @@ expectLocationTests =
 
 setLocationTests =
   let
-    fullState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.parseLocation
+    fullState =
+      Elmer.given App.defaultModel App.view App.update
+        |> ElmerNav.withLocationParser App.parseLocation
   in
   describe "set location"
   [ describe "when there is an upstream failure"
