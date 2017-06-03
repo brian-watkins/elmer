@@ -7,7 +7,7 @@ import Dict
 import Elmer
 import Html
 import Elmer exposing ((<&&>))
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Http as ElmerHttp
@@ -90,7 +90,7 @@ serveTests =
           anotherStubbedResponse = HttpStub.for (Route.post "http://whatUrl.com")
             |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
         in
-          Elmer.componentState App.defaultModel App.view App.update
+          Elmer.given App.defaultModel App.view App.update
             |> Spy.use [ ElmerHttp.serve [ stubbedResponse, anotherStubbedResponse ] ]
             |> Markup.target "#request-data-click"
             |> Event.click
@@ -110,7 +110,7 @@ serveTests =
             stubbedResponse = HttpStub.for (Route.post "http://fun.com/fun.html")
               |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
           in
-            Elmer.componentState App.defaultModel App.view App.update
+            Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
               |> Markup.target "#request-data-click"
               |> Event.click
@@ -130,7 +130,7 @@ serveTests =
               stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                 |> HttpStub.withStatus Status.notFound
             in
-              Elmer.componentState App.defaultModel App.view App.update
+              Elmer.given App.defaultModel App.view App.update
                 |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
                 |> Markup.target "#request-data-click"
                 |> Event.click
@@ -145,7 +145,7 @@ serveTests =
                 stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                   |> HttpStub.withBody "{}"
               in
-                Elmer.componentState App.defaultModel App.view App.update
+                Elmer.given App.defaultModel App.view App.update
                   |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
                   |> Markup.target "#request-data-click"
                   |> Event.click
@@ -164,7 +164,7 @@ serveTests =
                 let
                   stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                 in
-                  Elmer.componentState App.defaultModel App.view App.update
+                  Elmer.given App.defaultModel App.view App.update
                     |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
                     |> Markup.target "#request-data-click"
                     |> Event.click
@@ -188,7 +188,7 @@ serveTests =
                   |> HttpStub.withBody "{\"name\":\"awesome things\"}"
                 testModel = { defaultModel | query = "?type=awesome" }
               in
-                Elmer.componentState testModel App.view App.update
+                Elmer.given testModel App.view App.update
                   |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
                   |> Markup.target "#request-data-click"
                   |> Event.click
@@ -203,7 +203,7 @@ serveTests =
                 stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
                   |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
               in
-                Elmer.componentState App.defaultModel App.view App.update
+                Elmer.given App.defaultModel App.view App.update
                   |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
                   |> Markup.target "#request-data-click"
                   |> Event.click
@@ -216,7 +216,7 @@ serveTests =
               |> HttpStub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
             otherStub = HttpStub.for (Route.get "http://fun.com/super.html")
               |> HttpStub.withBody "{\"message\":\"This is great!\"}"
-            state = Elmer.componentState App.defaultModel App.view App.update
+            state = Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerHttp.serve [ stubbedResponse, otherStub ] ]
               |> Markup.target "#request-data-click"
               |> Event.click
@@ -241,7 +241,7 @@ serveTests =
 spyTests : Test
 spyTests =
   let
-    requestedState = Elmer.componentState App.defaultModel App.view App.update
+    requestedState = Elmer.given App.defaultModel App.view App.update
       |> Spy.use [ ElmerHttp.spy ]
       |> Markup.target "#request-data-click"
       |> Event.click
@@ -266,7 +266,7 @@ errorResponseTests =
         stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
           |> HttpStub.withError Http.Timeout
       in
-        Elmer.componentState App.defaultModel App.view App.update
+        Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
           |> Markup.target "#request-data-click"
           |> Event.click
@@ -287,7 +287,7 @@ expectTests =
         let
           stubbedResponse = HttpStub.for getRoute
         in
-          ComponentState.failure "You failed!"
+          TestState.failure "You failed!"
             |> ElmerHttp.expect getRoute
             |> Expect.equal (Expect.fail "You failed!")
     ]
@@ -298,7 +298,7 @@ expectTests =
           let
             stubbedResponse = HttpStub.for getRoute
           in
-            Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+            Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
               |> ElmerHttp.expect getRoute
               |> Expect.equal (Expect.fail <| format
                 [ message "Expected request for" "GET http://fun.com/fun.html"
@@ -313,7 +313,7 @@ expectTests =
             request1 = testRequest "POST" "http://fun.com/fun"
             request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
             stubbedResponse = HttpStub.for getRoute
-            initialState = componentStateWithRequests [ request1, request2 ]
+            initialState = testStateWithRequests [ request1, request2 ]
           in
             ElmerHttp.expect getRoute initialState
               |> Expect.equal (Expect.fail (format
@@ -332,7 +332,7 @@ expectTests =
             request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
             route = Route.get "http://fun.com/fun"
             stubbedResponse = HttpStub.for route
-            initialState = componentStateWithRequests [ request1, request2 ]
+            initialState = testStateWithRequests [ request1, request2 ]
           in
             ElmerHttp.expect route initialState
               |> Expect.equal (Expect.fail (format
@@ -349,7 +349,7 @@ expectTests =
             request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
             requestForStub = testRequest "GET" "http://fun.com/fun.html"
             stubbedResponse = HttpStub.for getRoute
-            initialState = componentStateWithRequests [ request1, requestForStub ,request2 ]
+            initialState = testStateWithRequests [ request1, requestForStub ,request2 ]
           in
             ElmerHttp.expect getRoute initialState
               |> Expect.equal Expect.pass
@@ -369,7 +369,7 @@ expectThatTests =
           let
             stubbedResponse = HttpStub.for getRoute
           in
-            ComponentState.failure "You failed!"
+            TestState.failure "You failed!"
               |> ElmerHttp.expectThat getRoute (\rs -> Expect.fail "NO")
               |> Expect.equal (Expect.fail "You failed!")
       ]
@@ -379,7 +379,7 @@ expectThatTests =
           let
             stubbedResponse = HttpStub.for getRoute
           in
-            Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+            Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
               |> ElmerHttp.expectThat getRoute (\rs -> Expect.equal [] rs)
               |> Expect.equal (Expect.pass)
       ]
@@ -391,7 +391,7 @@ expectThatTests =
               request1 = testRequest "POST" "http://fun.com/fun"
               request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
               stubbedResponse = HttpStub.for getRoute
-              initialState = componentStateWithRequests [ request1 ,request2 ]
+              initialState = testStateWithRequests [ request1 ,request2 ]
             in
               ElmerHttp.expectThat getRoute (\rs -> Expect.equal [] rs) initialState
                 |> Expect.equal Expect.pass
@@ -406,7 +406,7 @@ expectThatTests =
               requestForStub = testRequest "GET" "http://fun.com/fun.html"
               requestForStub2 = testRequest "GET" "http://fun.com/fun.html"
               requestForStub3 = testRequest "GET" "http://fun.com/fun.html"
-              initialState = componentStateWithRequests [ request1, requestForStub, request2, requestForStub2, requestForStub3 ]
+              initialState = testStateWithRequests [ request1, requestForStub, request2, requestForStub2, requestForStub3 ]
             in
               ElmerHttp.expectThat getRoute (\rs -> Expect.equal [ requestForStub, requestForStub2, requestForStub3 ] rs) initialState
                 |> Expect.equal Expect.pass
@@ -418,7 +418,7 @@ expectThatTests =
                 request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
                 stubbedResponse = HttpStub.for getRoute
                 requestForStub = testRequest "GET" "http://fun.com/fun.html"
-                initialState = componentStateWithRequests [ request1, requestForStub, request2 ]
+                initialState = testStateWithRequests [ request1, requestForStub, request2 ]
               in
                 ElmerHttp.expectThat getRoute (\rs -> Expect.fail "Failed!") initialState
                   |> Expect.equal (Expect.fail (format
@@ -433,13 +433,13 @@ expectThatTests =
       ]
     ]
 
-componentStateWithRequests : List HttpRequest -> ComponentState SimpleApp.Model SimpleApp.Msg
-componentStateWithRequests requestData =
+testStateWithRequests : List HttpRequest -> TestState SimpleApp.Model SimpleApp.Msg
+testStateWithRequests requestData =
   let
-    defaultState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+    defaultState = Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
   in
     defaultState
-      |> ComponentState.map (\component -> ComponentState.with { component | httpRequests = requestData })
+      |> TestState.map (\context -> TestState.with { context | httpRequests = requestData })
 
 testRequest : String -> String -> HttpRequest
 testRequest method url =
@@ -454,7 +454,7 @@ expectRequestDataTests =
   describe "Request Data Tests"
   [ test "it finds the headers" <|
     \() ->
-      Elmer.componentState App.defaultModel App.view App.update
+      Elmer.given App.defaultModel App.view App.update
         |> Spy.use [ ElmerHttp.spy ]
         |> Markup.target "#request-data-click"
         |> Event.click
@@ -470,7 +470,7 @@ resolveTests =
     stubbedResponse = HttpStub.for (Route.get "http://fun.com/fun.html")
       |> HttpStub.withBody "{\"name\":\"Cool Dude\"}"
       |> HttpStub.deferResponse
-    requestedState = Elmer.componentState App.defaultModel App.view App.update
+    requestedState = Elmer.given App.defaultModel App.view App.update
       |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
       |> Markup.target "#request-data-click"
       |> Event.click
@@ -501,18 +501,18 @@ clearRequestsTests =
     [ test "it shows the failure" <|
       \() ->
         let
-          result = ElmerHttp.clearRequestHistory (ComponentState.failure "You Failed!")
+          result = ElmerHttp.clearRequestHistory (TestState.failure "You Failed!")
         in
-          Expect.equal (ComponentState.failure "You Failed!") result
+          Expect.equal (TestState.failure "You Failed!") result
     ]
   , describe "when there are no requests to clear"
     [ test "it fails" <|
       \() ->
         let
-          initialState = componentStateWithRequests []
+          initialState = testStateWithRequests []
         in
           ElmerHttp.clearRequestHistory initialState
-            |> Expect.equal (ComponentState.failure "No HTTP requests to clear")
+            |> Expect.equal (TestState.failure "No HTTP requests to clear")
     ]
   , describe "when there are requests to clear"
     [ test "it clears the requests" <|
@@ -520,11 +520,11 @@ clearRequestsTests =
         let
           request1 = testRequest "POST" "http://fun.com/fun"
           request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-          initialState = componentStateWithRequests [ request1, request2 ]
+          initialState = testStateWithRequests [ request1, request2 ]
         in
           ElmerHttp.clearRequestHistory initialState
-            |> ComponentState.mapToExpectation (\component ->
-              Expect.equal True (List.isEmpty component.httpRequests)
+            |> TestState.mapToExpectation (\context ->
+              Expect.equal True (List.isEmpty context.httpRequests)
             )
     ]
   ]

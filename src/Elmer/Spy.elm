@@ -22,7 +22,7 @@ module Elmer.Spy exposing
 
 import Expect
 import Elmer exposing (Matcher)
-import Elmer.ComponentState as ComponentState
+import Elmer.TestState as TestState
 import Elmer.Spy.Internal as Spy_ exposing (Spy(..))
 import Elmer.Printer exposing (..)
 
@@ -50,7 +50,7 @@ through to the original function.
     let
       mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
     in
-      use [ mySpy ] componentState
+      use [ mySpy ] testState
         |> expect "my-spy" (wasCalled 0)
 
 -}
@@ -113,14 +113,14 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
     let
       mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
     in
-      use [ mySpy ] componentState
+      use [ mySpy ] testState
         |> expect "my-spy" (wasCalled 0)
 
 -}
-expect : String -> Matcher Calls -> Elmer.ComponentState model msg -> Expect.Expectation
+expect : String -> Matcher Calls -> Elmer.TestState model msg -> Expect.Expectation
 expect name matcher =
-  ComponentState.mapToExpectation (\component ->
-    case Spy_.calls name component.spies of
+  TestState.mapToExpectation (\context ->
+    case Spy_.calls name context.spies of
       Just calls ->
         matcher calls
       Nothing ->
@@ -145,7 +145,7 @@ you could do something like the following:
             Elmer.Platform.Command.fake (tagger (toDate "11/12/2016 5:30 pm"))
           )
     in
-      componentState
+      testState
         |> use [ taskOverride ]
         |> Elmer.Html.target "#get-date"
         |> Elmer.Html.Event.click
@@ -158,19 +158,19 @@ you could do something like the following:
 Note: If you need to replace a spy during the course of a test, you may
 call `use` again with the new spy. Each time you call `use` *all* spies
 will be removed. So be sure that each time you call `use` you register all
-the spies you need. 
+the spies you need.
 -}
-use : List Spy -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+use : List Spy -> Elmer.TestState model msg -> Elmer.TestState model msg
 use spies =
-  ComponentState.mapWithoutSpies (\component ->
+  TestState.mapWithoutSpies (\context ->
     let
       activated = Spy_.activate spies
       errors = takeErrors activated
     in
       if List.isEmpty errors then
-        ComponentState.with { component | spies = Spy_.deactivate activated }
+        TestState.with { context | spies = Spy_.deactivate activated }
       else
-        ComponentState.failure <|
+        TestState.failure <|
           format
             [ message "Failed to activate spies" <| failedSpies errors ]
   )

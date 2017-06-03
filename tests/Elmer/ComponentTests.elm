@@ -26,7 +26,7 @@ mapCommand =
     [ test "it handles a map command" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
           mapCommand = \() -> Cmd.map DoFun subTask
         in
           Command.send mapCommand initialState
@@ -35,7 +35,7 @@ mapCommand =
     , test "it handles a click event" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
           mapCommand = \() -> Cmd.map DoFun subTask
         in
           Command.send mapCommand initialState
@@ -48,7 +48,7 @@ mapCommand =
     [ test "it handles a mapped map command" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultParentModel App.parentView App.parentUpdate
+          initialState = Elmer.given App.defaultParentModel App.parentView App.parentUpdate
           mapCommand = Cmd.map DoFun subTask
           parentMapCommand = \() -> Cmd.map MsgAWrapper mapCommand
         in
@@ -58,7 +58,7 @@ mapCommand =
     , test "it handles a mapped message from the child view" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultParentModel App.parentView App.parentUpdate
+          initialState = Elmer.given App.defaultParentModel App.parentView App.parentUpdate
           mapCommand = Cmd.map DoFun subTask
           parentMapCommand = \() -> Cmd.map MsgAWrapper mapCommand
         in
@@ -70,7 +70,7 @@ mapCommand =
     , describe "when the mapped command has a custom update method"
       [ test "it handles a mapped message from the child view" <|
         \() ->
-          ElmerNav.navigationComponentState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
+          ElmerNav.navigationTestState App.defaultParentModel App.parentView App.parentUpdate App.parseLocation
             |> Spy.use [ ElmerNav.spy ]
             |> Markup.target "#change-location"
             |> Event.click

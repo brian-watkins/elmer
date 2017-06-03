@@ -6,7 +6,7 @@ import Elmer.TestApps.InitTestApp as InitApp
 import Elmer.TestHelpers exposing (..)
 import Expect
 import Elmer exposing (..)
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Spy as Spy
@@ -25,13 +25,13 @@ initTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = ComponentState.failure "You failed!"
+          initialState = TestState.failure "You failed!"
         in
           Elmer.init (\() -> (InitApp.defaultModel "", Cmd.none)) initialState
-            |> Expect.equal (ComponentState.failure "You failed!")
+            |> Expect.equal (TestState.failure "You failed!")
     ]
   , let
-      state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
+      state = Elmer.given (InitApp.defaultModel "") InitApp.view InitApp.update
         |> Spy.use [ Elmer.Http.spy ]
         |> Elmer.init (\() -> InitApp.init { baseUrl = "http://fun.com/api" })
     in
@@ -50,10 +50,10 @@ initTests =
     [ test "it fails" <|
       \() ->
         let
-          state = Elmer.componentState (InitApp.defaultModel "") InitApp.view InitApp.update
+          state = Elmer.given (InitApp.defaultModel "") InitApp.view InitApp.update
             |> Elmer.init (\() -> (InitApp.defaultModel "", Task.perform InitApp.Tag (Task.succeed "Yo")) )
         in
-          Expect.equal state (ComponentState.failure <|
+          Expect.equal state (TestState.failure <|
             format
               [ message "Elmer encountered a command it does not know how to run" "Task"
               , description "Try sending a stubbed or dummy command instead"
@@ -261,7 +261,7 @@ expectModelTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = ComponentState.failure "You failed!"
+          initialState = TestState.failure "You failed!"
         in
           Elmer.expectModel (\model -> Expect.fail "Shouldn't get here") initialState
             |> Expect.equal (Expect.fail "You failed!")
@@ -269,7 +269,7 @@ expectModelTests =
   , describe "when there is no failure"
     [ test "it runs the matcher on the current model" <|
       \() ->
-        Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+        Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           |> Elmer.expectModel (\model ->
             Expect.equal model.name "Cool Person"
           )

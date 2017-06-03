@@ -32,7 +32,7 @@ wasCalledTests =
   [ describe "when the spy has not been called"
     [ test "it fails with the message" <|
       \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
           |> Spy.expect "clearName" (Matchers.wasCalled 2)
           |> Expect.equal (Expect.fail <|
@@ -43,7 +43,7 @@ wasCalledTests =
             )
     , test "it fails with a properly depluralized message" <|
       \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
           |> Spy.expect "clearName" (Matchers.wasCalled 1)
           |> Expect.equal (Expect.fail <|
@@ -57,7 +57,7 @@ wasCalledTests =
     [ describe "when the expected count does not match the number of calls"
       [ test "it fails" <|
         \() ->
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
             |> Markup.target "#button"
             |> Event.click
@@ -73,7 +73,7 @@ wasCalledTests =
     , describe "when the expected count matches the number of calls"
       [ test "it passes" <|
         \() ->
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
             |> Markup.target "#button"
             |> Event.click

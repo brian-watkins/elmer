@@ -7,7 +7,7 @@ import Http
 import Dict
 import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
-import Elmer.Component exposing (Component)
+import Elmer.Context exposing (Context)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
@@ -52,14 +52,14 @@ collapseToCommand responseResult =
 toHttpCommand : HttpRequestHandler a -> Cmd msg -> Cmd msg
 toHttpCommand requestHandler command =
   let
-    httpCommand = Platform.mapStateCommand <| updateComponentState requestHandler.request
+    httpCommand = Platform.mapStateCommand <| updateTestState requestHandler.request
   in
     Cmd.batch [ httpCommand, command ]
 
 
-updateComponentState : HttpRequest -> Component model msg -> Component model msg
-updateComponentState request componentState =
-  { componentState | httpRequests = request :: componentState.httpRequests }
+updateTestState : HttpRequest -> Context model msg -> Context model msg
+updateTestState request testState =
+  { testState | httpRequests = request :: testState.httpRequests }
 
 
 matchFirstRequest : HttpRequestHandler a -> List HttpStub -> Result (Cmd msg) HttpStub

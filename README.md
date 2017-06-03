@@ -35,16 +35,16 @@ Follow the instructions at [elmer-test.cfapps.io](http://elmer-test.cfapps.io).
 
 Elmer requires Elm 0.18.
 
-#### Create a `ComponentState`
+### Writing Tests
 
-Elmer functions generally pass around `ComponentStates`. To get started describing some
-behavior with Elmer, you'll need to generate an initial component state with the `Elmer.componentState`
+Elmer functions generally pass around `TestState` values. To get started describing some
+behavior with Elmer, you'll need to generate an initial test state with the `Elmer.given`
 function. Just pass it your model, view method, and update method.
 
 #### Finding an Element
 
 Use `Elmer.Html.target` to target an `HtmlElement`, which describes an HTML element in your view. The `target`
-function takes a selector and a `ComponentState` as arguments. The selector can take the following
+function takes a selector and a `TestState` as arguments. The selector can take the following
 formats:
 
 + To target the first element with the class myClass, use `.myClass`
@@ -59,9 +59,9 @@ formats:
 Once you target an element, that element is the subject of subsequent actions, until
 you target another element. The following functions define actions on elements:
 
-+ Click events: `Elmer.Html.Event.click <componentState>`
-+ Input events: `Elmer.Html.Event.input <text> <componentState>`
-+ Custom events: `Elmer.Html.Event.trigger <eventName> <eventJson> <componentState>`
++ Click events: `Elmer.Html.Event.click <testState>`
++ Input events: `Elmer.Html.Event.input <text> <testState>`
++ Custom events: `Elmer.Html.Event.trigger <eventName> <eventJson> <testState>`
 + There are also events for mouse movements, and checking and selecting input elements. See
 the [docs](http://elmer-test.cfapps.io/packages/brian-watkins/elmer/latest) for more information.
 
@@ -89,13 +89,13 @@ You can combine multiple matchers using the `<&&>` operator like so:
 Elmer.Html.expect (element <|
   Matchers.hasText "Text one" <&&>
   Matchers.hasText "Text two"
-) componentStateResult
+) testStateResult
 ```
 
 Make expectations about a list of elements like so:
 
 ```
-Elmer.Html.target "div" componentState
+Elmer.Html.target "div" testState
   |> Elmer.Html.expect (elements <| Elmer.hasLength 4)
 ```
 
@@ -107,7 +107,7 @@ Let's test-drive a simple Elm HTML Application. We want to have a button on the 
 allTests : Test
 allTests =
   let
-    initialState = Elmer.componentState App.defaultModel App.view App.update
+    initialState = Elmer.given App.defaultModel App.view App.update
   in
     describe "my app"
     [ describe "initial state"
@@ -218,7 +218,7 @@ timeAppTests =
   [ test "it displays the time" <|
     \() ->
       let
-        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
+        initialState = Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
       in
         Elmer.Html.target ".button" initialState
           |> Event.click
@@ -291,7 +291,7 @@ timeAppTests =
   [ test "it displays the time" <|
     \() ->
       let
-        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
+        initialState = Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
         taskPerformStub = Elmer.Spy.create "fake-perform" (\_ -> Task.perform)
           |> Elmer.Spy.andCallFake (fakeTaskPerform (3 * Time.second))
       in
@@ -383,7 +383,7 @@ example, this test inputs search terms into a field, clicks a search button, and
 that a request is made to a specific route with the search terms in the query string:
 
 ```
-initialComponentState
+initialTestState
   |> Elmer.Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
   |> Elmer.Html.target "input[name='query']"
   |> Elmer.Html.Event.input "Fun Stuff"
@@ -406,8 +406,8 @@ See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 Elmer provides support for functions in the [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/2.0.1/)
 module that allow you to handle navigation for single-page web applications.
 
-To simulate location updates, you must construct a `ComponentState` using
-`Elmer.Navigation.navigationComponentState`. This function is just like `Elmer.componentState`
+To simulate location updates, you must construct a `TestState` using
+`Elmer.Navigation.navigationTestState`. This function is just like `Elmer.given`
 except that it also takes the location parser function (`Navigation.Location -> msg`)
 that you provide to `Navigation.program` when you initialize your app. This provides
 Elmer with the information it needs to process location updates as they occur in a test.
@@ -468,7 +468,7 @@ timeDefaultTest =
   describe "before the time is received"
   [ test "it prints 0 seconds" <|
     \() ->
-      Elmer.componentState App.defaultModel App.view App.update
+      Elmer.given App.defaultModel App.view App.update
         |> Elmer.Html.target "#num-seconds"
         |> Elmer.Html.expect (
             Elmer.Html.Matchers.element <|
@@ -519,7 +519,7 @@ timeSubscriptionTest =
             Elmer.Platform.Subscription.fake "timeEffect" tagger
           )
       in
-        Elmer.componentState App.defaultModel App.view App.update
+        Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ timeSpy ]
           |> Elmer.Platform.Subscription.with (\() -> App.subscriptions)
           |> Elmer.Platform.Subscription.send "timeEffect" (3 * 1000)
@@ -618,7 +618,7 @@ let
            Elmer.Platform.Subscription.fake "fake-receive" tagger
          )
 in
-  Elmer.componentState MyModule.defaultModel MyModule.view MyModule.update
+  Elmer.given MyModule.defaultModel MyModule.view MyModule.update
     |> Elmer.Spy.use [ spy ]
     |> Elmer.Platform.Subscription.with (\_ -> MyModule.subscriptions)
     |> Elmer.Platform.Subscription.send "fake-receive" "some fake data"
@@ -647,7 +647,7 @@ parseTest =
       let
         spy = Elmer.Spy.create "parser-spy" (\_ -> MyParserModule.parse)
       in
-        Elmer.componentState App.defaultModel App.view App.update
+        Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ spy ]
           |> Elmer.Html.target "input[type='text']"
           |> Elmer.Html.Event.input "A string to be parsed"
@@ -672,7 +672,7 @@ routeTest =
             Html.div [ Html.Attributes.id "thingsView" ] []
           )
       in
-        Elmer.navigationComponentState App.defaultModel App.view App.update App.locationParser
+        Elmer.navigationTestState App.defaultModel App.view App.update App.locationParser
           |> Elmer.Spy.use [ thingsViewSpy ]
           |> Elmer.Navigation.setLocation "http://fun.com/things"
           |> Elmer.Html.target "#thingsView"

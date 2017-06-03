@@ -4,7 +4,7 @@ module Elmer.Runtime
         , performCommand
         )
 
-import Elmer.Component as Component exposing (Component)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Printer exposing (..)
 import Elmer.Platform.Internal as Platform exposing (..)
 import Dict exposing (Dict)
@@ -14,7 +14,7 @@ type CommandResult model msg
   | CommandError String
 
 type alias CommandEffect model msg =
-  Component model msg -> (Component model msg, Cmd msg)
+  Context model msg -> (Context model msg, Cmd msg)
 
 type alias CommandRunner model subMsg msg =
   Cmd subMsg -> (subMsg -> msg) -> CommandResult model msg
@@ -33,13 +33,13 @@ commandRunners =
 mapStateCommandRunner : CommandRunner model subMsg msg
 mapStateCommandRunner command _ =
   let
-    componentStateMapper = Platform.cmdValue command
+    testStateMapper = Platform.cmdValue command
   in
-    CommandSuccess (mapComponentState componentStateMapper)
+    CommandSuccess (mapTestState testStateMapper)
 
-mapComponentState : (Component model msg -> Component model msg) -> Component model msg -> ( Component model msg, Cmd msg )
-mapComponentState mapper componentState =
-  ( mapper componentState, Cmd.none )
+mapTestState : (Context model msg -> Context model msg) -> Context model msg -> ( Context model msg, Cmd msg )
+mapTestState mapper testState =
+  ( mapper testState, Cmd.none )
 
 
 generateCommandRunner : CommandRunner model subMsg msg
@@ -49,9 +49,9 @@ generateCommandRunner command _ =
   in
     CommandSuccess (generateCommand generator)
 
-generateCommand : (Component model msg -> Cmd msg) -> Component model msg -> ( Component model msg, Cmd msg )
-generateCommand generator componentState =
-  ( componentState, generator componentState )
+generateCommand : (Context model msg -> Cmd msg) -> Context model msg -> ( Context model msg, Cmd msg )
+generateCommand generator testState =
+  ( testState, generator testState )
 
 
 elmerFailureCommandRunner : CommandRunner model subMsg msg
@@ -67,7 +67,7 @@ elmerStubbedCommandRunner command tagger =
   let
     msg = Platform.cmdValue command
   in
-    CommandSuccess (updateComponentState (tagger msg))
+    CommandSuccess (updateTestState (tagger msg))
 
 
 unknownCommandRunner : String -> CommandRunner model subMsg msg
@@ -84,23 +84,23 @@ identityTagger msg =
   msg
 
 
-updateComponentState : msg -> Component model msg -> ( Component model msg, Cmd msg )
-updateComponentState message componentState =
+updateTestState : msg -> Context model msg -> ( Context model msg, Cmd msg )
+updateTestState message testState =
     let
         ( updatedModel, command ) =
-            componentState.update message componentState.model
+            testState.update message testState.model
 
         updatedState =
-            { componentState | model = updatedModel }
+            { testState | model = updatedModel }
     in
         ( updatedState, command )
 
 
-performUpdate : msg -> Component model msg -> Result String (Component model msg)
-performUpdate message componentState =
+performUpdate : msg -> Context model msg -> Result String (Context model msg)
+performUpdate message testState =
     let
         ( updatedComponent, command ) =
-            updateComponentState message componentState
+            updateTestState message testState
     in
         performCommand command updatedComponent
 
@@ -111,36 +111,36 @@ commandRunnerForData commandName =
     |> Maybe.withDefault (unknownCommandRunner commandName)
 
 
-performCommand : Cmd msg -> Component model msg -> Result String (Component model msg)
-performCommand command component =
+performCommand : Cmd msg -> Context model msg -> Result String (Context model msg)
+performCommand command context =
     let
         commandResults =
             runCommand identityTagger command
     in
-      List.foldl reduceCommandResults (Ok component) commandResults
+      List.foldl reduceCommandResults (Ok context) commandResults
 
-reduceCommandResults : CommandResult model msg -> Result String (Component model msg) -> Result String (Component model msg)
+reduceCommandResults : CommandResult model msg -> Result String (Context model msg) -> Result String (Context model msg)
 reduceCommandResults commandResult currentResult =
   case currentResult of
-    Ok componentState ->
+    Ok testState ->
       case commandResult of
         CommandSuccess commandEffect ->
           let
-            ( updatedComponentState, updatedCommand ) = processCommandEffect commandEffect componentState
+            ( updatedTestState, updatedCommand ) = processCommandEffect commandEffect testState
           in
             if updatedCommand == Cmd.none then
-              Ok updatedComponentState
+              Ok updatedTestState
             else
-              performCommand updatedCommand updatedComponentState
+              performCommand updatedCommand updatedTestState
         CommandError errorMessage ->
           Err errorMessage
     Err errorMessage ->
       Err errorMessage
 
 
-processCommandEffect : CommandEffect model msg -> Component model msg -> ( Component model msg, Cmd msg )
-processCommandEffect commandEffect componentState =
-    commandEffect componentState
+processCommandEffect : CommandEffect model msg -> Context model msg -> ( Context model msg, Cmd msg )
+processCommandEffect commandEffect testState =
+    commandEffect testState
 
 
 runCommand : (subMsg -> msg) -> Cmd subMsg -> List (CommandResult model msg)
@@ -164,7 +164,7 @@ runCommand tagger command =
 
         Unknown ->
           let
-            commandResult = CommandSuccess (\componentState -> ( componentState, Cmd.none ))
+            commandResult = CommandSuccess (\testState -> ( testState, Cmd.none ))
           in
             [ commandResult ]
 

@@ -5,7 +5,7 @@ import Elmer.TestApps.FocusTestApp as App
 import Expect
 import Elmer
 import Elmer.EventTests as EventTests
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -18,7 +18,7 @@ focusTests =
   , EventTests.propagationBehavior Event.focus "focus"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "the focus event"
       [ test "at first the element is not focused" <|
@@ -41,7 +41,7 @@ blurTests =
   , EventTests.propagationBehavior Event.blur "blur"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "the blur event"
       [ test "at first the element is not blurred" <|

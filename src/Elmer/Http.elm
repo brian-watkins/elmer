@@ -32,7 +32,7 @@ import Elmer exposing (Matcher)
 import Elmer.Http.Internal as Http_ exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Http.Route as Route
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Platform.Command as Command
 import Elmer.Platform.Internal as Platform
@@ -60,7 +60,7 @@ a button is clicked. You could register a stub for that request like so
         |> Elmer.Http.Stub.withBody
           "{\"name\":\"Super User\",\"type\":\"admin\"}"
     in
-      componentState
+      testState
         |> Spy.use [ serve [ stubbedResponse ] ]
         |> Markup.target "#request-data-button"
         |> Elmer.Html.Event.click
@@ -80,7 +80,7 @@ Used in conjunction with `Elmer.Spy.use`.
 Suppose you simply want to make an expectation about a request without
 describing the behavior that results when its response is received.
 
-    componentState
+    testState
       |> Spy.use [ spy ]
       |> Markup.target "#request-data-button"
       |> Elmer.Http.Event.click
@@ -94,15 +94,15 @@ spy =
 
 
 {-| Clear any Http requests that may have been recorded at an earlier point
-in the history of this ComponentState.
+in the history of this TestState.
 -}
-clearRequestHistory : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+clearRequestHistory : Elmer.TestState model msg -> Elmer.TestState model msg
 clearRequestHistory =
-  ComponentState.map (\component ->
-    if List.isEmpty component.httpRequests then
-      ComponentState.failure "No HTTP requests to clear"
+  TestState.map (\context ->
+    if List.isEmpty context.httpRequests then
+      TestState.failure "No HTTP requests to clear"
     else
-      ComponentState.with { component | httpRequests = [] }
+      TestState.with { context | httpRequests = [] }
   )
 
 
@@ -114,22 +114,22 @@ If no requests have been made to the specified route, the test will fail.
 
 Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expect : HttpRoute -> Matcher (Elmer.ComponentState model msg)
+expect : HttpRoute -> Matcher (Elmer.TestState model msg)
 expect route =
-  ComponentState.mapToExpectation <|
-    \component ->
-      if List.isEmpty component.httpRequests then
+  TestState.mapToExpectation <|
+    \context ->
+      if List.isEmpty context.httpRequests then
         Expect.fail <| format
           [ message "Expected request for" (route.method ++ " " ++ route.url)
           , description "but no requests have been made"
           ]
       else
-        case hasRequest component.httpRequests route.method route.url of
+        case hasRequest context.httpRequests route.method route.url of
           Just _ ->
             Expect.pass
           Nothing ->
             let
-              requests = String.join "\n" (List.map (\r -> r.method ++ " " ++ r.url) component.httpRequests)
+              requests = String.join "\n" (List.map (\r -> r.method ++ " " ++ r.url) context.httpRequests)
             in
               Expect.fail <| format
                 [ message "Expected request for" (route.method ++ " " ++ route.url)
@@ -147,13 +147,13 @@ will be passed to the `Matcher (List HttpRequest)`.
 
 Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectThat : HttpRoute -> Matcher (List HttpRequest) -> Matcher (Elmer.ComponentState model msg)
+expectThat : HttpRoute -> Matcher (List HttpRequest) -> Matcher (Elmer.TestState model msg)
 expectThat route matcher =
-  ComponentState.mapToExpectation <|
-    \component ->
+  TestState.mapToExpectation <|
+    \context ->
       let
         result =
-          List.filter (matchesRequest route.method route.url) component.httpRequests
+          List.filter (matchesRequest route.method route.url) context.httpRequests
             |> matcher
       in
         case Test.Runner.getFailure result of

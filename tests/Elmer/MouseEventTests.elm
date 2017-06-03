@@ -5,7 +5,7 @@ import Elmer.TestApps.MouseTestApp as App
 import Elmer.EventTests as EventTests
 import Expect
 import Elmer
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -26,7 +26,7 @@ clickTests =
   , EventTests.multiEventPropagationBehavior 9 6 Event.click "mouseup"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
       updatedStateResult = Markup.target ".button" initialState
                             |> Event.click
     in
@@ -54,7 +54,7 @@ clickTests =
               )
       , test "it records a position of (0, 0)" <|
         \() ->
-          Elmer.componentState initialModel App.viewForPosition App.update
+          Elmer.given initialModel App.viewForPosition App.update
             |> Markup.target ".button"
             |> Event.click
             |> Elmer.expectModel (\model ->
@@ -70,7 +70,7 @@ doubleClickTests =
   , EventTests.multiEventPropagationBehavior 21 14 Event.doubleClick "dblclick"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
       updatedStateResult = Markup.target ".button" initialState
                             |> Event.doubleClick
     in
@@ -112,7 +112,7 @@ pressTests =
   , EventTests.propagationBehavior Event.press "mousedown"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "the press event"
       [ test "at first no mouse down is recorded" <|
@@ -127,7 +127,7 @@ pressTests =
               )
       , test "it records a position of (0, 0)" <|
         \() ->
-          Elmer.componentState initialModel App.viewForPosition App.update
+          Elmer.given initialModel App.viewForPosition App.update
             |> Markup.target ".button"
             |> Event.press
             |> Elmer.expectModel (\model ->
@@ -143,7 +143,7 @@ releaseTests =
   , EventTests.propagationBehavior Event.release "mouseup"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "the release event"
       [ test "at first no mouse up is recorded" <|
@@ -158,7 +158,7 @@ releaseTests =
               )
       , test "it records a position of (0, 0)" <|
         \() ->
-          Elmer.componentState initialModel App.viewForPosition App.update
+          Elmer.given initialModel App.viewForPosition App.update
             |> Markup.target ".button"
             |> Event.release
             |> Elmer.expectModel (\model ->
@@ -178,7 +178,7 @@ moveMouseInTests =
       let
         initialModel = App.defaultModel
       in
-        Elmer.componentState initialModel App.viewForPosition App.update
+        Elmer.given initialModel App.viewForPosition App.update
           |> Markup.target ".button"
           |> Event.moveMouseIn
           |> Elmer.expectModel (\model ->
@@ -197,7 +197,7 @@ moveMouseOutTests =
       let
         initialModel = App.defaultModel
       in
-        Elmer.componentState initialModel App.viewForPosition App.update
+        Elmer.given initialModel App.viewForPosition App.update
           |> Markup.target ".button"
           |> Event.moveMouseOut
           |> Elmer.expectModel (\model ->
@@ -210,7 +210,7 @@ mouseEnterTests =
   describe "Mouse Enter Event Handler Tests"
   [ let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
+      initialState = Elmer.given initialModel App.viewForMouseEnterLeave App.update
     in
       describe "the mouse move in event"
       [ describe "when the element does not have a mouse enter event handler but its ancestor does"
@@ -218,7 +218,7 @@ mouseEnterTests =
           \() ->
             Markup.target "li[data-option='2']" initialState
               |> Event.moveMouseIn
-              |> Expect.equal (ComponentState.failure "No relevant event handler found")
+              |> Expect.equal (TestState.failure "No relevant event handler found")
         ]
       , describe "when the element has a mouse enter event handler"
         [ test "at first no mouse enter is recorded" <|
@@ -233,7 +233,7 @@ mouseEnterTests =
                 )
         , test "it records a position of (0, 0)" <|
           \() ->
-            Elmer.componentState initialModel App.viewForPosition App.update
+            Elmer.given initialModel App.viewForPosition App.update
               |> Markup.target "#enter-leave-element"
               |> Event.moveMouseIn
               |> Elmer.expectModel (\model ->
@@ -257,7 +257,7 @@ mouseLeaveTests =
   describe "Mouse Leave Event Handler Tests"
   [ let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.viewForMouseEnterLeave App.update
+      initialState = Elmer.given initialModel App.viewForMouseEnterLeave App.update
     in
       describe "the mouseMoveOut event"
       [ describe "when the element does not have a mouse leave event handler but its ancestor does"
@@ -265,7 +265,7 @@ mouseLeaveTests =
           \() ->
             Markup.target "li[data-option='2']" initialState
               |> Event.moveMouseOut
-              |> Expect.equal (ComponentState.failure "No relevant event handler found")
+              |> Expect.equal (TestState.failure "No relevant event handler found")
         ]
       , describe "when the element has the mouse leave event handler"
         [ test "at first no mouse leave is recorded" <|
@@ -280,7 +280,7 @@ mouseLeaveTests =
                 )
         , test "it records a position of (0, 0)" <|
           \() ->
-            Elmer.componentState initialModel App.viewForPosition App.update
+            Elmer.given initialModel App.viewForPosition App.update
               |> Markup.target "#enter-leave-element"
               |> Event.moveMouseOut
               |> Elmer.expectModel (\model ->
@@ -305,7 +305,7 @@ mouseOverTests =
   describe "Mouse Over Event Handler Tests"
   [ let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "when the mouseOver event handler is registered"
       [ describe "when the targeted element has the mouseOver event handler"
@@ -321,7 +321,7 @@ mouseOverTests =
                 )
         , test "it records a position of (0, 0)" <|
           \() ->
-            Elmer.componentState initialModel App.viewForPosition App.update
+            Elmer.given initialModel App.viewForPosition App.update
               |> Markup.target ".button"
               |> Event.moveMouseIn
               |> Elmer.expectModel (\model ->
@@ -336,7 +336,7 @@ mouseOutTests =
   describe "Mouse Out Event Handler Tests"
   [ let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "when the mouseOut event handler is registered"
       [ describe "when the targeted element has the mouseOut event handler"
@@ -352,7 +352,7 @@ mouseOutTests =
                 )
         , test "it records a position of (0, 0)" <|
           \() ->
-            Elmer.componentState initialModel App.viewForPosition App.update
+            Elmer.given initialModel App.viewForPosition App.update
               |> Markup.target ".button"
               |> Event.moveMouseOut
               |> Elmer.expectModel (\model ->

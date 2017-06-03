@@ -2,7 +2,7 @@ module Elmer.HtmlTests exposing (..)
 
 import Test exposing (..)
 import Expect
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html as Markup
 import Elmer exposing ((<&&>))
 import Elmer.Html.Matchers as Matchers exposing (..)
@@ -22,7 +22,7 @@ selectTests =
     [ test "it returns the failure" <|
       \() ->
         let
-          initialState = ComponentState.failure "upstream failure"
+          initialState = TestState.failure "upstream failure"
         in
           Markup.target ".button" initialState
             |> Expect.equal initialState
@@ -35,7 +35,7 @@ expectTests =
     [ test "it fails with the error message" <|
       \() ->
         let
-          initialState = ComponentState.failure "upstream failure"
+          initialState = TestState.failure "upstream failure"
         in
           initialState
             |> Markup.expect (\context -> Expect.fail "Should not get here")
@@ -44,7 +44,7 @@ expectTests =
       [ test "it fails with the right message" <|
         \() ->
           let
-            initialState = ComponentState.failure "upstream failure"
+            initialState = TestState.failure "upstream failure"
           in
             initialState
               |> Markup.target "#no-element"
@@ -55,14 +55,14 @@ expectTests =
   , describe "when there is no targeted element"
     [ test "it fails" <|
       \() ->
-        Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+        Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           |> Markup.expect (\context -> Expect.fail "Should not get here")
           |> Expect.equal (Expect.fail "No expectations could be made because no Html has been targeted.\n\nUse Elmer.Html.target to identify the Html you want to describe.")
     ]
   , describe "when there is a targeted element"
     [ test "it defines the HtmlContext based on the selector and the rendered view" <|
       \() ->
-        Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+        Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           |> Markup.target "#root"
           |> Markup.expect (\query ->
               Expect.equal (Query.forHtml "#root" (SimpleApp.view SimpleApp.defaultModel)) query
@@ -77,7 +77,7 @@ childNodeTests =
     [ test "it finds the text" <|
       \() ->
         let
-          initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.viewWithChildren SimpleApp.update
+          initialState = Elmer.given SimpleApp.defaultModel SimpleApp.viewWithChildren SimpleApp.update
         in
           Markup.target "#root" initialState
             |> Markup.expect (element <| hasText "Child text")
@@ -91,7 +91,7 @@ renderTests =
     [ test "it passes on the failure" <|
       \() ->
         let
-          initialState = ComponentState.failure "You failed!"
+          initialState = TestState.failure "You failed!"
         in
           initialState
             |> Markup.render
@@ -103,7 +103,7 @@ renderTests =
         let
           spy = Spy.create "view-spy" (\_ -> SimpleApp.view)
         in
-          Elmer.componentState SimpleApp.defaultModel (\model -> SimpleApp.view model) SimpleApp.update
+          Elmer.given SimpleApp.defaultModel (\model -> SimpleApp.view model) SimpleApp.update
             |> Spy.use [ spy ]
             |> Markup.render
             |> Spy.expect "view-spy" (wasCalledWith [ typedArg SimpleApp.defaultModel ])

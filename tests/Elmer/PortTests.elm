@@ -21,7 +21,7 @@ portCommandTests =
         spy = Spy.create "port-spy" (\_ -> App.sendJsData)
           |> andCallFake (\_ -> Cmd.none)
       in
-        Elmer.componentState App.defaultModel App.view App.update
+        Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ spy ]
           |> Markup.target "#send-port-command-button"
           |> Event.click
@@ -37,7 +37,7 @@ portSubscriptionTests =
         spy = Spy.create "port-spy" (\_ -> App.receiveJsData)
           |> andCallFake (\tagger -> Subscription.fake "fakeReceive" tagger)
       in
-        Elmer.componentState App.defaultModel App.view App.update
+        Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ spy ]
           |> Subscription.with (\_ -> App.subscriptions)
           |> Subscription.send "fakeReceive" "some fake data"

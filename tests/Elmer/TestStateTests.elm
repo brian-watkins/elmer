@@ -1,8 +1,8 @@
-module Elmer.ComponentStateTests exposing (..)
+module Elmer.TestStateTests exposing (..)
 
 import Test exposing (..)
 import Expect
-import Elmer.ComponentState as ComponentState
+import Elmer.TestState as TestState
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer
 
@@ -12,7 +12,7 @@ mapToExpectationTests =
   [ describe "when there is an upstream error"
     [ test "it fails with the upstream error" <|
       \() ->
-        ComponentState.mapToExpectation (\_ -> Expect.pass) (ComponentState.failure "Failed!")
+        TestState.mapToExpectation (\_ -> Expect.pass) (TestState.failure "Failed!")
           |> Expect.equal (Expect.fail "Failed!")
     ]
   , describe "when there is no upstream failure"
@@ -20,17 +20,17 @@ mapToExpectationTests =
       [ test "it fails" <|
         \() ->
           let
-            initialState = Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+            initialState = Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           in
-            ComponentState.mapToExpectation (\_ -> Expect.fail "I failed!") initialState
+            TestState.mapToExpectation (\_ -> Expect.fail "I failed!") initialState
               |> Expect.equal (Expect.fail "I failed!")
       ]
     , describe "when the mapper passes"
       [ test "it passes" <|
         \() ->
-          Elmer.componentState SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-            |> ComponentState.mapToExpectation (\component ->
-                Expect.equal Nothing component.targetSelector
+          Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+            |> TestState.mapToExpectation (\context ->
+                Expect.equal Nothing context.targetSelector
               )
             |> Expect.equal (Expect.pass)
       ]

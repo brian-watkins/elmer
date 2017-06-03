@@ -10,7 +10,7 @@ module Elmer.Platform.Internal exposing
   , generateCommand
   )
 
-import Elmer.Component as Component exposing (Component)
+import Elmer.Context as Context exposing (Context)
 
 
 type Intention a msg subMsg
@@ -54,10 +54,10 @@ toSub : String -> a -> Sub msg
 toSub home data =
   Native.Platform.toIntention home data
 
-mapStateCommand : (Component model msg -> Component model msg) -> Cmd msg
+mapStateCommand : (Context model msg -> Context model msg) -> Cmd msg
 mapStateCommand mapper =
   toCmd "Elmer_MapState" mapper
 
-generateCommand : (Component model msg -> Cmd msg) -> Cmd msg
+generateCommand : (Context model msg -> Cmd msg) -> Cmd msg
 generateCommand generator =
   toCmd "Elmer_Generate" generator

@@ -1,9 +1,10 @@
-module Elmer.Component exposing
-  ( Component
+module Elmer.Context exposing
+  ( Context
   , ViewFunction
   , UpdateFunction
   , LocationParserFunction
   , render
+  , defaultContext
   )
 
 import Elmer.Http.Internal exposing (HttpRequest)
@@ -20,7 +21,7 @@ type alias UpdateFunction model msg =
 type alias LocationParserFunction msg =
     Navigation.Location -> msg
 
-type alias Component model msg =
+type alias Context model msg =
     { model : model
     , view : ViewFunction model msg
     , update : UpdateFunction model msg
@@ -34,6 +35,23 @@ type alias Component model msg =
     , spies : List Spy
     }
 
-render : Component model msg -> Html msg
-render component =
-  component.view component.model
+
+defaultContext : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
+defaultContext model view update =
+  { model = model
+  , view = view
+  , update = update
+  , targetSelector = Nothing
+  , locationParser = Nothing
+  , location = Nothing
+  , httpRequests = []
+  , deferredCommands = []
+  , dummyCommands = []
+  , subscriptions = Sub.none
+  , spies = []
+  }
+
+
+render : Context model msg -> Html msg
+render context =
+  context.view context.model

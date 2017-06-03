@@ -1,8 +1,8 @@
 module Elmer
     exposing
-        ( ComponentState
+        ( TestState
         , Matcher
-        , componentState
+        , given
         , (<&&>)
         , expectNot
         , each
@@ -14,10 +14,16 @@ module Elmer
         , expectModel
         )
 
-{-| Basic types and functions for working with ComponentStates and Matchers
+{-| Basic types and functions for working with tests and matchers
 
-# Working with ComponentStates
-@docs ComponentState, componentState, init, expectModel
+# Initializing a test
+@docs TestState, given
+
+# Test an init method
+@docs init
+
+# Make expectations about the model
+@docs expectModel
 
 # Working with Matchers
 @docs Matcher, (<&&>), expectNot
@@ -35,15 +41,15 @@ import Native.Spy
 
 import Expect
 import Test.Runner
-import Elmer.ComponentState as ComponentState
+import Elmer.TestState as TestState
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Array
 
-{-| Represents the current state of the component under test.
+{-| Represents the current state of the test.
 -}
-type alias ComponentState model msg
-  = ComponentState.ComponentState model msg
+type alias TestState model msg
+  = TestState.TestState model msg
 
 {-| Generic type for functions that pass or fail.
 
@@ -54,24 +60,25 @@ package.
 type alias Matcher a =
   (a -> Expect.Expectation)
 
-{-| Basic constructor for a `ComponentState`.
+{-| Initialize a test with a model, view function, and update function.
 -}
-componentState
+given
   :  model
   -> ( model -> Html msg )
   -> ( msg -> model -> ( model, Cmd msg ) )
-  -> ComponentState model msg
-componentState =
-  ComponentState.create
+  -> TestState model msg
+given =
+  TestState.create
 
 {-| Operator for conjoining matchers.
 If one fails, then the conjoined matcher fails, otherwise it passes.
 
-    Elmer.Html.expect (
-      Elmer.Html.Matchers.element <|
-        Elmer.Html.Matchers.hasText "Awesome" <&&>
-        Elmer.Html.Matchers.hasClass "cool"
-    ) componentState
+    Elmer.given someModel view update
+      |> Elmer.Html.expect (
+        Elmer.Html.Matchers.element <|
+          Elmer.Html.Matchers.hasText "Awesome" <&&>
+          Elmer.Html.Matchers.hasClass "cool"
+        )
 -}
 (<&&>) : Matcher a -> Matcher a -> Matcher a
 (<&&>) leftFunction rightFunction =
@@ -88,7 +95,7 @@ If one fails, then the conjoined matcher fails, otherwise it passes.
 
 {-| Make expectations about the model in its current state.
 
-    Elmer.componentState defaultModel view update
+    Elmer.given defaultModel view update
       |> Elmer.Html.target "button"
       |> Elmer.Html.Event.click
       |> Elmer.expectModel (\model ->
@@ -98,10 +105,10 @@ If one fails, then the conjoined matcher fails, otherwise it passes.
 Use Elmer to get the model into a certain state. Then use the normal facilities of
 elm-test to describe how the model should look in that state.
 -}
-expectModel : Matcher model -> Matcher (ComponentState model msg)
+expectModel : Matcher model -> Matcher (TestState model msg)
 expectModel matcher =
-  ComponentState.mapToExpectation (\component ->
-    matcher component.model
+  TestState.mapToExpectation (\context ->
+    matcher context.model
   )
 
 
@@ -212,7 +219,7 @@ hasLength expectedCount list =
         , message "but it has size" (toString (List.length list))
         ]
 
-{-| Update the `ComponentState` with the given model and Cmd.
+{-| Update the test context with the given model and Cmd.
 
 The current model will be replaced by the given model and the given command
 will then be executed. This is most useful for testing `init` functions.
@@ -221,22 +228,22 @@ The first argument takes a wrapper around whatever function produces the initial
 model and command. This allows Elmer to evaluate the initializing function lazily,
 in case any stubs need to be applied.
 
-    Elmer.componentState MyComponent.defaultModel MyComponent.view MyComponent.update
+    Elmer.given MyComponent.defaultModel MyComponent.view MyComponent.update
       |> init (\() -> MyComponent.init)
       |> Elmer.Html.target "#title"
       |> Elmer.Html.expectElementExists
 
 -}
-init : (() -> (model, Cmd msg)) -> ComponentState model msg -> ComponentState model msg
+init : (() -> (model, Cmd msg)) -> TestState model msg -> TestState model msg
 init initThunk =
-  ComponentState.map (\component ->
+  TestState.map (\context ->
     let
       (initModel, initCommand) = initThunk ()
-      updatedComponent = { component | model = initModel }
+      updatedContext = { context | model = initModel }
     in
-      case Runtime.performCommand initCommand updatedComponent of
-        Ok initializedComponent ->
-          ComponentState.with initializedComponent
+      case Runtime.performCommand initCommand updatedContext of
+        Ok initializeContext ->
+          TestState.with initializeContext
         Err message ->
-          ComponentState.failure message
+          TestState.failure message
   )

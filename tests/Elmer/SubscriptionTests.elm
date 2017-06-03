@@ -3,7 +3,7 @@ module Elmer.SubscriptionTests exposing (..)
 import Test exposing (..)
 import Expect
 import Elmer
-import Elmer.ComponentState as ComponentState exposing (..)
+import Elmer.TestState as TestState exposing (..)
 import Elmer.Spy as Spy
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
@@ -20,10 +20,10 @@ withTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = ComponentState.failure "You Failed!"
+          initialState = TestState.failure "You Failed!"
         in
           Subscription.with (\() _ -> Sub.none) initialState
-            |> Expect.equal (ComponentState.failure "You Failed!")
+            |> Expect.equal (TestState.failure "You Failed!")
     ]
   ]
 
@@ -34,20 +34,20 @@ sendTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = ComponentState.failure "You Failed!"
+          initialState = TestState.failure "You Failed!"
         in
           Subscription.send "mySub" 37 initialState
-            |> Expect.equal (ComponentState.failure "You Failed!")
+            |> Expect.equal (TestState.failure "You Failed!")
     ]
   , describe "when no subscription is found"
     [ describe "when there are no subscriptions spies"
       [ test "it fails and explains why" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.given App.defaultModel App.view App.update
           in
             Subscription.send "someOtherSub" 37 initialState
-              |> Expect.equal (ComponentState.failure (
+              |> Expect.equal (TestState.failure (
                 format
                   [ message "No subscription spy found with name" "someOtherSub"
                   , description "because there are no subscription spies"]
@@ -63,11 +63,11 @@ sendTests =
                   Subscription.fake ("my-spy-" ++ (toString interval)) tagger
                 )
           in
-            Elmer.componentState App.defaultModel App.view App.update
+            Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ override ]
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "someOtherSub" 37
-              |> Expect.equal (ComponentState.failure (
+              |> Expect.equal (TestState.failure (
                 format
                   [ message "No subscription spy found with name" "someOtherSub"
                   , message "These are the current subscription spies" "my-spy-3600000\nmy-spy-1"
@@ -80,7 +80,7 @@ sendTests =
       [ test "the data is tagged and processed" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.given App.defaultModel App.view App.update
             override = Spy.create "Time.every" (\_ -> Time.every)
               |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
@@ -96,7 +96,7 @@ sendTests =
       [ test "the data is tagged and processed" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.given App.defaultModel App.view App.update
             override = Spy.create "Time.every" (\_ -> Time.every)
               |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger
@@ -112,7 +112,7 @@ sendTests =
       [ test "the data is tagged and processed" <|
         \() ->
           let
-            initialState = Elmer.componentState App.defaultModel App.view App.update
+            initialState = Elmer.given App.defaultModel App.view App.update
             override = Spy.create "Time.every" (\_ -> Time.every)
               |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (toString interval)) tagger

@@ -2,14 +2,14 @@ module Elmer.Html.Query exposing
   ( HtmlTarget
   , forHtml
   , forElement
-  , forComponent
+  , forContext
   , findElement
   , findElements
   )
 
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
-import Elmer.Component as Component exposing (Component)
+import Elmer.Context as Context exposing (Context)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
@@ -40,11 +40,11 @@ forElement selector element =
     }
 
 
-forComponent : Component model msg -> Maybe (HtmlTarget msg)
-forComponent component =
-  component.targetSelector |>
+forContext : Context model msg -> Maybe (HtmlTarget msg)
+forContext context =
+  context.targetSelector |>
     Maybe.map (\selector ->
-      forHtml selector <| Component.render component
+      forHtml selector <| Context.render context
     )
 
 

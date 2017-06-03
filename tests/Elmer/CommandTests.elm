@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer.Platform.Command as Command
 import Elmer
-import Elmer.ComponentState as ComponentState exposing (..)
+import Elmer.TestState as TestState exposing (..)
 import Elmer.TestApps.SimpleTestApp as App
 import Elmer.TestApps.MessageTestApp as MessageApp
 import Elmer.TestApps.MouseTestApp as ClickApp
@@ -20,10 +20,10 @@ elmerFailureCommandTest =
   [ test "it causes an upstream failure" <|
     \() ->
       let
-        initialState = Elmer.componentState App.defaultModel App.view App.update
+        initialState = Elmer.given App.defaultModel App.view App.update
         result = Command.send (\() -> Command.fail "You failed!") initialState
       in
-        Expect.equal (ComponentState.failure "You failed!") result
+        Expect.equal (TestState.failure "You failed!") result
   ]
 
 elmerStubbedCommandTest : Test
@@ -32,7 +32,7 @@ elmerStubbedCommandTest =
   [ test "it sends the message" <|
     \() ->
       let
-        initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
+        initialState = Elmer.given MessageApp.defaultModel MessageApp.view MessageApp.update
         msg = MessageApp.RenderFirstMessage "Hey this is the message!"
       in
         Command.send (\() -> Command.fake msg) initialState
@@ -47,22 +47,22 @@ resolveDeferredCommandsTest =
     [ test "it returns the error" <|
       \() ->
         let
-          initialState = ComponentState.failure "You failed!"
+          initialState = TestState.failure "You failed!"
           state = Command.resolveDeferred initialState
         in
-          Expect.equal (ComponentState.failure "You failed!") state
+          Expect.equal (TestState.failure "You failed!") state
     ]
   , describe "when there are no deferred commands"
     [ test "it fails" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
         in
           Command.resolveDeferred initialState
-            |> Expect.equal (ComponentState.failure "No deferred commands found")
+            |> Expect.equal (TestState.failure "No deferred commands found")
     ]
   , let
-      initialState = Elmer.componentState ClickApp.defaultModel ClickApp.view ClickApp.update
+      initialState = Elmer.given ClickApp.defaultModel ClickApp.view ClickApp.update
       deferredClickCommandThunk = \() ->
         Command.fake ClickApp.DoClick
           |> Command.defer
@@ -86,7 +86,7 @@ resolveDeferredCommandsTest =
             , test "it clears the deferred commands" <|
               \() ->
                 Command.resolveDeferred resolvedCommandsState
-                  |> Expect.equal (ComponentState.failure "No deferred commands found")
+                  |> Expect.equal (TestState.failure "No deferred commands found")
             ]
         ]
   ]
@@ -97,16 +97,16 @@ sendCommandTest =
     [ test "it passes on the error" <|
       \() ->
         let
-          initialState = ComponentState.failure "upstream failure"
+          initialState = TestState.failure "upstream failure"
         in
           Command.send (\() -> Cmd.none) initialState
             |> Expect.equal initialState
     ]
   , describe "when there is no upstream failure"
-    [ test "it executes the command and updates the component state" <|
+    [ test "it executes the command and updates the test state" <|
         \() ->
           let
-            initialState = Elmer.componentState MessageApp.defaultModel MessageApp.view MessageApp.update
+            initialState = Elmer.given MessageApp.defaultModel MessageApp.view MessageApp.update
             result = Command.send (\() -> Command.fake (MessageApp.RenderFirstMessage "Did it!")) initialState
           in
             Elmer.expectModel (\model ->
@@ -123,7 +123,7 @@ dummyCommandTests =
     [ test "it shows the failure" <|
       \() ->
         let
-          state = ComponentState.failure "You Failed!"
+          state = TestState.failure "You Failed!"
           result = Command.expectDummy "someCommand" state
         in
           Expect.equal (Expect.fail "You Failed!") result
@@ -132,7 +132,7 @@ dummyCommandTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
           dummyCommand = Command.dummy "someCommand"
         in
           Command.send (\() -> dummyCommand) initialState
@@ -143,7 +143,7 @@ dummyCommandTests =
     [ test "it passes" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
           dummyCommand = Command.dummy "fakeCommand"
         in
           Command.send (\() -> dummyCommand) initialState

@@ -40,8 +40,8 @@ and [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigati
 -}
 
 import Elmer exposing (Matcher)
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
-import Elmer.Component exposing (Component)
+import Elmer.TestState as TestState exposing (TestState)
+import Elmer.Context exposing (Context)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Platform.Internal as Platform
@@ -75,19 +75,19 @@ This will be most useful in conjunction with `expectDummy`.
 dummy : String -> Cmd msg
 dummy identifier =
   Platform.mapStateCommand <|
-    updateComponentStateWithDummyCommand identifier
+    updateTestStateWithDummyCommand identifier
 
-updateComponentStateWithDummyCommand : String -> Component model msg -> Component model msg
-updateComponentStateWithDummyCommand identifier componentState =
-  { componentState | dummyCommands = identifier :: componentState.dummyCommands }
+updateTestStateWithDummyCommand : String -> Context model msg -> Context model msg
+updateTestStateWithDummyCommand identifier testState =
+  { testState | dummyCommands = identifier :: testState.dummyCommands }
 
 {-| Expect that a dummy command with the given identifier has been sent.
 -}
-expectDummy : String -> Matcher (Elmer.ComponentState model msg)
+expectDummy : String -> Matcher (Elmer.TestState model msg)
 expectDummy expectedIdentifier =
-  ComponentState.mapToExpectation (\componentState ->
+  TestState.mapToExpectation (\testState ->
     let
-      dummyCommands = List.filter (\identifier -> identifier == expectedIdentifier) componentState.dummyCommands
+      dummyCommands = List.filter (\identifier -> identifier == expectedIdentifier) testState.dummyCommands
     in
       if List.isEmpty dummyCommands then
         Expect.fail (format [message "No dummy commands sent with identifier" expectedIdentifier])
@@ -107,29 +107,29 @@ to the component's `update` function until `resolveDeferred` is called.
 defer : Cmd msg -> Cmd msg
 defer command =
   Platform.mapStateCommand <|
-    updateComponentStateWithDeferredCommand command
+    updateTestStateWithDeferredCommand command
 
-updateComponentStateWithDeferredCommand : Cmd msg -> Component model msg -> Component model msg
-updateComponentStateWithDeferredCommand command componentState =
-  { componentState | deferredCommands = command :: componentState.deferredCommands }
+updateTestStateWithDeferredCommand : Cmd msg -> Context model msg -> Context model msg
+updateTestStateWithDeferredCommand command testState =
+  { testState | deferredCommands = command :: testState.deferredCommands }
 
 {-| Resolve any deferred commands.
 
 Once this function is called, all messages associated with deferred commands will be
 sent to the component's `update` function.
 -}
-resolveDeferred : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+resolveDeferred : Elmer.TestState model msg -> Elmer.TestState model msg
 resolveDeferred =
-  ComponentState.map (\componentState ->
-    if List.isEmpty componentState.deferredCommands then
-      ComponentState.failure "No deferred commands found"
+  TestState.map (\testState ->
+    if List.isEmpty testState.deferredCommands then
+      TestState.failure "No deferred commands found"
     else
       let
-        deferredCommands = Cmd.batch componentState.deferredCommands
-        updatedComponentState = { componentState | deferredCommands = [] }
+        deferredCommands = Cmd.batch testState.deferredCommands
+        updatedTestState = { testState | deferredCommands = [] }
       in
-        Runtime.performCommand deferredCommands updatedComponentState
-          |> asComponentState
+        Runtime.performCommand deferredCommands updatedTestState
+          |> asTestState
   )
 
 {-| Send a command.
@@ -142,24 +142,24 @@ The first argument is a function that returns the command to be sent.
 We do this to allow Elmer to evaluate the command-generating function lazily,
 in case any stubbed functions need to be applied.
 
-    componentState
+    testState
       |> send (\() -> MyComponent.generateSomeCommand)
       |> Elmer.Html.target ".some-class"
       |> Elmer.Html.expect Elmer.Html.Matchers.elementExists
 
 -}
-send : (() -> Cmd msg) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+send : (() -> Cmd msg) -> Elmer.TestState model msg -> Elmer.TestState model msg
 send commandThunk =
-  ComponentState.map (\state ->
+  TestState.map (\state ->
     Runtime.performCommand (commandThunk ()) state
-      |> asComponentState
+      |> asTestState
   )
 
 
-asComponentState : Result String (Component model msg) -> ComponentState model msg
-asComponentState commandResult =
+asTestState : Result String (Context model msg) -> TestState model msg
+asTestState commandResult =
   case commandResult of
-    Ok component ->
-      ComponentState.with component
+    Ok context ->
+      TestState.with context
     Err message ->
-      ComponentState.failure message
+      TestState.failure message

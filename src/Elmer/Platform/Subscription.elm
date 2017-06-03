@@ -35,7 +35,7 @@ component as expected.
 -}
 
 import Elmer
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Printer exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Platform.Command as Command
@@ -61,7 +61,7 @@ could do the following:
           Elmer.Platform.Subscription.fake "everySecond" tagger
         )
     in
-      componentState
+      testState
         |> Spy.use [ fakeSub ]
         |> with (\() -> Component.subscriptions)
         |> send "everySecond" 3000
@@ -69,13 +69,13 @@ could do the following:
         |> Elmer.Html.expect (element <| hasText "3 seconds")
 
 -}
-with : (() -> (model -> Sub msg)) -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+with : (() -> (model -> Sub msg)) -> Elmer.TestState model msg -> Elmer.TestState model msg
 with subsThunk =
-  ComponentState.map (\component ->
+  TestState.map (\context ->
     let
-      subscription = subsThunk () <| component.model
+      subscription = subsThunk () <| context.model
     in
-      ComponentState.with { component | subscriptions = subscription }
+      TestState.with { context | subscriptions = subscription }
   )
 
 
@@ -101,7 +101,7 @@ and sends some data through it.
           Subscription.fake "mouseUps" tagger
         )
     in
-      Elmer.componentState defaultModel view update
+      Elmer.given defaultModel view update
         |> Spy.use [ subSpy ]
         |> with (\() -> subscriptions)
         |> send "mouseUps" { x = 10, y = 50 }
@@ -116,31 +116,31 @@ fake name tagger =
 Data sent via this function will be tagged accordingly and passed to
 the component's `update` function for processing.
 -}
-send : String -> a -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+send : String -> a -> Elmer.TestState model msg -> Elmer.TestState model msg
 send subName data =
-  ComponentState.map (\componentState ->
-    case findSubDescription subName componentState.subscriptions of
+  TestState.map (\testState ->
+    case findSubDescription subName testState.subscriptions of
       Just subDesc ->
         let
           command = subDesc.tagger data |> Command.fake
         in
-          case Runtime.performCommand command componentState of
+          case Runtime.performCommand command testState of
             Ok updatedState ->
-              ComponentState.with updatedState
+              TestState.with updatedState
             Err message ->
-              ComponentState.failure message
+              TestState.failure message
 
       Nothing ->
         let
-          spies = subscriptionSpyNames componentState.subscriptions
+          spies = subscriptionSpyNames testState.subscriptions
         in
           if List.isEmpty spies then
-            ComponentState.failure <| format
+            TestState.failure <| format
               [ message "No subscription spy found with name" subName
               , description "because there are no subscription spies"
               ]
           else
-            ComponentState.failure <| format
+            TestState.failure <| format
               [ message "No subscription spy found with name" subName
               , message "These are the current subscription spies" (String.join "\n" spies)
               ]

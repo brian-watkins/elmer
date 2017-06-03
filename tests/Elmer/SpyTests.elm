@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer.TestApps.SpyTestApp as SpyApp
 import Elmer.TestApps.HttpTestApp as HttpApp
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy
 import Elmer.Spy.Internal exposing (Arg(..))
 import Elmer.Spy.Matchers as Matchers
@@ -25,11 +25,11 @@ useTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = ComponentState.failure "You failed!"
+          initialState = TestState.failure "You failed!"
           spy = Spy.create "clearName" (\_ -> SpyApp.clearName)
         in
           Spy.use [ spy ] initialState
-            |> Expect.equal (ComponentState.failure "You failed!")
+            |> Expect.equal (TestState.failure "You failed!")
     ]
   ]
 
@@ -40,11 +40,11 @@ spyTests =
     [ test "it fails" <|
       \() ->
         let
-          initialState = Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          initialState = Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           spy = Spy.create "my-spy" (\_ -> "Huh?")
         in
           Spy.use [ spy ] initialState
-            |> Expect.equal (ComponentState.failure <|
+            |> Expect.equal (TestState.failure <|
               format
                 [ message "Failed to activate spies" "my-spy"
                 ]
@@ -57,7 +57,7 @@ spyTests =
           let
             spy = Spy.create "clearName" (\_ -> SpyApp.clearName)
           in
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ spy ]
               |> Markup.target "#button"
               |> Event.click
@@ -75,14 +75,14 @@ expectSpyTests =
   [ describe "when there is a failure upstream"
     [ test "it fails" <|
       \() ->
-        ComponentState.failure "Upstream Failure"
+        TestState.failure "Upstream Failure"
           |> Spy.expect "some-spy" (\_ -> Expect.pass)
           |> Expect.equal (Expect.fail "Upstream Failure")
     ]
   , describe "when the function has not been registered as a spy"
     [ test "it fails" <|
       \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.expect "some-spy" (\_ -> Expect.pass)
           |> Expect.equal (Expect.fail (format
             [ message "Attempted to make expectations about a spy" "some-spy"
@@ -94,7 +94,7 @@ expectSpyTests =
     [ describe "when the function has only one argument"
       [ test "it sets the name and passes it to the matcher" <|
         \() ->
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "titleText" (\_ -> SpyApp.titleText) ]
             |> Markup.target "#title"
             |> Spy.expect "titleText" (\spy ->
@@ -102,7 +102,7 @@ expectSpyTests =
               )
       , test "it sets the number of calls and passes it to the matcher" <|
         \() ->
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "titleText" (\_ -> SpyApp.titleText) ]
             |> Markup.target "#title"
             |> Markup.render
@@ -111,7 +111,7 @@ expectSpyTests =
               )
       , test "it sets the arguments for each call and passes it to the matcher" <|
         \() ->
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "titleText" (\_ -> SpyApp.titleText) ]
             |> Markup.target "#title"
             |> Markup.render
@@ -126,7 +126,7 @@ expectSpyTests =
                 Spy.create "titleText" (\_ -> SpyApp.titleText)
                   |> Spy.andCallFake ( \_ -> "Fake Title" )
             in
-              Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+              Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
                 |> Spy.use [ spy ]
                 |> Markup.target "#title"
                 |> Markup.render
@@ -140,7 +140,7 @@ expectSpyTests =
                 Spy.create "titleText" (\_ -> SpyApp.titleText)
                   |> Spy.andCallFake ( \_ -> "Fake Title" )
             in
-              Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+              Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
                 |> Spy.use [ spy ]
                 |> Markup.target "#title"
                 |> Markup.expect (element <| hasText "Fake Title")
@@ -150,7 +150,7 @@ expectSpyTests =
       [ describe "when all the arguments are provided at once"
         [ test "it sets the name and passes it to the matcher" <|
           \() ->
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ Spy.create "combineNames" (\_ -> SpyApp.combineNames) ]
               |> Markup.target "#multi-arg-button"
               |> Event.click
@@ -159,7 +159,7 @@ expectSpyTests =
                 )
         , test "it sets the number of calls and passes it to the matcher" <|
           \() ->
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ Spy.create "combineNames" (\_ -> SpyApp.combineNames) ]
               |> Markup.target "#multi-arg-button"
               |> Event.click
@@ -170,7 +170,7 @@ expectSpyTests =
                 )
         , test "it sets the arguments for each call and passes it to the matcher" <|
           \() ->
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ Spy.create "combineNames" (\_ -> SpyApp.combineNames) ]
               |> Markup.target "#multi-arg-button"
               |> Event.click
@@ -186,7 +186,7 @@ expectSpyTests =
                   Spy.create "combineNames" (\_ -> SpyApp.combineNames)
                     |> Spy.andCallFake ( \_ _ _ -> "Fake Name" )
               in
-                Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+                Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
                   |> Spy.use [ spy ]
                   |> Markup.target "#multi-arg-button"
                   |> Event.click
@@ -201,7 +201,7 @@ expectSpyTests =
                   Spy.create "combineNames" (\_ -> SpyApp.combineNames)
                     |> Spy.andCallFake ( \_ _ _ -> "Fake Name" )
               in
-                Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+                Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
                   |> Spy.use [ spy ]
                   |> Markup.target "#multi-arg-button"
                   |> Event.click
@@ -212,7 +212,7 @@ expectSpyTests =
       , describe "when arguments are provided successively"
         [ test "it sets the name and passes it to the matcher" <|
           \() ->
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ Spy.create "combineNames" (\_ -> SpyApp.combineNames) ]
               |> Markup.target "#successive-arg-button"
               |> Event.click
@@ -221,7 +221,7 @@ expectSpyTests =
                 )
         , test "it sets the number of calls and passes it to the matcher" <|
           \() ->
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ Spy.create "combineNames" (\_ -> SpyApp.combineNames) ]
               |> Markup.target "#successive-arg-button"
               |> Event.click
@@ -232,7 +232,7 @@ expectSpyTests =
                 )
         , test "it sets the arguments for each call and passes it to the matcher" <|
           \() ->
-            Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+            Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
               |> Spy.use [ Spy.create "combineNames" (\_ -> SpyApp.combineNames) ]
               |> Markup.target "#successive-arg-button"
               |> Event.click
@@ -248,7 +248,7 @@ expectSpyTests =
                   Spy.create "combineNames" (\_ -> SpyApp.combineNames)
                     |> Spy.andCallFake ( \_ _ _ -> "Fake Stuff" )
               in
-                Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+                Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
                   |> Spy.use [ spy ]
                   |> Markup.target "#successive-arg-button"
                   |> Event.click
@@ -263,7 +263,7 @@ expectSpyTests =
                   Spy.create "combineNames" (\_ -> SpyApp.combineNames)
                     |> Spy.andCallFake ( \_ _ _ -> "Fake Stuff" )
               in
-                Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+                Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
                   |> Spy.use [ spy ]
                   |> Markup.target "#successive-arg-button"
                   |> Event.click
@@ -284,7 +284,7 @@ spyArgumentTests =
         spy =
           Spy.create "fake-makeModel" (\_ -> SpyApp.makeModel)
       in
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.use [ spy ]
           |> Elmer.init (\_ ->
               SpyApp.init
@@ -321,13 +321,13 @@ restoreTests =
           stub = Spy.create "my-spy" (\_ -> SpyApp.titleText)
             |> Spy.andCallFake (\_ -> "Test Title")
         in
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ stub ]
             |> Markup.target "#title"
             |> Markup.expect (element <| hasText "Test Title")
     , test "it is not active for the next test" <|
       \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Markup.target "#title"
           |> Markup.expect (element <| hasText "A Title: Some Title")
     ]
@@ -342,14 +342,14 @@ restoreTests =
             Spy.create "my-spy" (\_ -> SpyApp.titleText)
               |> Spy.andCallFake (\_ -> "Another test title")
         in
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ stub ]
             |> Spy.use [ anotherStub ]
             |> Markup.target "#title"
             |> Markup.expect (element <| hasText "Another test title")
     , test "the spy is not set in the next test" <|
       \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Markup.target "#title"
           |> Markup.expect (element <| hasText "A Title: Some Title")
     ]
@@ -360,14 +360,14 @@ restoreTests =
           stub = Spy.create "my-spy" (\_ -> SpyApp.titleText)
             |> Spy.andCallFake (\_ -> "Test Title")
         in
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ stub ]
             |> Markup.target "#title"
             |> Event.click
-            |> Expect.equal (ComponentState.failure "No relevant event handler found")
+            |> Expect.equal (TestState.failure "No relevant event handler found")
     , test "the spy is not active for the next test" <|
       \() ->
-        Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Markup.target "#title"
           |> Markup.expect (element <| hasText "A Title: Some Title")
     ]
@@ -382,7 +382,7 @@ andCallFakeTests =
           |> Spy.andCallFake (\_ -> "Test Title")
 
         state =
-          Elmer.componentState SpyApp.defaultModel SpyApp.view SpyApp.update
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ spy ]
             |> Markup.target "#title"
       in

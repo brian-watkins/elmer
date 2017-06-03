@@ -4,7 +4,7 @@ import Test exposing (..)
 import Elmer.TestApps.NavigationTestApp as App
 import Expect
 import Elmer exposing (..)
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
@@ -22,7 +22,7 @@ expectLocationTests =
     [ test "it reports the failure" <|
       \() ->
         let
-          initialState = ComponentState.failure "Nothing found!"
+          initialState = TestState.failure "Nothing found!"
         in
           ElmerNav.expectLocation "http://blah.com" initialState
             |> Expect.equal (Expect.fail "Nothing found!")
@@ -31,7 +31,7 @@ expectLocationTests =
     [ test "it explains the failure" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
         in
           ElmerNav.expectLocation "http://badplace.com" initialState
             |> Expect.equal
@@ -41,7 +41,7 @@ expectLocationTests =
     [ describe "when the correct url is expected"
       [ test "it passes" <|
           \() ->
-            Elmer.componentState App.defaultModel App.view App.update
+            Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Markup.target "#navigateButton"
               |> Event.click
@@ -52,7 +52,7 @@ expectLocationTests =
       [ describe "when a location has been set"
         [ test "it explains the failure" <|
           \() ->
-            Elmer.componentState App.defaultModel App.view App.update
+            Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Markup.target "#navigateButton"
               |> Event.click
@@ -66,7 +66,7 @@ expectLocationTests =
     [ describe "when the correct url is expected"
       [ test "it passes" <|
           \() ->
-            Elmer.componentState App.defaultModel App.view App.update
+            Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Markup.target "#modifyLocationButton"
               |> Event.click
@@ -77,7 +77,7 @@ expectLocationTests =
       [ describe "when a location has been set"
         [ test "it explains the failure" <|
           \() ->
-            Elmer.componentState App.defaultModel App.view App.update
+            Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Markup.target "#modifyLocationButton"
               |> Event.click
@@ -91,14 +91,14 @@ expectLocationTests =
 
 setLocationTests =
   let
-    fullState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.parseLocation
+    fullState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.parseLocation
   in
   describe "set location"
   [ describe "when there is an upstream failure"
     [ test "it shows the message" <|
       \() ->
         let
-          failureState = ComponentState.failure "failed"
+          failureState = TestState.failure "failed"
         in
           ElmerNav.setLocation "http://fun.com/fun.html" failureState
             |> Markup.target ".error"
@@ -109,7 +109,7 @@ setLocationTests =
     [ test "it fails with a message" <|
       \() ->
         let
-          stateWithoutParser = ComponentState.map (\s -> ComponentState.with { s | locationParser = Nothing }) fullState
+          stateWithoutParser = TestState.map (\s -> TestState.with { s | locationParser = Nothing }) fullState
         in
           ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutParser
             |> Markup.target ".error"

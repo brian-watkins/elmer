@@ -53,8 +53,8 @@ import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
 import Elmer.Html
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
-import Elmer.Component as Component exposing (Component)
+import Elmer.TestState as TestState exposing (TestState)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Internal as Internal
 import Elmer
 import Elmer.Runtime as Runtime
@@ -103,12 +103,12 @@ handlers will be triggered.
 - If the targeted element has no form attribute, then the submit handler on any form that is an
 ancestor of the targeted element will be triggered.
 -}
-click : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+click : Elmer.TestState model msg -> Elmer.TestState model msg
 click =
   triggerClick Single
 
-triggerClick : ClickType -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
-triggerClick clickType componentState =
+triggerClick : ClickType -> Elmer.TestState model msg -> Elmer.TestState model msg
+triggerClick clickType testState =
   let
     eventPropagations =
       [ mouseEventPropagation "click"
@@ -119,11 +119,11 @@ triggerClick clickType componentState =
   in
     case clickType of
       Single ->
-        updateComponentState eventPropagations componentState
+        updateTestState eventPropagations testState
       Double ->
-        updateComponentState
+        updateTestState
           ( eventPropagations ++ [ basicEventPropagation "dblclick" ] )
-          componentState
+          testState
 
 submitHandlerQuery : EventHandlerQuery msg
 submitHandlerQuery view element =
@@ -156,24 +156,24 @@ triggersSubmit element =
 Two clicks will occur in succession, with the second also triggering a double
 click event. See `click` above for a list of the events triggered by a click.
 -}
-doubleClick : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+doubleClick : Elmer.TestState model msg -> Elmer.TestState model msg
 doubleClick =
   triggerClick Single
     >> triggerClick Double
 
 {-| Trigger a mouse down event on the targeted element.
 -}
-press : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+press : Elmer.TestState model msg -> Elmer.TestState model msg
 press =
-  updateComponentState
+  updateTestState
     [ mouseEventPropagation "mousedown"
     ]
 
 {-| Trigger a mouse up event on the targeted element.
 -}
-release : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+release : Elmer.TestState model msg -> Elmer.TestState model msg
 release =
-  updateComponentState
+  updateTestState
     [ mouseEventPropagation "mouseup"
     ]
 
@@ -184,9 +184,9 @@ This may trigger any relevant `mouseOver` or `mouseEnter` event handlers.
 Note: Mouse enter events do not propagate, so a mouse enter action will only
 trigger an event handler that is registered by the targeted element.
 -}
-moveMouseIn : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+moveMouseIn : Elmer.TestState model msg -> Elmer.TestState model msg
 moveMouseIn =
-  updateComponentState
+  updateTestState
     [ mouseElementEventPropagation "mouseenter"
     , mouseEventPropagation "mouseover"
     ]
@@ -198,28 +198,28 @@ This may trigger any relevant `mouseOut` or `mouseLeave` event handlers.
 Note: Mouse leave events do not propagate, so a mouse leave action will only
 trigger an event handler that is registered by the targeted element.
 -}
-moveMouseOut : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+moveMouseOut : Elmer.TestState model msg -> Elmer.TestState model msg
 moveMouseOut =
-  updateComponentState
+  updateTestState
     [ mouseElementEventPropagation "mouseleave"
     , mouseEventPropagation "mouseout"
     ]
 
 {-| Trigger a focus event on the targeted element.
 -}
-focus : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+focus : Elmer.TestState model msg -> Elmer.TestState model msg
 focus =
   processBasicEvent "focus"
 
 {-| Trigger a blur event on the targeted element.
 -}
-blur : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+blur : Elmer.TestState model msg -> Elmer.TestState model msg
 blur =
   processBasicEvent "blur"
 
 {-| Trigger an input event on the targeted element.
 -}
-input : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+input : String -> Elmer.TestState model msg -> Elmer.TestState model msg
 input inputString =
     trigger "input" (inputEvent inputString)
 
@@ -230,18 +230,18 @@ inputEvent value =
 {-| Trigger a change event on the targeted checkbox element with
 `True` for the `checked` property.
 -}
-check : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+check : Elmer.TestState model msg -> Elmer.TestState model msg
 check =
   handleCheck True
 
 {-| Trigger a change event on the targeted checkbox element with
 `False` for the `checked` property.
 -}
-uncheck : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+uncheck : Elmer.TestState model msg -> Elmer.TestState model msg
 uncheck =
   handleCheck False
 
-handleCheck : Bool -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+handleCheck : Bool -> Elmer.TestState model msg -> Elmer.TestState model msg
 handleCheck doCheck =
   let
     eventJson = "{\"target\":{\"checked\":"
@@ -254,18 +254,18 @@ handleCheck doCheck =
 
 The argument specifies the option to select by its `value` property.
 -}
-select : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+select : String -> Elmer.TestState model msg -> Elmer.TestState model msg
 select value =
-  ComponentState.map (\component ->
+  TestState.map (\context ->
     let
       eventPropagations = [ eventPropagation (eventHandlerQuery "input") (inputEvent value) ]
     in
-      targetedElement component
+      targetedElement context
         |> Result.andThen isSelectable
         |> Result.andThen (hasOption value)
-        |> Result.andThen (hasHandlersFor component eventPropagations)
-        |> Result.andThen (apply eventPropagations component)
-        |> toComponentState
+        |> Result.andThen (hasHandlersFor context eventPropagations)
+        |> Result.andThen (apply eventPropagations context)
+        |> toTestState
   )
 
 isSelectable : HtmlElement msg -> Result String (HtmlElement msg)
@@ -306,16 +306,16 @@ and the proper representation of the event object in JSON format.
 
 The following will trigger a `keyup` event:
 
-    componentState
+    testState
       |> trigger "keyup" "{\"keyCode\":65}"
 -}
-trigger : String -> String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+trigger : String -> String -> Elmer.TestState model msg -> Elmer.TestState model msg
 trigger eventName eventJson =
-  updateComponentState [ eventPropagation (eventHandlerQuery eventName) eventJson ]
+  updateTestState [ eventPropagation (eventHandlerQuery eventName) eventJson ]
 
 -- Private functions
 
-processBasicEvent : String -> ComponentState model msg -> ComponentState model msg
+processBasicEvent : String -> TestState model msg -> TestState model msg
 processBasicEvent eventName =
   trigger eventName "{}"
 
@@ -339,9 +339,9 @@ basicElementEventPropagation : String -> EventPropagation msg
 basicElementEventPropagation eventName =
   eventPropagation (elementEventHandlerQuery eventName) "{}"
 
-processBasicElementEvent : String -> ComponentState model msg -> ComponentState model msg
+processBasicElementEvent : String -> TestState model msg -> TestState model msg
 processBasicElementEvent eventName =
-  updateComponentState [ basicElementEventPropagation eventName ]
+  updateTestState [ basicElementEventPropagation eventName ]
 
 eventHandlerQuery : String -> EventHandlerQuery msg
 eventHandlerQuery eventName _ element =
@@ -352,19 +352,19 @@ elementEventHandlerQuery : String -> EventHandlerQuery msg
 elementEventHandlerQuery eventName _ element =
   List.filter (\e -> e.eventType == eventName) element.eventHandlers
 
-updateComponentState : List (EventPropagation msg) -> ComponentState model msg -> ComponentState model msg
-updateComponentState eventPropagations =
-  ComponentState.map (\component ->
-    targetedElement component
-      |> Result.andThen (hasHandlersFor component eventPropagations)
-      |> Result.andThen (apply eventPropagations component)
-      |> toComponentState
+updateTestState : List (EventPropagation msg) -> TestState model msg -> TestState model msg
+updateTestState eventPropagations =
+  TestState.map (\context ->
+    targetedElement context
+      |> Result.andThen (hasHandlersFor context eventPropagations)
+      |> Result.andThen (apply eventPropagations context)
+      |> toTestState
   )
 
-hasHandlersFor : Component model msg -> List (EventPropagation msg) -> HtmlElement msg -> Result String (HtmlElement msg)
-hasHandlersFor component eventPropagations element =
+hasHandlersFor : Context model msg -> List (EventPropagation msg) -> HtmlElement msg -> Result String (HtmlElement msg)
+hasHandlersFor context eventPropagations element =
   let
-    handlers = List.map (\ep -> ep.handlerQuery (Component.render component) element) eventPropagations
+    handlers = List.map (\ep -> ep.handlerQuery (Context.render context) element) eventPropagations
       |> List.concat
   in
     if List.isEmpty handlers then
@@ -372,22 +372,22 @@ hasHandlersFor component eventPropagations element =
     else
       Ok element
 
-apply : List (EventPropagation msg) -> Component model msg -> HtmlElement msg -> Result String (Component model msg)
-apply eventPropagationList component element =
+apply : List (EventPropagation msg) -> Context model msg -> HtmlElement msg -> Result String (Context model msg)
+apply eventPropagationList context element =
   List.foldl (\ep result ->
     case result of
-      Ok component ->
-        collectEventHandlers ep.handlerQuery component element
-          |> propagateEvent ep.event component
+      Ok context ->
+        collectEventHandlers ep.handlerQuery context element
+          |> propagateEvent ep.event context
       Err _ ->
         result
-  ) (Ok component) eventPropagationList
+  ) (Ok context) eventPropagationList
 
-targetedElement : Component model msg -> Result String (HtmlElement msg)
-targetedElement component =
-  case component.targetSelector of
+targetedElement : Context model msg -> Result String (HtmlElement msg)
+targetedElement context =
+  case context.targetSelector of
     Just selector ->
-      Query.findElement <| Query.forHtml selector (Component.render component)
+      Query.findElement <| Query.forHtml selector (Context.render context)
     Nothing ->
       Err "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
 
@@ -395,33 +395,33 @@ prepareHandler : HtmlEventHandler msg -> EventHandler msg
 prepareHandler eventHandler =
   Json.decodeString eventHandler.decoder
 
-collectEventHandlers : EventHandlerQuery msg -> Component model msg -> HtmlElement msg -> List (EventHandler msg)
-collectEventHandlers eventHandlerQuery component element =
-  eventHandlerQuery (Component.render component) element
+collectEventHandlers : EventHandlerQuery msg -> Context model msg -> HtmlElement msg -> List (EventHandler msg)
+collectEventHandlers eventHandlerQuery context element =
+  eventHandlerQuery (Context.render context) element
     |> takeUpTo (\handler -> handler.options.stopPropagation)
     |> List.map prepareHandler
 
-propagateEvent : EventJson -> Component model msg -> List (EventHandler msg) -> Result String (Component model msg)
-propagateEvent event component eventHandlers =
-  List.foldl (\eventHandler componentResult ->
-    case componentResult of
-      Ok component ->
-        updateComponent (eventHandler event) component
+propagateEvent : EventJson -> Context model msg -> List (EventHandler msg) -> Result String (Context model msg)
+propagateEvent event context eventHandlers =
+  List.foldl (\eventHandler contextResult ->
+    case contextResult of
+      Ok context ->
+        updateComponent (eventHandler event) context
       Err _ ->
-        componentResult
-  ) (Ok component) eventHandlers
+        contextResult
+  ) (Ok context) eventHandlers
 
-updateComponent : EventResult msg -> Component model msg -> Result String (Component model msg)
-updateComponent result component =
-  Result.andThen (\msg -> Runtime.performUpdate msg component) result
+updateComponent : EventResult msg -> Context model msg -> Result String (Context model msg)
+updateComponent result context =
+  Result.andThen (\msg -> Runtime.performUpdate msg context) result
 
-toComponentState : Result String (Component model msg) -> ComponentState model msg
-toComponentState componentResult =
-  case componentResult of
-    Ok component ->
-      ComponentState.with component
+toTestState : Result String (Context model msg) -> TestState model msg
+toTestState contextResult =
+  case contextResult of
+    Ok context ->
+      TestState.with context
     Err message ->
-      ComponentState.failure message
+      TestState.failure message
 
 
 takeUpTo : (a -> Bool) -> List a -> List a

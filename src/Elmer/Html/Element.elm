@@ -81,8 +81,9 @@ properties =
 {-| Get this element's attributes as a `Dict`. If you define a custom attribute
 for an Html element, you can find it with this function.
 
-    componentState
-      |> expectElement (\element ->
+    Elmer.given someModel view update
+      |> target "#some-element"
+      |> expect (element <| \element ->
         attributes element
           |> Dict.get "data-attribute"
           |> Expect.notEqual Nothing

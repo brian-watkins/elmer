@@ -5,7 +5,7 @@ import Expect
 
 import Html exposing (Html)
 import Elmer exposing (..)
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
@@ -28,7 +28,7 @@ sendSecondMessage str =
 batchCommandTest : Test
 batchCommandTest =
   let
-    initialState = Elmer.componentState App.defaultModel App.view App.update
+    initialState = Elmer.given App.defaultModel App.view App.update
     batchCommandThunk = \() ->
       Cmd.batch
         [ sendFirstMessage "Cool stuff!"
@@ -50,7 +50,7 @@ batchCommandTest =
 batchCommandFailureTest : Test
 batchCommandFailureTest =
   let
-    initialState = Elmer.componentState App.defaultModel App.view App.update
+    initialState = Elmer.given App.defaultModel App.view App.update
     batchCommandThunk = \() ->
       Cmd.batch
         [ sendFirstMessage "Cool stuff!"
@@ -62,14 +62,14 @@ batchCommandFailureTest =
     describe "when a batched command fails"
     [ test "it reports the failure" <|
       \() ->
-          Expect.equal (ComponentState.failure "It failed!") result
+          Expect.equal (TestState.failure "It failed!") result
     ]
 
 mappedBatchCommandTest : Test
 mappedBatchCommandTest =
   let
     testModel = { appModel = App.defaultModel }
-    initialState = Elmer.componentState testModel parentView parentUpdate
+    initialState = Elmer.given testModel parentView parentUpdate
     batchCommand = Cmd.batch
       [ sendFirstMessage "Cool stuff!"
       , sendSecondMessage "Fun stuff!"
@@ -115,11 +115,11 @@ unknownCommandTest =
   [ test "it fails" <|
     \() ->
       let
-        initialState = Elmer.componentState App.defaultModel App.view App.update
+        initialState = Elmer.given App.defaultModel App.view App.update
         unknownCommandThunk = \() -> Task.perform App.RenderFirstMessage (Task.succeed "hello")
       in
         Command.send unknownCommandThunk initialState
-          |> Expect.equal (ComponentState.failure ( format
+          |> Expect.equal (TestState.failure ( format
             [ message "Elmer encountered a command it does not know how to run" "Task"
             , description "Try sending a stubbed or dummy command instead"
             ]

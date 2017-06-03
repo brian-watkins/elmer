@@ -20,8 +20,8 @@ module Elmer.Html exposing
 -}
 
 import Elmer exposing (Matcher)
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
-import Elmer.Component as Component exposing (Component)
+import Elmer.TestState as TestState exposing (TestState)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query
@@ -94,15 +94,15 @@ the syntax described above. For example,
 will target the first `a` element that is a descendant of the first `div` element.
 You can add as many selectors as you want.
 -}
-target : String -> Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+target : String -> Elmer.TestState model msg -> Elmer.TestState model msg
 target selector =
-  ComponentState.map <|
-    \component ->
-      ComponentState.with { component | targetSelector = Just selector }
+  TestState.map <|
+    \context ->
+      TestState.with { context | targetSelector = Just selector }
 
 {-| Make expectations about the targeted html.
 
-    target ".my-class" componentState
+    target ".my-class" testState
       |> expect (
         Elmer.Html.Matchers.element <|
           Elmer.Html.Matchers.hasText "some text"
@@ -111,14 +111,14 @@ target selector =
 Use `expect` in conjunction with matchers like `element`, `elementExists`,
 or `elements`.
 -}
-expect : Matcher (HtmlTarget msg) -> Matcher (Elmer.ComponentState model msg)
+expect : Matcher (HtmlTarget msg) -> Matcher (Elmer.TestState model msg)
 expect matcher =
-  ComponentState.mapToExpectation <|
-    \component ->
-      case component.targetSelector of
+  TestState.mapToExpectation <|
+    \context ->
+      case context.targetSelector of
         Just selector ->
           matcher <|
-            Query.forHtml selector <| Component.render component
+            Query.forHtml selector <| Context.render context
         Nothing ->
           Expect.fail "No expectations could be made because no Html has been targeted.\n\nUse Elmer.Html.target to identify the Html you want to describe."
 
@@ -130,11 +130,11 @@ render the view manually before you can make expectations about that spy.
 
 Note: Usually you will not need to render the view manually.
 -}
-render : Elmer.ComponentState model msg -> Elmer.ComponentState model msg
+render : Elmer.TestState model msg -> Elmer.TestState model msg
 render =
-  ComponentState.map <|
-    \component ->
+  TestState.map <|
+    \context ->
       let
-        view = Component.render component
+        view = Context.render context
       in
-        ComponentState.with component
+        TestState.with context

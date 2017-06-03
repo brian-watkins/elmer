@@ -5,7 +5,7 @@ import Expect
 import Elmer
 import Elmer.TestApps.InputTestApp as App
 import Elmer.EventTests as EventTests
-import Elmer.ComponentState as ComponentState exposing (ComponentState)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Html as Markup
 import Elmer.Spy as Spy exposing (andCallFake)
@@ -20,7 +20,7 @@ inputTests =
   , describe "when the input succeeds"
     [ test "it updates the model accordingly" <|
       \() ->
-        Elmer.componentState App.defaultModel App.view App.update
+        Elmer.given App.defaultModel App.view App.update
           |> Markup.target "input[name='first-name']"
           |> Event.input "Mr. Fun Stuff"
           |> Elmer.expectModel (\model ->
@@ -37,7 +37,7 @@ checkTests =
   , EventTests.propagationBehavior Event.check "change"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "the check event"
       [ test "at first no check is recorded" <|
@@ -61,7 +61,7 @@ uncheckTests =
   , EventTests.propagationBehavior Event.uncheck "change"
   , let
       initialModel = App.defaultModel
-      initialState = Elmer.componentState initialModel App.view App.update
+      initialState = Elmer.given initialModel App.view App.update
     in
       describe "the uncheck event"
       [ test "at first no check is recorded" <|
@@ -85,15 +85,15 @@ triggersSubmit selector =
     [ test "it returns an error" <|
       \() ->
         let
-          state = Elmer.componentState App.defaultModel App.submitWithoutFormView App.update
+          state = Elmer.given App.defaultModel App.submitWithoutFormView App.update
             |> Markup.target selector
             |> Event.click
         in
-          Expect.equal state <| ComponentState.failure "No relevant event handler found"
+          Expect.equal state <| TestState.failure "No relevant event handler found"
     ]
   , let
       initialModel = App.defaultModel
-      state = Elmer.componentState initialModel App.view App.update
+      state = Elmer.given initialModel App.view App.update
         |> Markup.target selector
         |> Event.click
     in
@@ -110,7 +110,7 @@ triggersSubmit selector =
       ]
   , let
       initialModel = App.defaultModel
-      state = Elmer.componentState initialModel App.submitOutsideFormView App.update
+      state = Elmer.given initialModel App.submitOutsideFormView App.update
         |> Markup.target selector
         |> Event.click
     in
@@ -128,7 +128,7 @@ triggersSubmit selector =
   , describe "when the submit button references a form that does not exist"
     [ let
         initialModel = App.defaultModel
-        state = Elmer.componentState initialModel App.submitBadFormDescendentView App.update
+        state = Elmer.given initialModel App.submitBadFormDescendentView App.update
           |> Markup.target selector
           |> Event.click
       in
@@ -138,11 +138,11 @@ triggersSubmit selector =
             Expect.equal initialModel.isSubmitted False
         , test "it does nothing" <|
           \() ->
-            Expect.equal state <| ComponentState.failure "No relevant event handler found"
+            Expect.equal state <| TestState.failure "No relevant event handler found"
         ]
       , let
           initialModel = App.defaultModel
-          state = Elmer.componentState initialModel App.submitBadFormView App.update
+          state = Elmer.given initialModel App.submitBadFormView App.update
             |> Markup.target selector
             |> Event.click
         in
@@ -152,7 +152,7 @@ triggersSubmit selector =
               Expect.equal initialModel.isSubmitted False
           , test "it does nothing" <|
             \() ->
-              Expect.equal state <| ComponentState.failure "No relevant event handler found"
+              Expect.equal state <| TestState.failure "No relevant event handler found"
           ]
       ]
   ]
@@ -161,7 +161,7 @@ doesNotTriggerSubmit : String -> Test
 doesNotTriggerSubmit selector =
   let
       initialModel = App.defaultModel
-      state = Elmer.componentState initialModel App.view App.update
+      state = Elmer.given initialModel App.view App.update
           |> Markup.target selector
           |> Event.click
     in
@@ -208,7 +208,7 @@ submitWithSpyTests =
             Spy.create "outside-form-spy" (\_ -> App.submitBadFormDescendentView)
               |> andCallFake (\model -> App.submitOutsideFormView model)
         in
-          Elmer.componentState App.defaultModel App.spyTestView App.update
+          Elmer.given App.defaultModel App.spyTestView App.update
             |> Spy.use [ viewSpy ]
             |> Markup.target "#default-type-button"
             |> Event.click
@@ -225,7 +225,7 @@ selectTests =
     [ test "it passes on the error" <|
       \() ->
         let
-          initialState = ComponentState.failure "upstream failure"
+          initialState = TestState.failure "upstream failure"
         in
           Event.select "some-value" initialState
             |> Expect.equal initialState
@@ -234,53 +234,53 @@ selectTests =
     [ test "it returns an upstream failure" <|
       \() ->
         let
-          initialState = Elmer.componentState App.defaultModel App.view App.update
+          initialState = Elmer.given App.defaultModel App.view App.update
         in
           Event.select "some-value" initialState
-           |> Expect.equal (ComponentState.failure "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event.")
+           |> Expect.equal (TestState.failure "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event.")
     ]
   , describe "when the element is not a select"
     [ test "it fails" <|
       \() ->
         let
-          state = Elmer.componentState App.defaultModel App.view App.update
+          state = Elmer.given App.defaultModel App.view App.update
             |> Markup.target "#root"
             |> Event.select "some-value"
         in
-          Expect.equal state (ComponentState.failure "The targeted element is not selectable")
+          Expect.equal state (TestState.failure "The targeted element is not selectable")
     ]
   , describe "when the element is a select"
     [ describe "when no input event handler is found"
       [ test "it fails" <|
         \() ->
           let
-            state = Elmer.componentState App.defaultModel App.selectWithNoHandlerView App.update
+            state = Elmer.given App.defaultModel App.selectWithNoHandlerView App.update
               |> Markup.target "select"
               |> Event.select "some-value"
           in
-            Expect.equal state (ComponentState.failure "No relevant event handler found")
+            Expect.equal state (TestState.failure "No relevant event handler found")
       ]
     , describe "when the select has no options"
       [ test "it fails" <|
         \() ->
           let
-            state = Elmer.componentState App.defaultModel App.selectWithNoOptionsView App.update
+            state = Elmer.given App.defaultModel App.selectWithNoOptionsView App.update
               |> Markup.target "select"
               |> Event.select "some-value"
           in
-            Expect.equal state (ComponentState.failure (format [ message "No option found with value" "some-value" ]))
+            Expect.equal state (TestState.failure (format [ message "No option found with value" "some-value" ]))
       ]
     , describe "when the select has options"
       [ describe "when no option matches the specified value"
         [ test "it fails" <|
           \() ->
             let
-              state = Elmer.componentState App.defaultModel App.selectView App.update
+              state = Elmer.given App.defaultModel App.selectView App.update
                 |> Markup.target "select"
                 |> Event.select "bad-value"
             in
               Expect.equal state (
-                ComponentState.failure <| format
+                TestState.failure <| format
                   [ message "No option found with value" "bad-value"
                   , message "These are the options" "- select  [ input ]\n  - option { value = 'cat' } \n    - Cat\n  - option { value = 'dog' } \n    - Dog\n  - option { value = 'mouse' } \n    - Mouse"
                   ]
@@ -289,7 +289,7 @@ selectTests =
       , describe "when an option matches the specified value"
         [ test "it triggers the event handler" <|
           \() ->
-            Elmer.componentState App.defaultModel App.selectView App.update
+            Elmer.given App.defaultModel App.selectView App.update
               |> Markup.target "select"
               |> Event.select "mouse"
               |> Elmer.expectModel (\model ->

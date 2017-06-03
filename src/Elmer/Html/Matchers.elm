@@ -56,7 +56,7 @@ element elementMatcher query =
 
 {-| Expect that the selected element exists.
 
-    Elmer.Html.target "#cool-element" componentState
+    Elmer.Html.target "#cool-element" testState
       |> Elmer.Html.expect elementExists
 -}
 elementExists : Matcher (Elmer.Html.HtmlTarget msg)
@@ -73,7 +73,7 @@ elementExists query =
 If the selector fails to match any elements, an empty list will
 be passed to the given matcher.
 
-    Elmer.Html.target "li" componentState
+    Elmer.Html.target "li" testState
       |> Elmer.Html.expect (elements <| Elmer.hasLength 4)
 
 -}

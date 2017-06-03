@@ -35,7 +35,7 @@ appFlowTests =
   describe "app flow"
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
-        ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
           |> Spy.use [ Elmer.Http.serve [ (successStub "Ok" ) ] ]
           |> ElmerNav.setLocation "/click"
           |> Markup.target ".button"
@@ -47,7 +47,7 @@ appFlowTests =
     , test "it makes multiple expectations about a node" <|
       \() ->
         let
-          initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
+          initialState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
         in
           ElmerNav.setLocation "/text" initialState
             |> Markup.target "ul"
@@ -57,7 +57,7 @@ appFlowTests =
                 hasText "Fun Item 3"
               )
     , let
-        initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        initialState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
           |> Spy.use [ Elmer.Http.serve [ (successStub "A message from the server!") ] ]
           |> ElmerNav.setLocation "/request"
@@ -75,7 +75,7 @@ appFlowTests =
                 |> Markup.expect (element <| hasText "Got request error: No error!")
         ]
     , let
-        initialState = ElmerNav.navigationComponentState App.defaultModel App.view App.update App.urlParser
+        initialState = ElmerNav.navigationTestState App.defaultModel App.view App.update App.urlParser
         resultState = initialState
           |> Spy.use [ Elmer.Http.serve [ failureStub ] ]
           |> ElmerNav.setLocation "/request"
@@ -106,7 +106,7 @@ timeAppTests =
   [ test "it displays the time" <|
     \() ->
       let
-        initialState = Elmer.componentState TimeApp.defaultModel TimeApp.view TimeApp.update
+        initialState = Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
         taskOverride = Spy.create "Task.perform" (\_ -> Task.perform)
           |> Spy.andCallFake (fakeTaskPerform (3 * Time.second))
       in
