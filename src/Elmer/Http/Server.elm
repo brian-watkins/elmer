@@ -58,8 +58,8 @@ toHttpCommand requestHandler command =
 
 
 updateTestState : HttpRequest -> Context model msg -> Context model msg
-updateTestState request testState =
-  { testState | httpRequests = request :: testState.httpRequests }
+updateTestState request context =
+  { context | httpRequests = request :: context.httpRequests }
 
 
 matchFirstRequest : HttpRequestHandler a -> List HttpStub -> Result (Cmd msg) HttpStub

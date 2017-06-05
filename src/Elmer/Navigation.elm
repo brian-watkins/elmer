@@ -79,8 +79,8 @@ fakeNavigateCommand url =
     Cmd.batch [ stateCommand, parseCommand ]
 
 generateCommandForLocation : String -> Context model msg -> Cmd msg
-generateCommandForLocation url testState =
-  case testState.locationParser of
+generateCommandForLocation url context =
+  case context.locationParser of
     Just locationParser ->
       let
         message = handleLocationUpdate url locationParser
