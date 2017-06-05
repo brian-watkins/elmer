@@ -1,5 +1,5 @@
 {
-    "version": "2.1.0",
+    "version": "3.0.0",
     "summary": "Behavior-driven development for Elm Html applications",
     "repository": "https://github.com/brian-watkins/elmer.git",
     "license": "MIT",
