@@ -26,14 +26,46 @@ describe the behavior of your app under whatever conditions you need. Elmer
 allows you to write tests first, which gives you the freedom and confidence
 to change your code later on.
 
-### Install
+### Installation
 
-Follow the instructions at [elmer-test.cfapps.io](http://elmer-test.cfapps.io).
+Elmer requires Elm 0.18 and the latest version of [elm-test](https://github.com/elm-community/elm-test).
 
+Since Elmer uses some native code, it cannot be installed via the official Elm package
+repository. Instead, you can use [elm-github-install](https://github.com/gdotdesign/elm-github-install)
+to install it.
 
-### Usage
+### Getting Started
 
-Elmer requires Elm 0.18.
+First, initialize your project just like you would with elm-test.
+
+```
+$ elm-test init
+```
+
+Then, go into the `tests` directory and install Elmer. You'll need to manually edit the
+`elm-package.json` file and add to the `dependencies` like so:
+
+```
+"dependencies": {
+  "brian-watkins/elmer": "3.0.0 <= v < 4.0.0",
+  ...
+}
+```
+
+Then, if you are using elm-github-install, just run:
+
+```
+$ elm-install
+```
+
+Note that each time you add a new dependency you'll need to manually run
+`elm-install` in the tests directory before running your tests.
+
+### Documentation
+
+The latest documentation can be found [here](http://elmer-test.cfapps.io/packages/brian-watkins/elmer/latest).
+
+Earlier versions of the documentation can be found [here](http://elmer-test.cfapps.io).
 
 ### Writing Tests
 
