@@ -36,7 +36,13 @@ to install it.
 
 ### Getting Started
 
-First, initialize your project just like you would with elm-test.
+First, install elm-test -- Elmer has been tested with version 0.18.7 of the elm-test node-test-runner.
+
+```
+$ npm install -g elm-test@0.18.7
+```
+
+Next, initialize your project with elm-test.
 
 ```
 $ elm-test init
@@ -52,7 +58,7 @@ Then, go into the `tests` directory and install Elmer. You'll need to manually e
 }
 ```
 
-Then, if you are using elm-github-install, just run:
+Then, if you are using elm-github-install, inside the tests directory run:
 
 ```
 $ elm-install
