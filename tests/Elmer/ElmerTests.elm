@@ -1,6 +1,7 @@
 module Elmer.ElmerTests exposing (..)
 
 import Test exposing (..)
+import Test.Runner
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestApps.InitTestApp as InitApp
 import Elmer.TestHelpers exposing (..)
@@ -83,7 +84,7 @@ matchAllTests =
           each (\n -> Expect.equal (n % 2) 0) items
             |> Expect.equal (Expect.fail <| format
               [ description "Expected all to pass but some failed:"
-              , description "0\n╷\n│ Expect.equal\n╵\n1\n\n0\n╷\n│ Expect.equal\n╵\n1"
+              , description "1 is not equal to 0\n\n1 is not equal to 0"
               ]
             )
     ]
@@ -101,7 +102,7 @@ matchOneTests =
             some (\n -> Expect.equal (n % 17) 0) items
               |> Expect.equal (Expect.fail <| format
                 [ description "Expected some to pass but found none. Here are the failures:"
-                , description "0\n╷\n│ Expect.equal\n╵\n2\n\n0\n╷\n│ Expect.equal\n╵\n4"
+                , description "2 is not equal to 0\n\n4 is not equal to 0"
                 ]
               )
       ]
@@ -137,8 +138,7 @@ matchExactlyTests =
           exactly 2 (\n -> Expect.equal 4 n) items
             |> Expect.equal (Expect.fail <| format
               [ description "Expected exactly 2 to pass but found 3. Here are the failures:"
-              , description
-                "2\n╷\n│ Expect.equal\n╵\n4\n\n6\n╷\n│ Expect.equal\n╵\n4"
+              , description "4 is not equal to 2\n\n4 is not equal to 6"
               ]
             )
     ]
@@ -165,7 +165,7 @@ atIndexTests =
           atIndex 1 (Expect.equal 2) items
             |> Expect.equal (Expect.fail <| format
               [ description "Expected item at index 1 to pass but it failed:"
-              , description "3\n╷\n│ Expect.equal\n╵\n2"
+              , description "2 is not equal to 3"
               ]
             )
     ]

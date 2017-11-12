@@ -132,12 +132,12 @@ Here's how you would expect that exactly 2 of the calls had a certain argument.
 -}
 calls : Matcher (List Call) -> Matcher Calls
 calls callMatcher spy =
-  case Test.Runner.getFailure <| callMatcher spy.calls of
-    Just error ->
+  case Test.Runner.getFailureReason <| callMatcher spy.calls of
+    Just failure ->
       Expect.fail <|
         format
           [ description <| "Expectation for " ++ spy.name ++ " failed."
-          , description error.message
+          , description <| formatFailure failure
           ]
     Nothing ->
       Expect.pass

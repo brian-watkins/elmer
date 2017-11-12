@@ -156,12 +156,12 @@ expectThat route matcher =
           List.filter (matchesRequest route.method route.url) context.httpRequests
             |> matcher
       in
-        case Test.Runner.getFailure result of
+        case Test.Runner.getFailureReason result of
           Just failure ->
             Expect.fail <| format
               [ message "Requests matching" (route.method ++ " " ++ route.url)
               , description "failed to meet the expectations:"
-              , description failure.message
+              , description <| formatFailure failure
               ]
           Nothing ->
             Expect.pass

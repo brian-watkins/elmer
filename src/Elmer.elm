@@ -131,14 +131,14 @@ expectNot matcher =
 each : Matcher a -> Matcher (List a)
 each matcher list =
   let
-    failures = failureMessages matcher list
+    failures = takeFailures matcher list
   in
     if List.length failures == 0 then
       Expect.pass
     else
       Expect.fail <| format
         [ description "Expected all to pass but some failed:"
-        , description <| printMessages failures
+        , description <| formatFailures failures
         ]
 
 {-| Expect that at least one item in a list satisfies the given matcher.
@@ -146,14 +146,14 @@ each matcher list =
 some : Matcher a -> Matcher (List a)
 some matcher list =
   let
-    failures = failureMessages matcher list
+    failures = takeFailures matcher list
   in
     if List.length failures < List.length list then
       Expect.pass
     else
       Expect.fail <| format
         [ description "Expected some to pass but found none. Here are the failures:"
-        , description <| printMessages failures
+        , description <| formatFailures failures
         ]
 
 {-| Expect that exactly some number of items in a list satisfy the given matcher.
@@ -161,7 +161,7 @@ some matcher list =
 exactly : Int -> Matcher a -> Matcher (List a)
 exactly expectedCount matcher list =
   let
-    failures = failureMessages matcher list
+    failures = takeFailures matcher list
     matchCount = List.length list - List.length failures
   in
     if matchCount == expectedCount then
@@ -170,7 +170,7 @@ exactly expectedCount matcher list =
       Expect.fail <| format
         [ description <| "Expected exactly " ++ (toString expectedCount) ++
           " to pass but found " ++ (toString matchCount) ++ ". Here are the failures:"
-        , description <| printMessages failures
+        , description <| formatFailures failures
         ]
 
 {-| Expect that the item at the given index satisfies the given matcher.
@@ -179,11 +179,11 @@ atIndex : Int -> Matcher a -> Matcher (List a)
 atIndex index matcher list =
   case Array.fromList list |> Array.get index of
     Just item ->
-      case Test.Runner.getFailure <| matcher item of
+      case Test.Runner.getFailureReason <| matcher item of
         Just failure ->
           Expect.fail <| format
             [ description <| "Expected item at index " ++ (toString index) ++ " to pass but it failed:"
-            , description failure.message
+            , description <| formatFailure failure
             ]
         Nothing ->
           Expect.pass
@@ -192,18 +192,10 @@ atIndex index matcher list =
         [ description <| "Expected item at index " ++ (toString index) ++ " to pass but there is no item at that index"
         ]
 
-printMessages : List String -> String
-printMessages messages =
-  String.join "\n\n" messages
-
-failureMessages : Matcher a -> List a -> List String
-failureMessages matcher =
+takeFailures : Matcher a -> List a -> List FailureReason
+takeFailures matcher =
   List.filterMap (\item ->
-    case Test.Runner.getFailure <| matcher item of
-      Just failure ->
-        Just failure.message
-      Nothing ->
-        Nothing
+    Test.Runner.getFailureReason <| matcher item
   )
 
 {-| Expect that a list has the given length.
