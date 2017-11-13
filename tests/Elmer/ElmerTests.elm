@@ -142,6 +142,17 @@ matchExactlyTests =
               ]
             )
     ]
+  , describe "when the list is empty"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = []
+        in
+          exactly 2 (Expect.equal 17) items
+            |> Expect.equal (Expect.fail <| format
+              [ description "Expected exactly 2 to pass but the list is empty"]
+            )
+    ]
   ]
 
 atIndexTests : Test

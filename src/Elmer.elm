@@ -167,11 +167,17 @@ exactly expectedCount matcher list =
     if matchCount == expectedCount then
       Expect.pass
     else
-      Expect.fail <| format
-        [ description <| "Expected exactly " ++ (toString expectedCount) ++
-          " to pass but found " ++ (toString matchCount) ++ ". Here are the failures:"
-        , description <| formatFailures failures
-        ]
+      if List.isEmpty failures then
+        Expect.fail <| format
+          [ description <| "Expected exactly " ++ (toString expectedCount) ++
+            " to pass but the list is empty"
+          ]
+      else
+        Expect.fail <| format
+          [ description <| "Expected exactly " ++ (toString expectedCount) ++
+            " to pass but found " ++ (toString matchCount) ++ ". Here are the failures:"
+          , description <| formatFailures failures
+          ]
 
 {-| Expect that the item at the given index satisfies the given matcher.
 -}
