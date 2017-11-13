@@ -72,7 +72,6 @@ given
 given =
   TestState.create
 
-
 {-| Initialize a test with a command.
 
 A test initialized in this way can use `expectMessages` to examine
@@ -81,7 +80,6 @@ messages generated when the given command is processed.
 givenCommand : (() -> Cmd msg) -> TestState {} msg
 givenCommand =
   TestState.createWithCommand
-
 
 {-| Operator for conjoining matchers.
 If one fails, then the conjoined matcher fails, otherwise it passes.
@@ -164,13 +162,17 @@ each matcher list =
   let
     failures = takeFailures matcher list
   in
-    if List.length failures == 0 then
-      Expect.pass
-    else
+    if List.isEmpty list then
       Expect.fail <| format
-        [ description "Expected all to pass but some failed:"
-        , description <| formatFailures failures
-        ]
+        [ description "Expected all to pass but the list is empty" ]
+    else
+      if List.isEmpty failures then
+        Expect.pass
+      else
+        Expect.fail <| format
+          [ description "Expected all to pass but some failed:"
+          , description <| formatFailures failures
+          ]
 
 {-| Expect that at least one item in a list satisfies the given matcher.
 -}
@@ -179,13 +181,17 @@ some matcher list =
   let
     failures = takeFailures matcher list
   in
-    if List.length failures < List.length list then
-      Expect.pass
-    else
+    if List.isEmpty list then
       Expect.fail <| format
-        [ description "Expected some to pass but found none. Here are the failures:"
-        , description <| formatFailures failures
-        ]
+        [ description "Expected some to pass but the list is empty" ]
+    else
+      if List.length failures < List.length list then
+        Expect.pass
+      else
+        Expect.fail <| format
+          [ description "Expected some to pass but found none. Here are the failures:"
+          , description <| formatFailures failures
+          ]
 
 {-| Expect that exactly some number of items in a list satisfy the given matcher.
 -}

@@ -88,6 +88,14 @@ matchAllTests =
               ]
             )
     ]
+  , describe "when the list is empty"
+    [ test "it fails" <|
+      \() ->
+        each (Expect.equal 2) []
+          |> Expect.equal (Expect.fail <| format
+            [ description "Expected all to pass but the list is empty"]
+          )
+    ]
   ]
 
 matchOneTests : Test
@@ -114,6 +122,14 @@ matchOneTests =
           in
             some (\n -> Expect.equal (n % 17) 0) items
               |> Expect.equal Expect.pass
+      ]
+    , describe "when the list is empty"
+      [ test "it fails" <|
+        \() ->
+          some (Expect.equal 3) []
+            |> Expect.equal (Expect.fail <| format
+              [ description "Expected some to pass but the list is empty" ]
+            )
       ]
     ]
 
