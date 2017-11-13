@@ -41,18 +41,18 @@ and [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigati
 
 import Elmer exposing (Matcher)
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context exposing (Context)
+import Elmer.Context.Internal exposing (Context)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
-import Elmer.Platform.Internal as Platform
+import Elmer.Runtime.Command as RuntimeCommand
 import Expect
 
 
 {-| Generate a command that will cause the test to fail with the specified message.
 -}
 fail : String -> Cmd msg
-fail message =
-  Platform.toCmd "Elmer_Fail" message
+fail =
+  RuntimeCommand.fail
 
 {-| Generate a command that returns a message.
 
@@ -60,8 +60,8 @@ When this command is processed, the message will be passed
 to the component's `update` function.
 -}
 fake : msg -> Cmd msg
-fake message =
-  Platform.toCmd "Elmer_Stub" message
+fake =
+  RuntimeCommand.stub
 
 {-| Generate a dummy command.
 
@@ -74,7 +74,7 @@ This will be most useful in conjunction with `expectDummy`.
 -}
 dummy : String -> Cmd msg
 dummy identifier =
-  Platform.mapStateCommand <|
+  RuntimeCommand.mapContext <|
     updateTestStateWithDummyCommand identifier
 
 updateTestStateWithDummyCommand : String -> Context model msg -> Context model msg
@@ -106,7 +106,7 @@ to the component's `update` function until `resolveDeferred` is called.
 -}
 defer : Cmd msg -> Cmd msg
 defer command =
-  Platform.mapStateCommand <|
+  RuntimeCommand.mapContext <|
     updateTestStateWithDeferredCommand command
 
 updateTestStateWithDeferredCommand : Cmd msg -> Context model msg -> Context model msg

@@ -1,43 +1,19 @@
 module Elmer.Context exposing
-  ( Context
-  , ViewFunction
-  , UpdateFunction
-  , LocationParserFunction
-  , render
-  , defaultContext
+  ( defaultHtmlContext
+  , defaultCommandContext
+  , withSpies
   )
 
 import Elmer.Http.Internal exposing (HttpRequest)
 import Elmer.Spy.Internal exposing (Spy)
+import Elmer.Runtime.Command as RuntimeCommand
+import Elmer.Context.Internal exposing (..)
 import Navigation
 import Html exposing (Html)
 
-type alias ViewFunction model msg =
-    model -> Html msg
 
-type alias UpdateFunction model msg =
-    msg -> model -> ( model, Cmd msg )
-
-type alias LocationParserFunction msg =
-    Navigation.Location -> msg
-
-type alias Context model msg =
-    { model : model
-    , view : ViewFunction model msg
-    , update : UpdateFunction model msg
-    , targetSelector : Maybe String
-    , locationParser : Maybe (LocationParserFunction msg)
-    , location : Maybe String
-    , httpRequests : List HttpRequest
-    , deferredCommands : List (Cmd msg)
-    , dummyCommands : List String
-    , subscriptions : Sub msg
-    , spies : List Spy
-    }
-
-
-defaultContext : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
-defaultContext model view update =
+defaultHtmlContext : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
+defaultHtmlContext model view update =
   { model = model
   , view = view
   , update = update
@@ -49,9 +25,37 @@ defaultContext model view update =
   , dummyCommands = []
   , subscriptions = Sub.none
   , spies = []
+  , commandGenerator = Nothing
+  , messages = []
   }
 
 
-render : Context model msg -> Html msg
-render context =
-  context.view context.model
+type alias CommandContextModel msg =
+  { messages : List msg
+  }
+
+emptyView : model -> Html msg
+emptyView model =
+  Html.text ""
+
+messageCollectorUpdate : msg -> model -> (model, Cmd msg)
+messageCollectorUpdate msg model =
+  ( model
+  , RuntimeCommand.mapContext (\context ->
+      { context | messages = msg :: context.messages }
+    )
+  )
+
+defaultCommandContext : (() -> Cmd msg) -> Context {} msg
+defaultCommandContext commandGenerator =
+  defaultHtmlContext {} emptyView messageCollectorUpdate
+    |> withCommandGenerator commandGenerator
+
+withCommandGenerator : (() -> Cmd msg) -> Context model msg -> Context model msg
+withCommandGenerator generator context =
+  { context | commandGenerator = Just generator }
+
+
+withSpies : List Spy -> Context model msg -> Context model msg
+withSpies spies context =
+  { context | spies = spies }

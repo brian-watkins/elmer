@@ -21,7 +21,7 @@ module Elmer.Html exposing
 
 import Elmer exposing (Matcher)
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context as Context exposing (Context)
+import Elmer.Context.Internal as Context exposing (Context)
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query

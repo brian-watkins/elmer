@@ -39,7 +39,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Printer exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Platform.Command as Command
-import Elmer.Platform.Internal as Platform exposing (..)
+import Elmer.Runtime.Intention as Intention exposing (Intention(..))
 
 
 type alias SubDescription a msg =
@@ -109,7 +109,7 @@ and sends some data through it.
 -}
 fake : String -> (a -> msg) -> Sub msg
 fake name tagger =
-  Platform.toSub "Elmer_Sub" (describeSub name tagger)
+  Intention.toSub "Elmer_Sub" (describeSub name tagger)
 
 {-| Send data on behalf of the identified subscription.
 
@@ -148,9 +148,9 @@ send subName data =
 
 subscriptionSpyNames : Sub msg -> List String
 subscriptionSpyNames sub =
-  case Platform.subData sub of
+  case Intention.subData sub of
     Leaf leaf ->
-      [ Platform.subValue leaf.intention |> .name ]
+      [ Intention.subValue leaf.intention |> .name ]
     Tree treeData ->
       subscriptionSpyNames treeData.tree
     Batch subs ->
@@ -161,10 +161,10 @@ subscriptionSpyNames sub =
 
 findSubDescription : String -> Sub msg -> Maybe (SubDescription a msg)
 findSubDescription subName sub =
-  case Platform.subData sub of
+  case Intention.subData sub of
     Leaf leaf ->
       let
-        subDesc = Platform.subValue leaf.intention
+        subDesc = Intention.subValue leaf.intention
       in
         if subDesc.name == subName then
           Just subDesc

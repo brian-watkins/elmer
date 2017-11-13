@@ -23,9 +23,9 @@ module Elmer.Navigation
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
 import Elmer.Platform.Command as Command
-import Elmer.Platform.Internal as Platform
+import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context exposing (Context)
+import Elmer.Context.Internal exposing (Context)
 import Elmer exposing (Matcher)
 import Expect
 import Elmer.Printer exposing (..)
@@ -73,10 +73,10 @@ spy =
 fakeNavigateCommand : String -> Cmd msg
 fakeNavigateCommand url =
   let
-    parseCommand = Platform.generateCommand <| generateCommandForLocation url
-    stateCommand = Platform.mapStateCommand <| storeLocation url
+    parseCommand = RuntimeCommand.generate <| generateCommandForLocation url
+    contextCommand = RuntimeCommand.mapContext <| storeLocation url
   in
-    Cmd.batch [ stateCommand, parseCommand ]
+    Cmd.batch [ contextCommand, parseCommand ]
 
 generateCommandForLocation : String -> Context model msg -> Cmd msg
 generateCommandForLocation url context =

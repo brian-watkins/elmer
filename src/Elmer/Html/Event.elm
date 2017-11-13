@@ -54,7 +54,7 @@ import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
 import Elmer.Html
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context as Context exposing (Context)
+import Elmer.Context.Internal as Context exposing (Context)
 import Elmer.Internal as Internal
 import Elmer
 import Elmer.Runtime as Runtime

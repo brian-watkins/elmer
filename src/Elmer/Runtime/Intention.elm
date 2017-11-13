@@ -1,4 +1,4 @@
-module Elmer.Platform.Internal exposing
+module Elmer.Runtime.Intention exposing
   ( Intention(..)
   , cmdValue
   , subValue
@@ -6,11 +6,7 @@ module Elmer.Platform.Internal exposing
   , toSub
   , cmdData
   , subData
-  , mapStateCommand
-  , generateCommand
   )
-
-import Elmer.Context as Context exposing (Context)
 
 
 type Intention a msg subMsg
@@ -32,32 +28,24 @@ type alias LeafData a =
 
 cmdData : Cmd msg -> Intention a msg subMsg
 cmdData command =
-  Native.Platform.asIntention command
+  Native.Intention.asIntention command
 
 cmdValue : Cmd a -> b
 cmdValue cmd =
-  Native.Platform.intentionValue cmd
+  Native.Intention.intentionValue cmd
 
 toCmd : String -> a -> Cmd msg
 toCmd home data =
-  Native.Platform.toIntention home data
+  Native.Intention.toIntention home data
 
 subData : Sub msg -> Intention a msg subMsg
 subData subscription =
-  Native.Platform.asIntention subscription
+  Native.Intention.asIntention subscription
 
 subValue : Sub a -> b
 subValue sub =
-  Native.Platform.intentionValue sub
+  Native.Intention.intentionValue sub
 
 toSub : String -> a -> Sub msg
 toSub home data =
-  Native.Platform.toIntention home data
-
-mapStateCommand : (Context model msg -> Context model msg) -> Cmd msg
-mapStateCommand mapper =
-  toCmd "Elmer_MapState" mapper
-
-generateCommand : (Context model msg -> Cmd msg) -> Cmd msg
-generateCommand generator =
-  toCmd "Elmer_Generate" generator
+  Native.Intention.toIntention home data

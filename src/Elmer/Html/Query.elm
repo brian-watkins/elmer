@@ -9,7 +9,7 @@ module Elmer.Html.Query exposing
 
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
-import Elmer.Context as Context exposing (Context)
+import Elmer.Context.Internal as Context exposing (Context)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json

@@ -7,9 +7,9 @@ import Http
 import Dict
 import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
-import Elmer.Context exposing (Context)
+import Elmer.Context.Internal exposing (Context)
 import Elmer.Platform.Command as Command
-import Elmer.Platform.Internal as Platform
+import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 
@@ -52,7 +52,7 @@ collapseToCommand responseResult =
 toHttpCommand : HttpRequestHandler a -> Cmd msg -> Cmd msg
 toHttpCommand requestHandler command =
   let
-    httpCommand = Platform.mapStateCommand <| updateTestState requestHandler.request
+    httpCommand = RuntimeCommand.mapContext <| updateTestState requestHandler.request
   in
     Cmd.batch [ httpCommand, command ]
 

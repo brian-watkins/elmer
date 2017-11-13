@@ -34,8 +34,6 @@ import Elmer.Http.Server as Server
 import Elmer.Http.Route as Route
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
-import Elmer.Platform.Command as Command
-import Elmer.Platform.Internal as Platform
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 import Test.Runner

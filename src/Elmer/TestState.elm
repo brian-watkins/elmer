@@ -1,6 +1,7 @@
 module Elmer.TestState exposing
   ( TestState
   , create
+  , createWithCommand
   , map
   , mapWithoutSpies
   , mapToExpectation
@@ -8,8 +9,10 @@ module Elmer.TestState exposing
   , failure
   )
 
-import Elmer.Context as Context exposing (..)
+import Elmer.Context as Context
+import Elmer.Context.Internal exposing (..)
 import Elmer.Spy.Internal as Spy_ exposing (Spy)
+import Elmer.Runtime as Runtime
 import Expect
 import Html exposing (Html)
 
@@ -19,7 +22,12 @@ type TestState model msg
 
 create : model -> ViewFunction model msg -> UpdateFunction model msg -> TestState model msg
 create model view update =
-  Context.defaultContext model view update
+  Context.defaultHtmlContext model view update
+    |> with
+
+createWithCommand : (() -> Cmd msg) -> TestState {} msg
+createWithCommand commandGenerator =
+  Context.defaultCommandContext commandGenerator
     |> with
 
 with : Context model msg -> TestState model msg
@@ -45,10 +53,7 @@ map mapper =
   abstractMap Failed
     (\context ->
       let
-        contextWithSpies =
-          { context
-          | spies = Spy_.activate context.spies
-          }
+        contextWithSpies = Context.withSpies (Spy_.activate context.spies) context
       in
         mapper contextWithSpies
           |> updateComponentWithDeactivatedSpies contextWithSpies
@@ -69,10 +74,9 @@ updateComponentWithDeactivatedSpies contextWithSpies =
         |> deactivateSpies contextWithSpies
     )
     (\context ->
-      with
-        { context
-        | spies = Spy_.deactivate context.spies
-        }
+      context
+        |> Context.withSpies (Spy_.deactivate context.spies)
+        |> with
     )
 
 
@@ -81,13 +85,20 @@ mapToExpectation mapper =
   abstractMap Expect.fail
     (\context ->
       let
-        contextWithSpies =
-          { context
-          | spies = Spy_.activate context.spies
-          }
+        contextWithSpies = Context.withSpies (Spy_.activate context.spies) context
       in
-        mapper contextWithSpies
-          |> deactivateSpies contextWithSpies
+        case contextWithSpies.commandGenerator of
+          Just generator ->
+            case Runtime.performCommand (generator ()) contextWithSpies of
+              Ok resolvedContext ->
+                mapper resolvedContext
+                  |> deactivateSpies resolvedContext
+              Err errorMessage ->
+                Expect.fail errorMessage
+                  |> deactivateSpies contextWithSpies
+          Nothing ->
+            mapper contextWithSpies
+              |> deactivateSpies contextWithSpies
     )
 
 deactivateSpies : Context model msg -> a -> a

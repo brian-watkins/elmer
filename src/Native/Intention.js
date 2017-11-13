@@ -1,23 +1,23 @@
-var _brian_watkins$elmer$Native_Platform = function() {
+var _brian_watkins$elmer$Native_Intention = function() {
 
   var asIntention = function(intention) {
     if (intention.type == "leaf") {
-      return _brian_watkins$elmer$Elmer_Platform_Internal$Leaf(asLeafData(intention))
+      return _brian_watkins$elmer$Elmer_Runtime_Intention$Leaf(asLeafData(intention))
     }
 
     if (intention.type == "map") {
-      return _brian_watkins$elmer$Elmer_Platform_Internal$Tree(asTreeData(intention))
+      return _brian_watkins$elmer$Elmer_Runtime_Intention$Tree(asTreeData(intention))
     }
 
     if (intention.type == "node") {
-      return _brian_watkins$elmer$Elmer_Platform_Internal$Batch(asBatch(intention))
+      return _brian_watkins$elmer$Elmer_Runtime_Intention$Batch(asBatch(intention))
     }
 
-    return _brian_watkins$elmer$Elmer_Platform_Internal$Unknown
+    return _brian_watkins$elmer$Elmer_Runtime_Intention$Unknown
   }
 
   var asLeafData = function(intention) {
-    return A2(_brian_watkins$elmer$Elmer_Platform_Internal$LeafData,
+    return A2(_brian_watkins$elmer$Elmer_Runtime_Intention$LeafData,
       intention,
       intention.home
     );
@@ -27,7 +27,7 @@ var _brian_watkins$elmer$Native_Platform = function() {
     var tagger = intention.tagger
     var mappedIntention = intention.tree
 
-    return (A2)(_brian_watkins$elmer$Elmer_Platform_Internal$TreeData,
+    return (A2)(_brian_watkins$elmer$Elmer_Runtime_Intention$TreeData,
       mappedIntention,
       tagger
     );
