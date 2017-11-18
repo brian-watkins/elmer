@@ -17,19 +17,48 @@ var _brian_watkins$elmer$Native_Spy = function() {
       return _brian_watkins$elmer$Elmer_Spy_Internal$Error({ name: name, calls: [] });
     }
 
-    var spyValue =
-      { name: name
-      , calls: []
-      , functionName: functionToSpyOn
-      , original: eval(functionToSpyOn)
-      , fake: eval(functionToSpyOn)
+    return activate({
+      name: name,
+      calls: [],
+      functionName: functionToSpyOn,
+      original: eval(functionToSpyOn),
+      fake: eval(functionToSpyOn)
+    })
+  }
+
+  var fakeFunctions = {}
+
+  var spiesOnReal = function(spyValue) {
+    return spyValue.functionName != null
+  }
+
+  var createWith = function(name, fun) {
+    return activate({
+      name: name,
+      calls: [],
+      functionName: null,
+      original: null,
+      fake: fun
+    })
+  }
+
+  var call = function(name) {
+    return function () {
+      var spyFunction = fakeFunctions[name]
+      if (spyFunction) {
+        return spyFunction.apply(this, arguments)
       }
 
-    return activate(spyValue)
+      throw "Attempted to use Spy.call with an unknown spy: " + name
+    }
   }
 
   var deactivate = function (spyValue) {
-    eval(spyValue.functionName + " = spyValue.original")
+    if (spiesOnReal(spyValue)) {
+      eval(spyValue.functionName + " = spyValue.original")
+    }
+
+    delete fakeFunctions[spyValue.name]
 
     return _brian_watkins$elmer$Elmer_Spy_Internal$Inactive(spyValue)
   }
@@ -43,7 +72,11 @@ var _brian_watkins$elmer$Native_Spy = function() {
       fake: spyValue.fake
     }
 
-    eval(spyValueCopy.functionName + " = createSpyCall(spyValueCopy, spyValueCopy.fake)")
+    if (spiesOnReal(spyValueCopy)) {
+      eval(spyValueCopy.functionName + " = createSpyCall(spyValueCopy, spyValueCopy.fake)")
+    }
+
+    fakeFunctions[spyValueCopy.name] = createSpyCall(spyValueCopy, spyValueCopy.fake)
 
     return _brian_watkins$elmer$Elmer_Spy_Internal$Active(spyValueCopy)
   }
@@ -134,6 +167,8 @@ var _brian_watkins$elmer$Native_Spy = function() {
 
   return {
       create: F2(create),
+      createWith: F2(createWith),
+      call: call,
       deactivate: deactivate,
       activate: activate,
       calls: calls,

@@ -2,6 +2,8 @@ module Elmer.Spy exposing
   ( Spy
   , Calls
   , create
+  , createWith
+  , call
   , andCallFake
   , expect
   , use
@@ -9,14 +11,19 @@ module Elmer.Spy exposing
 
 {-| Functions for spying during tests.
 
-# Spy on a Function
-@docs Spy, Calls, create, expect
+@docs Spy, Calls
 
-# Provide a Fake Implementation
-@docs andCallFake
+# Spy on a Real Function
+@docs create, andCallFake
+
+# Spy on a Provided Function
+@docs createWith, call
 
 # Use a Spy
 @docs use
+
+# Make Expectations about a Spy
+@docs expect
 
 -}
 
@@ -38,7 +45,7 @@ type alias Calls =
 
 {-| Create a spy for a function.
 
-To create a spy, pass in a string to identify the spy and a function that returns the
+To create a spy for a function, pass in a string to identify the spy and a function that returns the
 function you want spy on.
 
 Use a spy when you want to know that a function was called.
@@ -59,6 +66,57 @@ create name namingFunc =
   Spy_.Uninstalled <|
     \() ->
       Spy_.create name namingFunc
+
+
+{- Create a spy for a function you provide.
+
+Let's say you're testing a function that has a function for one of its arguments.
+In your test, you may want to provide some function that simulates certain
+conditions. If you want to assert that the provided function is itself called
+with certain arguments, use `createWith` to construct a spy for that function.
+
+When you pass the spied upon function to the function under test, use `Spy.call`
+which will return a version of the function that records its calls.
+
+For example, let's say you want to inject some dependencies into your update
+function to decouple application logic from view logic. You would create a spy
+with a function you provide for your test. Then, use `Spy.call` when you want
+to provide a version of the function that will record its calls.
+
+    let
+      spy = createWith "my-spy" (tagger ->
+        Command.fake <| tagger "Success!"
+      )
+    in
+      Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.call "my-spy")
+        |> Elmer.Spy.use [ spy ]
+        |> Elmer.Html.target "button"
+        |> Elmer.Html.Event.click
+        |> Elmer.Html.target "#result-message"
+        |> Elmer.Html.expect (
+          element <| hasText "Success!"
+        )
+
+Note: Using `andCallFake` with a spy produced via `createWith` will replace the
+provided function.
+-}
+createWith : String -> (a -> b) -> Spy
+createWith name fakeFunction =
+  Spy_.Uninstalled <|
+    \() ->
+      Spy_.createWith name fakeFunction
+
+
+{- Returns a function that records calls to itself and calls through to the function
+associated with the spy that has the given name.
+
+Note: Use `call` only in conjunction with spies produced using `createWith`; otherwise
+you'll receive an error.
+-}
+call : String -> (a -> b)
+call =
+  Spy_.call
+
 
 {-| Call the provided function when a Spy is called.
 
@@ -104,7 +162,6 @@ andCallFake fakeFunction spy =
                 installed
     _ ->
       spy
-
 
 {-| Make an expectation about a spy.
 
