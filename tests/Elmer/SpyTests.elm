@@ -364,7 +364,7 @@ restoreTests =
             |> Spy.use [ stub ]
             |> Markup.target "#title"
             |> Event.click
-            |> Expect.equal (TestState.failure "No relevant event handler found")
+            |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: click, mousedown, mouseup, submit")
     , test "the spy is not active for the next test" <|
       \() ->
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update

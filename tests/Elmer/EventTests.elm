@@ -12,8 +12,8 @@ import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
 
-standardEventBehavior : (TestState SimpleApp.Model SimpleApp.Msg -> TestState SimpleApp.Model SimpleApp.Msg) -> Test
-standardEventBehavior eventFunction =
+standardEventBehavior : String -> (TestState SimpleApp.Model SimpleApp.Msg -> TestState SimpleApp.Model SimpleApp.Msg) -> Test
+standardEventBehavior eventTypes eventFunction =
   describe "Event Behavior"
   [ describe "when there is an upstream failure"
     [ test "it passes on the error" <|
@@ -53,7 +53,7 @@ standardEventBehavior eventFunction =
         in
           Markup.target ".no-events" initialState
             |> eventFunction
-            |> Expect.equal (TestState.failure ("No relevant event handler found"))
+            |> Expect.equal (TestState.failure ("No event handlers found for any of the triggered events: " ++ eventTypes))
     ]
   ]
 
@@ -95,7 +95,7 @@ customEventTests =
     keyUpEventJson = "{\"keyCode\":65}"
   in
     describe "custom event tests"
-    [ standardEventBehavior (Event.trigger "keyup" keyUpEventJson)
+    [ standardEventBehavior "keyup" (Event.trigger "keyup" keyUpEventJson)
     , describe "when the event succeeds"
       [ test "it updates the model accordingly" <|
         \() ->

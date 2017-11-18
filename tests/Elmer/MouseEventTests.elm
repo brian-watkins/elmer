@@ -20,7 +20,7 @@ andExpect leftResult rightResult =
 
 clickTests =
   describe "Click Event Tests"
-  [ EventTests.standardEventBehavior Event.click
+  [ EventTests.standardEventBehavior "click, mousedown, mouseup, submit" Event.click
   , EventTests.multiEventPropagationBehavior 9 6 Event.click "click"
   , EventTests.multiEventPropagationBehavior 9 6 Event.click "mousedown"
   , EventTests.multiEventPropagationBehavior 9 6 Event.click "mouseup"
@@ -66,7 +66,7 @@ clickTests =
 
 doubleClickTests =
   describe "Double Click Event Tests"
-  [ EventTests.standardEventBehavior Event.doubleClick
+  [ EventTests.standardEventBehavior "click, mousedown, mouseup, submit" Event.doubleClick
   , EventTests.multiEventPropagationBehavior 21 14 Event.doubleClick "dblclick"
   , let
       initialModel = App.defaultModel
@@ -108,7 +108,7 @@ doubleClickTests =
 
 pressTests =
   describe "Press Event Tests"
-  [ EventTests.standardEventBehavior Event.press
+  [ EventTests.standardEventBehavior "mousedown" Event.press
   , EventTests.propagationBehavior Event.press "mousedown"
   , let
       initialModel = App.defaultModel
@@ -139,7 +139,7 @@ pressTests =
 
 releaseTests =
   describe "Release Event Tests"
-  [ EventTests.standardEventBehavior Event.release
+  [ EventTests.standardEventBehavior "mouseup" Event.release
   , EventTests.propagationBehavior Event.release "mouseup"
   , let
       initialModel = App.defaultModel
@@ -171,7 +171,7 @@ releaseTests =
 moveMouseInTests : Test
 moveMouseInTests =
   describe "moveMouseIn"
-  [ EventTests.standardEventBehavior Event.moveMouseIn
+  [ EventTests.standardEventBehavior "mouseenter, mouseover" Event.moveMouseIn
   , EventTests.propagationBehavior Event.moveMouseIn "mouseover"
   , test "it records a position of (0, 0)" <|
     \() ->
@@ -190,7 +190,7 @@ moveMouseInTests =
 moveMouseOutTests : Test
 moveMouseOutTests =
   describe "moveMouseOut"
-  [ EventTests.standardEventBehavior Event.moveMouseOut
+  [ EventTests.standardEventBehavior "mouseleave, mouseout" Event.moveMouseOut
   , EventTests.propagationBehavior Event.moveMouseOut "mouseout"
   , test "it records a position of (0, 0)" <|
     \() ->
@@ -218,7 +218,7 @@ mouseEnterTests =
           \() ->
             Markup.target "li[data-option='2']" initialState
               |> Event.moveMouseIn
-              |> Expect.equal (TestState.failure "No relevant event handler found")
+              |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: mouseenter, mouseover")
         ]
       , describe "when the element has a mouse enter event handler"
         [ test "at first no mouse enter is recorded" <|
@@ -265,7 +265,7 @@ mouseLeaveTests =
           \() ->
             Markup.target "li[data-option='2']" initialState
               |> Event.moveMouseOut
-              |> Expect.equal (TestState.failure "No relevant event handler found")
+              |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: mouseleave, mouseout")
         ]
       , describe "when the element has the mouse leave event handler"
         [ test "at first no mouse leave is recorded" <|

@@ -14,7 +14,7 @@ import Elmer.Html as Markup
 focusTests : Test
 focusTests =
   describe "focus"
-  [ EventTests.standardEventBehavior Event.focus
+  [ EventTests.standardEventBehavior "focus" Event.focus
   , EventTests.propagationBehavior Event.focus "focus"
   , let
       initialModel = App.defaultModel
@@ -37,7 +37,7 @@ focusTests =
 blurTests : Test
 blurTests =
   describe "blur"
-  [ EventTests.standardEventBehavior Event.blur
+  [ EventTests.standardEventBehavior "blur" Event.blur
   , EventTests.propagationBehavior Event.blur "blur"
   , let
       initialModel = App.defaultModel

@@ -78,16 +78,18 @@ type alias EventJson =
 type alias EventPropagation msg =
   { handlerQuery : EventHandlerQuery msg
   , event : EventJson
+  , eventType: String
   }
 
 type ClickType
   = Single
   | Double
 
-eventPropagation : EventHandlerQuery msg -> EventJson -> EventPropagation msg
-eventPropagation query event =
+eventPropagation : String -> EventHandlerQuery msg -> EventJson -> EventPropagation msg
+eventPropagation eventType query event =
   { handlerQuery = query
   , event = event
+  , eventType = eventType
   }
 
 {-| Simulate a click on the targeted element.
@@ -114,7 +116,7 @@ triggerClick clickType testState =
       [ mouseEventPropagation "click"
       , mouseEventPropagation "mousedown"
       , mouseEventPropagation "mouseup"
-      , eventPropagation submitHandlerQuery "{}"
+      , eventPropagation "submit" submitHandlerQuery "{}"
       ]
   in
     case clickType of
@@ -258,7 +260,7 @@ select : String -> Elmer.TestState model msg -> Elmer.TestState model msg
 select value =
   TestState.map (\context ->
     let
-      eventPropagations = [ eventPropagation (eventHandlerQuery "input") (inputEvent value) ]
+      eventPropagations = [ eventPropagation "input" (eventHandlerQuery "input") (inputEvent value) ]
     in
       targetedElement context
         |> Result.andThen isSelectable
@@ -311,7 +313,7 @@ The following will trigger a `keyup` event:
 -}
 trigger : String -> String -> Elmer.TestState model msg -> Elmer.TestState model msg
 trigger eventName eventJson =
-  updateTestState [ eventPropagation (eventHandlerQuery eventName) eventJson ]
+  updateTestState [ eventPropagation eventName (eventHandlerQuery eventName) eventJson ]
 
 -- Private functions
 
@@ -325,19 +327,19 @@ mouseEventJson =
 
 mouseEventPropagation : String -> EventPropagation msg
 mouseEventPropagation eventName =
-  eventPropagation (eventHandlerQuery eventName) mouseEventJson
+  eventPropagation eventName (eventHandlerQuery eventName) mouseEventJson
 
 basicEventPropagation : String -> EventPropagation msg
 basicEventPropagation eventName =
-  eventPropagation (eventHandlerQuery eventName) "{}"
+  eventPropagation eventName (eventHandlerQuery eventName) "{}"
 
 mouseElementEventPropagation : String -> EventPropagation msg
 mouseElementEventPropagation eventName =
-  eventPropagation (elementEventHandlerQuery eventName) mouseEventJson
+  eventPropagation eventName (elementEventHandlerQuery eventName) mouseEventJson
 
 basicElementEventPropagation : String -> EventPropagation msg
 basicElementEventPropagation eventName =
-  eventPropagation (elementEventHandlerQuery eventName) "{}"
+  eventPropagation eventName (elementEventHandlerQuery eventName) "{}"
 
 processBasicElementEvent : String -> TestState model msg -> TestState model msg
 processBasicElementEvent eventName =
@@ -368,7 +370,10 @@ hasHandlersFor context eventPropagations element =
       |> List.concat
   in
     if List.isEmpty handlers then
-      Err <| "No relevant event handler found"
+      Err <| "No event handlers found for any of the triggered events: " ++ (
+        List.map .eventType eventPropagations
+          |> String.join ", "
+      )
     else
       Ok element
 
