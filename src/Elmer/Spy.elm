@@ -55,7 +55,8 @@ Elmer will record that it has been called. By defalut, Elmer will then call
 through to the original function.
 
     let
-      mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
+      mySpy =
+        create "my-spy" (\_ -> MyComponent.someFunction)
     in
       use [ mySpy ] testState
         |> expect "my-spy" (wasCalled 0)
@@ -68,7 +69,7 @@ create name namingFunc =
       Spy_.create name namingFunc
 
 
-{- Create a spy for a function you provide.
+{-| Create a spy for a function you provide.
 
 Let's say you're testing a function that has a function for one of its arguments.
 In your test, you may want to provide some function that simulates certain
@@ -84,17 +85,24 @@ with a function you provide for your test. Then, use `Spy.call` when you want
 to provide a version of the function that will record its calls.
 
     let
-      spy = createWith "my-spy" (tagger ->
-        Command.fake <| tagger "Success!"
-      )
+      spy =
+        createWith "my-spy" (tagger ->
+          Command.fake <| tagger "Success!"
+        )
+      updateForTest =
+        MyModule.updateUsing <|
+          Spy.call "my-spy"
     in
-      Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.call "my-spy")
+      Elmer.given testModel MyModule.view updateForTest
         |> Elmer.Spy.use [ spy ]
+        |> Elmer.Html.target "input"
+        |> Elmer.Html.Event.input "some text"
         |> Elmer.Html.target "button"
         |> Elmer.Html.Event.click
-        |> Elmer.Html.target "#result-message"
-        |> Elmer.Html.expect (
-          element <| hasText "Success!"
+        |> Elmer.Spy.expect "my-spy" (
+          Elmer.Spy.Matchers.wasCalledWith
+            [ Elmer.Spy.Matchers.stringArg "some text"
+            ]
         )
 
 Note: Using `andCallFake` with a spy produced via `createWith` will replace the
@@ -107,8 +115,8 @@ createWith name fakeFunction =
       Spy_.createWith name fakeFunction
 
 
-{- Returns a function that records calls to itself and calls through to the function
-associated with the spy that has the given name.
+{-| Returns a function that records calls to itself and calls through to the function
+associated with the spy with the given name.
 
 Note: Use `call` only in conjunction with spies produced using `createWith`; otherwise
 you'll receive an error.
@@ -122,8 +130,9 @@ call =
 
 Once you've created a `Spy`, you can provide a fake implementation like so:
 
-    mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
-      |> andCallFake testImplementation
+    mySpy =
+      create "my-spy" (\_ -> MyComponent.someFunction)
+        |> andCallFake testImplementation
 
 where `testImplementation` is some function with the very same signature as
 the one being spied upon.
@@ -168,7 +177,8 @@ andCallFake fakeFunction spy =
 See `Elmer.Spy.Matchers` for matchers to use with this function.
 
     let
-      mySpy = create "my-spy" (\_ -> MyComponent.someFunction)
+      mySpy =
+        create "my-spy" (\_ -> MyComponent.someFunction)
     in
       use [ mySpy ] testState
         |> expect "my-spy" (wasCalled 0)
@@ -197,9 +207,12 @@ generate a command with `Task.perform`. To describe this behavior in your test,
 you could do something like the following:
 
     let
-      taskOverride = create "fake-perform" (\_ -> Task.perform)
-        |> andCallFake (\tagger task ->
-            Elmer.Platform.Command.fake (tagger (toDate "11/12/2016 5:30 pm"))
+      taskOverride =
+        create "fake-perform" (\_ -> Task.perform)
+          |> andCallFake (\tagger task ->
+            Elmer.Platform.Command.fake (
+              tagger <| toDate "11/12/2016 5:30 pm"
+            )
           )
     in
       testState

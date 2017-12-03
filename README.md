@@ -484,6 +484,31 @@ When Elmer processes a dummy command, it simply records the fact that the comman
 it treats the command just like `Cmd.none`. In your test, use `Elmer.command.expectDummy <identifier>`
 to expect that the command was sent.
 
+#### Testing Commands in Isolation
+
+You might want to test a command independently of any module that might use it. In that case,
+use `Elmer.Headless.givenCommand` and provide it with a function that generates the command you
+want to test. This will initiate a `TestState` that simply records any messages that result when
+the given command is processed. You can use the `Elmer.Headless.expectMessages` matcher to
+make any expectations about the messages received. For example, here's a test that expects a
+certain message when a certain command is processed:
+
+```
+Elmer.Headless.givenCommand (\_ -> MyModule.myCommand MyTagger withSomeArgument)
+  |> Elmer.Headless.expectMessages (\messages ->
+    Expect.equal [ MyTagger "Fun Result" ]
+  )
+```
+
+You can use `Elmer.Headless.givenCommand` with other matchers as it makes sense. So, you might
+write a test that expects a certain Http request to result from the processing of a command:
+
+```
+Elmer.Headless.givenCommand (\_ -> MyModule.sendRequest MyTagger someArgument)
+  |> Elmer.Spy.use [ Elmer.Http.spy ]
+  |> Elmer.Http.expect (Elmer.Http.Route.get "http://fun.com/api/someArgument")
+```
+
 ### Subscriptions
 
 Using subscriptions, your component can register to be notified when certain effects occur.
@@ -736,6 +761,31 @@ Elmer.Spy.expect "my-spy" (
 ```
 
 See `Elmer.Spy.Matchers` for a full list of argument matchers.
+
+`Elmer.Spy.Create` is good for spying on named functions. Sometimes, though, it would be
+nice to spy on an anonymous function. Suppose that you are testing a module that takes a function
+as an argument, and you want to expect that the function is called with a certain argument.
+You can use `Elmer.Spy.createWith` to produce a function that is nothing more than a spy, with a
+'fake' implementation. Create a reference to this function using `Spy.call`. For example:
+
+```
+let
+  spy = createWith "my-spy" (tagger ->
+    Command.fake <| tagger "Success!"
+  )
+in
+  Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.call "my-spy")
+    |> Elmer.Spy.use [ spy ]
+    |> Elmer.Html.target "input"
+    |> Elmer.Html.Event.input "some text"
+    |> Elmer.Html.target "button"
+    |> Elmer.Html.Event.click
+    |> Elmer.Spy.expect "my-spy" (
+      Elmer.Spy.Matchers.wasCalledWith
+        [ Elmer.Spy.Matchers.stringArg "some text"
+        ]
+    )
+```
 
 ### Development
 

@@ -10,17 +10,14 @@ import Elmer.Runtime as Runtime
 import Html exposing (Html)
 import Expect
 
-type alias CommandContextModel msg =
-  { messages : List msg
-  }
 
 type HeadlessState
   = Messages
 
 
-createWithCommand : (() -> Cmd msg) -> TestState {} msg
+createWithCommand : (() -> Cmd msg) -> TestState () msg
 createWithCommand commandGenerator =
-  Context.default {} emptyView messageCollectorUpdate
+  Context.default () emptyView messageCollectorUpdate
     |> withCommandGenerator commandGenerator
     |> TestState.with
 
