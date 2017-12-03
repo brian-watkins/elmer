@@ -8,6 +8,7 @@
     ],
     "exposed-modules": [
         "Elmer",
+        "Elmer.Headless",
         "Elmer.Html",
         "Elmer.Html.Matchers",
         "Elmer.Html.Event",
