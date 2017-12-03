@@ -6,7 +6,7 @@ module Elmer.Html.Event.Processor exposing
 import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Types exposing (..)
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context.Internal as Context exposing (Context)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime as Runtime
 import Json.Decode as Json
 import Elmer.Html.Query as Query
@@ -57,7 +57,7 @@ apply eventDescriptionList context element =
 
 targetedElement : Context model msg -> Result String (HtmlElement msg)
 targetedElement context =
-  case context.targetSelector of
+  case Context.state TargetSelector context of
     Just selector ->
       Query.findElement <| Query.forHtml selector (Context.render context)
     Nothing ->

@@ -177,7 +177,7 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
 expect : String -> Matcher Calls -> Elmer.TestState model msg -> Expect.Expectation
 expect name matcher =
   TestState.mapToExpectation (\context ->
-    case Spy_.calls name context.spies of
+    case Spy_.calls name <| Spy_.spiesFrom context of
       Just calls ->
         matcher calls
       Nothing ->
@@ -219,18 +219,21 @@ the spies you need.
 -}
 use : List Spy -> Elmer.TestState model msg -> Elmer.TestState model msg
 use spies =
-  TestState.mapWithoutSpies (\context ->
-    let
-      activated = Spy_.activate spies
-      errors = takeErrors activated
-    in
-      if List.isEmpty errors then
-        TestState.with { context | spies = Spy_.deactivate activated }
-      else
-        TestState.failure <|
-          format
-            [ message "Failed to activate spies" <| failedSpies errors ]
-  )
+  TestState.mapWithoutSpies <|
+    \context ->
+      let
+        activated = Spy_.activate spies
+        errors = takeErrors activated
+      in
+        if List.isEmpty errors then
+          Spy_.deactivate activated
+            |> flip Spy_.withSpies context
+            |> TestState.with
+        else
+          TestState.failure <|
+            format
+              [ message "Failed to activate spies" <| failedSpies errors ]
+
 
 failedSpies : List Spy -> String
 failedSpies spies =

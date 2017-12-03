@@ -9,8 +9,12 @@ module Elmer.Spy.Internal exposing
   , deactivate
   , calls
   , batch
+  , spiesFrom
+  , withSpies
   )
 
+import Elmer.Context as Context exposing (Context)
+import Elmer.Runtime.Command as RuntimeCommand
 
 type alias Calls =
   { name : String
@@ -104,3 +108,16 @@ deactivateOne spy =
 deactivate : List Spy -> List Spy
 deactivate =
   List.map deactivateOne
+
+type SpyState
+  = Spies
+
+spiesFrom : Context model msg -> List Spy
+spiesFrom context =
+  Context.state Spies context
+    |> Maybe.withDefault []
+
+withSpies : List Spy -> Context model msg -> Context model msg
+withSpies spies context =
+  RuntimeCommand.mapState Spies (\_ -> spies)
+    |> flip Context.updateState context

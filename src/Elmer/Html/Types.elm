@@ -1,5 +1,6 @@
 module Elmer.Html.Types exposing
-  ( HtmlNode(..)
+  ( HtmlState(..)
+  , HtmlNode(..)
   , HtmlElement
   , HtmlEventHandler
   , HtmlFact(..)
@@ -7,6 +8,10 @@ module Elmer.Html.Types exposing
 
 import Json.Decode as Json
 import Dict exposing (Dict)
+
+
+type HtmlState =
+  TargetSelector
 
 type HtmlNode msg
     = Element (HtmlElement msg)

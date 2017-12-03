@@ -5,7 +5,8 @@ import Expect
 import Http
 import Dict
 import Elmer
-import Html
+import Html exposing (Html)
+import Json.Decode as Json
 import Elmer exposing ((<&&>))
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
@@ -295,25 +296,23 @@ expectTests =
     [ describe "when there are no requests"
       [ test "it fails with a message" <|
         \() ->
-          let
-            stubbedResponse = HttpStub.for getRoute
-          in
-            Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-              |> ElmerHttp.expect getRoute
-              |> Expect.equal (Expect.fail <| format
-                [ message "Expected request for" "GET http://fun.com/fun.html"
-                , description "but no requests have been made"
-                ]
-              )
+          Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+            |> ElmerHttp.expect getRoute
+            |> Expect.equal (Expect.fail <| format
+              [ message "Expected request for" "GET http://fun.com/fun.html"
+              , description "but no requests have been made"
+              ]
+            )
       ]
     , describe "when there are other requests"
       [ test "it fails with a message" <|
         \() ->
           let
-            request1 = testRequest "POST" "http://fun.com/fun"
-            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-            stubbedResponse = HttpStub.for getRoute
-            initialState = testStateWithRequests [ request1, request2 ]
+            initialState =
+              testStateWithRequests
+                [ ("POST", "http://fun.com/fun")
+                , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                ]
           in
             ElmerHttp.expect getRoute initialState
               |> Expect.equal (Expect.fail (format
@@ -328,11 +327,12 @@ expectTests =
       [ test "it fails" <|
         \() ->
           let
-            request1 = testRequest "POST" "http://fun.com/fun"
-            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
             route = Route.get "http://fun.com/fun"
-            stubbedResponse = HttpStub.for route
-            initialState = testStateWithRequests [ request1, request2 ]
+            initialState =
+              testStateWithRequests
+                [ ("POST", "http://fun.com/fun")
+                , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                ]
           in
             ElmerHttp.expect route initialState
               |> Expect.equal (Expect.fail (format
@@ -345,11 +345,12 @@ expectTests =
       [ test "it passes" <|
         \() ->
           let
-            request1 = testRequest "POST" "http://fun.com/fun"
-            request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-            requestForStub = testRequest "GET" "http://fun.com/fun.html"
-            stubbedResponse = HttpStub.for getRoute
-            initialState = testStateWithRequests [ request1, requestForStub ,request2 ]
+            initialState =
+              testStateWithRequests
+                [ ("POST", "http://fun.com/fun")
+                , ("GET", "http://fun.com/fun.html")
+                , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                ]
           in
             ElmerHttp.expect getRoute initialState
               |> Expect.equal Expect.pass
@@ -388,10 +389,11 @@ expectThatTests =
         [ test "it passes an empty list to the matcher" <|
           \() ->
             let
-              request1 = testRequest "POST" "http://fun.com/fun"
-              request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-              stubbedResponse = HttpStub.for getRoute
-              initialState = testStateWithRequests [ request1 ,request2 ]
+              initialState =
+                testStateWithRequests
+                  [ ("POST", "http://fun.com/fun")
+                  , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                  ]
             in
               ElmerHttp.expectThat getRoute (\rs -> Expect.equal [] rs) initialState
                 |> Expect.equal Expect.pass
@@ -400,25 +402,28 @@ expectThatTests =
         [ test "it passes a list of the matching requests to the matcher" <|
           \() ->
             let
-              request1 = testRequest "POST" "http://fun.com/fun"
-              request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-              stubbedResponse = HttpStub.for getRoute
+              initialState =
+                testStateWithRequests
+                  [ ("POST", "http://fun.com/fun")
+                  , ("GET", "http://fun.com/fun.html")
+                  , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                  , ("GET", "http://fun.com/fun.html")
+                  , ("GET", "http://fun.com/fun.html")
+                  ]
               requestForStub = testRequest "GET" "http://fun.com/fun.html"
-              requestForStub2 = testRequest "GET" "http://fun.com/fun.html"
-              requestForStub3 = testRequest "GET" "http://fun.com/fun.html"
-              initialState = testStateWithRequests [ request1, requestForStub, request2, requestForStub2, requestForStub3 ]
             in
-              ElmerHttp.expectThat getRoute (\rs -> Expect.equal [ requestForStub, requestForStub2, requestForStub3 ] rs) initialState
+              ElmerHttp.expectThat getRoute (\rs -> Expect.equal [ requestForStub, requestForStub, requestForStub ] rs) initialState
                 |> Expect.equal Expect.pass
         , describe "when the matcher fails"
           [ test "it fails with a message" <|
             \() ->
               let
-                request1 = testRequest "POST" "http://fun.com/fun"
-                request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-                stubbedResponse = HttpStub.for getRoute
-                requestForStub = testRequest "GET" "http://fun.com/fun.html"
-                initialState = testStateWithRequests [ request1, requestForStub, request2 ]
+                initialState =
+                  testStateWithRequests
+                    [ ("POST", "http://fun.com/fun")
+                    , ("GET", "http://fun.com/fun.html")
+                    , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                    ]
               in
                 ElmerHttp.expectThat getRoute (\rs -> Expect.fail "Failed!") initialState
                   |> Expect.equal (Expect.fail (format
@@ -433,13 +438,54 @@ expectThatTests =
       ]
     ]
 
-testStateWithRequests : List HttpRequest -> TestState SimpleApp.Model SimpleApp.Msg
-testStateWithRequests requestData =
+testStateWithRequests : List (String, String) -> TestState TestModel TestMsg
+testStateWithRequests requests =
+  Elmer.given {} testView testUpdate
+    |> Spy.use [ ElmerHttp.spy ]
+    |> Command.send (\() -> makeRequests requests)
+
+-- testStateWithRequests : List HttpRequest -> TestState SimpleApp.Model SimpleApp.Msg
+-- testStateWithRequests requestData =
+--   let
+--     defaultState = Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+--   in
+--     defaultState
+--       |> TestState.map (\context -> TestState.with { context | httpRequests = requestData })
+
+makeRequests : List (String, String) -> Cmd TestMsg
+makeRequests requests =
+  List.map (\info -> uncurry sendRequest info) requests
+    |> Cmd.batch
+
+sendRequest : String -> String -> Cmd TestMsg
+sendRequest method url =
   let
-    defaultState = Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+    request =
+      Http.request
+        { method = method
+        , headers = []
+        , url = url
+        , body = Http.emptyBody
+        , expect = Http.expectJson <| Json.succeed ""
+        , timeout = Nothing
+        , withCredentials = False
+        }
   in
-    defaultState
-      |> TestState.map (\context -> TestState.with { context | httpRequests = requestData })
+    Http.send TestRequestTagger request
+
+testView : TestModel -> Html TestMsg
+testView model =
+  Html.text ""
+
+testUpdate : TestMsg -> TestModel -> (TestModel, Cmd TestMsg)
+testUpdate msg model =
+  (model, Cmd.none)
+
+type alias TestModel =
+  {}
+
+type TestMsg
+  = TestRequestTagger (Result Http.Error String)
 
 testRequest : String -> String -> HttpRequest
 testRequest method url =
@@ -518,13 +564,15 @@ clearRequestsTests =
     [ test "it clears the requests" <|
       \() ->
         let
-          request1 = testRequest "POST" "http://fun.com/fun"
-          request2 = testRequest "GET" "http://awesome.com/awesome.html?stuff=fun"
-          initialState = testStateWithRequests [ request1, request2 ]
+          initialState =
+            testStateWithRequests
+              [ ("POST", "http://fun.com/fun")
+              , ("GET", "http://fun.com/fun.html")
+              ]
         in
-          ElmerHttp.clearRequestHistory initialState
-            |> TestState.mapToExpectation (\context ->
-              Expect.equal True (List.isEmpty context.httpRequests)
-            )
+          initialState
+            |> ElmerHttp.clearRequestHistory
+            |> ElmerHttp.expectThat (Route.post "http://fun.com/fun") (wasRequested 0)
+                <&&> ElmerHttp.expectThat (Route.get "http://fun.com/fun.html") (wasRequested 0)
     ]
   ]

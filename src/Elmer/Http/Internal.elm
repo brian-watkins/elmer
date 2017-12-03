@@ -1,5 +1,6 @@
 module Elmer.Http.Internal exposing
-  ( HttpHeader
+  ( HttpState(..)
+  , HttpHeader
   , HttpRequestFunction
   , HttpRequestHandler
   , HttpRequest
@@ -13,6 +14,9 @@ module Elmer.Http.Internal exposing
   )
 
 import Http
+
+type HttpState
+  = Requests
 
 type alias HttpRoute =
   { method : String

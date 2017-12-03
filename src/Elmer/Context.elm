@@ -1,61 +1,82 @@
 module Elmer.Context exposing
-  ( defaultHtmlContext
-  , defaultCommandContext
-  , withSpies
+  ( Context
+  , ViewFunction
+  , UpdateFunction
+  , default
+  , model
+  , withModel
+  , render
+  , update
+  , state
+  , updateState
   )
 
-import Elmer.Http.Internal exposing (HttpRequest)
-import Elmer.Spy.Internal exposing (Spy)
-import Elmer.Runtime.Command as RuntimeCommand
-import Elmer.Context.Internal exposing (..)
-import Navigation
 import Html exposing (Html)
+import Elmer.Runtime.Intention as Intention
 
 
-defaultHtmlContext : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
-defaultHtmlContext model view update =
-  { model = model
-  , view = view
-  , update = update
-  , targetSelector = Nothing
-  , locationParser = Nothing
-  , location = Nothing
-  , httpRequests = []
-  , deferredCommands = []
-  , dummyCommands = []
-  , subscriptions = Sub.none
-  , spies = []
-  , commandGenerator = Nothing
-  , messages = []
-  }
+type alias ViewFunction model msg =
+    model -> Html msg
+
+type alias UpdateFunction model msg =
+    msg -> model -> ( model, Cmd msg )
+
+type Context model msg
+  = Context
+    { model : model
+    , view : ViewFunction model msg
+    , update : UpdateFunction model msg
+    , state : List (Cmd msg)
+    }
 
 
-type alias CommandContextModel msg =
-  { messages : List msg
-  }
-
-emptyView : model -> Html msg
-emptyView model =
-  Html.text ""
-
-messageCollectorUpdate : msg -> model -> (model, Cmd msg)
-messageCollectorUpdate msg model =
-  ( model
-  , RuntimeCommand.mapContext (\context ->
-      { context | messages = msg :: context.messages }
-    )
-  )
-
-defaultCommandContext : (() -> Cmd msg) -> Context {} msg
-defaultCommandContext commandGenerator =
-  defaultHtmlContext {} emptyView messageCollectorUpdate
-    |> withCommandGenerator commandGenerator
-
-withCommandGenerator : (() -> Cmd msg) -> Context model msg -> Context model msg
-withCommandGenerator generator context =
-  { context | commandGenerator = Just generator }
+default : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
+default model view update =
+  Context
+    { model = model
+    , view = view
+    , update = update
+    , state = []
+    }
 
 
-withSpies : List Spy -> Context model msg -> Context model msg
-withSpies spies context =
-  { context | spies = spies }
+model : Context model msg -> model
+model (Context context) =
+  context.model
+
+
+withModel : model -> Context model msg -> Context model msg
+withModel model (Context context) =
+  Context
+    { context | model = model }
+
+
+render : Context model msg -> Html msg
+render (Context context) =
+  context.view context.model
+
+
+update : msg -> Context model msg -> ( Context model msg, Cmd msg )
+update message (Context context) =
+  let
+      ( updatedModel, command ) =
+          context.update message context.model
+
+      updatedContext =
+          { context | model = updatedModel }
+  in
+      ( Context updatedContext, command )
+
+
+state : typeId -> Context model msg -> Maybe a
+state typeId (Context context) =
+  context.state
+    |> List.filter (\cmd -> typeId == (Intention.cmdValue cmd |> .typeId))
+    |> List.map (\cmd -> Intention.cmdValue cmd |> .mapper)
+    |> List.foldl (\mapper val -> Just <| mapper val) Nothing
+
+
+updateState : Cmd msg -> Context model msg -> Context model msg
+updateState command (Context context) =
+  Context
+    { context | state = context.state ++ [ command ] }

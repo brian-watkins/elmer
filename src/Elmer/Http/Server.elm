@@ -7,7 +7,7 @@ import Http
 import Dict
 import Elmer exposing (Matcher)
 import Elmer.Http.Internal as HttpInternal exposing (..)
-import Elmer.Context.Internal exposing (Context)
+import Elmer.Context exposing (Context)
 import Elmer.Platform.Command as Command
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Printer exposing (..)
@@ -34,8 +34,6 @@ dummySend _ request =
     toHttpCommand httpRequestHandler Cmd.none
 
 
-
-
 unwrapResponseStubs : List HttpResponseStub -> List HttpStub
 unwrapResponseStubs responseStubs =
   List.map (\(HttpResponseStub stub) -> stub) responseStubs
@@ -52,14 +50,14 @@ collapseToCommand responseResult =
 toHttpCommand : HttpRequestHandler a -> Cmd msg -> Cmd msg
 toHttpCommand requestHandler command =
   let
-    httpCommand = RuntimeCommand.mapContext <| updateTestState requestHandler.request
+    httpCommand = RuntimeCommand.mapState Requests <| updateTestState requestHandler.request
   in
     Cmd.batch [ httpCommand, command ]
 
-
-updateTestState : HttpRequest -> Context model msg -> Context model msg
-updateTestState request context =
-  { context | httpRequests = request :: context.httpRequests }
+updateTestState : HttpRequest -> Maybe (List HttpRequest) -> List HttpRequest
+updateTestState request maybeRequests =
+  Maybe.withDefault [] maybeRequests
+    |> (::) request
 
 
 matchFirstRequest : HttpRequestHandler a -> List HttpStub -> Result (Cmd msg) HttpStub

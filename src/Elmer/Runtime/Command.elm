@@ -1,6 +1,6 @@
 module Elmer.Runtime.Command exposing
   ( commandRunner
-  , mapContext
+  , mapState
   , generate
   , fail
   , stub
@@ -8,7 +8,7 @@ module Elmer.Runtime.Command exposing
 
 import Elmer.Runtime.Intention as Intention
 import Elmer.Runtime.Types exposing (..)
-import Elmer.Context.Internal as Context exposing (Context)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Printer exposing (..)
 import Dict exposing (Dict)
 
@@ -16,27 +16,30 @@ import Dict exposing (Dict)
 commandRunner : String -> CommandRunner model subMsg msg
 commandRunner name =
   case name of
-    "Elmer_Fail" -> failCommandRunner
-    "Elmer_Stub" -> stubCommandRunner
-    "Elmer_Generate" -> generateCommandRunner
-    "Elmer_MapContext" -> mapContextCommandRunner
-    unknownCommand -> unknownCommandRunner unknownCommand
+    "Elmer_Fail" ->
+      failCommandRunner
+    "Elmer_Stub" ->
+      stubCommandRunner
+    "Elmer_Generate" ->
+      generateCommandRunner
+    "Elmer_MapState" ->
+      mapStateCommandRunner
+    unknownCommand ->
+      unknownCommandRunner unknownCommand
 
+mapState : typeId -> (Maybe a -> a) -> Cmd msg
+mapState typeId mapper =
+  Intention.toCmd "Elmer_MapState" { typeId = typeId, mapper = mapper }
 
-mapContext : (Context model msg -> Context model msg) -> Cmd msg
-mapContext mapper =
-  Intention.toCmd "Elmer_MapContext" mapper
+mapStateCommandRunner : CommandRunner model subMsg msg
+mapStateCommandRunner command tagger =
+  CommandSuccess (storeStateCommand <| Cmd.map tagger command)
 
-mapContextCommandRunner : CommandRunner model subMsg msg
-mapContextCommandRunner command _ =
-  let
-    contextMapper = Intention.cmdValue command
-  in
-    CommandSuccess (applyToContext contextMapper)
-
-applyToContext : (Context model msg -> Context model msg) -> Context model msg -> ( Context model msg, Cmd msg )
-applyToContext mapper context =
-  ( mapper context, Cmd.none )
+storeStateCommand : Cmd msg -> Context model msg -> ( Context model msg, Cmd msg )
+storeStateCommand command context =
+  ( Context.updateState command context
+  , Cmd.none
+  )
 
 
 generate : (Context model msg -> Cmd msg) -> Cmd msg

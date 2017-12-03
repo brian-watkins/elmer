@@ -21,7 +21,8 @@ module Elmer.Html exposing
 
 import Elmer exposing (Matcher)
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context.Internal as Context exposing (Context)
+import Elmer.Context as Context exposing (Context)
+import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query
@@ -98,7 +99,10 @@ target : String -> Elmer.TestState model msg -> Elmer.TestState model msg
 target selector =
   TestState.map <|
     \context ->
-      TestState.with { context | targetSelector = Just selector }
+        RuntimeCommand.mapState TargetSelector (\_ -> selector)
+          |> flip Context.updateState context
+          |> TestState.with
+
 
 {-| Make expectations about the targeted html.
 
@@ -115,7 +119,7 @@ expect : Matcher (HtmlTarget msg) -> Matcher (Elmer.TestState model msg)
 expect matcher =
   TestState.mapToExpectation <|
     \context ->
-      case context.targetSelector of
+      case Context.state TargetSelector context of
         Just selector ->
           matcher <|
             Query.forHtml selector <| Context.render context

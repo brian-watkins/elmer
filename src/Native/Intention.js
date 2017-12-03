@@ -39,6 +39,10 @@ var _brian_watkins$elmer$Native_Intention = function() {
   }
 
   var intentionValue = function(intention) {
+    if (intention.type == "map") {
+      return intentionValue(intention.tree)
+    }
+
     return intention.value
   }
 

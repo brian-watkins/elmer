@@ -111,7 +111,7 @@ setLocationTests =
     [ test "it fails with a message" <|
       \() ->
         let
-          stateWithoutParser = TestState.map (\s -> TestState.with { s | locationParser = Nothing }) fullState
+          stateWithoutParser = Elmer.given App.defaultModel App.view App.update
         in
           ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutParser
             |> Markup.target ".error"

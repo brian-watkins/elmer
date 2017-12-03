@@ -32,6 +32,8 @@ import Elmer exposing (Matcher)
 import Elmer.Http.Internal as Http_ exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Http.Route as Route
+import Elmer.Context as Context
+import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Printer exposing (..)
@@ -96,12 +98,19 @@ in the history of this TestState.
 -}
 clearRequestHistory : Elmer.TestState model msg -> Elmer.TestState model msg
 clearRequestHistory =
-  TestState.map (\context ->
-    if List.isEmpty context.httpRequests then
-      TestState.failure "No HTTP requests to clear"
-    else
-      TestState.with { context | httpRequests = [] }
-  )
+  TestState.map <|
+    \context ->
+      let
+        requests =
+          Context.state Requests context
+            |> Maybe.withDefault []
+      in
+        if List.isEmpty requests then
+          TestState.failure "No HTTP requests to clear"
+        else
+          RuntimeCommand.mapState Requests (\_ -> [])
+            |> flip Context.updateState context
+            |> TestState.with
 
 
 {-| Expect one or more requests to the specified route.
@@ -116,23 +125,31 @@ expect : HttpRoute -> Matcher (Elmer.TestState model msg)
 expect route =
   TestState.mapToExpectation <|
     \context ->
-      if List.isEmpty context.httpRequests then
-        Expect.fail <| format
-          [ message "Expected request for" (route.method ++ " " ++ route.url)
-          , description "but no requests have been made"
-          ]
-      else
-        case hasRequest context.httpRequests route.method route.url of
-          Just _ ->
-            Expect.pass
-          Nothing ->
-            let
-              requests = String.join "\n" (List.map (\r -> r.method ++ " " ++ r.url) context.httpRequests)
-            in
-              Expect.fail <| format
-                [ message "Expected request for" (route.method ++ " " ++ route.url)
-                , message "but only found these requests" requests
-                ]
+      let
+        requests =
+          Context.state Requests context
+            |> Maybe.withDefault []
+      in
+        if List.isEmpty requests then
+          Expect.fail <| format
+            [ message "Expected request for" (route.method ++ " " ++ route.url)
+            , description "but no requests have been made"
+            ]
+        else
+          case hasRequest requests route.method route.url of
+            Just _ ->
+              Expect.pass
+            Nothing ->
+              let
+                requestInfo =
+                  List.reverse requests
+                    |> List.map (\r -> r.method ++ " " ++ r.url)
+                    |> String.join "\n"
+              in
+                Expect.fail <| format
+                  [ message "Expected request for" (route.method ++ " " ++ route.url)
+                  , message "but only found these requests" requestInfo
+                  ]
 
 {-| Make some expectation about requests to the specified route.
 
@@ -150,8 +167,12 @@ expectThat route matcher =
   TestState.mapToExpectation <|
     \context ->
       let
+        requests =
+          Context.state Requests context
+            |> Maybe.withDefault []
+
         result =
-          List.filter (matchesRequest route.method route.url) context.httpRequests
+          List.filter (matchesRequest route.method route.url) requests
             |> matcher
       in
         case Test.Runner.getFailureReason result of

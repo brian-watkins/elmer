@@ -30,7 +30,7 @@ mapToExpectationTests =
         \() ->
           Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
             |> TestState.mapToExpectation (\context ->
-                Expect.equal Nothing context.targetSelector
+                Expect.pass
               )
             |> Expect.equal (Expect.pass)
       ]

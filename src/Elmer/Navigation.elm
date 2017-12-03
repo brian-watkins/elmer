@@ -25,13 +25,18 @@ import Elmer.Spy.Internal as Spy_
 import Elmer.Platform.Command as Command
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context.Internal exposing (Context)
+import Elmer.Context as Context exposing (Context)
 import Elmer exposing (Matcher)
 import Expect
 import Elmer.Printer exposing (..)
 import Elmer.Navigation.Location as Location
 import Navigation
 import Html exposing (Html)
+
+
+type NativationState
+  = LocationParser
+  | Location
 
 
 {-| Register a location parser with the current test context.
@@ -41,9 +46,12 @@ The location parser function is the function you would provide to
 -}
 withLocationParser : ( Navigation.Location -> msg ) -> Elmer.TestState model msg -> Elmer.TestState model msg
 withLocationParser parser =
-  TestState.map (\context ->
-    TestState.with { context | locationParser = Just parser }
-  )
+  TestState.map <|
+    \context ->
+      RuntimeCommand.mapState LocationParser (\_ -> parser)
+        |> flip Context.updateState context
+        |> TestState.with
+
 
 {-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
 records the location as it is set.
@@ -70,17 +78,18 @@ spy =
         |> andCallFake fakeNavigateCommand
     ]
 
+
 fakeNavigateCommand : String -> Cmd msg
 fakeNavigateCommand url =
   let
     parseCommand = RuntimeCommand.generate <| generateCommandForLocation url
-    contextCommand = RuntimeCommand.mapContext <| storeLocation url
+    stateCommand = RuntimeCommand.mapState Location (\_ -> url)
   in
-    Cmd.batch [ contextCommand, parseCommand ]
+    Cmd.batch [ stateCommand, parseCommand ]
 
 generateCommandForLocation : String -> Context model msg -> Cmd msg
 generateCommandForLocation url context =
-  case context.locationParser of
+  case Context.state LocationParser context of
     Just locationParser ->
       let
         message = handleLocationUpdate url locationParser
@@ -93,9 +102,6 @@ handleLocationUpdate : String -> (Navigation.Location -> msg) -> msg
 handleLocationUpdate url parser =
     (parser (Location.asLocation url))
 
-storeLocation : String -> Context model msg -> Context model msg
-storeLocation url testState =
-  { testState | location = Just url }
 
 {-| Expect that the current location is equal to the given string.
 
@@ -104,14 +110,14 @@ Note: This expectation must be used in conjunction with `spy` above.
 expectLocation : String -> Matcher (Elmer.TestState model msg)
 expectLocation expectedURL =
   TestState.mapToExpectation <|
-      \testState ->
-          case testState.location of
-              Just location ->
-                  Expect.equal location expectedURL
-                      |> Expect.onFail (format [message "Expected to be at location:" expectedURL, message "but location is:" location])
+      \context ->
+        case Context.state Location context of
+          Just location ->
+            Expect.equal location expectedURL
+                |> Expect.onFail (format [message "Expected to be at location:" expectedURL, message "but location is:" location])
+          Nothing ->
+            Expect.fail (format [message "Expected to be at location:" expectedURL, description "but no location has been set"])
 
-              Nothing ->
-                  Expect.fail (format [message "Expected to be at location:" expectedURL, description "but no location has been set"])
 
 {-| Set the location for the component.
 
@@ -121,13 +127,13 @@ will be passed to the component's `update` function for processing.
 -}
 setLocation : String -> Elmer.TestState model msg -> Elmer.TestState model msg
 setLocation location =
-  TestState.map (\context ->
-    case context.locationParser of
-        Just locationParser ->
+  TestState.map <|
+    \context ->
+      case Context.state LocationParser context of
+        Just _ ->
           let
-              commandThunk = \() -> fakeNavigateCommand location
+            commandThunk = \() -> fakeNavigateCommand location
           in
-              Command.send commandThunk <| TestState.with context
+            Command.send commandThunk <| TestState.with context
         Nothing ->
-            TestState.failure "setLocation failed because no locationParser was set"
-  )
+          TestState.failure "setLocation failed because no locationParser was set"

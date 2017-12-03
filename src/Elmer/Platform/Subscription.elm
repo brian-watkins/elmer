@@ -40,7 +40,12 @@ import Elmer.Printer exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Platform.Command as Command
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))
+import Elmer.Context as Context
+import Elmer.Runtime.Command as RuntimeCommand
 
+
+type SubscriptionState
+  = Subscriptions
 
 type alias SubDescription a msg =
   { name : String
@@ -71,12 +76,14 @@ could do the following:
 -}
 with : (() -> (model -> Sub msg)) -> Elmer.TestState model msg -> Elmer.TestState model msg
 with subsThunk =
-  TestState.map (\context ->
-    let
-      subscription = subsThunk () <| context.model
-    in
-      TestState.with { context | subscriptions = subscription }
-  )
+  TestState.map <|
+    \context ->
+      let
+        subscription = subsThunk () <| Context.model context
+      in
+        RuntimeCommand.mapState Subscriptions (\_ -> subscription)
+          |> flip Context.updateState context
+          |> TestState.with
 
 
 describeSub : String -> (a -> msg) -> SubDescription a msg
@@ -118,33 +125,39 @@ the component's `update` function for processing.
 -}
 send : String -> a -> Elmer.TestState model msg -> Elmer.TestState model msg
 send subName data =
-  TestState.map (\testState ->
-    case findSubDescription subName testState.subscriptions of
-      Just subDesc ->
-        let
-          command = subDesc.tagger data |> Command.fake
-        in
-          case Runtime.performCommand command testState of
-            Ok updatedState ->
-              TestState.with updatedState
-            Err message ->
-              TestState.failure message
+  TestState.map <|
+    \context ->
+      let
+        subscriptions =
+          Context.state Subscriptions context
+            |> Maybe.withDefault Sub.none
+      in
+        case findSubDescription subName subscriptions of
+          Just subDesc ->
+            let
+              command = subDesc.tagger data |> Command.fake
+            in
+              case Runtime.performCommand command context of
+                Ok updatedState ->
+                  TestState.with updatedState
+                Err message ->
+                  TestState.failure message
 
-      Nothing ->
-        let
-          spies = subscriptionSpyNames testState.subscriptions
-        in
-          if List.isEmpty spies then
-            TestState.failure <| format
-              [ message "No subscription spy found with name" subName
-              , description "because there are no subscription spies"
-              ]
-          else
-            TestState.failure <| format
-              [ message "No subscription spy found with name" subName
-              , message "These are the current subscription spies" (String.join "\n" spies)
-              ]
-  )
+          Nothing ->
+            let
+              spies = subscriptionSpyNames subscriptions
+            in
+              if List.isEmpty spies then
+                TestState.failure <| format
+                  [ message "No subscription spy found with name" subName
+                  , description "because there are no subscription spies"
+                  ]
+              else
+                TestState.failure <| format
+                  [ message "No subscription spy found with name" subName
+                  , message "These are the current subscription spies" (String.join "\n" spies)
+                  ]
+
 
 subscriptionSpyNames : Sub msg -> List String
 subscriptionSpyNames sub =

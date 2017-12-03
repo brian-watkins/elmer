@@ -4,7 +4,7 @@ module Elmer.Runtime
         , performCommand
         )
 
-import Elmer.Context.Internal as Context exposing (Context)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime.Types exposing (..)
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))

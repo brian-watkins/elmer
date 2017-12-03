@@ -1,7 +1,7 @@
 module Elmer.TestState exposing
   ( TestState
+  , TestStateExtension(..)
   , create
-  , createWithCommand
   , map
   , mapWithoutSpies
   , mapToExpectation
@@ -9,30 +9,29 @@ module Elmer.TestState exposing
   , failure
   )
 
-import Elmer.Context as Context
-import Elmer.Context.Internal exposing (..)
+import Elmer.Context as Context exposing (..)
 import Elmer.Spy.Internal as Spy_ exposing (Spy)
-import Elmer.Runtime as Runtime
 import Expect
-import Html exposing (Html)
+
 
 type TestState model msg
     = Ready (Context model msg)
     | Failed String
 
+type TestStateExtension
+  = MapToExpectationExtension
+
+
 create : model -> ViewFunction model msg -> UpdateFunction model msg -> TestState model msg
 create model view update =
-  Context.defaultHtmlContext model view update
+  Context.default model view update
     |> with
 
-createWithCommand : (() -> Cmd msg) -> TestState {} msg
-createWithCommand commandGenerator =
-  Context.defaultCommandContext commandGenerator
-    |> with
 
 with : Context model msg -> TestState model msg
 with context =
   Ready context
+
 
 failure : String -> TestState model msg
 failure message =
@@ -50,24 +49,21 @@ abstractMap failureMapper mapper testState =
 
 map : (Context model msg -> TestState model msg) -> TestState model msg -> TestState model msg
 map mapper =
-  abstractMap Failed
-    (\context ->
-      let
-        contextWithSpies = Context.withSpies (Spy_.activate context.spies) context
-      in
-        mapper contextWithSpies
-          |> updateComponentWithDeactivatedSpies contextWithSpies
-    )
+  abstractMap Failed <|
+    spyMapExtension mapper
 
-mapWithoutSpies : (Context model msg -> TestState model msg) -> TestState model msg -> TestState model msg
-mapWithoutSpies mapper =
-  abstractMap Failed
-    (\context ->
-      mapper context
-    )
 
-updateComponentWithDeactivatedSpies : Context model msg -> TestState model msg -> TestState model msg
-updateComponentWithDeactivatedSpies contextWithSpies =
+spyMapExtension : (Context model msg -> TestState model msg) -> Context model msg -> TestState model msg
+spyMapExtension mapper context =
+  let
+    contextWithSpies = Spy_.withSpies (Spy_.activate <| Spy_.spiesFrom context) context
+  in
+    mapper contextWithSpies
+      |> testStateWithDeactivatedSpies contextWithSpies
+
+
+testStateWithDeactivatedSpies : Context model msg -> TestState model msg -> TestState model msg
+testStateWithDeactivatedSpies contextWithSpies =
   abstractMap
     (\message ->
       Failed message
@@ -75,35 +71,45 @@ updateComponentWithDeactivatedSpies contextWithSpies =
     )
     (\context ->
       context
-        |> Context.withSpies (Spy_.deactivate context.spies)
+        |> Spy_.withSpies (Spy_.deactivate <| Spy_.spiesFrom context)
         |> with
     )
 
 
+mapWithoutSpies : (Context model msg -> TestState model msg) -> TestState model msg -> TestState model msg
+mapWithoutSpies mapper =
+  abstractMap Failed <|
+    \context ->
+      mapper context
+
+
 mapToExpectation : (Context model msg -> Expect.Expectation) -> TestState model msg -> Expect.Expectation
 mapToExpectation mapper =
-  abstractMap Expect.fail
-    (\context ->
+  abstractMap Expect.fail <|
+    \context ->
       let
-        contextWithSpies = Context.withSpies (Spy_.activate context.spies) context
+        extensions =
+          Context.state MapToExpectationExtension context
+            |> Maybe.withDefault []
+            |> (::) spyExpectationExtension
       in
-        case contextWithSpies.commandGenerator of
-          Just generator ->
-            case Runtime.performCommand (generator ()) contextWithSpies of
-              Ok resolvedContext ->
-                mapper resolvedContext
-                  |> deactivateSpies resolvedContext
-              Err errorMessage ->
-                Expect.fail errorMessage
-                  |> deactivateSpies contextWithSpies
-          Nothing ->
-            mapper contextWithSpies
-              |> deactivateSpies contextWithSpies
-    )
+        context
+          |> List.foldr (<|) mapper extensions
+
+
+spyExpectationExtension : (Context model msg -> Expect.Expectation) -> Context model msg -> Expect.Expectation
+spyExpectationExtension mapper context =
+  let
+    contextWithSpies =
+      Spy_.withSpies (Spy_.activate <| Spy_.spiesFrom context) context
+  in
+    mapper contextWithSpies
+      |> deactivateSpies contextWithSpies
+
 
 deactivateSpies : Context model msg -> a -> a
 deactivateSpies context subject =
   let
-    uninstalled = Spy_.deactivate context.spies
+    uninstalled = Spy_.deactivate <| Spy_.spiesFrom context
   in
     subject

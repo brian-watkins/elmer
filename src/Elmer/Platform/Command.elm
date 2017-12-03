@@ -41,7 +41,7 @@ and [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigati
 
 import Elmer exposing (Matcher)
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Context.Internal exposing (Context)
+import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Runtime.Command as RuntimeCommand
@@ -63,6 +63,11 @@ fake : msg -> Cmd msg
 fake =
   RuntimeCommand.stub
 
+type CommandState
+  = DeferredCommands
+  | DummyCommands
+
+
 {-| Generate a dummy command.
 
 You might only care to describe the fact that a command has been sent, and not
@@ -74,26 +79,33 @@ This will be most useful in conjunction with `expectDummy`.
 -}
 dummy : String -> Cmd msg
 dummy identifier =
-  RuntimeCommand.mapContext <|
-    updateTestStateWithDummyCommand identifier
+  RuntimeCommand.mapState DummyCommands <|
+    updateStateWithDummyCommand identifier
 
-updateTestStateWithDummyCommand : String -> Context model msg -> Context model msg
-updateTestStateWithDummyCommand identifier testState =
-  { testState | dummyCommands = identifier :: testState.dummyCommands }
+
+updateStateWithDummyCommand : String -> Maybe (List String) -> List String
+updateStateWithDummyCommand identifier state =
+  Maybe.withDefault [] state
+    |> (::) identifier
+
 
 {-| Expect that a dummy command with the given identifier has been sent.
 -}
 expectDummy : String -> Matcher (Elmer.TestState model msg)
 expectDummy expectedIdentifier =
-  TestState.mapToExpectation (\testState ->
-    let
-      dummyCommands = List.filter (\identifier -> identifier == expectedIdentifier) testState.dummyCommands
-    in
-      if List.isEmpty dummyCommands then
-        Expect.fail (format [message "No dummy commands sent with identifier" expectedIdentifier])
-      else
-        Expect.pass
-  )
+  TestState.mapToExpectation <|
+    \context ->
+      let
+        matchingCommands =
+          Context.state DummyCommands context
+            |> Maybe.withDefault []
+            |> List.filter (\identifier -> identifier == expectedIdentifier)
+      in
+        if List.isEmpty matchingCommands then
+          Expect.fail (format [message "No dummy commands sent with identifier" expectedIdentifier])
+        else
+          Expect.pass
+
 
 {-| Defer a command for later processing.
 
@@ -106,12 +118,14 @@ to the component's `update` function until `resolveDeferred` is called.
 -}
 defer : Cmd msg -> Cmd msg
 defer command =
-  RuntimeCommand.mapContext <|
-    updateTestStateWithDeferredCommand command
+  RuntimeCommand.mapState DeferredCommands <|
+    updateStateWithDeferredCommand command
 
-updateTestStateWithDeferredCommand : Cmd msg -> Context model msg -> Context model msg
-updateTestStateWithDeferredCommand command testState =
-  { testState | deferredCommands = command :: testState.deferredCommands }
+updateStateWithDeferredCommand : Cmd msg -> Maybe (List (Cmd msg)) -> List (Cmd msg)
+updateStateWithDeferredCommand command state =
+  Maybe.withDefault [] state
+    |> (::) command
+
 
 {-| Resolve any deferred commands.
 
@@ -120,17 +134,25 @@ sent to the component's `update` function.
 -}
 resolveDeferred : Elmer.TestState model msg -> Elmer.TestState model msg
 resolveDeferred =
-  TestState.map (\testState ->
-    if List.isEmpty testState.deferredCommands then
-      TestState.failure "No deferred commands found"
-    else
+  TestState.map <|
+    \context ->
       let
-        deferredCommands = Cmd.batch testState.deferredCommands
-        updatedTestState = { testState | deferredCommands = [] }
+        deferredCommands =
+          Context.state DeferredCommands context
+            |> Maybe.withDefault []
       in
-        Runtime.performCommand deferredCommands updatedTestState
-          |> asTestState
-  )
+        if List.isEmpty deferredCommands then
+          TestState.failure "No deferred commands found"
+        else
+          let
+            commandBatch = Cmd.batch deferredCommands
+            updatedContext =
+              RuntimeCommand.mapState DeferredCommands (\_ -> [])
+                |> flip Context.updateState context
+          in
+            Runtime.performCommand commandBatch updatedContext
+              |> asTestState
+
 
 {-| Send a command.
 

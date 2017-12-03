@@ -4,7 +4,7 @@ module Elmer.Runtime.Types exposing
   , CommandRunner
   )
 
-import Elmer.Context.Internal exposing (Context)
+import Elmer.Context exposing (Context)
 
 type CommandResult model msg
   = CommandSuccess (CommandEffect model msg)
