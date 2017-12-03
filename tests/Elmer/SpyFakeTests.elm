@@ -23,7 +23,7 @@ createWithTests =
               Command.fake <| tagger word
             )
           dependencies =
-            { fetchName = Spy.call "my-fake"
+            { fetchName = Spy.callable "my-fake"
             , getNumber = (\_ -> 33)
             }
         in
@@ -46,8 +46,8 @@ createWithTests =
               27
             )
           dependencies =
-            { fetchName = Spy.call "fun-fake"
-            , getNumber = Spy.call "awesome-fake"
+            { fetchName = Spy.callable "fun-fake"
+            , getNumber = Spy.callable "awesome-fake"
             }
           state =
             Elmer.given App.initialModel App.view (App.update dependencies)
@@ -83,15 +83,15 @@ createWithTests =
         ]
   ]
 
-callTests : Test
-callTests =
-  describe "call"
-  [ describe "when call is used with a spy for a real function" <|
+callableTests : Test
+callableTests =
+  describe "callable"
+  [ describe "when callable is used with a spy for a real function" <|
     let
       spy = Spy.create "task-spy" (\_ -> Task.perform)
         |> Spy.andCallFake (\_ _ -> Cmd.none)
       dependencies =
-        { fetchName = Spy.call "task-spy"
+        { fetchName = Spy.callable "task-spy"
         , getNumber = (\_ -> 33)
         }
     in

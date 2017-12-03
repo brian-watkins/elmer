@@ -42,14 +42,14 @@ var _brian_watkins$elmer$Native_Spy = function() {
     })
   }
 
-  var call = function(name) {
+  var callable = function(name) {
     return function () {
       var spyFunction = fakeFunctions[name]
       if (spyFunction) {
         return spyFunction.apply(this, arguments)
       }
 
-      throw "Attempted to use Spy.call with an unknown spy: " + name
+      throw "Attempted to use Spy.callable with an unknown spy: " + name
     }
   }
 
@@ -168,7 +168,7 @@ var _brian_watkins$elmer$Native_Spy = function() {
   return {
       create: F2(create),
       createWith: F2(createWith),
-      call: call,
+      callable: callable,
       deactivate: deactivate,
       activate: activate,
       calls: calls,

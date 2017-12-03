@@ -4,7 +4,7 @@ module Elmer.Spy.Internal exposing
   , Arg(..)
   , create
   , createWith
-  , call
+  , callable
   , activate
   , deactivate
   , calls
@@ -49,9 +49,9 @@ createWith : String -> (a -> b) -> Spy
 createWith name fakeFunction =
   Native.Spy.createWith name fakeFunction
 
-call : String -> (a -> b)
-call name =
-  Native.Spy.call name
+callable : String -> (a -> b)
+callable name =
+  Native.Spy.callable name
 
 calls : String -> List Spy -> Maybe Calls
 calls name spies =

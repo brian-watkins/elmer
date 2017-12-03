@@ -3,7 +3,7 @@ module Elmer.Spy exposing
   , Calls
   , create
   , createWith
-  , call
+  , callable
   , andCallFake
   , expect
   , use
@@ -17,7 +17,7 @@ module Elmer.Spy exposing
 @docs create, andCallFake
 
 # Spy on a Provided Function
-@docs createWith, call
+@docs createWith, callable
 
 # Use a Spy
 @docs use
@@ -81,7 +81,7 @@ which will return a version of the function that records its calls.
 
 For example, let's say you want to inject some dependencies into your update
 function to decouple application logic from view logic. You would create a spy
-with a function you provide for your test. Then, use `Spy.call` when you want
+with a function you provide for your test. Then, use `Spy.callable` when you want
 to provide a version of the function that will record its calls.
 
     let
@@ -91,7 +91,7 @@ to provide a version of the function that will record its calls.
         )
       updateForTest =
         MyModule.updateUsing <|
-          Spy.call "my-spy"
+          Spy.callable "my-spy"
     in
       Elmer.given testModel MyModule.view updateForTest
         |> Elmer.Spy.use [ spy ]
@@ -118,12 +118,12 @@ createWith name fakeFunction =
 {-| Returns a function that records calls to itself and calls through to the function
 associated with the spy with the given name.
 
-Note: Use `call` only in conjunction with spies produced using `createWith`; otherwise
+Note: Use `callable` only in conjunction with spies produced using `createWith`; otherwise
 you'll receive an error.
 -}
-call : String -> (a -> b)
-call =
-  Spy_.call
+callable : String -> (a -> b)
+callable =
+  Spy_.callable
 
 
 {-| Call the provided function when a Spy is called.

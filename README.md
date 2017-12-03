@@ -766,7 +766,7 @@ See `Elmer.Spy.Matchers` for a full list of argument matchers.
 nice to spy on an anonymous function. Suppose that you are testing a module that takes a function
 as an argument, and you want to expect that the function is called with a certain argument.
 You can use `Elmer.Spy.createWith` to produce a function that is nothing more than a spy, with a
-'fake' implementation. Create a reference to this function using `Spy.call`. For example:
+'fake' implementation. Create a reference to this function using `Spy.callable`. For example:
 
 ```
 let
@@ -774,7 +774,7 @@ let
     Command.fake <| tagger "Success!"
   )
 in
-  Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.call "my-spy")
+  Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.callable "my-spy")
     |> Elmer.Spy.use [ spy ]
     |> Elmer.Html.target "input"
     |> Elmer.Html.Event.input "some text"
