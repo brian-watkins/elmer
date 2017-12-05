@@ -36,10 +36,10 @@ to install it.
 
 ### Getting Started
 
-First, install elm-test -- Elmer has been tested with version 0.18.7 of the elm-test node-test-runner.
+First, install elm-test -- Elmer has been tested with version 0.18.11 of the elm-test node-test-runner.
 
 ```
-$ npm install -g elm-test@0.18.7
+$ npm install -g elm-test@0.18.11
 ```
 
 Next, initialize your project with elm-test.
