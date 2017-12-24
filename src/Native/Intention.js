@@ -34,8 +34,7 @@ var _brian_watkins$elmer$Native_Intention = function() {
   }
 
   var asBatch = function(intention) {
-    var intentions = _elm_lang$core$Native_List.toArray(intention.branches)
-    return _elm_lang$core$Native_List.fromArray(intentions)
+    return intention.branches
   }
 
   var intentionValue = function(intention) {
@@ -46,6 +45,9 @@ var _brian_watkins$elmer$Native_Intention = function() {
     return intention.value
   }
 
+  //Looks like we can't call this directly in the elm code
+  //But the rest of Intention.js could probably be moved into elm and just
+  //use Native.Value
   var toIntention = function(home, data) {
     return _elm_lang$core$Native_Platform.leaf(home)(data)
   }

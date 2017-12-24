@@ -35,7 +35,6 @@ module Elmer
 
 import Html exposing (Html)
 import Native.Intention
-import Native.Http
 import Native.Html
 import Native.Spy
 

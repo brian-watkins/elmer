@@ -14,6 +14,8 @@ module Elmer.Http.Internal exposing
   )
 
 import Http
+import Json.Decode as Json
+import Elmer.Value as Value
 
 type HttpState
   = Requests
@@ -36,6 +38,11 @@ type alias HttpRequestFunction a b =
 type alias HttpHeader =
   { name: String
   , value: String
+  }
+
+type alias HttpStringBody =
+  { mimeType: String
+  , body: String
   }
 
 type alias HttpRequestHandler a =
@@ -68,9 +75,48 @@ type alias Status =
 
 
 asHttpRequestHandler : Http.Request a -> HttpRequestHandler a
-asHttpRequestHandler request =
-  Native.Http.asHttpRequestHandler request
+asHttpRequestHandler httpRequest =
+  { request = makeHttpRequest httpRequest
+  , responseHandler =
+      case Value.mapArg (Value.decode expectDecoder) httpRequest of
+        Ok handler ->
+          handler
+        Err err ->
+          Debug.crash <| "Error fetching" ++ err
+  }
 
+expectDecoder : Json.Decoder Json.Value
+expectDecoder =
+  Json.at ["expect", "responseToResult"] Json.value
+
+
+makeHttpRequest : Http.Request a -> HttpRequest
+makeHttpRequest =
+  Value.mapArg <|
+    \r ->
+      { method = Value.field "method" r
+      , url = Value.field "url" r
+      , headers = List.map makeHttpHeader <| Value.field "headers" r
+      , body = makeBody r
+      }
+
+
+makeBody : a -> Maybe String
+makeBody request =
+  let
+    body = Value.field "body" request
+  in
+    if Value.constructor body == "StringBody" then
+      Value.mapArg2 HttpStringBody body
+        |> .body
+        |> Just
+    else
+      Nothing
+
+
+makeHttpHeader : Http.Header -> HttpHeader
+makeHttpHeader header =
+  Value.mapArg2 HttpHeader header
 
 route : String -> String
 route url =
