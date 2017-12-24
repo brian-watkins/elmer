@@ -8,6 +8,7 @@ module Elmer.Runtime.Intention exposing
   , subData
   )
 
+import Elmer.Value as Value
 
 type Intention a msg subMsg
     = Leaf (LeafData a)
@@ -26,26 +27,55 @@ type alias LeafData a =
     }
 
 
-cmdData : Cmd msg -> Intention a msg subMsg
-cmdData command =
-  Native.Intention.asIntention command
+cmdData : Cmd msg -> Intention (Cmd msg) msg subMsg
+cmdData =
+  asIntention
 
 cmdValue : Cmd a -> b
-cmdValue cmd =
-  Native.Intention.intentionValue cmd
+cmdValue =
+  intentionValue
 
 toCmd : String -> a -> Cmd msg
-toCmd home data =
-  Native.Intention.toIntention home data
+toCmd =
+  toIntention
 
-subData : Sub msg -> Intention a msg subMsg
-subData subscription =
-  Native.Intention.asIntention subscription
+subData : Sub msg -> Intention (Sub msg) msg subMsg
+subData =
+  asIntention
 
 subValue : Sub a -> b
-subValue sub =
-  Native.Intention.intentionValue sub
+subValue =
+  intentionValue
 
 toSub : String -> a -> Sub msg
-toSub home data =
-  Native.Intention.toIntention home data
+toSub =
+  toIntention
+
+
+toIntention : String -> a -> b
+toIntention =
+  Value.global "_elm_lang$core$Native_Platform"
+    |> Value.field "leaf"
+
+
+asIntention : v -> Intention v msg subMsg
+asIntention value =
+  case Value.field "type" value of
+    "leaf" ->
+      Leaf ({ intention = value, home = Value.field "home" value })
+    "map" ->
+      Tree ({ tree = Value.field "tree" value, tagger = Value.field "tagger" value })
+    "node" ->
+      Batch (Value.field "branches" value)
+    unknownType ->
+      "Unknown intention type" ++ unknownType
+        |> Debug.crash
+
+
+intentionValue : int -> val
+intentionValue int =
+  if Value.field "type" int == "map" then
+    Value.field "tree" int
+      |> intentionValue
+  else
+    Value.field "value" int

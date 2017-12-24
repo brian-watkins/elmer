@@ -4,10 +4,13 @@ module Elmer.Value exposing
   , field
   , mapArg
   , mapArg2
+  , mapArg3
+  , global
   )
 
 import Json.Decode as Json
 import Native.Value
+
 
 decode : Json.Decoder a -> v -> Result String b
 decode decoder value =
@@ -30,19 +33,32 @@ field key value =
         |> Debug.crash
 
 
+global : String -> a
+global =
+  Native.Value.global
+
+
 mapArg : (a -> z) -> v -> z
-mapArg mapper value =
-  argAt 0 value
-    |> mapper
+mapArg =
+  mapArgAt 0
 
 
 mapArg2 : (a -> b -> z) -> v -> z
 mapArg2 mapper value =
-  let
-    firstArg = argAt 0 value
-    secondArg = argAt 1 value
-  in
-    mapper firstArg secondArg
+  mapArg mapper value
+    |> flip (mapArgAt 1) value
+
+
+mapArg3 : (a -> b -> c -> z) -> v -> z
+mapArg3 mapper value =
+  mapArg2 mapper value
+    |> flip (mapArgAt 2) value
+
+
+mapArgAt : Int -> (a -> z) -> v -> z
+mapArgAt index mapper value =
+  argAt index value
+    |> mapper
 
 
 argAt : Int -> v -> a
