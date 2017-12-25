@@ -4,8 +4,12 @@ var _brian_watkins$elmer$Native_Value = function() {
     return eval(name)
   }
 
+  var cast = function(value) {
+    return value
+  }
+
   return {
-      decode: _elm_lang$core$Json_Decode$decodeValue,
+      cast: cast,
       global: global
   };
 

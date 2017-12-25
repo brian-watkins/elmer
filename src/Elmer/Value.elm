@@ -14,7 +14,9 @@ import Native.Value
 
 decode : Json.Decoder a -> v -> Result String b
 decode decoder value =
-  Native.Value.decode decoder value
+  Native.Value.cast value
+    |> Json.decodeValue decoder
+    |> Result.map Native.Value.cast
 
 
 constructor : v -> String
