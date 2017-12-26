@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer exposing (..)
 import Elmer.Html.Element as Element
+import Elmer.Html.Node as Node
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
@@ -114,7 +115,9 @@ toStringTests =
   [ test "it prints a node" <|
     \() ->
       let
-        nodeResult = Native.Html.asHtmlElement sampleHtml
+        nodeResult =
+          Node.from sampleHtml
+            |> Node.asElement
       in
         case nodeResult of
           Just node ->
@@ -131,7 +134,9 @@ toStringTests =
   , test "it prints a node with a boolean property" <|
     \() ->
       let
-        elementResult = Native.Html.asHtmlElement htmlWithBoolProperty
+        elementResult =
+          Node.from htmlWithBoolProperty
+            |> Node.asElement
       in
         case elementResult of
           Just element ->

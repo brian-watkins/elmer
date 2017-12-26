@@ -5,6 +5,7 @@ import Expect
 import Elmer.Html exposing (HtmlElement)
 import Elmer.Html.Query as Query
 import Elmer.Html.Matchers as Matchers
+import Elmer.Html.Node as Node
 import Elmer.TestHelpers exposing (..)
 import Html.Attributes as Attr
 import Html exposing (Html)
@@ -320,7 +321,9 @@ descendantTests =
 
 getElement : Html msg -> HtmlElement msg
 getElement html =
-  Maybe.withDefault nodeWithList <| Native.Html.asHtmlElement html
+  Node.from html
+    |> Node.asElement
+    |> Maybe.withDefault nodeWithList
 
 liWithDiv : String -> HtmlElement msg
 liWithDiv name =

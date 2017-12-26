@@ -18,18 +18,16 @@ import Elmer.Html.Types exposing (..)
 import Elmer.Internal as Internal
 import Dict exposing (Dict)
 
+
 toString : HtmlElement msg -> String
 toString node =
   (printElement "" (Element node))
 
-facts : HtmlElement msg -> Dict String HtmlFact
-facts node =
-  Json.decodeString (Json.dict factsDecoder) node.facts
-    |> Result.withDefault Dict.empty
 
 elementId : HtmlElement msg -> Maybe String
 elementId =
   property "id"
+
 
 classList : HtmlElement msg -> List String
 classList node =
@@ -40,10 +38,12 @@ classList node =
         Nothing ->
             []
 
+
 property : String -> HtmlElement msg -> Maybe String
 property name element =
   properties element
     |> Dict.get name
+
 
 hasProperty : (String, String) -> HtmlElement msg -> Bool
 hasProperty (key, value) element =
@@ -51,9 +51,10 @@ hasProperty (key, value) element =
     |> Maybe.withDefault ""
     |> (==) value
 
+
 properties : HtmlElement msg -> Dict String String
 properties element =
-  facts element
+  element.facts
     |> Dict.toList
     |> List.filterMap (\(key, fact) ->
       case fact of
@@ -63,12 +64,15 @@ properties element =
           Just (key, Internal.boolToString value)
         DictValue _ ->
           Nothing
+        Ignored ->
+          Nothing
       )
     |> Dict.fromList
 
+
 styles : HtmlElement msg -> Maybe (Dict String String)
 styles element =
-  case Dict.get "STYLE" <| facts element of
+  case Dict.get "STYLE" element.facts of
     Just (DictValue styles) ->
       Just styles
     Just _ ->
@@ -79,21 +83,17 @@ styles element =
 
 attributes : HtmlElement msg -> Dict String String
 attributes element =
-  Result.withDefault Dict.empty <|
-      Json.decodeString (Json.field "ATTR" (Json.dict Json.string)) element.facts
+  case Dict.get "ATTR" element.facts of
+    Just (DictValue attrs) ->
+      attrs
+    _ ->
+      Dict.empty
+
 
 attribute : String -> HtmlElement msg -> Maybe String
 attribute name element =
   attributes element
     |> Dict.get name
-
-factsDecoder : Json.Decoder HtmlFact
-factsDecoder =
-  Json.oneOf
-    [ Json.map StringValue Json.string
-    , Json.map BoolValue Json.bool
-    , Json.map DictValue (Json.dict Json.string)
-    ]
 
 
 printElement : String -> HtmlNode msg -> String
@@ -112,6 +112,7 @@ printElement indentation element =
     Text text ->
       indentation ++ "- " ++ text
 
+
 printEvents : HtmlElement msg -> String
 printEvents node =
   if List.isEmpty node.eventHandlers then
@@ -127,34 +128,44 @@ printEvents node =
 printFacts : HtmlElement msg -> String
 printFacts node =
   let
-    factsList = facts node
-      |> Dict.toList
+    factsList =
+      node.facts
+        |> Dict.toList
   in
     if List.isEmpty factsList then
       ""
     else
       let
-        factString = List.map factToString factsList
-          |> String.join ", "
+        factString =
+          List.filterMap factToString factsList
+            |> String.join ", "
       in
-        "{ " ++ factString ++ " }"
+        if String.isEmpty factString then
+          ""
+        else
+          "{ " ++ factString ++ " }"
 
 
-factToString : (String, HtmlFact) -> String
+factToString : (String, HtmlFact) -> Maybe String
 factToString (key, fact) =
   case fact of
     StringValue value ->
-      stringFactToString (key, value)
+      Just <| stringFactToString (key, value)
     BoolValue value ->
-      boolFactToString (key, value)
+      Just <| boolFactToString (key, value)
     DictValue value ->
       Dict.toList value
         |> List.map stringFactToString
         |> String.join ", "
+        |> Just
+    Ignored ->
+      Nothing
+
 
 stringFactToString : (String, String) -> String
 stringFactToString (key, value) =
   key ++ " = '" ++ value ++ "'"
+
 
 boolFactToString : (String, Bool) -> String
 boolFactToString (key, value) =
@@ -166,10 +177,12 @@ isCheckbox element =
   element.tag == "input" &&
     ( property "type" element |> Maybe.withDefault "" ) == "checkbox"
 
+
 isSubmitInput : HtmlElement msg -> Bool
 isSubmitInput element =
   element.tag == "input" &&
     hasProperty ("type", "submit") element
+
 
 isSubmitButton : HtmlElement msg -> Bool
 isSubmitButton element =

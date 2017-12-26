@@ -19,7 +19,7 @@ type HtmlNode msg
 
 type alias HtmlElement msg =
     { tag : String
-    , facts : String
+    , facts : Dict String HtmlFact
     , children : List (HtmlNode msg)
     , inheritedEventHandlers : List (HtmlEventHandler msg)
     , eventHandlers : List (HtmlEventHandler msg)
@@ -40,3 +40,4 @@ type HtmlFact
   = StringValue String
   | BoolValue Bool
   | DictValue (Dict String String)
+  | Ignored

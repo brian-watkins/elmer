@@ -12,17 +12,20 @@ import Json.Decode as Json
 import Native.Value
 
 
+cast : a -> b
+cast =
+  Native.Value.cast
+
 decode : Json.Decoder a -> v -> Result String b
 decode decoder value =
-  Native.Value.cast value
+  cast value
     |> Json.decodeValue decoder
-    |> Result.map Native.Value.cast
+    |> Result.map cast
 
 
 constructor : v -> String
-constructor value =
-  decode (Json.field "ctor" Json.string) value
-    |> Result.withDefault ""
+constructor =
+  field "ctor"
 
 
 field : String -> v -> b

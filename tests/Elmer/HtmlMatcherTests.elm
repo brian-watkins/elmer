@@ -8,6 +8,7 @@ import Elmer exposing (..)
 import Elmer.Html exposing (HtmlElement)
 import Elmer.Html.Matchers as Matchers
 import Elmer.Html.Query as Query exposing (HtmlTarget(..))
+import Elmer.Html.Node as Node
 import Elmer.Printer exposing (..)
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -195,7 +196,8 @@ elementWithAttributes attributes =
     attrs = List.map (\(name, value) -> Attr.attribute name value) attributes
     html = Html.div attrs []
   in
-    Native.Html.asHtmlElement html
+    Node.from html
+      |> Node.asElement
       |> Maybe.withDefault (nodeWithId "fail")
 
 
@@ -307,7 +309,8 @@ elementWithStyles styles =
   let
     html = Html.div [ Attr.style styles ] []
   in
-    Native.Html.asHtmlElement html
+    Node.from html
+      |> Node.asElement
       |> Maybe.withDefault (nodeWithId "fail")
 
 

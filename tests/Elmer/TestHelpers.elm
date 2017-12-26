@@ -1,13 +1,13 @@
 module Elmer.TestHelpers exposing (..)
 
 import Elmer.Html.Types exposing (..)
-import Dict
+import Dict exposing (Dict)
 import Json.Decode as Json
 
 emptyNode : String -> HtmlElement msg
 emptyNode tagName =
   { tag = tagName
-  , facts = "{}"
+  , facts = Dict.empty
   , children = []
   , inheritedEventHandlers = []
   , eventHandlers = []
@@ -18,21 +18,41 @@ nodeWithClass className =
   let
     node = emptyNode "div"
   in
-    { node | facts = "{\"className\":\"" ++ className ++ " funClass\"}"}
+    { node
+    | facts =
+        factsWithStringValues [ ("className", className ++ " funClass") ]
+    }
 
 nodeWithId : String -> HtmlElement msg
 nodeWithId id =
   let
     node = emptyNode "div"
   in
-    { node | facts = "{\"id\":\"" ++ id ++ "\"}" }
+    { node | facts =
+        factsWithStringValues [ ("id", id) ]
+    }
 
 nodeWithClassAndId : String -> String -> HtmlElement msg
 nodeWithClassAndId className id =
   let
     node = emptyNode "div"
   in
-    { node | facts = "{\"className\":\"" ++ className ++ " funClass\", \"id\":\"" ++ id ++ "\"}"}
+    { node | facts =
+      factsWithStringValues
+        [ ("className", className ++ " funClass")
+        , ("id", id)
+        ]
+    }
+
+factsWithStringValues : List (String, String) -> Dict String HtmlFact
+factsWithStringValues values =
+  List.map (\(key, value) -> (key, StringValue value)) values
+    |> Dict.fromList
+
+factsWithBoolValues : List (String, Bool) -> Dict String HtmlFact
+factsWithBoolValues values =
+  List.map (\(key, value) -> (key, BoolValue value)) values
+    |> Dict.fromList
 
 
 textNode : String -> HtmlNode msg
@@ -68,7 +88,7 @@ nodeWithMultipleChildren text =
 nodeWithNestedChildren : String -> HtmlElement msg
 nodeWithNestedChildren text =
   { tag = "div"
-  , facts = "{}"
+  , facts = Dict.empty
   , children =
     [ (textNode "fun stuff")
     , Element (emptyNode "div")
@@ -84,14 +104,18 @@ nodeWithProperty (name, value) =
   let
     node = emptyNode "div"
   in
-    { node | facts = "{\"" ++ name ++ "\":\"" ++ value ++ "\"}" }
+    { node | facts =
+      factsWithStringValues [ (name, value) ]
+    }
 
 nodeWithBooleanProperty : (String, Bool) -> HtmlElement msg
 nodeWithBooleanProperty (name, value) =
   let
     node = emptyNode "div"
   in
-    { node | facts = "{\"" ++ name ++ "\":" ++ (String.toLower (toString value)) ++ "}" }
+    { node | facts =
+      factsWithBoolValues [ (name, value) ]
+    }
 
 nodeWithEvents : List String -> HtmlElement String
 nodeWithEvents events =

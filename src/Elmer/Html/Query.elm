@@ -9,12 +9,12 @@ module Elmer.Html.Query exposing
 
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
+import Elmer.Html.Node as Node
 import Elmer.Context as Context exposing (Context)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
 import Regex exposing (Regex)
-
 
 type HtmlTarget msg =
   HtmlTarget (Selection msg)
@@ -29,8 +29,11 @@ forHtml : String -> Html msg -> HtmlTarget msg
 forHtml selector html =
   HtmlTarget
     { selector = selector
-    , element = Native.Html.asHtmlElement html
+    , element =
+        Node.from html
+          |> Node.asElement
     }
+
 
 forElement : String -> HtmlElement msg -> HtmlTarget msg
 forElement selector element =
