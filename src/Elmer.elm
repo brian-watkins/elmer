@@ -34,7 +34,6 @@ module Elmer
 -}
 
 import Html exposing (Html)
-import Native.Spy
 
 import Expect
 import Test.Runner

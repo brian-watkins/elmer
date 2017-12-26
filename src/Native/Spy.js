@@ -116,7 +116,7 @@ var _brian_watkins$elmer$Native_Spy = function() {
       args.push(argValue)
     }
 
-    spyValue.calls.push(args)
+    spyValue.calls.push(_elm_lang$core$Native_List.fromArray(args))
   }
 
   var createSpyCall = function(spyValue, targetFunction) {
@@ -146,23 +146,17 @@ var _brian_watkins$elmer$Native_Spy = function() {
     return wrapper;
   }
 
-  var registerFake = function(spyValue, fakeFun) {
+  var registerFake = function(fakeFun, spyValue) {
     spyValue.fake = fakeFun
 
     return _brian_watkins$elmer$Elmer_Spy_Internal$Active(spyValue);
   }
 
   var calls = function(spyValue) {
-    var callList = spyValue.calls.map(function (c) {
-      return _elm_lang$core$Native_List.fromArray(c)
-    })
-
-    var spyCalls = (A2)(_brian_watkins$elmer$Elmer_Spy_Internal$Calls,
+    return A2(_brian_watkins$elmer$Elmer_Spy_Internal$Calls,
       spyValue.name,
-      _elm_lang$core$Native_List.fromArray(callList)
-    );
-
-    return spyCalls;
+      _elm_lang$core$Native_List.fromArray(spyValue.calls)
+    )
   }
 
   return {

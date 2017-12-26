@@ -166,7 +166,7 @@ andCallFake fakeFunction spy =
           in
             case installed of
               Active spyValue ->
-                Native.Spy.registerFake spyValue fakeFunction
+                Spy_.registerFake fakeFunction spyValue
               _ ->
                 installed
     _ ->

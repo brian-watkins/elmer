@@ -11,10 +11,12 @@ module Elmer.Spy.Internal exposing
   , batch
   , spiesFrom
   , withSpies
+  , registerFake
   )
 
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime.Command as RuntimeCommand
+import Native.Spy
 
 type alias Calls =
   { name : String
@@ -75,6 +77,10 @@ callsWithName name spyValue =
       Just calls
     else
       Nothing
+
+registerFake : (a -> b) -> SpyValue -> Spy
+registerFake =
+  Native.Spy.registerFake
 
 {-| Note: Calling a fake method on a batch spy is not supported
 -}
