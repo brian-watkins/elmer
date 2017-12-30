@@ -16,7 +16,10 @@ module Elmer.Spy.Internal exposing
 
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime.Command as RuntimeCommand
-import Native.Spy
+import Elmer.Spy.Function as Function exposing (Function)
+import Json.Decode as Json
+import Elmer.Value as Value
+
 
 type alias Calls =
   { name : String
@@ -39,48 +42,94 @@ type Spy
   | Error SpyValue
   | Batch (List Spy)
 
-type SpyValue
-  = SpyValue
+
+type alias SpyValue =
+  { name: String
+  , function: Maybe Function
+  , calls: List (List Arg)
+  }
 
 
 create : String -> (() -> a) -> Spy
 create name namingFunc =
-  Native.Spy.create name namingFunc
+  case Function.from name namingFunc of
+    Just function ->
+      recordCalls
+        { name = name
+        , function = Just function
+        , calls = []
+        }
+    Nothing ->
+      Error
+        { name = name
+        , function = Nothing
+        , calls = []
+        }
+
 
 createWith : String -> (a -> b) -> Spy
 createWith name fakeFunction =
-  Native.Spy.createWith name fakeFunction
+  recordCalls
+    { name = name
+    , function = Just <| Function.create name fakeFunction
+    , calls = []
+    }
+
+
+recordCalls : SpyValue -> Spy
+recordCalls spy =
+  case spy.function of
+    Just function ->
+      Active
+        { spy | function = Just <| Function.activateSpy function }
+    Nothing ->
+      Error spy
+
 
 callable : String -> (a -> b)
 callable name =
-  Native.Spy.callable name
+  Function.callable name
+
 
 calls : String -> List Spy -> Maybe Calls
 calls name spies =
   List.filterMap (\spy ->
     case spy of
       Active spyValue ->
-        callsWithName name spyValue
+        callsIfName name spyValue
       Inactive spyValue ->
-        callsWithName name spyValue
+        callsIfName name spyValue
       _ ->
         Nothing
   ) spies
     |> List.head
 
-callsWithName : String -> SpyValue -> Maybe Calls
-callsWithName name spyValue =
-  let
-    calls = Native.Spy.calls spyValue
-  in
-    if calls.name == name then
-      Just calls
-    else
-      Nothing
+
+callsIfName : String -> SpyValue -> Maybe Calls
+callsIfName name spyValue =
+  if spyValue.name == name then
+    Just <| callRecord spyValue
+  else
+    Nothing
+
+
+callRecord : SpyValue -> Calls
+callRecord spyValue =
+  { name = spyValue.name
+  , calls = spyValue.calls
+  }
+
 
 registerFake : (a -> b) -> SpyValue -> Spy
-registerFake =
-  Native.Spy.registerFake
+registerFake fake spy =
+  case spy.function of
+    Just function ->
+      Active
+        { spy | function = Just <| Function.withFake fake function
+        }
+    Nothing ->
+      Active spy
+
 
 {-| Note: Calling a fake method on a batch spy is not supported
 -}
@@ -88,40 +137,79 @@ batch : List Spy -> Spy
 batch spies =
   Batch spies
 
+
 activate : List Spy -> List Spy
 activate spies =
   List.map (\spy ->
     case spy of
       Uninstalled installer ->
-        installer () :: []
+        [ installer () ]
       Inactive spyValue ->
-        Native.Spy.activate spyValue :: []
+        [ recordCalls spyValue ]
       Batch spies ->
         activate spies
       _ ->
-        spy :: []
+        [ spy ]
   ) spies
     |> List.concat
+
 
 deactivateOne : Spy -> Spy
 deactivateOne spy =
   case spy of
     Active spyValue ->
-      Native.Spy.deactivate spyValue
+      let
+        recordedCalls =
+          case spyValue.function of
+            Just function ->
+              Function.deactivateSpy function
+                |> Value.decode (Json.list <| Json.list argDecoder)
+                |> Result.withDefault []
+            Nothing ->
+              []
+      in
+        Inactive
+          { spyValue | calls = List.append spyValue.calls recordedCalls }
     _ ->
       spy
+
 
 deactivate : List Spy -> List Spy
 deactivate =
   List.map deactivateOne
 
+
+argDecoder : Json.Decoder Arg
+argDecoder =
+  Json.map (\arg -> (Value.nativeType arg, arg)) Json.value
+    |> Json.map (\(argType, value) ->
+        case argType of
+          "string" ->
+            StringArg <| Value.cast value
+          "int" ->
+            IntArg <| Value.cast value
+          "float" ->
+            FloatArg <| Value.cast value
+          "object" ->
+            TypedArg <| toString value
+          "boolean" ->
+            BoolArg <| Value.cast value
+          "function" ->
+            FunctionArg
+          _ ->
+            AnyArg
+      )
+
+
 type SpyState
   = Spies
+
 
 spiesFrom : Context model msg -> List Spy
 spiesFrom context =
   Context.state Spies context
     |> Maybe.withDefault []
+
 
 withSpies : List Spy -> Context model msg -> Context model msg
 withSpies spies context =

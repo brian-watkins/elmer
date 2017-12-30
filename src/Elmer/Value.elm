@@ -6,6 +6,9 @@ module Elmer.Value exposing
   , mapArg2
   , mapArg3
   , global
+  , cast
+  , nativeType
+  , assign
   )
 
 import Json.Decode as Json
@@ -15,6 +18,17 @@ import Native.Value
 cast : a -> b
 cast =
   Native.Value.cast
+
+
+nativeType : a -> String
+nativeType =
+  Native.Value.nativeType
+
+
+assign : String -> v -> v
+assign =
+  Native.Value.assign
+
 
 decode : Json.Decoder a -> v -> Result String b
 decode decoder value =

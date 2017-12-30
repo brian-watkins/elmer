@@ -253,9 +253,7 @@ failedSpies spies =
   List.filterMap (\spy ->
     case spy of
       Error spyValue ->
-        Native.Spy.calls spyValue
-          |> .name
-          |> Just
+        Just spyValue.name
       _ ->
         Nothing
   ) spies
