@@ -15,6 +15,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 import Elmer.Printer exposing (..)
 import Task
+import Time
 
 
 sendFirstMessage : String -> Cmd App.Msg
@@ -116,12 +117,11 @@ unknownCommandTest =
     \() ->
       let
         initialState = Elmer.given App.defaultModel App.view App.update
-        unknownCommandThunk = \() -> Task.perform App.RenderFirstMessage (Task.succeed "hello")
+        unknownCommandThunk = \() -> Task.perform App.RenderFirstMessage (Time.now |> Task.map toString)
       in
         Command.send unknownCommandThunk initialState
           |> Expect.equal (TestState.failure ( format
-            [ message "Elmer encountered a command it does not know how to run" "Task"
-            , description "Try sending a stubbed or dummy command instead"
+            [ description "Encountered a real task. Use Elmer.Task.fake to stub any task-generating functions."
             ]
           ))
   ]

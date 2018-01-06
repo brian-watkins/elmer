@@ -17,7 +17,7 @@ import Elmer.Http.Route as Route
 import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Printer exposing (..)
 import Task
-
+import Time
 
 initTests : Test
 initTests =
@@ -52,12 +52,11 @@ initTests =
       \() ->
         let
           state = Elmer.given (InitApp.defaultModel "") InitApp.view InitApp.update
-            |> Elmer.init (\() -> (InitApp.defaultModel "", Task.perform InitApp.Tag (Task.succeed "Yo")) )
+            |> Elmer.init (\() -> (InitApp.defaultModel "", Task.perform InitApp.Tag (Time.now |> Task.map toString)) )
         in
           Expect.equal state (TestState.failure <|
             format
-              [ message "Elmer encountered a command it does not know how to run" "Task"
-              , description "Try sending a stubbed or dummy command instead"
+              [ description "Encountered a real task. Use Elmer.Task.fake to stub any task-generating functions."
               ]
           )
     ]
