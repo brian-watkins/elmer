@@ -24,7 +24,8 @@
         "Elmer.Http.Request",
         "Elmer.Http.Route",
         "Elmer.Spy",
-        "Elmer.Spy.Matchers"
+        "Elmer.Spy.Matchers",
+        "Elmer.Task"
     ],
     "native-modules": true,
     "dependencies": {
