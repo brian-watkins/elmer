@@ -4,7 +4,6 @@ import Test exposing (..)
 import Expect
 import Elmer exposing (exactly)
 import Elmer.Headless as Headless
-import Elmer.Task exposing (TaskResult(..))
 import Task
 import Time exposing (Time)
 
@@ -86,34 +85,6 @@ realTaskTests =
       |> Expect.equal (Expect.fail "Encountered a real task. Use Elmer.Task.fake to stub any task-generating functions.")
   ]
 
-fakeTaskTests : Test
-fakeTaskTests =
-  describe "fake"
-  [ test "it creates a task that succeeds with the message" <|
-    \() ->
-      Headless.givenCommand (\_ ->
-        Success 27
-          |> Elmer.Task.fake
-          |> Task.perform TagInt
-      )
-      |> Headless.expectMessages (
-        exactly 1 <| Expect.equal (
-          TagInt 27
-        )
-      )
-  , test "it creates a task that fails with the message" <|
-    \() ->
-      Headless.givenCommand (\_ ->
-        Failure "You Failed!"
-          |> Elmer.Task.fake
-          |> Task.attempt TagResult
-      )
-      |> Headless.expectMessages (
-        exactly 1 <| Expect.equal (
-          TagResult <| Err "You Failed!"
-        )
-      )
-  ]
 
 andThenTests : Test
 andThenTests =
@@ -121,10 +92,9 @@ andThenTests =
   [ test "it handles tasks connected with andThen" <|
     \() ->
       Headless.givenCommand (\_ ->
-        Success 27
-          |> Elmer.Task.fake
-          |> Task.andThen (\i -> Elmer.Task.fake <| Success (i + 13))
-          |> Task.andThen (\i -> Elmer.Task.fake <| Success ("Hello " ++ (toString i)))
+        Task.succeed 27
+          |> Task.andThen (\i -> Task.succeed <| i + 13)
+          |> Task.andThen (\i -> Task.succeed <| "Hello " ++ (toString i))
           |> Task.perform TagString
       )
       |> Headless.expectMessages (
@@ -141,10 +111,10 @@ sequenceTests =
   [ test "it handles a sequence of tasks" <|
     \() ->
       Headless.givenCommand (\_ ->
-        [ Elmer.Task.fake <| Success 27
-        , Elmer.Task.fake <| Success 19
-        , Elmer.Task.fake <| Success 31
-        , Elmer.Task.fake <| Success 8
+        [ Task.succeed 27
+        , Task.succeed 19
+        , Task.succeed 31
+        , Task.succeed 8
         ]
           |> Task.sequence
           |> Task.perform TagList
@@ -163,8 +133,7 @@ mapTests =
   [ test "it handles a mapped task" <|
     \() ->
       Headless.givenCommand (\_ ->
-        Success 27
-          |> Elmer.Task.fake
+        Task.succeed 27
           |> Task.map (\i -> i + 81)
           |> Task.map toString
           |> Task.perform TagString
@@ -178,8 +147,8 @@ mapTests =
     \() ->
       Headless.givenCommand (\_ ->
         Task.map2 TestData
-          (Elmer.Task.fake <| Success "Awesome Dude")
-          (Elmer.Task.fake <| Success 27)
+          (Task.succeed "Awesome Dude")
+          (Task.succeed 27)
           |> Task.perform TagTestData
       )
       |> Headless.expectMessages (
@@ -194,9 +163,9 @@ mapTests =
     \() ->
       Headless.givenCommand (\_ ->
         Task.map3 TestData3
-          (Elmer.Task.fake <| Success "Awesome Dude")
-          (Elmer.Task.fake <| Success 27)
-          (Elmer.Task.fake <| Success "Fun")
+          (Task.succeed "Awesome Dude")
+          (Task.succeed 27)
+          (Task.succeed "Fun")
           |> Task.perform TagTestData3
       )
       |> Headless.expectMessages (
@@ -212,10 +181,10 @@ mapTests =
     \() ->
       Headless.givenCommand (\_ ->
         Task.map4 TestData4
-          (Elmer.Task.fake <| Success "Awesome Dude")
-          (Elmer.Task.fake <| Success 27)
-          (Elmer.Task.fake <| Success "Fun")
-          (Elmer.Task.fake <| Success "Snow")
+          (Task.succeed "Awesome Dude")
+          (Task.succeed 27)
+          (Task.succeed "Fun")
+          (Task.succeed "Snow")
           |> Task.perform TagTestData4
       )
       |> Headless.expectMessages (
@@ -232,11 +201,11 @@ mapTests =
     \() ->
       Headless.givenCommand (\_ ->
         Task.map5 TestData5
-          (Elmer.Task.fake <| Success "Awesome Dude")
-          (Elmer.Task.fake <| Success 27)
-          (Elmer.Task.fake <| Success "Fun")
-          (Elmer.Task.fake <| Success "Snow")
-          (Elmer.Task.fake <| Success "Apple")
+          (Task.succeed "Awesome Dude")
+          (Task.succeed 27)
+          (Task.succeed "Fun")
+          (Task.succeed "Snow")
+          (Task.succeed "Apple")
           |> Task.perform TagTestData5
       )
       |> Headless.expectMessages (
@@ -258,12 +227,10 @@ onErrorTests =
   [ test "it handles onError with a simple successful task" <|
     \() ->
       Headless.givenCommand (\_ ->
-        Failure "I failed"
-          |> Elmer.Task.fake
+        Task.fail "I failed"
           |> Task.onError (\error ->
             "Recovered from error: " ++ error
-              |> Success
-              |> Elmer.Task.fake
+              |> Task.succeed
             )
           |> Task.attempt TagResultString
       )
@@ -275,13 +242,11 @@ onErrorTests =
   , test "it handles onError with a more complex successful task" <|
     \() ->
       Headless.givenCommand (\_ ->
-        Failure "I failed"
-          |> Elmer.Task.fake
+        Task.fail "I failed"
           |> Task.onError (\error ->
             "Recovered from error: " ++ error
-              |> Success
-              |> Elmer.Task.fake
-              |> Task.andThen (\msg -> Elmer.Task.fake <| Success <| "A message: " ++ msg)
+              |> Task.succeed
+              |> Task.andThen (\msg -> Task.succeed <| "A message: " ++ msg)
             )
           |> Task.attempt TagResultString
       )
@@ -293,12 +258,10 @@ onErrorTests =
   , test "it handles onError with a simple failed task" <|
     \() ->
       Headless.givenCommand (\_ ->
-        Failure "I failed"
-          |> Elmer.Task.fake
+        Task.fail "I failed"
           |> Task.onError (\error ->
             "I also failed after: " ++ error
-              |> Failure
-              |> Elmer.Task.fake
+              |> Task.fail
             )
           |> Task.attempt TagResultString
       )
@@ -316,8 +279,7 @@ mapErrorTests =
   [ test "it maps the error value" <|
     \() ->
       Headless.givenCommand (\_ ->
-        Failure "I failed"
-          |> Elmer.Task.fake
+        Task.fail "I failed"
           |> Task.mapError (\error ->
             "Mapped error: " ++ error
           )

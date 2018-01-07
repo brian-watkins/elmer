@@ -14,7 +14,6 @@ import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
 import Elmer.Http.Route as Route
 import Elmer.Spy as Spy exposing (Spy)
-import Elmer.Task exposing (TaskResult(..))
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
@@ -104,14 +103,9 @@ appFlowTests =
         ]
     ]
 
-fakeTaskPerform : Time -> (Time -> msg) -> Task Never Time -> Cmd msg
-fakeTaskPerform time tagger task =
-  Command.fake (tagger time)
-
 timeSpy : Time -> Spy
 timeSpy time =
-  Success time
-    |> Elmer.Task.fake
+  Task.succeed time
     |> Spy.replaceValue (\_ -> Time.now)
 
 timeAppTests : Test

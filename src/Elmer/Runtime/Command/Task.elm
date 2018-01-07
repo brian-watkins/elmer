@@ -38,7 +38,7 @@ commandRunner command tagger =
           Resolved promiseValue ->
             CommandSuccess (Context.update (tagger (Value.cast promiseValue)))
           Rejected failedValue ->
-            CommandError "NOT DONE YET!"
+            CommandError "Encountered a task failure, but no error handler has been specified. This should not happen."
           Native ->
             CommandError "Encountered a real task. Use Elmer.Task.fake to stub any task-generating functions."
       Err msg ->
@@ -129,12 +129,8 @@ decodeResolution =
   Json.field "ctor" Json.string
     |> Json.andThen (\ctor ->
       case ctor of
-        "_Elmer_Task_succeed" ->
-          Json.map Resolved <| Json.field "value" Json.value
         "_Task_succeed" ->
           Json.map Resolved <| Json.field "value" Json.value
-        "_Elmer_Task_fail" ->
-          Json.map Rejected <| Json.field "value" Json.value
         "_Task_fail" ->
           Json.map Rejected <| Json.field "value" Json.value
         "_Task_nativeBinding" ->
