@@ -686,6 +686,47 @@ in
     |> ...
 ```
 
+### Testing Tasks
+
+Elm uses tasks to describe asynchronous operations at a high-level. You can use Elmer
+describe the behavior of applications that use the Task API to chain together
+or otherwise operate on the results of tasks. To do so:
+
+1. Stub any task-generating functions to return a task created with `Task.succeed`
+or `Task.fail` and the value you want as necessary for the behavior you want to describe.
+
+2. That's it.
+
+Elmer does not know how to run any tasks other than `Task.succeed` and `Task.fail`.
+However, Elmer does know how to properly apply all the functions from the Task API.
+In this way, Elmer allows you to describe the behavior that results from operations
+with tasks without actually running those tasks during your test.
+
+Here's an example. Suppose when a button is clicked, your app creates a task that gets
+the current time, formats it (using some function called `formatTime : Time -> String`),
+and tags the resulting string with `TagFormattedTime` like so:
+
+    Time.now
+      |> Task.map formatTime
+      |> Task.perform TagFormattedTime
+
+You can test this behavior by replacing `Time.now` with a `Task.succeed`
+that resolves to the time you want.
+
+    let
+      timeSpy =
+        Task.succeed 1515281017615
+          |> Spy.replaceValue (\_ -> Time.now)
+    in
+      testState
+        |> Spy.use [ timeSpy ]
+        |> Elmer.Html.target "#get-current-time"
+        |> Elmer.Html.Event.click
+        |> Elmer.Html.target "#current-time"
+        |> Elmer.Html.expect (
+          element <| hasText "1/6/2018 23:23:37"
+        )
+
 ### Spies and Fakes
 
 Elmer generalizes the pattern for managing the effects of `Subs` and `Cmds`, allowing
@@ -786,6 +827,10 @@ in
         ]
     )
 ```
+
+Finally, you can use `Spy.replaceValue` to replace the value returned by a no-argument function
+(such as `Time.now`) during a test. You can't make expectations about spies created in this
+way; `Spy.replaceValue` is just a convenient way to inject fake values during a test.
 
 ### Development
 
