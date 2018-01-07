@@ -398,3 +398,58 @@ andCallFakeTests =
           ]
     ]
   ]
+
+
+replaceValueTests : Test
+replaceValueTests =
+  describe "replaceValue"
+  [ describe "when a function with no arguments is replaced"
+    [ test "it returns the fake value" <|
+      \() ->
+        let
+          spy =
+            "I am a fake footer"
+              |> Spy.replaceValue (\_ -> SpyApp.footerText)
+        in
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
+            |> Spy.use [ spy ]
+            |> Markup.target "#footer"
+            |> Markup.expect (element <| hasText "I am a fake footer")
+    ]
+  , describe "when a function with arguments is replaced"
+    [ test "it results in an error" <|
+      \() ->
+        let
+          spy =
+            "I am a fake title"
+              |> Spy.replaceValue (\_ -> SpyApp.titleText)
+        in
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
+            |> Spy.use [ spy ]
+            |> Markup.target "#footer"
+            |> Markup.expect (element <| hasText "I am a fake footer")
+            |> Expect.equal (Expect.fail <|
+                format
+                  [ message "Failed to activate spies" "titleText"
+                  ]
+              )
+    ]
+  , describe "when attempt to replace something that is not a function"
+    [ test "it fails" <|
+      \() ->
+        let
+          spy =
+            "I am a fake title"
+              |> Spy.replaceValue (\_ -> "not a spyable function")
+        in
+          Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
+            |> Spy.use [ spy ]
+            |> Markup.target "#footer"
+            |> Markup.expect (element <| hasText "I am a fake footer")
+            |> Expect.equal (Expect.fail <|
+                format
+                  [ message "Failed to activate spies" "Unable to find function to replace"
+                  ]
+              )
+    ]
+  ]

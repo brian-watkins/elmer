@@ -3,6 +3,7 @@ module Elmer.Spy exposing
   , Calls
   , create
   , createWith
+  , replaceValue
   , callable
   , andCallFake
   , expect
@@ -14,7 +15,7 @@ module Elmer.Spy exposing
 @docs Spy, Calls
 
 # Spy on a Real Function
-@docs create, andCallFake
+@docs create, andCallFake, replaceValue
 
 # Spy on a Provided Function
 @docs createWith, callable
@@ -115,6 +116,32 @@ createWith name fakeFunction =
       Spy_.createWith name fakeFunction
 
 
+{-| Stub a function that simply returns a value.
+
+Suppose you have a function like `Time.now` that takes no arguments and simply
+returns a value. You can specify the value returned by such a function during your
+test like so:
+
+    timeNowSpy : Spy
+    timeNowSpy =
+      Success 1000
+        |> Elmer.Task.fake
+        |> Spy.replaceValue (\_ -> Time.now)
+
+Note: It's not possible to make expectations about spies constructed
+with `replaceValue`.
+
+Note: An error will result if you attempt to use `replaceValue`
+with a function that has arguments.
+
+-}
+replaceValue : (() -> a) -> b -> Spy
+replaceValue namingFunc value =
+  Spy_.Uninstalled <|
+    \() ->
+      Spy_.replaceValue namingFunc value
+
+
 {-| Returns a function that records calls to itself and calls through to the function
 associated with the spy with the given name.
 
@@ -171,6 +198,7 @@ andCallFake fakeFunction spy =
                 installed
     _ ->
       spy
+
 
 {-| Make an expectation about a spy.
 

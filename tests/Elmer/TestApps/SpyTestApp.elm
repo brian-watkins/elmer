@@ -29,6 +29,7 @@ view model =
     , Html.div [ Attr.id "multi-arg-button", Events.onClick HandleMultiArgClick ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "successive-arg-button", Events.onClick SuccessiveArgClick ] [ Html.text "Click me!" ]
     , Html.div [ Attr.id "name" ] [ Html.text <| "Name: " ++ model.name ]
+    , Html.div [ Attr.id "footer" ] [ Html.text footerText ]
     ]
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -47,6 +48,10 @@ update msg model =
 titleText : String -> String
 titleText name =
   "A Title: " ++ name
+
+footerText : String
+footerText =
+  "This is the footer"
 
 combineNames : String -> String -> String -> String
 combineNames kind firstName lastName =

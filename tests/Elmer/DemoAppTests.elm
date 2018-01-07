@@ -13,7 +13,8 @@ import Elmer.Http
 import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
 import Elmer.Http.Route as Route
-import Elmer.Spy as Spy
+import Elmer.Spy as Spy exposing (Spy)
+import Elmer.Task exposing (TaskResult(..))
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
@@ -107,18 +108,20 @@ fakeTaskPerform : Time -> (Time -> msg) -> Task Never Time -> Cmd msg
 fakeTaskPerform time tagger task =
   Command.fake (tagger time)
 
+timeSpy : Time -> Spy
+timeSpy time =
+  Success time
+    |> Elmer.Task.fake
+    |> Spy.replaceValue (\_ -> Time.now)
+
 timeAppTests : Test
 timeAppTests =
   describe "time demo app"
   [ test "it displays the time" <|
     \() ->
-      let
-        initialState = Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskOverride = Spy.create "Task.perform" (\_ -> Task.perform)
-          |> Spy.andCallFake (fakeTaskPerform (3 * Time.second))
-      in
-        Markup.target ".button" initialState
-          |> Spy.use [ taskOverride ]
+        Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
+          |> Markup.target ".button"
+          |> Spy.use [ timeSpy (3 * Time.second) ]
           |> Event.click
           |> Markup.target "#currentTime"
           |> Markup.expect (element <| hasText "Time: 3000")

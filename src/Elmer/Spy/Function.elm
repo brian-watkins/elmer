@@ -1,7 +1,9 @@
 module Elmer.Spy.Function exposing
   ( Function
+  , globalIdentifier
   , from
   , create
+  , replace
   , withFake
   , callable
   , activateSpy
@@ -20,12 +22,16 @@ type alias Function =
   , fake: Value
   }
 
-
-from : String -> (() -> a) -> Maybe Function
-from functionAlias namingThunk =
+globalIdentifier : (() -> a) -> Maybe String
+globalIdentifier namingThunk =
   Native.Function.globalIdentifier namingThunk
     |> Value.decode identifierDecoder
     |> Result.withDefault Nothing
+
+
+from : String -> (() -> a) -> Maybe Function
+from functionAlias namingThunk =
+  globalIdentifier namingThunk
     |> Maybe.map (\globalId ->
         { alias = functionAlias
         , identifier = Just globalId
@@ -35,6 +41,29 @@ from functionAlias namingThunk =
               |> recordable functionAlias
         }
     )
+
+
+replace : (() -> a) -> b -> Maybe Function
+replace namingThunk value =
+  globalIdentifier namingThunk
+    |> Maybe.andThen (\globalId ->
+        if isValue globalId then
+          Just
+            { alias = globalId
+            , identifier = Just globalId
+            , original = Just <| Value.global globalId
+            , fake = Value.cast value
+            }
+        else
+          Nothing
+    )
+
+
+isValue : String -> Bool
+isValue globalId =
+  Value.global globalId
+    |> Value.nativeType
+    |> (/=) "function"
 
 
 recordable : String -> (a -> b) -> Value

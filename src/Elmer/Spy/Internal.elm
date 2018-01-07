@@ -4,6 +4,7 @@ module Elmer.Spy.Internal exposing
   , Arg(..)
   , create
   , createWith
+  , replaceValue
   , callable
   , activate
   , deactivate
@@ -74,6 +75,33 @@ createWith name fakeFunction =
     , function = Just <| Function.create name fakeFunction
     , calls = []
     }
+
+
+replaceValue : (() -> a) -> b -> Spy
+replaceValue namingFunc value =
+  let
+    globalId =
+      Function.globalIdentifier namingFunc
+        |> Maybe.withDefault "Unable to find function to replace"
+    functionName =
+      String.split "$" globalId
+        |> List.reverse
+        |> List.head
+        |> Maybe.withDefault "Unable to find function to replace"
+  in
+    case Function.replace namingFunc value of
+      Just function ->
+        recordCalls
+          { name = globalId
+          , function = Just function
+          , calls = []
+          }
+      Nothing ->
+        Error
+          { name = functionName
+          , function = Nothing
+          , calls = []
+          }
 
 
 recordCalls : SpyValue -> Spy
