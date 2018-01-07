@@ -61,8 +61,8 @@ function that returns `Time.every Time.second <tagger>`. To describe this behavi
 could do the following:
 
     let
-      fakeSub = Elmer.Platform.spy "fake-time" (\_ -> Time.every)
-        |> Elmer.Platform.andCallFake (\interval tagger ->
+      fakeSub = Elmer.Spy.create "fake-time" (\_ -> Time.every)
+        |> Elmer.Spy.andCallFake (\interval tagger ->
           Elmer.Platform.Subscription.fake "everySecond" tagger
         )
     in
