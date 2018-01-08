@@ -82,7 +82,7 @@ realTaskTests =
           TagTime 100
         )
       )
-      |> Expect.equal (Expect.fail "Encountered a real task. Use Elmer.Task.fake to stub any task-generating functions.")
+      |> Expect.equal (Expect.fail "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary.")
   ]
 
 

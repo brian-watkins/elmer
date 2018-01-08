@@ -40,7 +40,7 @@ commandRunner command tagger =
           Rejected failedValue ->
             CommandError "Encountered a task failure, but no error handler has been specified. This should not happen."
           Native ->
-            CommandError "Encountered a real task. Use Elmer.Task.fake to stub any task-generating functions."
+            CommandError "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
       Err msg ->
         CommandError <| "Error decoding Task: " ++ msg
 
