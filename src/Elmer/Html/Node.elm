@@ -37,8 +37,12 @@ fromHtml inheritedEvents tagger html =
       fromNode inheritedEvents tagger html
     "tagger" ->
       fromTagger inheritedEvents html
+    "thunk" ->
+      ()
+        |> Value.field "thunk" html
+        |> fromHtml inheritedEvents tagger
     unknownType ->
-      Debug.crash <| "Unknown type: " ++ unknownType
+      Debug.crash <| "Unknown html type: " ++ unknownType
 
 
 fromText : Html msg -> HtmlNode msg
@@ -100,12 +104,12 @@ toEventHandler tagger (name, event) =
   { eventType = name
   , options = Value.field "options" event
   , decoder =
-    case tagger of
-      Just t ->
-        Value.field "decoder" event
-          |> Json.map t
-      Nothing ->
-        Value.field "decoder" event
+      case tagger of
+        Just t ->
+          Value.field "decoder" event
+            |> Json.map t
+        Nothing ->
+          Value.field "decoder" event
   }
 
 
