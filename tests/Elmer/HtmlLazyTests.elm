@@ -7,10 +7,6 @@ import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer exposing ((<&&>))
 import Elmer.Html.Matchers as Matchers exposing (..)
-import Elmer.Html.Query as Query exposing (HtmlTarget(..))
-import Elmer.TestHelpers exposing (..)
-import Elmer.Spy as Spy
-import Elmer.Spy.Matchers exposing (wasCalled, wasCalledWith, typedArg)
 import Html.Attributes as Attr
 import Html exposing (Html)
 import Elmer.TestApps.LazyTestApp as App

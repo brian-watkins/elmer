@@ -35,6 +35,8 @@ fromHtml inheritedEvents tagger html =
       fromText html
     "node" ->
       fromNode inheritedEvents tagger html
+    "keyed-node" ->
+      fromNode inheritedEvents tagger html
     "tagger" ->
       fromTagger inheritedEvents html
     "thunk" ->
@@ -82,8 +84,15 @@ handleChildNodes inheritedEvents tagger node =
 
 childrenDecoder : Json.Decoder (List Json.Value)
 childrenDecoder =
-  Json.field "children" <| Json.list Json.value
+  Json.field "children" <| Json.list childDecoder
 
+
+childDecoder : Json.Decoder Json.Value
+childDecoder =
+  Json.oneOf
+    [ Json.field "_1" Json.value
+    , Json.value
+    ]
 
 eventHandlers : Maybe (Tagger subMsg msg) -> Html msg -> List (HtmlEventHandler msg)
 eventHandlers tagger html =
