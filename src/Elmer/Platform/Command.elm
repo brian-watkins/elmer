@@ -45,6 +45,7 @@ import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Runtime.Command as RuntimeCommand
+import Elmer.Runtime.Command.Defer as Defer
 import Expect
 
 
@@ -64,8 +65,7 @@ fake =
   RuntimeCommand.stub
 
 type CommandState
-  = DeferredCommands
-  | DummyCommands
+  = DummyCommands
 
 
 {-| Generate a dummy command.
@@ -117,14 +117,8 @@ When a deferred command is processed, any effect associated with that command wi
 to the component's `update` function until `resolveDeferred` is called.
 -}
 defer : Cmd msg -> Cmd msg
-defer command =
-  RuntimeCommand.mapState DeferredCommands <|
-    updateStateWithDeferredCommand command
-
-updateStateWithDeferredCommand : Cmd msg -> Maybe (List (Cmd msg)) -> List (Cmd msg)
-updateStateWithDeferredCommand command state =
-  Maybe.withDefault [] state
-    |> (::) command
+defer =
+  Defer.with
 
 
 {-| Resolve any deferred commands.
@@ -137,9 +131,7 @@ resolveDeferred =
   TestState.map <|
     \context ->
       let
-        deferredCommands =
-          Context.state DeferredCommands context
-            |> Maybe.withDefault []
+        deferredCommands = Defer.fromContext context
       in
         if List.isEmpty deferredCommands then
           TestState.failure "No deferred commands found"
@@ -147,7 +139,7 @@ resolveDeferred =
           let
             commandBatch = Cmd.batch deferredCommands
             updatedContext =
-              RuntimeCommand.mapState DeferredCommands (\_ -> [])
+              Defer.clear
                 |> flip Context.updateState context
           in
             Runtime.performCommand commandBatch updatedContext

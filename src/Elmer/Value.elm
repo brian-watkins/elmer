@@ -1,5 +1,6 @@
 module Elmer.Value exposing
   ( decode
+  , encode
   , constructor
   , field
   , mapArg
@@ -12,6 +13,7 @@ module Elmer.Value exposing
   )
 
 import Json.Decode as Json
+import Json.Encode as Encode
 import Native.Value
 
 
@@ -83,3 +85,10 @@ mapArgAt index mapper value =
 argAt : Int -> v -> a
 argAt index value =
   field ("_" ++ toString index) value
+
+
+encode : String -> List (String, Encode.Value) -> b
+encode ctor args =
+  ( "ctor", Encode.string ctor ) :: args
+    |> Encode.object
+    |> cast

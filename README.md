@@ -411,8 +411,8 @@ In this case, a GET request to the given route will result in a response with th
 See `Elmer.Http.Stub` for the full list of builder functions. (With more on the way ...)
 
 Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.serve` function
-along with `Elmer.Spy.use` to override `Http.send` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during your test.
-When your application code calls `Http.send`, the request will be checked against the
+along with `Elmer.Spy.use` to override `Http.send` and `Http.toTask` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during your test.
+When your application code calls `Http.send` or `Http.toTask`, the request will be checked against the
 provided stubs and if a match occurs, the given response will be returned.
 
 Elmer also allows you to write tests that expect some HTTP request to have been made, in a
@@ -434,8 +434,8 @@ initialTestState
 
 If you don't care to describe the behavior of your app after the response from a request is
 received -- that is, if you don't care to create a stubbed response for some request -- you
-can provide `Elmer.Http.spy` to `Elmer.Spy.use` and it will override the `Http.send`
-function, merely recording any requests it receives.
+can provide `Elmer.Http.spy` to `Elmer.Spy.use` and it will override the `Http.send` and `Http.toTask`
+functions so that they merely record any requests received.
 
 See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 
@@ -689,8 +689,7 @@ in
 ### Testing Tasks
 
 Elm uses tasks to describe asynchronous operations at a high-level. You can use Elmer
-describe the behavior of applications that use the Task API to chain together
-or otherwise operate on the results of tasks. To do so:
+to describe the behavior of applications that use the Task API. To do so:
 
 1. Stub any task-generating functions to return a task created with `Task.succeed`
 or `Task.fail` and the value you want as necessary for the behavior you want to describe.

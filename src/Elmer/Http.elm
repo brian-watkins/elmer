@@ -30,12 +30,14 @@ import Http
 import Dict
 import Elmer exposing (Matcher)
 import Elmer.Http.Internal as Http_ exposing (..)
-import Elmer.Http.Server as Server
+import Elmer.Http.Send as FakeSend
+import Elmer.Http.ToTask as FakeToTask
 import Elmer.Http.Route as Route
 import Elmer.Context as Context
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
+import Elmer.Spy.Internal as Spy_
 import Elmer.Printer exposing (..)
 import Expect exposing (Expectation)
 import Test.Runner
@@ -48,8 +50,8 @@ Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
 type alias HttpResponseStub
   = Http_.HttpResponseStub
 
-{-| Override `Http.send` and register HttpResponseStubs to be returned
-when the appropriate request is received. Used in conjunction with
+{-| Override `Http.send` and `Http.toTask` to register HttpResponseStubs that will be
+returned when the appropriate request is received. Used in conjunction with
 `Elmer.Spy.use`.
 
 Suppose you have a component that requests information about a user when
@@ -70,11 +72,15 @@ a button is clicked. You could register a stub for that request like so
 -}
 serve : List HttpResponseStub -> Spy
 serve responseStubs =
-  Spy.create "Http.send" (\_ -> Http.send)
-    |> andCallFake (Server.stubbedSend responseStubs)
+  Spy_.batch
+    [ Spy.create "Http.send" (\_ -> Http.send)
+        |> andCallFake (FakeSend.stubbedWith responseStubs)
+    , Spy.create "Http.toTask" (\_ -> Http.toTask)
+        |> andCallFake (FakeToTask.stubbedWith responseStubs)
+    ]
 
 
-{-| Override `Http.send` and record requests as they are received.
+{-| Override `Http.send` and `Http.toTask` to record requests as they are received.
 Used in conjunction with `Elmer.Spy.use`.
 
 Suppose you simply want to make an expectation about a request without
@@ -86,11 +92,20 @@ describing the behavior that results when its response is received.
       |> Elmer.Http.Event.click
       |> Elmer.Http.expect (Elmer.Http.Route.get "http://fun.com/user")
 
+Note: When using `spy` in conjunction with `Http.toTask`, the task chain will
+stop at the first http request, since Elmer can't decide how to go on without
+knowing the response from the request.  
+
 -}
 spy : Spy
 spy =
-  Spy.create "Http.send" (\_ -> Http.send)
-    |> andCallFake Server.dummySend
+  Spy_.batch
+    [ Spy.create "Http.send" (\_ -> Http.send)
+        |> andCallFake FakeSend.spy
+    , Spy.create "Http.toTask" (\_ -> Http.toTask)
+        |> andCallFake FakeToTask.spy
+    ]
+
 
 
 {-| Clear any Http requests that may have been recorded at an earlier point

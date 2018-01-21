@@ -1,28 +1,22 @@
 module Elmer.Runtime.Command.Task exposing
   ( commandRunner
+  , name
   )
 
 import Elmer.Runtime.Intention as Intention
 import Elmer.Runtime.Types exposing (..)
+import Elmer.Runtime.Command.Fail as Fail
+import Elmer.Runtime.Command.Defer as Defer
+import Elmer.Runtime.Command.Stub as Stub
 import Elmer.Value as Value
-import Json.Decode as Json exposing (Value)
-import Elmer.Context as Context exposing (Context)
+import Elmer.Runtime.Promise as Promise
+import Elmer.Runtime.Promise.Runner as PromiseRunner
+import Elmer.Runtime.Promise.Types exposing (..)
 
 
-type Promise
-  = Complete Resolution
-  | Continue Continuation
-
-type alias Continuation =
-  { next : Promise
-  , onResolve : Maybe (Value -> Value)
-  , onReject : Maybe (Value -> Value)
-  }
-
-type Resolution
-  = Resolved Value
-  | Rejected Value
-  | Native
+name : String
+name =
+  "Task"
 
 
 commandRunner : CommandRunner model subMsg msg
@@ -30,111 +24,45 @@ commandRunner command tagger =
   let
     taskResult =
       Intention.cmdValue command
-        |> Value.mapArg (Value.decode decodePromise)
+        |> Value.mapArg (Value.decode Promise.decoder)
   in
     case taskResult of
       Ok promise ->
-        case resolve promise of
-          Resolved promiseValue ->
-            CommandSuccess (Context.update (tagger (Value.cast promiseValue)))
-          Rejected failedValue ->
-            CommandError "Encountered a task failure, but no error handler has been specified. This should not happen."
-          Native ->
-            CommandError "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
+        CommandSuccess <|
+          \context ->
+            ( context
+            , PromiseRunner.run promise
+                |> promiseCommand tagger
+            )
       Err msg ->
-        CommandError <| "Error decoding Task: " ++ msg
+        CommandError <|
+          "Error decoding Task: " ++ msg
 
 
-resolve : Promise -> Resolution
-resolve promise =
-  case promise of
-    Complete result ->
-      result
-    Continue continuation ->
-      case resolve continuation.next of
-        Resolved value ->
-          doCallback Resolved value continuation.onResolve
-        Rejected value ->
-          doCallback Rejected value continuation.onReject
-        Native ->
-          Native
+promiseCommand : (subMsg -> msg) -> Promised msg -> Cmd msg
+promiseCommand tagger promised =
+  (toCommand tagger promised.resolution) :: promised.commands
+    |> Cmd.batch
+    |> deferIf promised.shouldDefer
 
 
-doCallback : (Value -> Resolution) -> Value -> Maybe (Value -> Value) -> Resolution
-doCallback mapper value maybeCallback =
-  case maybeCallback of
-    Just callback ->
-      callback value
-        |> Value.decode decodePromise
-        |> unwrapOrFail
-        |> resolve
-    Nothing ->
-      mapper value
+deferIf : Bool -> Cmd msg -> Cmd msg
+deferIf shouldDefer command =
+  if shouldDefer then
+    Defer.with command
+  else
+    command
 
 
-unwrapOrFail : Result String a -> a
-unwrapOrFail result =
-  case result of
-    Ok value ->
-      value
-    Err msg ->
-      Debug.crash msg
-
-
-decodePromise : Json.Decoder Promise
-decodePromise =
-  Json.oneOf
-    [ Json.lazy (\_ -> Json.map Continue decodeContinuation)
-    , Json.map Complete decodeResolution
-    ]
-
-
-decodeContinuation : Json.Decoder Continuation
-decodeContinuation =
-  Json.field "ctor" Json.string
-    |> Json.andThen (\ctor ->
-      case ctor of
-        "_Task_onError" ->
-          decodeOnError
-        "_Task_andThen" ->
-          decodeAndThen
-        unknown ->
-          "Unknown decodeContinuation constructor: " ++ unknown
-            |> Json.fail
-    )
-
-
-decodeAndThen : Json.Decoder Continuation
-decodeAndThen =
-  Json.map3 Continuation
-    (Json.field "task" (Json.lazy (\_ -> decodePromise)))
-    (Json.map Just <| Json.map Value.cast <| Json.field "callback" Json.value)
-    (Json.succeed Nothing)
-
-
-decodeOnError : Json.Decoder Continuation
-decodeOnError =
-  Json.map3 Continuation
-    (Json.oneOf
-      [ Json.map Complete <| Json.field "task" decodeResolution
-      , Json.at [ "task", "task" ] (Json.lazy (\_ -> decodePromise))
-      ]
-    )
-    (Json.maybe <| Json.map Value.cast <| Json.at [ "task", "callback" ] Json.value)
-    (Json.map Just <| Json.map Value.cast <| Json.field "callback" Json.value)
-
-
-decodeResolution : Json.Decoder Resolution
-decodeResolution =
-  Json.field "ctor" Json.string
-    |> Json.andThen (\ctor ->
-      case ctor of
-        "_Task_succeed" ->
-          Json.map Resolved <| Json.field "value" Json.value
-        "_Task_fail" ->
-          Json.map Rejected <| Json.field "value" Json.value
-        "_Task_nativeBinding" ->
-          Json.succeed Native
-        unknown ->
-          Json.fail <| "Unknown Resolution constructor: " ++ unknown
-    )
+toCommand : (subMsg -> msg) -> Resolution msg -> Cmd msg
+toCommand tagger resolution =
+  case resolution of
+    Resolved promiseValue ->
+      Value.cast promiseValue
+        |> tagger
+        |> Stub.with
+    Rejected _ ->
+      "Encountered a task failure, but no error handler has been specified. This should not happen."
+        |> Fail.with
+    Aborted command ->
+      command

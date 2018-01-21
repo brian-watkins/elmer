@@ -102,6 +102,18 @@ andThenTests =
           TagString "Hello 40"
         )
       )
+  , test "it fails with the first task fails" <|
+    \() ->
+      Headless.givenCommand (\_ ->
+        Task.fail "Failed!"
+          |> Task.andThen (\i -> Task.succeed <| i + 13)
+          |> Task.attempt TagResult
+      )
+      |> Headless.expectMessages (
+        exactly 1 <| Expect.equal (
+          TagResult <| Err "Failed!"
+        )
+      )
   ]
 
 
@@ -141,6 +153,34 @@ mapTests =
       |> Headless.expectMessages (
         exactly 1 <| Expect.equal (
           TagString "108"
+        )
+      )
+  , test "it handles a mapped andThen task" <|
+    \() ->
+      Headless.givenCommand (\_ ->
+        Task.succeed 27
+          |> Task.andThen (\num -> Task.succeed <| num + 100)
+          |> Task.map (\i -> i + 81)
+          |> Task.map toString
+          |> Task.perform TagString
+      )
+      |> Headless.expectMessages (
+        exactly 1 <| Expect.equal (
+          TagString "208"
+        )
+      )
+  , test "it does not map if it fails" <|
+    \() ->
+      Headless.givenCommand (\_ ->
+        Task.succeed 27
+          |> Task.andThen (\num -> Task.fail <| "Failed with " ++ toString num)
+          |> Task.map (\i -> i + 81)
+          |> Task.map toString
+          |> Task.attempt TagResultString
+      )
+      |> Headless.expectMessages (
+        exactly 1 <| Expect.equal (
+          TagResultString <| Err "Failed with 27"
         )
       )
   , test "it handles two mapped tasks" <|
@@ -270,6 +310,36 @@ onErrorTests =
           TagResultString <| Err "I also failed after: I failed"
         )
       )
+  , test "it handles onError applied to an andThen task" <|
+      \() ->
+        Headless.givenCommand (\_ ->
+          Task.succeed 27
+            |> Task.andThen (\i -> Task.fail <| "Bad number => " ++ toString i)
+            |> Task.onError (\err -> Task.succeed 15)
+            |> Task.attempt TagResult
+        )
+        |> Headless.expectMessages (
+          exactly 1 <| Expect.equal (
+            TagResult <| Ok 15
+          )
+        )
+  , test "it handles onError applied to a sequence task" <|
+    \() ->
+      Headless.givenCommand (\_ ->
+        [ Task.succeed 27
+        , Task.succeed 19
+        , Task.fail "Failed"
+        , Task.succeed 8
+        ]
+          |> Task.sequence
+          |> Task.onError (\msg -> Task.succeed [99])
+          |> Task.perform TagList
+      )
+      |> Headless.expectMessages (
+        exactly 1 <| Expect.equal (
+          TagList [ 99 ]
+        )
+      )
   ]
 
 
@@ -288,6 +358,33 @@ mapErrorTests =
       |> Headless.expectMessages (
         exactly 1 <| Expect.equal (
           TagResultString <| Err "Mapped error: I failed"
+        )
+      )
+  , test "it does not map a success" <|
+    \() ->
+      Headless.givenCommand (\_ ->
+        Task.succeed "Success!"
+          |> Task.mapError (\error ->
+            "Mapped error: " ++ error
+          )
+          |> Task.attempt TagResultString
+      )
+      |> Headless.expectMessages (
+        exactly 1 <| Expect.equal (
+          TagResultString <| Ok "Success!"
+        )
+      )
+  , test "it maps the error value for an andThen task" <|
+    \() ->
+      Headless.givenCommand (\_ ->
+        Task.succeed 27
+          |> Task.andThen (\i -> Task.fail <| "Bad number => " ++ toString i)
+          |> Task.mapError (\err -> "Got an error: " ++ err)
+          |> Task.attempt TagResult
+      )
+      |> Headless.expectMessages (
+        exactly 1 <| Expect.equal (
+          TagResult <| Err "Got an error: Bad number => 27"
         )
       )
   ]
