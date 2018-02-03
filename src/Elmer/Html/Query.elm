@@ -112,27 +112,37 @@ matchesTagSelector tagSelector node =
     case tagSelector.tag of
         Just tagName ->
             if matchesTag tagName node then
-                Maybe.withDefault True <|
-                    matchCharacteristicSelector tagSelector node
+              (matchCharacteristicSelector True tagSelector node)
+                && (matchTagClass True tagSelector node)
             else
                 False
 
         Nothing ->
-            Maybe.withDefault False <|
-                matchCharacteristicSelector tagSelector node
+          (matchCharacteristicSelector False tagSelector node)
+            && (matchTagClass True tagSelector node)
 
 
-matchCharacteristicSelector : TagSelector -> HtmlElement msg -> Maybe Bool
-matchCharacteristicSelector tagSelector node =
-    Maybe.map
-        (\charName -> matchesCharacteristic charName tagSelector.characteristicValue node)
-        tagSelector.characteristicName
+matchCharacteristicSelector : Bool -> TagSelector -> HtmlElement msg -> Bool
+matchCharacteristicSelector isOptional tagSelector node =
+    Maybe.map (\charName ->
+      matchesCharacteristic charName tagSelector.characteristicValue node
+    ) tagSelector.characteristicName
+    |> Maybe.withDefault isOptional
+
+
+matchTagClass : Bool -> TagSelector -> HtmlElement msg -> Bool
+matchTagClass isOptional tagSelector element =
+  Maybe.map (\className ->
+    matchesClass className element
+  ) tagSelector.class
+  |> Maybe.withDefault isOptional
 
 
 type alias TagSelector =
     { tag : Maybe String
     , characteristicName : Maybe String
     , characteristicValue : Maybe String
+    , class : Maybe String
     }
 
 
@@ -141,6 +151,7 @@ emptyTagSelector =
     { tag = Nothing
     , characteristicName = Nothing
     , characteristicValue = Nothing
+    , class = Nothing
     }
 
 
@@ -150,7 +161,7 @@ tagSelector selector =
         matchMaybe =
             List.head <|
                 Regex.find (Regex.AtMost 1)
-                    (Regex.regex "^([\\w-]*)(?:\\[([\\w-]+)(?:='([\\w-]+)')?\\])?")
+                    (Regex.regex "^([\\w-]*)(?:\\[([\\w-]+)(?:='([\\w-]+)')?\\])?(?:\\.([\\w-]+))?")
                     selector
     in
         case matchMaybe of
@@ -158,6 +169,7 @@ tagSelector selector =
                 { tag = submatch 0 match
                 , characteristicName = submatch 1 match
                 , characteristicValue = submatch 2 match
+                , class = submatch 3 match
                 }
 
             Nothing ->

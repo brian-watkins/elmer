@@ -132,13 +132,13 @@ findByClass =
     ]
 
 findByTag =
-  let
-    html = Html.div [ Attr.id "root" ]
-      [ Html.input [ Attr.class "inputField" ] []
-      ]
-  in
   describe "find by tag"
-  [ describe "when there is an element with the tag"
+  [ describe "when there is an element with the tag" <|
+    let
+      html = Html.div [ Attr.id "root" ]
+        [ Html.input [ Attr.class "inputField" ] []
+        ]
+    in
     [ test "it finds the first element" <|
       \() ->
         case Query.findElement <| Query.forHtml "div" html of
@@ -151,6 +151,22 @@ findByTag =
         case Query.findElement <| Query.forHtml "input" html of
           Ok node ->
             Matchers.hasClass "inputField" node
+          Err _ ->
+            Expect.fail "Nothing found"
+    ]
+  , describe "when the tag is qualified by a class" <|
+    let
+      html =
+        Html.div [ Attr.id "root" ]
+        [ Html.p [ Attr.class "title" ] [ Html.text "the title" ]
+        , Html.p [ Attr.class "description" ] [ Html.text "the description" ]
+        ]
+    in
+    [ test "it finds the tag with the class" <|
+      \() ->
+        case Query.findElement <| Query.forHtml "p.description" html of
+          Ok node ->
+            Matchers.hasText "the description" node
           Err _ ->
             Expect.fail "Nothing found"
     ]
@@ -224,6 +240,15 @@ findByAttribute =
           case Query.findElement <| Query.forHtml "div[data-attribute-name='myDifferentAttributeValue']" html of
             Ok node ->
               Matchers.hasClass "anotherWithAttribute" node
+            Err _ ->
+              Expect.fail "Nothing found"
+      ]
+    , describe "when an attribute and class is specified"
+      [ test "it finds the element with the attribute and the class" <|
+        \() ->
+          case Query.findElement <| Query.forHtml "[data-attribute-name].anotherWithAttribute" html of
+            Ok element ->
+              Matchers.hasAttribute ("data-attribute-name", "myDifferentAttributeValue") element
             Err _ ->
               Expect.fail "Nothing found"
       ]

@@ -66,14 +66,6 @@ Target an element by Html tag:
 
     target "div"
 
-Target an element by Html tag having attribute:
-
-    target "div[data-my-attr]"
-
-Target an element by Html tag having attribute with value:
-
-    target "div[data-my-attr='my-value']"
-
 Target an element having an attribute:
 
     target "[data-my-attr]"
@@ -81,6 +73,12 @@ Target an element having an attribute:
 Target an element with an attribute and value:
 
     target "[data-my-attr='my-value']"
+
+Combine tag, attribute, and class selectors as necessary:
+
+    target "div.some-style"
+    target "div[data-my-attr='my-value']"
+    target "[data-my-attr].some-style"
 
 Target the first descendant:
 
