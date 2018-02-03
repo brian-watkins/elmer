@@ -1,5 +1,6 @@
 module Elmer.Html.Element exposing
   ( id
+  , target
   , classList
   , property
   , boolProperty
@@ -13,6 +14,9 @@ module Elmer.Html.Element exposing
 # Element Characteristics
 @docs id, classList, property, boolProperty, properties, attributes
 
+# Target Descendants
+@docs target
+
 # Debugging
 @docs toString
 
@@ -20,7 +24,32 @@ module Elmer.Html.Element exposing
 
 import Elmer.Html
 import Elmer.Html.Internal as Internal
+import Elmer.Html.Query as Query
 import Dict exposing (Dict)
+
+
+{-| Target descendants of an element.
+
+Use this function in conjunction with `HtmlTarget` matchers like `element` or `elements`
+to make expectations about descendants of an element.
+
+    Elmer.given someModel view update
+      |> Elmer.Html.target "#some-element"
+      |> Elmer.Html.expect (Elmer.Html.Matchers.element <|
+        \element ->
+          target "div" element
+            |> Elmer.Html.Matchers.elements (
+              Elmer.hasLength 3
+            )
+
+Note that `Elmer.Html.target "#some-element div"` would allow you to write the
+same expectation. Use `Element.target` for complex expectations about nested elements.
+
+-}
+target : String -> Elmer.Html.HtmlElement msg -> Elmer.Html.HtmlTarget msg
+target selector =
+  Query.forElement selector
+
 
 {-| Represent an `HtmlElement` as a String.
 -}
