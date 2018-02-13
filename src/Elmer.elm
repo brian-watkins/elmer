@@ -9,6 +9,7 @@ module Elmer
         , some
         , exactly
         , atIndex
+        , last
         , hasLength
         , init
         , expectModel
@@ -29,7 +30,7 @@ module Elmer
 @docs Matcher, (<&&>), expectNot
 
 # List Matchers
-@docs each, exactly, some, atIndex, hasLength
+@docs each, exactly, some, atIndex, last, hasLength
 
 -}
 
@@ -209,6 +210,31 @@ takeFailures matcher =
   List.filterMap (\item ->
     Test.Runner.getFailureReason <| matcher item
   )
+
+{-| Expect that the last item in a list satisfies the given matcher.
+-}
+last : Matcher a -> Matcher (List a)
+last matcher list =
+  let
+    maybeItem =
+      List.drop ((List.length list) - 1) list
+        |> List.head
+  in
+    case maybeItem of
+      Just item ->
+        case Test.Runner.getFailureReason <| matcher item of
+          Just failure ->
+            Expect.fail <| format
+              [ description <| "Expected the last item to pass but it failed:"
+              , description <| formatFailure failure
+              ]
+          Nothing ->
+            Expect.pass
+      Nothing ->
+        Expect.fail <| format
+          [ description <| "Expected the last item to pass but the list is empty"
+          ]
+
 
 {-| Expect that a list has the given length.
 -}

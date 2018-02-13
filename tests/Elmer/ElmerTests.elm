@@ -170,6 +170,41 @@ matchExactlyTests =
     ]
   ]
 
+lastTests : Test
+lastTests =
+  describe "last"
+  [ describe "when the last item matches"
+    [ test "it passes" <|
+      \() ->
+        let
+          items = [ 2, 3, 4 ]
+        in
+          last (Expect.equal 4) items
+            |> Expect.equal Expect.pass
+    ]
+  , describe "when the last item does not match"
+    [ test "it fails" <|
+      \() ->
+        let
+          items = [ 2, 3, 4 ]
+        in
+          last (Expect.equal 7) items
+            |> Expect.equal (Expect.fail <| format
+              [ description "Expected the last item to pass but it failed:"
+              , description "7 is not equal to 4"
+              ]
+            )
+    ]
+  , describe "when the list is empty"
+    [ test "it fails" <|
+      \() ->
+        last (Expect.equal 7) []
+          |> Expect.equal (Expect.fail <| format
+            [ description "Expected the last item to pass but the list is empty" ]
+          )
+    ]
+  ]
+
 atIndexTests : Test
 atIndexTests =
   describe "atIndex"
