@@ -46,17 +46,17 @@ messageCollectorUpdate msg model =
 
 withCommandGenerator : (() -> Cmd msg) -> Context model msg -> Context model msg
 withCommandGenerator generator context =
-  RuntimeCommand.mapState MapToExpectationExtension (\state ->
+  RuntimeCommand.mapState MapBeforeExpectationExtension (\state ->
     Maybe.withDefault [] state
-      |> (::) (expectationExtension generator)
+      |> (::) (beforeExpectationExtension generator)
   )
     |> flip Context.updateState context
 
 
-expectationExtension : (() -> Cmd msg) -> (Context model msg -> Expect.Expectation) -> Context model msg -> Expect.Expectation
-expectationExtension commandGenerator mapper context =
+beforeExpectationExtension : (() -> Cmd msg) -> Context model msg -> TestState model msg
+beforeExpectationExtension commandGenerator context =
   case Runtime.performCommand (commandGenerator ()) context of
     Ok resolvedContext ->
-      mapper resolvedContext
+      TestState.with resolvedContext
     Err errorMessage ->
-      Expect.fail errorMessage
+      TestState.failure errorMessage

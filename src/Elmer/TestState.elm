@@ -19,7 +19,7 @@ type TestState model msg
     | Failed String
 
 type TestStateExtension
-  = MapToExpectationExtension
+  = MapBeforeExpectationExtension
 
 
 create : model -> ViewFunction model msg -> UpdateFunction model msg -> TestState model msg
@@ -84,17 +84,18 @@ mapWithoutSpies mapper =
 
 
 mapToExpectation : (Context model msg -> Expect.Expectation) -> TestState model msg -> Expect.Expectation
-mapToExpectation mapper =
-  abstractMap Expect.fail <|
+mapToExpectation mapper testState =
+  mapBeforeExpectation testState
+    |> abstractMap Expect.fail (spyExpectationExtension <| mapper)
+
+
+mapBeforeExpectation : TestState model msg -> TestState model msg
+mapBeforeExpectation =
+  map <|
     \context ->
-      let
-        extensions =
-          Context.state MapToExpectationExtension context
-            |> Maybe.withDefault []
-            |> (::) spyExpectationExtension
-      in
-        context
-          |> List.foldr (<|) mapper extensions
+      Context.state MapBeforeExpectationExtension context
+        |> Maybe.withDefault []
+        |> List.foldr map (with context)
 
 
 spyExpectationExtension : (Context model msg -> Expect.Expectation) -> Context model msg -> Expect.Expectation
