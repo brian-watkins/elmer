@@ -6,7 +6,7 @@ import Elmer.TestApps.SpyTestApp as SpyApp
 import Elmer.TestApps.HttpTestApp as HttpApp
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy
-import Elmer.Spy.Internal exposing (Arg(..))
+import Elmer.Spy.Arg exposing (Arg(..))
 import Elmer.Spy.Matchers as Matchers
 import Elmer.Html as Markup
 import Elmer.Html.Event as Event
@@ -16,6 +16,7 @@ import Elmer
 import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Platform.Command as Command
+import Elmer.Value as Value
 
 
 useTests : Test
@@ -303,8 +304,8 @@ spyArgumentTests =
                   , IntArg 23
                   , FloatArg 23.45
                   , BoolArg True
-                  , TypedArg "{ kind = \"Flowers\", duration = 77.3 }"
-                  , TypedArg "Fruit \"Apple\""
+                  , TypedArg <| Value.cast { kind = "Flowers", duration = 77.3 }
+                  , TypedArg <| (Value.cast <| SpyApp.Fruit "Apple")
                   , FunctionArg
                   ]
                 ]

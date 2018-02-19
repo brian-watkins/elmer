@@ -1,7 +1,6 @@
 module Elmer.Spy.Internal exposing
   ( Spy(..)
   , Calls
-  , Arg(..)
   , create
   , createWith
   , replaceValue
@@ -18,8 +17,10 @@ module Elmer.Spy.Internal exposing
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Spy.Function as Function exposing (Function)
+import Elmer.Spy.Arg as Arg exposing (Arg)
 import Json.Decode as Json
 import Elmer.Value as Value
+import Expect
 
 
 type alias Calls =
@@ -27,14 +28,6 @@ type alias Calls =
   , calls : List (List Arg)
   }
 
-type Arg
-  = StringArg String
-  | IntArg Int
-  | FloatArg Float
-  | BoolArg Bool
-  | TypedArg String
-  | FunctionArg
-  | AnyArg
 
 type Spy
   = Uninstalled (() -> Spy)
@@ -191,7 +184,7 @@ deactivateOne spy =
           case spyValue.function of
             Just function ->
               Function.deactivateSpy function
-                |> Value.decode (Json.list <| Json.list argDecoder)
+                |> Value.decode (Json.list <| Json.list Arg.decoder)
                 |> Result.withDefault []
             Nothing ->
               []
@@ -205,28 +198,6 @@ deactivateOne spy =
 deactivate : List Spy -> List Spy
 deactivate =
   List.map deactivateOne
-
-
-argDecoder : Json.Decoder Arg
-argDecoder =
-  Json.map (\arg -> (Value.nativeType arg, arg)) Json.value
-    |> Json.map (\(argType, value) ->
-        case argType of
-          "string" ->
-            StringArg <| Value.cast value
-          "int" ->
-            IntArg <| Value.cast value
-          "float" ->
-            FloatArg <| Value.cast value
-          "object" ->
-            TypedArg <| toString value
-          "boolean" ->
-            BoolArg <| Value.cast value
-          "function" ->
-            FunctionArg
-          _ ->
-            AnyArg
-      )
 
 
 type SpyState

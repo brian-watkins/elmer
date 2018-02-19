@@ -8,6 +8,7 @@ module Elmer.Spy.Matchers exposing
   , typedArg
   , functionArg
   , anyArg
+  , argThat
   , wasCalled
   , wasCalledWith
   , calls
@@ -23,22 +24,23 @@ module Elmer.Spy.Matchers exposing
 @docs Call, calls, hasArgs
 
 # Argument Matchers
-@docs Arg, anyArg, stringArg, intArg, floatArg, boolArg, typedArg, functionArg
+@docs Arg, argThat, anyArg, stringArg, intArg, floatArg, boolArg, typedArg, functionArg
 
 -}
 
 import Expect
 import Test.Runner
 import Elmer exposing (Matcher)
-import Elmer.Internal as Internal
 import Elmer.Spy exposing (Calls)
-import Elmer.Spy.Internal as Spy_
+import Elmer.Spy.Arg as Arg
+import Elmer.Spy.Call as Call
 import Elmer.Printer exposing (..)
+import Elmer.Value as Value
 
 {-| Represents an expected function argument.
 -}
 type alias Arg =
-  Spy_.Arg
+  Arg.Arg
 
 {-| Represents a particular call to a spy.
 -}
@@ -78,25 +80,25 @@ timesString times =
 -}
 stringArg : String -> Arg
 stringArg =
-  Spy_.StringArg
+  Arg.StringArg
 
 {-| Matches an argument with the given integer.
 -}
 intArg : Int -> Arg
 intArg =
-  Spy_.IntArg
+  Arg.IntArg
 
 {-| Matches an argument with the given float value.
 -}
 floatArg : Float -> Arg
 floatArg =
-  Spy_.FloatArg
+  Arg.FloatArg
 
 {-| Matches an argument with the given boolean value.
 -}
 boolArg : Bool -> Arg
 boolArg =
-  Spy_.BoolArg
+  Arg.BoolArg
 
 {-| Matches an argument with the given typed value.
 
@@ -104,19 +106,45 @@ Note: You may not match what you want if your typed value contains a function re
 -}
 typedArg : a -> Arg
 typedArg item =
-  Spy_.TypedArg (toString item)
+  Value.cast item
+    |> Arg.TypedArg
 
 {-| Matches an argument that is a function.
 -}
 functionArg : Arg
 functionArg =
-  Spy_.FunctionArg
+  Arg.FunctionArg
 
 {-| Matches any argument.
 -}
 anyArg : Arg
 anyArg =
-  Spy_.AnyArg
+  Arg.AnyArg
+
+{-| Matches an argument whose value satisfies the given matcher.
+
+Suppose you want to expect that the second argument to a function is a record
+with a specific value for its name attribute. You could do something like this:
+
+    Spy.expect "my-spy" (
+      wasCalledWith
+        [ anyArg
+        , argThat <|
+          \model ->
+            model.name
+              |> Expect.equal "Awesome Person"
+        ]
+    )
+
+Note: Bad things will happen if you provide a matcher to `argThat` for a type
+that is different from that of the argument you are trying to match.
+
+-}
+argThat : Matcher a -> Arg
+argThat matcher =
+  Value.cast matcher
+    |> Arg.ArgThat
+
 
 {-| Make expectations about the calls recorded by this spy.
 
@@ -144,17 +172,21 @@ calls callMatcher spy =
 
 {-| Expect that a call has some arguments.
 
-Used in conjunction with `calls`.
+Use `hasArgs` in conjunction with `calls` to make an expectation about the args
+of a specific call.
+
+    Spy.expect "my-spy" (
+      calls <| atIndex 2 <| hasArgs
+        [ stringArg "Some String"
+        , typedArg someTypedValue
+        ]
+    )
+
 -}
 hasArgs : List Arg -> Matcher Call
 hasArgs args call =
-  if argListMatches args call then
-    Expect.pass
-  else
-    Expect.fail <| format
-      [ message ("Expected spy to have been called with") <| argsString args
-      , message "but it was called with" <| String.join "\n\n" (List.map argsString [ call ])
-      ]
+  evaluateCalls Nothing args [ call ]
+
 
 {-| Expect that a spy was called at least once with the given arguments.
 
@@ -177,64 +209,62 @@ This is shorthand for:
 -}
 wasCalledWith : List Arg -> Matcher Calls
 wasCalledWith args spy =
-  if List.isEmpty spy.calls then
-    Expect.fail <|
-      format
-        [ message ("Expected spy " ++ spy.name ++ " to have been called with") <| argsString args
-        , description "but it was not called"
-        ]
-  else
-    let
-      matchingCalls =
-        spy.calls
-          |> List.filter (\callArgs ->
-            argListMatches args callArgs
-          )
-    in
-      if List.isEmpty matchingCalls then
-        Expect.fail <|
-          format
-            [ message ("Expected spy " ++ spy.name ++ " to have been called with") <| argsString args
-            , message "but it was called with" <| String.join "\n\n" (List.map argsString spy.calls)
-            ]
-      else
-        Expect.pass
+  evaluateCalls (Just spy.name) args spy.calls
 
-argListMatches : List Arg -> List Arg -> Bool
-argListMatches expected actual =
-  case expected of
-    [] ->
-      List.isEmpty actual
-    x :: xs ->
-      case actual of
-        [] ->
-          False
-        y :: ys ->
-          if x == Spy_.AnyArg || x == y then
-            argListMatches xs ys
-          else
-            False
 
-argsString : List Arg -> String
-argsString args =
-  "[ "
-    ++ String.join "\n, " (List.map printArg args)
-    ++ "\n]"
+evaluateCalls : Maybe String -> List Arg -> Matcher (List (List Arg))
+evaluateCalls maybeSpyName args calls =
+    if List.isEmpty calls then
+      noCallsFailure maybeSpyName args
+    else
+      let
+        failingCalls =
+          calls
+            |> List.filter (\callArgs ->
+              not <| Call.matches args callArgs
+            )
+      in
+        if List.length failingCalls < List.length calls then
+          Expect.pass
+        else
+          Expect.fail <|
+            format <|
+              List.append
+                [ message (calledWithMessage maybeSpyName) <| Call.asString args
+                , message "but it was called with" <| String.join "\n\n" (List.map Call.asString calls)
+                ]
+                (argThatFailureMessages failingCalls args)
 
-printArg : Spy_.Arg -> String
-printArg arg =
-  case arg of
-    Spy_.StringArg str ->
-      "\"" ++ str ++ "\""
-    Spy_.IntArg num ->
-      toString num
-    Spy_.FloatArg num ->
-      toString num
-    Spy_.BoolArg bool ->
-       Internal.boolToString bool
-    Spy_.TypedArg str ->
-      str
-    Spy_.FunctionArg ->
-      "<FUNCTION>"
-    Spy_.AnyArg ->
-      "<ANY>"
+
+noCallsFailure : Maybe String -> List Arg -> Expect.Expectation
+noCallsFailure maybeSpyName args =
+  Expect.fail <|
+    format
+      [ message (calledWithMessage maybeSpyName) <| Call.asString args
+      , description "but it was not called"
+      ]
+
+
+argThatFailureMessages : List (List Arg) -> List Arg -> List Message
+argThatFailureMessages calls args =
+  let
+    argThatFailureMessages =
+      calls
+        |> List.map (Call.argThatFailures args)
+        |> List.concat
+        |> List.map description
+  in
+    if List.isEmpty argThatFailureMessages then
+      []
+    else
+      description "An argThat matcher failed:" ::
+        argThatFailureMessages
+
+
+calledWithMessage : Maybe String -> String
+calledWithMessage maybeSpyName =
+  case maybeSpyName of
+    Just spyName ->
+      "Expected spy " ++ spyName ++ " to have been called with"
+    Nothing ->
+      "Expected spy to have been called with"

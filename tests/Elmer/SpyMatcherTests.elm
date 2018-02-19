@@ -1,16 +1,19 @@
 module Elmer.SpyMatcherTests exposing (..)
 
 import Test exposing (..)
+import Test.Runner
 import Expect
 import Elmer.TestApps.SpyTestApp as SpyApp
 import Elmer.Spy as Spy
-import Elmer.Spy.Matchers as Matchers exposing (stringArg)
-import Elmer.Spy.Internal as Spy_ exposing (Calls, Arg(..))
+import Elmer.Spy.Matchers as Matchers exposing (stringArg, argThat)
+import Elmer.Spy.Internal as Spy_ exposing (Calls)
+import Elmer.Spy.Arg exposing (Arg(..))
 import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (hasText)
 import Elmer.Printer exposing (..)
-import Elmer
+import Elmer exposing ((<&&>))
+import Elmer.Value as Value
 
 
 type FunType
@@ -135,9 +138,9 @@ argMatcherTests =
   [ argumentTests "Int" (Matchers.intArg 23) "23" (IntArg 23)
   , argumentTests "Float" (Matchers.floatArg 23.54) "23.54" (FloatArg 23.54)
   , argumentTests "Bool" (Matchers.boolArg True) "true" (BoolArg True)
-  , argumentTests "Typed Record" (Matchers.typedArg <| funStuff "Beach") "{ name = \"Beach\" }" (TypedArg "{ name = \"Beach\" }")
-  , argumentTests "Typed Union" (Matchers.typedArg <| Bird "Owl") "Bird \"Owl\"" (TypedArg "Bird \"Owl\"")
-  , argumentTests "Typed List" (Matchers.typedArg <| [ "Fun", "Sun", "Beach" ]) "[\"Fun\",\"Sun\",\"Beach\"]" (TypedArg "[\"Fun\",\"Sun\",\"Beach\"]")
+  , argumentTests "Typed Record" (Matchers.typedArg <| funStuff "Beach") "{ name = \"Beach\" }" (TypedArg <| Value.cast { name = "Beach" })
+  , argumentTests "Typed Union" (Matchers.typedArg <| Bird "Owl") "Bird \"Owl\"" (TypedArg <| (Value.cast Bird "Owl"))
+  , argumentTests "Typed List" (Matchers.typedArg <| [ "Fun", "Sun", "Beach" ]) "[\"Fun\",\"Sun\",\"Beach\"]" (TypedArg <| Value.cast ["Fun","Sun","Beach"])
   , argumentTests "Function" (Matchers.functionArg) "<FUNCTION>" FunctionArg
   ]
 
@@ -249,3 +252,73 @@ hasArgsTests =
                 ])
     ]
   ]
+
+argThatTests : Test
+argThatTests =
+  describe "argThat"
+  [ argThatBehavior "wasCalledWith" Matchers.wasCalledWith
+  , argThatBehavior "hasArgs" hasArgsMatcher
+  ]
+
+hasArgsMatcher : List Arg -> Elmer.Matcher Calls
+hasArgsMatcher expectedArgs =
+  Matchers.calls <| Elmer.some <| Matchers.hasArgs expectedArgs
+
+argThatBehavior : String -> (List Arg -> Elmer.Matcher Calls) -> Test
+argThatBehavior name matcher =
+  describe ("Using " ++ name)
+  [ describe "when the argument satisfies the function"
+    [ test "it matches" <|
+      \() ->
+        testCalls "test-spy" [ [ StringArg "blah" ], [ StringArg "what"] ]
+          |> matcher [ argThat <| Expect.equal "what" ]
+          |> Expect.equal (Expect.pass)
+    , test "it matches a typed argument" <|
+      \() ->
+        testCalls "test-spy" [ [ TypedArg <| Value.cast { name = "Cool Dude", age = 74 } ] ]
+          |> matcher
+            [ argThat <|
+                \record ->
+                  record.age
+                    |> Expect.equal 74
+            ]
+          |> Expect.equal (Expect.pass)
+    ]
+  , describe "when the argument does not satisfy the function"
+    [ test "it fails" <|
+      \() ->
+        testCalls "test-spy" [ [ StringArg "blah" ], [ StringArg "what"] ]
+          |> matcher [ argThat <| Expect.equal "something else" ]
+          |> (expectFailureContains "\"something else\" is not equal to \"blah\""
+            <&&> expectFailureContains "\"something else\" is not equal to \"what\""
+          )
+    ]
+  , describe "when argThat is used to match a function argument"
+    [ test "it fails" <|
+      \() ->
+        testCalls "test-spy" [ [ FunctionArg ] ]
+          |> matcher [ argThat <| Expect.equal "some string" ]
+          |> expectFailureContains (format
+              [ message "to have been called with" <| "[ <ARG_THAT>\n]"
+              , message "but it was called with" "[ <FUNCTION>\n]"
+              , description "An argThat matcher failed:"
+              , description <| format
+                [ description "argThat cannot be used to match arguments that are functions"
+                ]
+              ]
+          )
+    ]
+  ]
+
+expectFailureContains : String -> Expect.Expectation -> Expect.Expectation
+expectFailureContains expected expectation =
+  case Test.Runner.getFailureReason expectation of
+    Just failure ->
+      if String.contains expected failure.description then
+        Expect.pass
+      else
+        Expect.fail <|
+          "'" ++ failure.description ++ "'\n\ndoes not contain\n\n'" ++ expected ++ "'"
+    Nothing ->
+      Expect.fail <|
+        "Expected expectation to fail but it passed"
