@@ -24,10 +24,14 @@ matches expected actual =
             AnyArg ->
               matches xs ys
             ArgThat matcher ->
-              if Expect.pass == (matcher <| Arg.value y) then
-                matches xs ys
-              else
-                False
+              case Arg.value y of
+                Nothing ->
+                  False
+                Just val ->
+                  if Expect.pass == (matcher val) then
+                    matches xs ys
+                  else
+                    False
             arg ->
               if arg == y then
                 matches xs ys
@@ -47,14 +51,12 @@ argThatFailures expected actual =
         y :: ys ->
           case x of
             ArgThat matcher ->
-              let
-                argVal = Arg.value y
-              in
-                if argVal == FunctionArgValue then
+              case Arg.value y of
+                Nothing ->
                   "argThat cannot be used to match arguments that are functions" ::
                     argThatFailures xs ys
-                else
-                  case Test.Runner.getFailureReason <| matcher argVal of
+                Just val ->
+                  case Test.Runner.getFailureReason <| matcher val of
                     Just failure ->
                       formatFailure failure ::
                         argThatFailures xs ys

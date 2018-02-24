@@ -1,6 +1,6 @@
 module Elmer.Spy.Arg exposing
   ( Arg(..)
-  , ArgValue(..)
+  , ArgValue
   , asString
   , value
   , decoder
@@ -24,29 +24,28 @@ type Arg
 
 
 type ArgValue
-  = SomeValue
-  | FunctionArgValue
+  = ArgValue
 
 
-value : Arg -> ArgValue
+value : Arg -> Maybe ArgValue
 value arg =
   case arg of
     StringArg str ->
-      Value.cast str
+      Just <| Value.cast str
     IntArg num ->
-      Value.cast num
+      Just <| Value.cast num
     FloatArg num ->
-      Value.cast num
+      Just <| Value.cast num
     BoolArg bool ->
-      Value.cast bool
+      Just <| Value.cast bool
     TypedArg arg ->
-      Value.cast arg
+      Just <| Value.cast arg
     FunctionArg ->
-      FunctionArgValue
+      Nothing
     AnyArg ->
-      Value.cast never
+      Just <| Value.cast never
     ArgThat _ ->
-      Value.cast never
+      Just <| Value.cast never
 
 
 asString : Arg -> String
