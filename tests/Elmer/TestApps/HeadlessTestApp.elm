@@ -1,6 +1,8 @@
 port module Elmer.TestApps.HeadlessTestApp exposing (..)
 
 import Http
+import Json.Decode as Json
+
 
 port testPortCommand : String -> Cmd msg
 
@@ -10,9 +12,9 @@ spyCommand message =
 
 
 type Msg
-  = HttpRequest (Result Http.Error String)
+  = HttpRequest (Result Http.Error (List Int))
 
 httpCommand : String -> Cmd Msg
 httpCommand url =
-  Http.getString url
+  Http.get url (Json.list Json.int)
     |> Http.send HttpRequest

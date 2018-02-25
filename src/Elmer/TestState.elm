@@ -95,7 +95,7 @@ mapBeforeExpectation =
     \context ->
       Context.state MapBeforeExpectationExtension context
         |> Maybe.withDefault []
-        |> List.foldr map (with context)
+        |> List.foldr mapWithoutSpies (with context)
 
 
 spyExpectationExtension : (Context model msg -> Expect.Expectation) -> Context model msg -> Expect.Expectation
