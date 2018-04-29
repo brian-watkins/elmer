@@ -4,6 +4,7 @@ module Elmer.Http.Stub exposing
   , withStatus
   , withBody
   , withResult
+  , withHeader
   , deferResponse
   )
 
@@ -12,11 +13,8 @@ module Elmer.Http.Stub exposing
 # Create a stubbed response
 @docs for
 
-# Describe the Response body
-@docs withBody
-
-# Describe the Response Status
-@docs withStatus, withError
+# Describe the Response
+@docs withBody, withHeader, withStatus, withError
 
 # Provide a Result based on the Request
 @docs withResult
@@ -115,6 +113,26 @@ withBody newBody =
   withResult (\_ result ->
       HttpResult.withBody newBody result
     )
+
+
+{-| Build a response stub that has the specified header.
+
+Add as many headers as necessary like so:
+
+    Elmer.Http.Stub.for (Elmer.Http.Route.post "http://fake.com/fake")
+      |> withBody "{\"name\":\"Fun Person\"}"
+      |> withHeader ("x-fun-header", "something fun")
+      |> withHeader ("x-awesome-header", "something awesome")
+-}
+withHeader : (String, String) -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
+withHeader (headerName, headerValue) =
+  withResult (\_ result ->
+    case result of
+        Response response ->
+          Response { response | headers = Dict.insert headerName headerValue response.headers }
+        Error _ ->
+          result
+  )
 
 
 {-| Build a response stub that generates an HttpResult based on the matching

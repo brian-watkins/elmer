@@ -91,6 +91,31 @@ responseBuilderTests =
                 Expect.fail "Should have a response"
       ]
     ]
+  , describe "withHeader"
+    [ testDoesNotUpdateResponseStatus (HttpStub.withHeader ("x-header-1", "x-value-1"))
+    , describe "when the stubbed response has a response" <|
+      let
+        (HttpResponseStub updatedResponse) = 
+          defaultResponseStub 
+            |> HttpStub.withHeader ("x-header-1", "x-value-1")
+            |> HttpStub.withHeader ("x-header-2", "x-value-2")
+      in
+      [ test "it adds the header to the response" <|
+        \() ->
+            case updatedResponse.resultBuilder testRequest of
+              Response response ->
+                Expect.equal (Just "x-value-1") (Dict.get "x-header-1" response.headers)
+              Error _ ->
+                Expect.fail "Should have a response"
+      , test "it adds the other header to the response" <|
+        \() ->
+            case updatedResponse.resultBuilder testRequest of
+              Response response ->
+                Expect.equal (Just "x-value-2") (Dict.get "x-header-2" response.headers)
+              Error _ ->
+                Expect.fail "Should have a response"
+      ]
+    ]
   , describe "deferResponse"
     [ test "by default it does not defer the response" <|
       \() ->
