@@ -125,13 +125,9 @@ Add as many headers as necessary like so:
       |> withHeader ("x-awesome-header", "something awesome")
 -}
 withHeader : (String, String) -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
-withHeader (headerName, headerValue) =
+withHeader header =
   withResult (\_ result ->
-    case result of
-        Response response ->
-          Response { response | headers = Dict.insert headerName headerValue response.headers }
-        Error _ ->
-          result
+    HttpResult.withHeader header result
   )
 
 
