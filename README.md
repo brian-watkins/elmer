@@ -244,149 +244,8 @@ to specify the effect of this command in our tests, we will *override* occurrenc
 with a function we create in our tests. This function will generate a special command
 that specifies the intended effect, and Elmer will process the result as if the original command were actually performed.
 
-For a more concrete example, let's test drive a simple app that displays the time.
-
-We'd like to be able to click a button and then see the current time display. We'll begin with a test that describes
-the behavior we want:
-
-```
-timeAppTests : Test
-timeAppTests =
-  describe "time demo app"
-  [ test "it displays the time" <|
-    \() ->
-      let
-        initialState = Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
-      in
-        Elmer.Html.target ".button" initialState
-          |> Event.click
-          |> Elmer.Html.target "#currentTime"
-          |> Elmer.Html.expect (
-              Elmer.Html.Matchers.element <|
-                Elmer.Html.Matchers.hasText "Time: ???"
-             )
-  ]
-```
-
-To make this compile and pass, we create the following app:
-
-```
-type alias Model =
-  { }
-
-type Msg
-  = Msg
-
-defaultModel : Model
-defaultModel =
-  { }
-
-view : Model -> Html Msg
-view model =
-  Html.div []
-    [ Html.div [ Attr.id "currentTime" ] [ Html.text ( "Time: ???" ) ]
-    , Html.div [ Attr.class "button" ] [ Html.text "Click me for the time!" ]
-    ]
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-  ( model, Cmd.none )
-```
-
-Of course, this doesn't really do what we want yet. When the button is clicked,
-we'll need our app to actually perform a task, provided by the `Time` module,
-that fetches the current time and wraps it with a message, like so:
-
-```
-Task.perform NewTime Time.now
-```
-
-We want to improve our test so that it drives out this implementation. To do so, we'll need to provide a fake version of `Task.perform`, since Elmer doesn't actually know how to process tasks.
-
-We first create a function in our test with the same signature as `Task.perform`.
-
-```
-fakeTaskPerform : Time -> (Time -> msg) -> Task Never Time -> Cmd msg
-fakeTaskPerform time tagger _ =
-  Command.fake (tagger time)
-```
-
-Here, we use `Elmer.Platform.Command.fake` to create a command whose effect is the message we provide.
-This lets us specify exactly what time should be returned for the purpose of our test.
-
-Now we update our test to override `Task.perform` with `fakeTaskPerform`. We use
-two functions to do this:
-
-- `Elmer.Spy.create` with `Elmer.Spy.andCallFake` allows us to specify
-which `Cmd`-generating function to override and provide the alternate implementation.
-- `Elmer.Spy.use` registers our spy, ensuring that, during our test, the relevant
-`Cmd`-generating function will be replaced with the alternate implementation we specify.
-
-```
-timeAppTests : Test
-timeAppTests =
-  describe "time demo app"
-  [ test "it displays the time" <|
-    \() ->
-      let
-        initialState = Elmer.given TimeApp.defaultModel TimeApp.view TimeApp.update
-        taskPerformStub = Elmer.Spy.create "fake-perform" (\_ -> Task.perform)
-          |> Elmer.Spy.andCallFake (fakeTaskPerform (3 * Time.second))
-      in
-        Elmer.Html.target ".button" initialState
-          |> Elmer.Spy.use [ taskPerformOverride ]
-          |> Event.click
-          |> Elmer.Html.target "#currentTime"
-          |> Elmer.Html.expect (
-              Elmer.Html.Matchers.element <|
-                Elmer.Html.Matchers.hasText "Time: 3000"
-             )
-  ]
-```
-
-Our test should compile but still fail. To make it pass, we'll need to update the rest of our app
-so that it requests the current time, stores it in the model, and displays it in the view.
-
-```
-type alias Model =
-  { time : Time }
-
-type Msg
-  = GetTime
-  | NewTime Time
-
-defaultModel : Model
-defaultModel =
-  { time = Time.second }
-
-view : Model -> Html Msg
-view model =
-  Html.div []
-    [ Html.div [ Attr.id "currentTime" ] [ Html.text ( "Time: " ++ ( toString model.time ) ) ]
-    , Html.div [ Attr.class "button", onClick GetTime ] [ Html.text "Click me for the time!" ]
-    ]
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-  case msg of
-    GetTime ->
-      ( model, Task.perform NewTime Time.now )
-    NewTime time ->
-      ( { model | time = time }, Cmd.none )
-
-```
-
-And now our test should pass.
-
-Elmer allows us to write tests first, describing the behavior of our component
-without needing to know the internal details of that component. We can provide fake
-implementations for `Cmd`-generating functions that our component relies upon, but
-in doing so, we don't need to know any details about how our component processes
-the effects of the generated commands. Our tests give us flexibility
-to refactor our code and confidence that the new code still results in
-the correct behavior.
-
-For the full example, see `tests/Elmer/TestApps/TimeTestApp.elm` and the associated tests in `tests/Elmer/DemoAppTests.elm`.
+For a more concrete example, check out this [article](https://medium.com/@brian.watkins/test-driving-elm-with-elmer-649e2e7e02a8), which discusses how to fake
+commands and subscriptions during a test.
 
 Note that while Elmer is not capable of processing any commands, it does support
 the general operations on commands in the core `Platform.Cmd` module, namely, `batch` and `map`. So, you
@@ -520,53 +379,7 @@ and replace it with a fake subscription using `Elmer.Platform.Subscription.fake`
 2. Register the subscriptions using `Elmer.Platform.Subscription.with`
 2. Simulate the effect you've subscribed to receive with `Elmer.Platform.Subscription.send`
 
-Let's test-drive a component that subscribes to receive the time every second. We'll
-begin by writing a test to drive out the basics of our component.
-
-```
-timeDefaultTest : Test
-timeDefaultTest =
-  describe "before the time is received"
-  [ test "it prints 0 seconds" <|
-    \() ->
-      Elmer.given App.defaultModel App.view App.update
-        |> Elmer.Html.target "#num-seconds"
-        |> Elmer.Html.expect (
-            Elmer.Html.Matchers.element <|
-              Elmer.Html.Matchers.hasText "0 seconds"
-           )
-  ]
-```
-
-Let's next do the simplest thing to get this test to compile:
-
-```
-type alias Model =
-  { }
-
-type Msg
-  = Msg
-
-defaultModel : Model
-defaultModel =
-  { }
-
-view : Model -> Html Msg
-view model =
-  Html.div []
-    [ Html.div [ Attr.id "num-seconds" ] [ Html.text "0 seconds" ]
-    ]
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-  ( model, Cmd.none )
-
-subscriptions : Model -> Sub Msg
-subscriptions =
-  Sub.none
-```
-
-Now let's write a test that describes the behavior when a time effect is received.
+Here's an example test:
 
 ```
 timeSubscriptionTest : Test
@@ -592,44 +405,7 @@ timeSubscriptionTest =
   ]
 ```
 
-Now we have a failing test; let's make it pass!
-
-```
-type alias Model =
-  { currentTime : Time }
-
-type Msg
-  = TimeUpdate Time
-
-defaultModel : Model
-defaultModel =
-  { currentTime = 0 }
-
-view : Model -> Html Msg
-view model =
-  Html.div []
-    [ Html.div [ Attr.id "num-seconds" ] [ Html.text ((formatTime model.currentTime) ++ " seconds") ]
-    ]
-
-formatTime : Time -> String
-formatTime time =
-  Time.inSeconds time
-    |> toString
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-  case msg of
-    TimeUpdate time ->
-      ( { model | currentTime = time }, Cmd.none )
-
-subscriptions : Model -> Sub Msg
-subscriptions =
-  Time.every Time.second TimeUpdate
-```
-
-And now our test should pass! Notice that we were able to test drive our component without
-our tests knowing how that component actually deals with the effect from the Time
-subscription.
+For a more complete example, check out this [article](https://medium.com/@brian.watkins/test-driving-elm-with-elmer-649e2e7e02a8).
 
 ### Ports
 
@@ -835,22 +611,9 @@ way; `Spy.replaceValue` is just a convenient way to inject fake values during a 
 
 For development purposes, it's possible to deploy Elmer to a local project.
 
-First, install [elm-ops-tooling](https://github.com/NoRedInk/elm-ops-tooling); you'll use this to install Elmer. Next, you'll want to set up your project with [elm-test](https://github.com/elm-community/elm-test). Since you'll be deploying Elmer manually, you'll have to make sure its dependencies are available in your tests. So, check the `dependencies` section of `elm-package.json` in your tests directory to be sure that it contains the following:
-
-```
-  "elm-lang/html": "2.0.0 <= v < 3.0.0",
-  "elm-lang/http": "1.0.0 <= v < 2.0.0",
-  "elm-lang/navigation": "2.0.1 <= v < 3.0.0"
-```
-
-You'll probably need these in any case if you're building an elm html application that does much at all.
-
-Next, create a test and run it once to make sure that elm-test has downloaded its dependencies. Clone the Elmer repo into some local directory. Finally, run
-the following command to install Elmer:
-
-```
-$ python ./elm-ops-tooling/elm_self_publish.py <path to elmer> <path to your project>/tests
-```
+Use something like [elm-github-install](https://github.com/gdotdesign/elm-github-install) for the test
+dependencies of the project using Elmer. You can set elm-github-install to install Elmer from a directory
+in the local filesystem. 
 
 To run the tests:
 
