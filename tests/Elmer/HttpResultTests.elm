@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer.Http.Internal exposing (..)
 import Elmer.Http.Result as HttpResult
+import Elmer.Http.Status as Status
 import Http
 import Dict
 
@@ -67,6 +68,32 @@ withHeaderTests =
             Expect.equal (Just "x-value-2") (Dict.get "x-header-2" response.headers)
           Error _ ->
             Expect.fail "Should be a response!"
+    ]
+  ]
+
+withStatusTests : Test
+withStatusTests =
+  describe "withStatus"
+  [ describe "when the result is an error"
+    [ test "it returns the error" <|
+      \() ->
+        let
+          result = Error Http.Timeout
+        in
+          HttpResult.withStatus Status.ok result
+            |> Expect.equal (Error Http.Timeout)
+    ]
+  , describe "when the result is a response"
+    [ test "it sets the status" <|
+      \() ->
+        let
+            result = responseResult |> HttpResult.withStatus Status.notFound
+        in
+          case result of
+            Response response ->
+              Expect.equal { code = 404, message = "Not Found" } response.status
+            Error _ ->
+              Expect.fail "Should be a response!"
     ]
   ]
 

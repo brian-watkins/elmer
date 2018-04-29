@@ -24,11 +24,12 @@ module Elmer.Http.Stub exposing
 
 -}
 
-import Elmer.Http
-import Elmer.Http.Internal exposing (..)
-import Elmer.Http.Status as Status
-import Elmer.Http.Result as HttpResult
-import Elmer.Http.Route as Route
+import Elmer.Http exposing (HttpResponseStub)
+import Elmer.Http.Internal as Internal
+import Elmer.Http.Status as Status exposing (HttpStatus)
+import Elmer.Http.Result as HttpResult exposing (HttpResult)
+import Elmer.Http.Request exposing (HttpRequest)
+import Elmer.Http.Route exposing (HttpRoute)
 import Http
 import Dict
 
@@ -44,7 +45,7 @@ for route =
 
 defaultResponseStub : String -> String -> HttpResponseStub
 defaultResponseStub method url =
-  HttpResponseStub
+  Internal.HttpResponseStub
     { url = url
     , method = method
     , resultBuilder = (\_ -> defaultResult url)
@@ -54,9 +55,9 @@ defaultResponseStub method url =
 defaultResult : String -> HttpResult
 defaultResult url =
   let
-    (HttpStatus okStatus) = Status.ok
+    (Internal.HttpStatus okStatus) = Status.ok
   in
-    Response
+    Internal.Response
       { url = url
       , status = okStatus
       , headers = Dict.empty
@@ -72,11 +73,11 @@ times out. You could create a stubbed response like so:
       |> withError Http.Error.Timout
 
 -}
-withError : Http.Error -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
+withError : Http.Error -> HttpResponseStub -> HttpResponseStub
 withError error =
   withResult (\_ _ ->
-      Error error
-    )
+    Internal.Error error
+  )
 
 
 {-| Build a response stub that returns some particular status.
@@ -88,15 +89,11 @@ returns a `500 Internal Server Error`. You could create a stubbed response like 
       |> withStatus Elmer.Http.Status.serverError
 
 -}
-withStatus : HttpStatus -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
-withStatus (HttpStatus newStatus) =
-  withResult (\_ result ->
-      case result of
-        Response response ->
-          Response { response | status = newStatus }
-        Error _ ->
-          result
-    )
+withStatus : HttpStatus -> HttpResponseStub -> HttpResponseStub
+withStatus status =
+  withResult (\_ ->
+    HttpResult.withStatus status
+  )
 
 
 {-| Build a response stub that returns the specified string as its body.
@@ -108,11 +105,11 @@ parsed. You could create a stub like so:
       |> withBody "{\"name\":\"Fun Person\"}"
 
 -}
-withBody : String -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
+withBody : String -> HttpResponseStub -> HttpResponseStub
 withBody newBody =
-  withResult (\_ result ->
-      HttpResult.withBody newBody result
-    )
+  withResult (\_ ->
+    HttpResult.withBody newBody
+  )
 
 
 {-| Build a response stub that has the specified header.
@@ -124,10 +121,10 @@ Add as many headers as necessary like so:
       |> withHeader ("x-fun-header", "something fun")
       |> withHeader ("x-awesome-header", "something awesome")
 -}
-withHeader : (String, String) -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
+withHeader : (String, String) -> HttpResponseStub -> HttpResponseStub
 withHeader header =
-  withResult (\_ result ->
-    HttpResult.withHeader header result
+  withResult (\_ ->
+    HttpResult.withHeader header
   )
 
 
@@ -142,8 +139,8 @@ You could create a stub that echoes back the posted body like so:
       )
 
 -}
-withResult : (HttpRequest -> HttpResult -> HttpResult) -> Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
-withResult builder (HttpResponseStub stub) =
+withResult : (HttpRequest -> HttpResult -> HttpResult) -> HttpResponseStub -> HttpResponseStub
+withResult builder (Internal.HttpResponseStub stub) =
   let
     composedBuilder =
       (\request ->
@@ -151,7 +148,7 @@ withResult builder (HttpResponseStub stub) =
           |> builder request
       )
   in
-    HttpResponseStub { stub | resultBuilder = composedBuilder }
+    Internal.HttpResponseStub { stub | resultBuilder = composedBuilder }
 
 
 {-| Defer a response.
@@ -162,6 +159,6 @@ Note: If this stub is processed as part of a request made with `Http.toTask` the
 entire Task chain will be deferred until `Elmer.Platform.Command.resolveDeferred` is called.
 
 -}
-deferResponse : Elmer.Http.HttpResponseStub -> Elmer.Http.HttpResponseStub
-deferResponse (HttpResponseStub stub) =
-  HttpResponseStub { stub | deferResponse = True }
+deferResponse : HttpResponseStub -> HttpResponseStub
+deferResponse (Internal.HttpResponseStub stub) =
+  Internal.HttpResponseStub { stub | deferResponse = True }
