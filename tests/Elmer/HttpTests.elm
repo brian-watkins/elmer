@@ -355,8 +355,23 @@ expectTests =
             ElmerHttp.expect getRoute initialState
               |> Expect.equal Expect.pass
       ]
+    , describe "when the route and the method match"
+      [ test "it passes" <|
+        \() ->
+          let
+            initialState =
+              testStateWithRequests
+                [ ("POST", "http://fun.com/fun")
+                , ("GET", "http://fun.com/fun.html?stuff=fun")
+                , ("GET", "http://awesome.com/awesome.html?stuff=fun")
+                ]
+          in
+            ElmerHttp.expect getRoute initialState
+              |> Expect.equal Expect.pass
+      ]
     ]
   ]
+
 
 expectThatTests : Test
 expectThatTests =
@@ -408,12 +423,15 @@ expectThatTests =
                   , ("GET", "http://fun.com/fun.html")
                   , ("GET", "http://awesome.com/awesome.html?stuff=fun")
                   , ("GET", "http://fun.com/fun.html")
-                  , ("GET", "http://fun.com/fun.html")
+                  , ("GET", "http://fun.com/fun.html?stuff=fun")
                   ]
               requestForStub = testRequest "GET" "http://fun.com/fun.html"
+              requestForQueryStringStub = testRequest "GET" "http://fun.com/fun.html?stuff=fun"
             in
-              ElmerHttp.expectThat getRoute (\rs -> Expect.equal [ requestForStub, requestForStub, requestForStub ] rs) initialState
-                |> Expect.equal Expect.pass
+              initialState
+                |> ElmerHttp.expectThat getRoute (\rs -> 
+                  Expect.equal [ requestForQueryStringStub, requestForStub, requestForStub ] rs
+                ) 
         , describe "when the matcher fails"
           [ test "it fails with a message" <|
             \() ->
@@ -432,7 +450,6 @@ expectThatTests =
                     , description "Failed!"
                     ]
                   ))
-
           ]
         ]
       ]
