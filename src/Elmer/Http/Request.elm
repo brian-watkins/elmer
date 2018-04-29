@@ -1,11 +1,12 @@
 module Elmer.Http.Request exposing
   ( HttpRequest
   , body
+  , queryString
   )
 
 {-| Functions for working with a recorded HTTP request.
 
-@docs HttpRequest, body
+@docs HttpRequest, body, queryString
 
 -}
 
@@ -22,3 +23,10 @@ type alias HttpRequest
 body : HttpRequest -> Maybe String
 body request =
   request.body
+
+
+{-| Get the query string of a recorded HTTP request, if it exists
+-}
+queryString : HttpRequest -> Maybe String
+queryString request =
+  Http_.queryString request.url

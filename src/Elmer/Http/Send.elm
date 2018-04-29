@@ -5,7 +5,6 @@ module Elmer.Http.Send exposing
 
 import Elmer.Http.Internal as HttpInternal exposing (..)
 import Elmer.Http.Server as Server
-import Elmer.Runtime.Task as RuntimeTask
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Printer exposing (..)
 import Http

@@ -11,6 +11,7 @@ module Elmer.Http.Internal exposing
   , HttpRoute
   , asHttpRequestHandler
   , route
+  , queryString
   )
 
 import Http
@@ -123,3 +124,9 @@ route url =
   String.split "?" url
     |> List.head
     |> Maybe.withDefault ""
+
+queryString : String -> Maybe String
+queryString url =
+  String.split "?" url
+    |> List.drop 1
+    |> List.head

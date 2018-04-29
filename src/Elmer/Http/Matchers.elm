@@ -21,6 +21,7 @@ import Expect
 import Http
 import Elmer exposing (Matcher)
 import Elmer.Http.Request exposing (HttpRequest)
+import Elmer.Http.Internal as Http_
 import Elmer.Printer exposing (..)
 
 
@@ -96,9 +97,7 @@ hasQueryParam ( key, value ) request =
 
 queryString : HttpRequest -> String
 queryString request =
-  String.split "?" request.url
-    |> List.drop 1
-    |> List.head
+  Http_.queryString request.url
     |> Maybe.withDefault ""
 
 

@@ -25,10 +25,35 @@ bodyTests =
     ]
   ]
 
+queryStringTest : Test
+queryStringTest =
+  describe "queryString"
+  [ describe "when there is no query string"
+    [ test "it returns Nothing" <|
+      \() ->
+        HttpRequest.queryString (testRequest <| Just "Something")
+          |> Expect.equal Nothing
+    ]
+  , describe "when there is a query string"
+    [ test "it returns the query string" <|
+      \() ->
+        HttpRequest.queryString (testQueryRequest "fruit=apple&sport=bowling")
+          |> Expect.equal (Just "fruit=apple&sport=bowling")
+    ]
+  ]
+
 testRequest : Maybe String -> HttpRequest
 testRequest body =
   { method = "GET"
   , url = "http://fake.com"
   , headers = []
   , body = body
+  }
+
+testQueryRequest : String -> HttpRequest
+testQueryRequest query =
+  { method = "GET"
+  , url = "http://fake.com?" ++ query
+  , headers = []
+  , body = Nothing
   }
