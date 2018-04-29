@@ -2,11 +2,12 @@ module Elmer.Http.Request exposing
   ( HttpRequest
   , body
   , queryString
+  , headers
   )
 
 {-| Functions for working with a recorded HTTP request.
 
-@docs HttpRequest, body, queryString
+@docs HttpRequest, body, queryString, headers
 
 -}
 
@@ -30,3 +31,11 @@ body request =
 queryString : HttpRequest -> Maybe String
 queryString request =
   Http_.queryString request.url
+
+
+{-| Get the headers of a recorded HTTP request as a list of (name, value) tuples. 
+-}
+headers : HttpRequest -> List (String, String)
+headers request =
+  request.headers
+    |> List.map (\header -> (header.name, header.value))

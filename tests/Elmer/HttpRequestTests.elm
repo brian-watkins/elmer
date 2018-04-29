@@ -42,6 +42,29 @@ queryStringTest =
     ]
   ]
 
+headersTest : Test
+headersTest =
+  describe "headers"
+  [ describe "when there are no headers"
+    [ test "it returns an empty list" <|
+      \() ->
+        HttpRequest.headers (testRequest <| Nothing)
+          |> Expect.equal []
+    ]
+  , describe "when there are headers"
+    [ test "it returns a list of tuples" <|
+      \() ->
+        let
+          headers =
+            [ { name = "x-header-1", value = "x-value-1" }
+            , { name = "x-header-2", value = "x-value-2" }
+            ]
+        in
+          HttpRequest.headers (testHeadersRequest headers)
+            |> Expect.equal [ ("x-header-1", "x-value-1"), ("x-header-2", "x-value-2") ]
+    ]
+  ]
+
 testRequest : Maybe String -> HttpRequest
 testRequest body =
   { method = "GET"
@@ -55,5 +78,13 @@ testQueryRequest query =
   { method = "GET"
   , url = "http://fake.com?" ++ query
   , headers = []
+  , body = Nothing
+  }
+
+testHeadersRequest : List HttpHeader -> HttpRequest
+testHeadersRequest headers =
+  { method = "GET"
+  , url = "http://fake.com"
+  , headers = headers
   , body = Nothing
   }
