@@ -165,15 +165,18 @@ where `testImplementation` is some function with the very same signature as
 the one being spied upon.
 
 If you are spying on a function that returns a `Cmd`, then your fake
-should return one of the fake commands described in `Elmer.Platform.Command`.
+should return `Cmd.none` or one of the fake commands described in `Elmer.Platform.Command`.
 
-For example, you could override `Task.perform` with a fake command that tags
-some data like so:
+For example, you could override `Random.generate` so that it returns a set value during a test
+like so:
 
-    create "fake-perform" (\_ -> Task.perform)
-      |> andCallFake (\tagger task ->
-          Elmer.Platform.Command.fake (tagger "some data")
-        )
+    Elmer.Spy.create "fake-random" (\_ -> Random.generate)
+      |> andCallFake (\tagger generator ->
+        Random.initialeSeed 10001
+          |> Random.step generator
+          |> tagger
+          |> Elmer.Platform.Command.fake
+      )
 
 If you are spying on a function that returns a `Sub`, then your fake should
 return a fake subscription; see `Subscription.fake`.
@@ -229,28 +232,27 @@ expect name matcher =
 {-| Install spies for use during the test.
 
 Suppose your component contains a button that,
-when clicked, issues a command to get the current date and updates the view. To
-get the current date, in your code you'll need to create a `Task` with `Date.now` and then
-generate a command with `Task.perform`. To describe this behavior in your test,
+when clicked, issues a command to get a random number and updates the view. To
+get the random number, in your code you'll need to use `Random.generate` with the
+appropriate `Generator`. To describe this behavior in your test,
 you could do something like the following:
 
     let
-      taskOverride =
-        create "fake-perform" (\_ -> Task.perform)
-          |> andCallFake (\tagger task ->
-            Elmer.Platform.Command.fake (
-              tagger <| toDate "11/12/2016 5:30 pm"
-            )
+      randomSpy =
+        create "fake-random" (\_ -> Random.generate)
+          |> andCallFake (\tagger _ ->
+            tagger 27
+              |> Elmer.Platform.Command.fake
           )
     in
       testState
         |> use [ taskOverride ]
-        |> Elmer.Html.target "#get-date"
+        |> Elmer.Html.target "#get-random"
         |> Elmer.Html.Event.click
-        |> Elmer.Html.target "#current-date"
+        |> Elmer.Html.target "#current-random"
         |> Elmer.Html.expect (
           Elmer.Html.Matchers.element <|
-            Elmer.Html.Matchers.hasText "11/12/2016 5:30 pm"
+            Elmer.Html.Matchers.hasText "27"
         )
 
 Note: If you need to replace a spy during the course of a test, you may
