@@ -131,11 +131,17 @@ withHeader header =
 {-| Build a response stub that generates an HttpResult based on the matching
 HttpRequest.
 
-You could create a stub that echoes back the posted body like so:
+You could create a stub that returns a body only given a certain query string like so:
 
     Elmer.Http.Stub.for (Elmer.Http.Route.post "http://fake.com/fake")
-      |> withResult (\request result ->
-        Elmer.Http.Result.withBody (Elmer.Http.Request.body request) result
+      |> withResult (\request ->
+        let
+          queryString = Elmer.Http.Request.queryString request
+        in
+          if String.contains "funSport=bowling" queryString then
+            Elmer.Http.Result.withBody "{\"sport\":\"bowling\"}"
+          else
+            Elmer.Http.Result.withStatus Elmer.Http.Status.notFound
       )
 
 -}
