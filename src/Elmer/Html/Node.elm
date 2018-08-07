@@ -38,7 +38,7 @@ fromHtml inheritedEvents tagger html =
     "keyed-node" ->
       fromNode inheritedEvents tagger html
     "tagger" ->
-      fromTagger inheritedEvents html
+      fromTagger inheritedEvents tagger html
     "thunk" ->
       ()
         |> Value.field "thunk" html
@@ -53,10 +53,17 @@ fromText html =
     |> Text
 
 
-fromTagger : List (HtmlEventHandler msg) -> Html msg -> HtmlNode msg
-fromTagger inheritedEvents html =
-  Value.field "node" html
-    |> fromHtml inheritedEvents (Just <| Value.field "tagger" html)
+fromTagger : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromTagger inheritedEvents maybePreviousTagger html =
+  let
+    thisTagger = Value.field "tagger" html
+    fullTagger =
+      maybePreviousTagger
+        |> Maybe.map (\previous -> previous << thisTagger)
+        |> Maybe.withDefault thisTagger
+  in
+    Value.field "node" html
+      |> fromHtml inheritedEvents (Just fullTagger)
 
 
 fromNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
