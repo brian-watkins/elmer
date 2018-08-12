@@ -4,7 +4,8 @@ module Elmer.Http.ToTask exposing
   )
 
 
-import Elmer.Http.Internal as HttpInternal exposing (..)
+import Elmer.Http.Internal as HttpInternal
+import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Runtime.Task as RuntimeTask
 import Elmer.Runtime.Command as RuntimeCommand
@@ -27,7 +28,7 @@ spy : Http.Request a -> Task Http.Error a
 spy request =
   HttpInternal.asHttpRequestHandler request
     |> .request
-    |> flip andRecordRequestTask RuntimeTask.abandon
+    |> andRecordAbandonRequest
 
 
 httpTask : HttpRequest -> Result Http.Error a -> Task Http.Error a
@@ -47,6 +48,11 @@ andRecordRequestTask request =
     |> RuntimeTask.mapState Requests
 
 
+andRecordAbandonRequest : HttpRequest -> Task x a
+andRecordAbandonRequest request =
+  andRecordRequestTask request RuntimeTask.abandon
+
+
 updateTestState : HttpRequest -> Maybe (List HttpRequest) -> List HttpRequest
 updateTestState request maybeRequests =
   Maybe.withDefault [] maybeRequests
@@ -54,9 +60,8 @@ updateTestState request maybeRequests =
 
 
 deferIfNecessary : HttpStub -> Task Http.Error a -> Task Http.Error a
-deferIfNecessary stub httpTask =
+deferIfNecessary stub task =
   if stub.deferResponse then
-    httpTask
-      |> RuntimeTask.defer
+    RuntimeTask.defer task
   else
-    httpTask
+    task

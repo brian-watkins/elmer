@@ -25,7 +25,7 @@ module Elmer.Http.Stub exposing
 -}
 
 import Elmer.Http exposing (HttpResponseStub)
-import Elmer.Http.Internal as Internal
+import Elmer.Http.Types as Types
 import Elmer.Http.Status as Status exposing (HttpStatus)
 import Elmer.Http.Result as HttpResult exposing (HttpResult)
 import Elmer.Http.Request exposing (HttpRequest)
@@ -45,7 +45,7 @@ for route =
 
 defaultResponseStub : String -> String -> HttpResponseStub
 defaultResponseStub method url =
-  Internal.HttpResponseStub
+  Types.HttpResponseStub
     { url = url
     , method = method
     , resultBuilder = (\_ -> defaultResult url)
@@ -55,9 +55,9 @@ defaultResponseStub method url =
 defaultResult : String -> HttpResult
 defaultResult url =
   let
-    (Internal.HttpStatus okStatus) = Status.ok
+    (Types.HttpStatus okStatus) = Status.ok
   in
-    Internal.Response
+    Types.Response
       { url = url
       , status = okStatus
       , headers = Dict.empty
@@ -76,7 +76,7 @@ times out. You could create a stubbed response like so:
 withError : Http.Error -> HttpResponseStub -> HttpResponseStub
 withError error =
   withResult (\_ _ ->
-    Internal.Error error
+    Types.Error error
   )
 
 
@@ -146,7 +146,7 @@ You could create a stub that returns a body only given a certain query string li
 
 -}
 withResult : (HttpRequest -> HttpResult -> HttpResult) -> HttpResponseStub -> HttpResponseStub
-withResult builder (Internal.HttpResponseStub stub) =
+withResult builder (Types.HttpResponseStub stub) =
   let
     composedBuilder =
       (\request ->
@@ -154,7 +154,7 @@ withResult builder (Internal.HttpResponseStub stub) =
           |> builder request
       )
   in
-    Internal.HttpResponseStub { stub | resultBuilder = composedBuilder }
+    Types.HttpResponseStub { stub | resultBuilder = composedBuilder }
 
 
 {-| Defer a response.
@@ -166,5 +166,5 @@ entire Task chain will be deferred until `Elmer.Platform.Command.resolveDeferred
 
 -}
 deferResponse : HttpResponseStub -> HttpResponseStub
-deferResponse (Internal.HttpResponseStub stub) =
-  Internal.HttpResponseStub { stub | deferResponse = True }
+deferResponse (Types.HttpResponseStub stub) =
+  Types.HttpResponseStub { stub | deferResponse = True }

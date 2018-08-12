@@ -55,25 +55,25 @@ This is shorthand for:
 
 -}
 wasCalled : Int -> Matcher Calls
-wasCalled times spy =
+wasCalled expectedCallCount spy =
   let
-    calls = List.length spy.calls
+    callCount = List.length spy.calls
   in
-    if calls == times then
+    if callCount == expectedCallCount then
       Expect.pass
     else
       Expect.fail <|
         format
-          [ message ("Expected spy " ++ spy.name ++ " to have been called") <| timesString times
-          , message "but it was called" <| timesString calls
+          [ message ("Expected spy " ++ spy.name ++ " to have been called") <| timesString expectedCallCount
+          , message "but it was called" <| timesString callCount
           ]
 
 timesString : Int -> String
 timesString times =
   if times == 1 then
-    (toString times) ++ " time"
+    (String.fromInt times) ++ " time"
   else
-    (toString times) ++ " times"
+    (String.fromInt times) ++ " times"
 
 
 {-| Matches an argument with the given string.
@@ -213,25 +213,25 @@ wasCalledWith args spy =
 
 
 evaluateCalls : Maybe String -> List Arg -> Matcher (List (List Arg))
-evaluateCalls maybeSpyName args calls =
-    if List.isEmpty calls then
+evaluateCalls maybeSpyName args callsArgList =
+    if List.isEmpty callsArgList then
       noCallsFailure maybeSpyName args
     else
       let
         failingCalls =
-          calls
+          callsArgList
             |> List.filter (\callArgs ->
               not <| Call.matches args callArgs
             )
       in
-        if List.length failingCalls < List.length calls then
+        if List.length failingCalls < List.length callsArgList then
           Expect.pass
         else
           Expect.fail <|
             format <|
               List.append
                 [ message (calledWithMessage maybeSpyName) <| Call.asString args
-                , message "but it was called with" <| String.join "\n\n" (List.map Call.asString calls)
+                , message "but it was called with" <| String.join "\n\n" (List.map Call.asString callsArgList)
                 ]
                 (argThatFailureMessages failingCalls args)
 
@@ -246,19 +246,19 @@ noCallsFailure maybeSpyName args =
 
 
 argThatFailureMessages : List (List Arg) -> List Arg -> List Message
-argThatFailureMessages calls args =
+argThatFailureMessages callsArgList args =
   let
-    argThatFailureMessages =
-      calls
+    failureMessages =
+      callsArgList
         |> List.map (Call.argThatFailures args)
         |> List.concat
         |> List.map description
   in
-    if List.isEmpty argThatFailureMessages then
+    if List.isEmpty failureMessages then
       []
     else
       description "An argThat matcher failed:" ::
-        argThatFailureMessages
+        failureMessages
 
 
 calledWithMessage : Maybe String -> String

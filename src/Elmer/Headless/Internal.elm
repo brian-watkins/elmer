@@ -50,7 +50,7 @@ withCommandGenerator generator context =
     Maybe.withDefault [] state
       |> (::) (beforeExpectationExtension generator)
   )
-    |> flip Context.updateState context
+    |> Context.updateStateFor context
 
 
 beforeExpectationExtension : (() -> Cmd msg) -> Context model msg -> TestState model msg

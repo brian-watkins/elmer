@@ -19,6 +19,7 @@ under test.
 
 import Expect
 import Http
+import Url.Builder as Builder
 import Elmer exposing (Matcher)
 import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Http.Internal as Http_
@@ -38,11 +39,11 @@ wasRequested times requests =
   else
     Expect.fail <|
       "Expected "
-        ++ (toString times)
+        ++ (String.fromInt times)
         ++ " "
         ++ (pluralize "request" times)
         ++ ", but recorded "
-        ++ (toString <| List.length requests)
+        ++ (String.fromInt <| List.length requests)
         ++ " "
         ++ (pluralize "request" (List.length requests))
 
@@ -86,7 +87,8 @@ hasQueryParam ( key, value ) request =
   let
     query = queryString request
     params = String.split "&" query
-    expectedParam = (Http.encodeUri key) ++ "=" ++ (Http.encodeUri value)
+    expectedParam = Builder.toQuery [ Builder.string key value ]
+      |> String.dropLeft 1
   in
     if String.isEmpty query then
       Expect.fail (format [ message "Expected request to have query param" ( key ++ " = " ++ value), description "but it has no query string" ])

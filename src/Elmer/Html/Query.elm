@@ -7,15 +7,24 @@ module Elmer.Html.Query exposing
   , findElements
   )
 
+{-| Query Html (exposed for testing only)
+
+@docs HtmlTarget, forHtml, forElement, forContext, findElement, findElements
+
+-}
+
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Node as Node
+import Elmer.Html.TagSelector as TagSelector exposing (TagSelector)
 import Elmer.Context as Context exposing (Context)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
-import Regex exposing (Regex)
 
+
+{-| HtmlTarget
+-}
 type HtmlTarget msg =
   HtmlTarget (Selection msg)
 
@@ -25,6 +34,8 @@ type alias Selection msg =
   }
 
 
+{-| forHtml
+-}
 forHtml : String -> Html msg -> HtmlTarget msg
 forHtml selector html =
   HtmlTarget
@@ -35,6 +46,8 @@ forHtml selector html =
     }
 
 
+{-| forElement
+-}
 forElement : String -> HtmlElement msg -> HtmlTarget msg
 forElement selector element =
   HtmlTarget
@@ -43,6 +56,8 @@ forElement selector element =
     }
 
 
+{-| forContext
+-}
 forContext : Context model msg -> Maybe (HtmlTarget msg)
 forContext context =
   Context.state TargetSelector context
@@ -51,6 +66,8 @@ forContext context =
     )
 
 
+{-| findElement
+-}
 findElement : HtmlTarget msg -> Result String (HtmlElement msg)
 findElement query =
   let
@@ -64,6 +81,8 @@ findElement query =
       |> Result.fromMaybe (queryErrorMessage query)
 
 
+{-| findElements
+-}
 findElements : HtmlTarget msg -> List (HtmlElement msg)
 findElements (HtmlTarget selection) =
   selection.element
@@ -76,8 +95,8 @@ findAll selector element =
   let
     subselectors = String.split " " selector
   in
-    List.foldl (\selector elements ->
-      List.concatMap (findAllWithinElement selector) elements
+    List.foldl (\subSelector elements ->
+      List.concatMap (findAllWithinElement subSelector) elements
     ) [ element ] subselectors
 
 findAllWithinElement : String -> HtmlElement msg -> List (HtmlElement msg)
@@ -89,6 +108,16 @@ findAllWithinElement selector element =
       List.concatMap (findAllWithinElement selector) (takeElements element.children)
 
 
+-- NOTE: This could probably be revisited to use the TagSelector parser.
+-- Then it's just a matter of whether it has an id, just a style, or a tag?
+-- Also probably would be better to have functions for constructing the selector anyway.
+-- But lots of possibilities here ... 
+-- Markup.target (byId "blah") (and id can't be combined with style, etc. but attribute-name can be)
+-- Markup.target (byTag "div" <| withAttribute ("data-attribute", "value") <| withClass "blah")
+-- Markup.target (byAttributeName "data-attribute")
+-- Markup.target (byAttributeName "data-attrbute" <| withValue <| withClass)
+-- Markup.target (byClass "blah")
+-- Markup.target ... with descendants ... 
 matchesElement : String -> HtmlElement msg -> Bool
 matchesElement selector node =
     case String.uncons selector of
@@ -101,104 +130,41 @@ matchesElement selector node =
                     matchesClass name node
 
                 _ ->
-                    matchesTagSelector (tagSelector selector) node
+                    matchesTagSelector (TagSelector.from selector) node
 
         Nothing ->
             False
 
 
 matchesTagSelector : TagSelector -> HtmlElement msg -> Bool
-matchesTagSelector tagSelector node =
-    case tagSelector.tag of
+matchesTagSelector selector node =
+    case selector.tag of
         Just tagName ->
             if matchesTag tagName node then
-              (matchCharacteristicSelector True tagSelector node)
-                && (matchTagClass True tagSelector node)
+              (matchCharacteristicSelector True selector node)
+                && (matchTagClass True selector node)
             else
                 False
 
         Nothing ->
-          (matchCharacteristicSelector False tagSelector node)
-            && (matchTagClass True tagSelector node)
+          (matchCharacteristicSelector False selector node)
+            && (matchTagClass True selector node)
 
 
 matchCharacteristicSelector : Bool -> TagSelector -> HtmlElement msg -> Bool
-matchCharacteristicSelector isOptional tagSelector node =
+matchCharacteristicSelector isOptional selector node =
     Maybe.map (\charName ->
-      matchesCharacteristic charName tagSelector.characteristicValue node
-    ) tagSelector.characteristicName
+      matchesCharacteristic charName selector.characteristicValue node
+    ) selector.characteristicName
     |> Maybe.withDefault isOptional
 
 
 matchTagClass : Bool -> TagSelector -> HtmlElement msg -> Bool
-matchTagClass isOptional tagSelector element =
+matchTagClass isOptional selector element =
   Maybe.map (\className ->
     matchesClass className element
-  ) tagSelector.class
+  ) selector.class
   |> Maybe.withDefault isOptional
-
-
-type alias TagSelector =
-    { tag : Maybe String
-    , characteristicName : Maybe String
-    , characteristicValue : Maybe String
-    , class : Maybe String
-    }
-
-
-emptyTagSelector : TagSelector
-emptyTagSelector =
-    { tag = Nothing
-    , characteristicName = Nothing
-    , characteristicValue = Nothing
-    , class = Nothing
-    }
-
-
-tagSelector : String -> TagSelector
-tagSelector selector =
-    let
-        matchMaybe =
-            List.head <|
-                Regex.find (Regex.AtMost 1)
-                    (Regex.regex "^([\\w-]*)(?:\\[([\\w-]+)(?:='([\\w-]+)')?\\])?(?:\\.([\\w-]+))?")
-                    selector
-    in
-        case matchMaybe of
-            Just match ->
-                { tag = submatch 0 match
-                , characteristicName = submatch 1 match
-                , characteristicValue = submatch 2 match
-                , class = submatch 3 match
-                }
-
-            Nothing ->
-                emptyTagSelector
-
-
-submatch : Int -> Regex.Match -> Maybe String
-submatch index match =
-    notEmpty << flatten << List.head << List.drop index <| match.submatches
-
-flatten : Maybe ( Maybe a ) -> Maybe a
-flatten outerMaybe =
-  case outerMaybe of
-    Just innerMaybe ->
-      innerMaybe
-    Nothing ->
-      Nothing
-
-
-notEmpty : Maybe String -> Maybe String
-notEmpty maybeEmpty =
-    maybeEmpty
-        |> Maybe.andThen
-            (\s ->
-                if String.isEmpty s then
-                    Nothing
-                else
-                    Just s
-            )
 
 
 matchesId : String -> HtmlElement msg -> Bool

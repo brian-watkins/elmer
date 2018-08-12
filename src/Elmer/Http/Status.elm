@@ -19,20 +19,19 @@ module Elmer.Http.Status exposing
 
 -}
 
-import Elmer.Http.Internal as Internal
-
+import Elmer.Http.Types as Types
 
 {-| Represents the status of an Http response
 -}
 type alias HttpStatus =
-  Internal.HttpStatus
+  Types.HttpStatus
 
 
 {-| Generate an `HttpStatus`.
 -}
 httpStatus : Int -> String -> HttpStatus
 httpStatus code message =
-  Internal.HttpStatus
+  Types.HttpStatus
     { code = code
     , message = message
     }

@@ -11,6 +11,7 @@ module Elmer.Spy.Internal exposing
   , batch
   , spiesFrom
   , withSpies
+  , withSpiesFor
   , registerFake
   )
 
@@ -167,8 +168,8 @@ activate spies =
         [ installer () ]
       Inactive spyValue ->
         [ recordCalls spyValue ]
-      Batch spies ->
-        activate spies
+      Batch batched ->
+        activate batched
       _ ->
         [ spy ]
   ) spies
@@ -213,4 +214,8 @@ spiesFrom context =
 withSpies : List Spy -> Context model msg -> Context model msg
 withSpies spies context =
   RuntimeCommand.mapState Spies (\_ -> spies)
-    |> flip Context.updateState context
+    |> Context.updateStateFor context
+
+withSpiesFor : Context model msg -> List Spy -> Context model msg
+withSpiesFor context spies =
+  withSpies spies context

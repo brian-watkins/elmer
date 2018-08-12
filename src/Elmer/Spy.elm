@@ -270,7 +270,7 @@ use spies =
       in
         if List.isEmpty errors then
           Spy_.deactivate activated
-            |> flip Spy_.withSpies context
+            |> Spy_.withSpiesFor context
             |> TestState.with
         else
           TestState.failure <|

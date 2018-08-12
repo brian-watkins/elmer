@@ -29,10 +29,12 @@ component. What to do?
 import Http
 import Dict
 import Elmer exposing (Matcher)
-import Elmer.Http.Internal as Http_ exposing (..)
+import Elmer.Http.Internal as Http_
+import Elmer.Http.Types as Types
 import Elmer.Http.Send as FakeSend
 import Elmer.Http.ToTask as FakeToTask
-import Elmer.Http.Route as Route
+import Elmer.Http.Route as Route exposing (HttpRoute)
+import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Context as Context
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
@@ -48,7 +50,7 @@ import Test.Runner
 Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
 -}
 type alias HttpResponseStub
-  = Http_.HttpResponseStub
+  = Types.HttpResponseStub
 
 {-| Override `Http.send` and `Http.toTask` to register HttpResponseStubs that will be
 returned when the appropriate request is received. Used in conjunction with
@@ -117,14 +119,14 @@ clearRequestHistory =
     \context ->
       let
         requests =
-          Context.state Requests context
+          Context.state Types.Requests context
             |> Maybe.withDefault []
       in
         if List.isEmpty requests then
           TestState.failure "No HTTP requests to clear"
         else
-          RuntimeCommand.mapState Requests (\_ -> [])
-            |> flip Context.updateState context
+          RuntimeCommand.mapState Types.Requests (\_ -> [])
+            |> Context.updateStateFor context
             |> TestState.with
 
 
@@ -142,7 +144,7 @@ expect route =
     \context ->
       let
         requests =
-          Context.state Requests context
+          Context.state Types.Requests context
             |> Maybe.withDefault []
       in
         if List.isEmpty requests then
@@ -183,7 +185,7 @@ expectThat route matcher =
     \context ->
       let
         requests =
-          Context.state Requests context
+          Context.state Types.Requests context
             |> Maybe.withDefault []
 
         result =

@@ -54,7 +54,7 @@ hasProperty (key, value) element =
 
 properties : HtmlElement msg -> Dict String String
 properties element =
-  element.facts
+  element.properties
     |> Dict.toList
     |> List.filterMap (\(key, fact) ->
       case fact of
@@ -62,32 +62,18 @@ properties element =
           Just (key, value)
         BoolValue value ->
           Just (key, Internal.boolToString value)
-        DictValue _ ->
-          Nothing
-        Ignored ->
-          Nothing
       )
     |> Dict.fromList
 
 
-styles : HtmlElement msg -> Maybe (Dict String String)
+styles : HtmlElement msg -> Dict String String
 styles element =
-  case Dict.get "STYLE" element.facts of
-    Just (DictValue styles) ->
-      Just styles
-    Just _ ->
-      Nothing
-    Nothing ->
-      Nothing
+  element.styles
 
 
 attributes : HtmlElement msg -> Dict String String
 attributes element =
-  case Dict.get "ATTR" element.facts of
-    Just (DictValue attrs) ->
-      attrs
-    _ ->
-      Dict.empty
+  element.attributes
 
 
 attribute : String -> HtmlElement msg -> Maybe String
@@ -96,6 +82,7 @@ attribute name element =
     |> Dict.get name
 
 
+-- REVISIT: What about styles? We don't seem to print out the styles of an element? Or don't have a test for that?
 printElement : String -> HtmlNode msg -> String
 printElement indentation element =
   case element of
@@ -114,31 +101,29 @@ printElement indentation element =
 
 
 printEvents : HtmlElement msg -> String
-printEvents node =
-  if List.isEmpty node.eventHandlers then
+printEvents element =
+  if List.isEmpty element.eventHandlers then
     ""
   else
     let
-      eventString = List.map .eventType node.eventHandlers
+      eventString = List.map .eventType element.eventHandlers
         |> String.join ", "
     in
       "[ " ++ eventString ++ " ]"
 
 
 printFacts : HtmlElement msg -> String
-printFacts node =
+printFacts element =
   let
     factsList =
-      node.facts
-        |> Dict.toList
+      attributesToStrings element ++
+      propertiesToStrings element
   in
     if List.isEmpty factsList then
       ""
     else
       let
-        factString =
-          List.filterMap factToString factsList
-            |> String.join ", "
+        factString = String.join ", " factsList
       in
         if String.isEmpty factString then
           ""
@@ -146,21 +131,28 @@ printFacts node =
           "{ " ++ factString ++ " }"
 
 
-factToString : (String, HtmlFact) -> Maybe String
+propertiesToStrings : HtmlElement msg -> List String
+propertiesToStrings element =
+  element.properties
+    |> Dict.toList
+    |> List.map factToString
+
+
+factToString : (String, HtmlFact) -> String
 factToString (key, fact) =
   case fact of
     StringValue value ->
-      Just <| stringFactToString (key, value)
+      stringFactToString (key, value)
     BoolValue value ->
-      Just <| boolFactToString (key, value)
-    DictValue value ->
-      Dict.toList value
-        |> List.map stringFactToString
-        |> String.join ", "
-        |> Just
-    Ignored ->
-      Nothing
+      boolFactToString (key, value)
 
+
+attributesToStrings : HtmlElement msg -> List String
+attributesToStrings element =
+  element.attributes
+    |> Dict.toList
+    |> List.map stringFactToString
+    
 
 stringFactToString : (String, String) -> String
 stringFactToString (key, value) =

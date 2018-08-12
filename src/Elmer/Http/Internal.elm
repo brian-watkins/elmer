@@ -1,96 +1,45 @@
 module Elmer.Http.Internal exposing
-  ( HttpState(..)
-  , HttpHeader
-  , HttpRequestFunction
-  , HttpRequestHandler
-  , HttpRequest
-  , HttpStub
-  , HttpResponseStub(..)
-  , HttpResult(..)
-  , HttpStatus(..)
-  , HttpRoute
-  , asHttpRequestHandler
+  ( asHttpRequestHandler
   , route
   , queryString
+  , makeHttpRequest
   )
+
+{-| Exposed for Testing
+
+@docs asHttpRequestHandler, route, queryString, makeHttpRequest
+
+-}
 
 import Http
 import Json.Decode as Json
 import Elmer.Value as Value
-
-type HttpState
-  = Requests
-
-type alias HttpRoute =
-  { method : String
-  , url : String
-  }
-
-type alias HttpRequest =
-  { method: String
-  , url: String
-  , headers: List HttpHeader
-  , body: Maybe String
-  }
-
-type alias HttpRequestFunction a b =
-  (Result Http.Error a -> b) -> Http.Request a -> Cmd b
-
-type alias HttpHeader =
-  { name: String
-  , value: String
-  }
-
-type alias HttpStringBody =
-  { mimeType: String
-  , body: String
-  }
-
-type alias HttpRequestHandler a =
-  { request: HttpRequest
-  , responseHandler: (Http.Response String -> Result String a)
-  }
-
-type HttpResponseStub
-  = HttpResponseStub HttpStub
-
-type alias HttpStub =
-  { url: String
-  , method: String
-  , resultBuilder : (HttpRequest -> HttpResult)
-  , deferResponse: Bool
-  }
-
-type HttpResult
-  = Response (Http.Response String)
-  | Error Http.Error
+import Elmer.Http.Types exposing (..)
 
 
-type HttpStatus
-  = HttpStatus Status
-
-type alias Status =
-  { code: Int
-  , message: String
-  }
-
-
+{-|
+-}
 asHttpRequestHandler : Http.Request a -> HttpRequestHandler a
 asHttpRequestHandler httpRequest =
+  -- let
+  --   d = Elm.Kernel.Value.print "http request" httpRequest
+  -- in
   { request = makeHttpRequest httpRequest
   , responseHandler =
       case Value.mapArg (Value.decode expectDecoder) httpRequest of
         Ok handler ->
           handler
         Err err ->
-          Debug.crash <| "Error fetching" ++ err
+          Debug.todo <| "Error fetching" ++ err
   }
 
 expectDecoder : Json.Decoder Json.Value
 expectDecoder =
-  Json.at ["expect", "responseToResult"] Json.value
+  Json.at ["expect", "a"] Value.decoder
 
 
+{-|
+-}
 makeHttpRequest : Http.Request a -> HttpRequest
 makeHttpRequest =
   Value.mapArg <|
@@ -119,12 +68,16 @@ makeHttpHeader : Http.Header -> HttpHeader
 makeHttpHeader header =
   Value.mapArg2 HttpHeader header
 
+{-|
+-}
 route : String -> String
 route url =
   String.split "?" url
     |> List.head
     |> Maybe.withDefault ""
 
+{-|
+-}
 queryString : String -> Maybe String
 queryString url =
   String.split "?" url

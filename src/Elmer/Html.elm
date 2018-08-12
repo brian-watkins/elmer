@@ -30,7 +30,6 @@ import Html exposing (Html)
 import Expect
 import Dict exposing (Dict)
 import Json.Decode as Json
-import Regex exposing (Regex)
 
 
 {-| Represents an Html element.
@@ -98,7 +97,7 @@ target selector =
   TestState.map <|
     \context ->
         RuntimeCommand.mapState TargetSelector (\_ -> selector)
-          |> flip Context.updateState context
+          |> Context.updateStateFor context
           |> TestState.with
 
 

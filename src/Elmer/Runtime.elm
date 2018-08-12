@@ -4,12 +4,20 @@ module Elmer.Runtime
         , performCommand
         )
 
+{-| Exposed for Testing
+
+@docs performUpdate, performCommand
+
+-}
+
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime.Types exposing (..)
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))
 
 
+{-|
+-}
 performUpdate : msg -> Context model msg -> Result String (Context model msg)
 performUpdate message context =
     let
@@ -19,6 +27,8 @@ performUpdate message context =
         performCommand command updatedContext
 
 
+{-|
+-}
 performCommand : Cmd msg -> Context model msg -> Result String (Context model msg)
 performCommand command context =
     let

@@ -6,12 +6,20 @@ module Elmer.Spy.Arg exposing
   , decoder
   )
 
+{-| Exposed for testing
+
+@docs Arg, ArgValue, asString, value, decoder
+
+-}
+
 import Expect
 import Json.Decode as Json exposing (Decoder)
 import Elmer.Value as Value
 import Elmer.Internal as Internal
 
 
+{-|
+-}
 type Arg
   = StringArg String
   | IntArg Int
@@ -23,10 +31,14 @@ type Arg
   | ArgThat (ArgValue -> Expect.Expectation)
 
 
+{-|
+-}
 type ArgValue
   = ArgValue
 
 
+{-|
+-}
 value : Arg -> Maybe ArgValue
 value arg =
   case arg of
@@ -38,8 +50,8 @@ value arg =
       Just <| Value.cast num
     BoolArg bool ->
       Just <| Value.cast bool
-    TypedArg arg ->
-      Just <| Value.cast arg
+    TypedArg typed ->
+      Just <| Value.cast typed
     FunctionArg ->
       Nothing
     AnyArg ->
@@ -48,19 +60,21 @@ value arg =
       Just <| Value.cast never
 
 
+{-|
+-}
 asString : Arg -> String
 asString arg =
   case arg of
     StringArg str ->
       "\"" ++ str ++ "\""
     IntArg num ->
-      toString num
+      String.fromInt num
     FloatArg num ->
-      toString num
+      String.fromFloat num
     BoolArg bool ->
        Internal.boolToString bool
-    TypedArg arg ->
-      toString arg
+    TypedArg typed ->
+      Debug.toString typed
     FunctionArg ->
       "<FUNCTION>"
     AnyArg ->
@@ -69,21 +83,24 @@ asString arg =
       "<ARG_THAT>"
 
 
+{-|
+-}
 decoder : Decoder Arg
 decoder =
-  Json.map (\arg -> (Value.nativeType arg, arg)) Json.value
-    |> Json.map (\(argType, value) ->
+  Value.decoder
+    |> Json.map (\arg -> (Value.nativeType arg, arg)) 
+    |> Json.map (\(argType, val) ->
         case argType of
           "string" ->
-            StringArg <| Value.cast value
+            StringArg <| Value.cast val
           "int" ->
-            IntArg <| Value.cast value
+            IntArg <| Value.cast val
           "float" ->
-            FloatArg <| Value.cast value
+            FloatArg <| Value.cast val
           "object" ->
-            TypedArg <| Value.cast value
+            TypedArg <| Value.cast val
           "boolean" ->
-            BoolArg <| Value.cast value
+            BoolArg <| Value.cast val
           "function" ->
             FunctionArg
           _ ->

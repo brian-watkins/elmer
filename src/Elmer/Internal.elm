@@ -5,5 +5,8 @@ module Elmer.Internal exposing
 
 boolToString : Bool -> String
 boolToString bool =
-  Basics.toString bool
-    |> String.toLower
+  case bool of
+    True ->
+      "true"
+    False ->
+      "false"

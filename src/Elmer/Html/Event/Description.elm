@@ -11,7 +11,6 @@ module Elmer.Html.Event.Description exposing
 import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Event.HandlerQuery as EventHandlerQuery
 import Elmer.Internal as Internal
-import Regex exposing (regex, HowMany(..))
 
 
 create : String -> EventHandlerQuery msg -> EventJson -> EventDescription msg
@@ -87,4 +86,4 @@ inputEventJson =
 
 withTemplate : String -> String -> String
 withTemplate template value =
-  Regex.replace All (regex "[?]") (\_ -> value) template
+  String.replace "?" value template

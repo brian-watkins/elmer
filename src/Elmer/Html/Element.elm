@@ -22,6 +22,8 @@ module Elmer.Html.Element exposing
 
 -}
 
+-- REVISIT: We might want to add a function to get the styles here?
+
 import Elmer.Html
 import Elmer.Html.Internal as Internal
 import Elmer.Html.Query as Query

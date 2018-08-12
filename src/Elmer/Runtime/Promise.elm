@@ -14,93 +14,94 @@ decoder =
   Json.oneOf
     [ Json.lazy (\_ -> Json.map Continue decodeContinuation)
     , Json.map Complete decodeResolution
-    , Json.lazy (\_ -> decodeAndDo)
-    , Json.lazy (\_ -> decodeDefer)
+    , Json.lazy (\_ -> decodeElmerPromise)
     ]
-
-
-decodeAndDo : Json.Decoder (Promise msg)
-decodeAndDo =
-  Json.field "ctor" Json.string
-      |> Json.andThen (\ctor ->
-        case ctor of
-          "_Elmer_Task_andDo" ->
-            Json.map2 AndDo
-              (Json.field "command" (Json.map Value.cast Json.value))
-              (Json.field "task" (Json.lazy (\_ -> decoder)))
-          unknown ->
-            "Unknown andDo constructor: " ++ unknown
-              |> Json.fail
-      )
-
-
-decodeDefer : Json.Decoder (Promise msg)
-decodeDefer =
-  Json.field "ctor" Json.string
-      |> Json.andThen (\ctor ->
-        case ctor of
-          "_Elmer_Task_defer" ->
-            Json.map Defer
-              (Json.field "task" (Json.lazy (\_ -> decoder)))
-          unknown ->
-            "Unknown defer constructor: " ++ unknown
-              |> Json.fail
-      )
 
 
 decodeContinuation : Json.Decoder (Continuation msg)
 decodeContinuation =
-  Json.field "ctor" Json.string
-    |> Json.andThen (\ctor ->
+  decodeConstructorAndThen <|
+    \ctor ->
       case ctor of
-        "_Task_onError" ->
-          decodeOnError
-        "_Task_andThen" ->
+        3 ->
           decodeAndThen
+        4 ->
+          decodeOnError
         unknown ->
-          "Unknown decodeContinuation constructor: " ++ unknown
+          "Unknown decodeContinuation constructor: " ++ String.fromInt unknown
             |> Json.fail
-    )
 
 
 decodeAndThen : Json.Decoder (Continuation msg)
 decodeAndThen =
   Json.map3 Continuation
-    (Json.field "task" (Json.lazy (\_ -> decoder)))
-    (Json.map Just <| Json.map Value.cast <| Json.field "callback" Json.value)
+    nextPromiseDecoder
+    (Json.map Just <| callbackDecoder)
     (Json.succeed Nothing)
 
 
 decodeOnError : Json.Decoder (Continuation msg)
 decodeOnError =
   Json.map3 Continuation
-    (Json.field "task" (Json.lazy (\_ -> decoder)))
+    nextPromiseDecoder
     (Json.succeed Nothing)
-    (Json.map Just <| Json.map Value.cast <| Json.field "callback" Json.value)
+    (Json.map Just <| callbackDecoder)
+
+
+nextPromiseDecoder : Json.Decoder (Promise msg)
+nextPromiseDecoder =
+  Json.field "d" (Json.lazy (\_ -> decoder))
+
+
+callbackDecoder : Json.Decoder (Value -> Value)
+callbackDecoder =
+  Json.field "b" Value.decoder
 
 
 decodeResolution : Json.Decoder (Resolution msg)
 decodeResolution =
-  Json.field "ctor" Json.string
-    |> Json.andThen (\ctor ->
+  decodeConstructorAndThen <|
+    \ctor ->
       case ctor of
-        "_Task_succeed" ->
+        0 -> -- Succeed
           Json.map Resolved valueDecoder
-        "_Task_fail" ->
+        1 -> -- Fail
           Json.map Rejected valueDecoder
-        "_Task_nativeBinding" ->
+        2 -> -- Native Binding
           failWith "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
             |> Json.succeed
-        "_Elmer_Task_abort" ->
-          Json.map Aborted <| Json.map Value.cast valueDecoder
         unknown ->
-          Json.fail <| "Unknown Resolution constructor: " ++ unknown
-    )
+          Json.fail <| "Unknown Resolution constructor: " ++ String.fromInt unknown
 
 
 valueDecoder : Json.Decoder Value
 valueDecoder =
-  Json.field "value" Json.value
+  Json.field "a" Value.decoder
+
+
+decodeElmerPromise : Json.Decoder (Promise msg)
+decodeElmerPromise =
+  decodeConstructorAndThen <| 
+    \ctor ->
+      case ctor of
+        1001 ->
+          Json.map2 AndDo
+            (Json.field "command" Value.decoder)
+            (Json.field "task" (Json.lazy (\_ -> decoder)))
+        1002 ->
+          Json.map (Complete << Aborted) <| Json.field "command" Value.decoder
+        1003 ->
+          Json.map Defer
+            (Json.field "task" (Json.lazy (\_ -> decoder)))
+        unknown ->
+          "Unknown andDo constructor: " ++ String.fromInt unknown
+            |> Json.fail
+
+
+decodeConstructorAndThen : (Int -> Json.Decoder a) -> Json.Decoder a
+decodeConstructorAndThen generateDecoder =
+  Json.field "$" Json.int
+    |> Json.andThen generateDecoder
 
 
 failWith : String -> Resolution msg

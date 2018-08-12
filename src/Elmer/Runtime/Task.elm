@@ -13,8 +13,8 @@ import Elmer.Runtime.Command.MapState
 
 defer : Task x a -> Task x a
 defer task =
-  Value.encode "_Elmer_Task_defer"
-    [ ( "task", Value.cast task )
+  Value.encode (Value.for 1003)
+    [ ( "task", Value.for task )
     ]
 
 
@@ -26,16 +26,16 @@ mapState typeId mapper =
 
 andDo : Cmd msg -> Task x a -> Task x a
 andDo command task =
-  Value.encode "_Elmer_Task_andDo"
-    [ ( "task", Value.cast task )
-    , ( "command", Value.cast command )
+  Value.encode (Value.for 1001)
+    [ ( "task", Value.for task )
+    , ( "command", Value.for command )
     ]
 
 
 abortWith : Cmd msg -> Task x a
 abortWith command =
-  Value.encode "_Elmer_Task_abort"
-    [ ( "value", Value.cast command )
+  Value.encode (Value.for 1002)
+    [ ( "command", Value.for command )
     ]
 
 

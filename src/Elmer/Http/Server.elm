@@ -5,7 +5,8 @@ module Elmer.Http.Server exposing
 
 
 import Http exposing (Error(..))
-import Elmer.Http.Internal as HttpInternal exposing (..)
+import Elmer.Http.Internal as HttpInternal
+import Elmer.Http.Types exposing (..)
 import Elmer.Printer exposing (..)
 
 

@@ -140,7 +140,7 @@ resolveDeferred =
             commandBatch = Cmd.batch deferredCommands
             updatedContext =
               Defer.clear
-                |> flip Context.updateState context
+                |> Context.updateStateFor context
           in
             Runtime.performCommand commandBatch updatedContext
               |> asTestState

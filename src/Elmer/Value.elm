@@ -1,5 +1,6 @@
 module Elmer.Value exposing
-  ( decode
+  ( for
+  , decode
   , encode
   , constructor
   , field
@@ -10,38 +11,53 @@ module Elmer.Value exposing
   , cast
   , nativeType
   , assign
+  , decoder
   )
 
 import Json.Decode as Json
 import Json.Encode as Encode
-import Native.Value
+import Elm.Kernel.Value
 
+type Value
+  = Value
+
+for : a -> Value
+for =
+  cast
 
 cast : a -> b
 cast =
-  Native.Value.cast
+  Elm.Kernel.Value.cast
 
 
 nativeType : a -> String
 nativeType =
-  Native.Value.nativeType
+  Elm.Kernel.Value.nativeType
 
 
 assign : String -> v -> v
 assign =
-  Native.Value.assign
+  Elm.Kernel.Value.assign
 
 
 decode : Json.Decoder a -> v -> Result String b
-decode decoder value =
-  cast value
-    |> Json.decodeValue decoder
+decode valueDecoder value =
+  Elm.Kernel.Value.wrap value
+    |> cast
+    |> Json.decodeValue valueDecoder
+    |> Result.mapError cast
     |> Result.map cast
+    |> Result.map (\v -> Elm.Kernel.Value.unwrap v |> cast)
+
+
+decoder : Json.Decoder a
+decoder =
+  Json.map Elm.Kernel.Value.unwrap Json.value
 
 
 constructor : v -> String
 constructor =
-  field "ctor"
+  field "$"
 
 
 field : String -> v -> b
@@ -51,44 +67,50 @@ field key value =
       f
     Err msg ->
       "Error decoding field " ++ key ++ ":\n\n" ++ msg ++ "\n"
-        |> Debug.crash
+        |> Debug.todo
 
 
 global : String -> a
 global =
-  Native.Value.global
+  Elm.Kernel.Value.global
 
 
 mapArg : (a -> z) -> v -> z
 mapArg =
-  mapArgAt 0
+  mapArgAt "a"
 
 
 mapArg2 : (a -> b -> z) -> v -> z
 mapArg2 mapper value =
   mapArg mapper value
-    |> flip (mapArgAt 1) value
+    |> flip (mapArgAt "b") value
 
 
 mapArg3 : (a -> b -> c -> z) -> v -> z
 mapArg3 mapper value =
   mapArg2 mapper value
-    |> flip (mapArgAt 2) value
+    |> flip (mapArgAt "c") value
 
 
-mapArgAt : Int -> (a -> z) -> v -> z
+mapArgAt : String -> (a -> z) -> v -> z
 mapArgAt index mapper value =
   argAt index value
     |> mapper
 
 
-argAt : Int -> v -> a
+argAt : String -> v -> a
 argAt index value =
-  field ("_" ++ toString index) value
+  field index value
 
 
-encode : String -> List (String, Encode.Value) -> b
+encode : Value -> List (String, Value) -> b
 encode ctor args =
-  ( "ctor", Encode.string ctor ) :: args
+  ( "$", Elm.Kernel.Value.wrap ctor ) :: (List.map (\(key, value) -> (key, Elm.Kernel.Value.wrap value)) args)
     |> Encode.object
+    |> Elm.Kernel.Value.unwrap
     |> cast
+  
+
+flip : (a -> b -> c) -> b -> a -> c
+flip fun bArg aArg =
+  fun aArg bArg

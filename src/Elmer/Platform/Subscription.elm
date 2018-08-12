@@ -82,7 +82,7 @@ with subsThunk =
         subscription = subsThunk () <| Context.model context
       in
         RuntimeCommand.mapState Subscriptions (\_ -> subscription)
-          |> flip Context.updateState context
+          |> Context.updateStateFor context
           |> TestState.with
 
 
@@ -197,4 +197,7 @@ composeTagger parentTagger subDesc =
   let
     composedTagger = parentTagger << subDesc.tagger
   in
-    Just { subDesc | tagger = composedTagger }
+    Just 
+      { name = subDesc.name
+      , tagger = composedTagger 
+      }

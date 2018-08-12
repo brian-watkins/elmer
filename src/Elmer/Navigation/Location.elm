@@ -1,10 +1,26 @@
-module Elmer.Navigation.Location exposing (asLocation)
+module Elmer.Navigation.Location exposing 
+    ( Location
+    , asLocation
+    )
 
-import Navigation
+-- import Navigation
 import String
 
+type alias Location =
+    { href : String
+    , host : String
+    , hostname : String
+    , protocol : String
+    , origin : String
+    , port_ : String
+    , pathname : String
+    , search : String
+    , hash : String
+    , username : String
+    , password : String
+    }
 
-asLocation : String -> Navigation.Location
+asLocation : String -> Location
 asLocation url =
     let
         path =

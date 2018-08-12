@@ -39,8 +39,8 @@ resolve promise promised =
             promisedContinuation
     AndDo command next ->
       resolve next { promised | commands = command :: promised.commands }
-    Defer promise ->
-      resolve promise { promised | shouldDefer = True }
+    Defer deferred ->
+      resolve deferred { promised | shouldDefer = True }
 
 
 handleCallback : Value -> Maybe (Value -> Value) -> Promised msg -> Promised msg
@@ -55,8 +55,11 @@ applyCallback value promised callback =
   callback value
     |> Value.decode Promise.decoder
     |> unwrapOrFail
-    |> flip resolve promised
+    |> resolveFor promised
 
+resolveFor : Promised msg -> Promise msg -> Promised msg
+resolveFor promised promise =
+  resolve promise promised
 
 unwrapOrFail : Result String a -> Promise msg
 unwrapOrFail result =

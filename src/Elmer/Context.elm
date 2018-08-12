@@ -9,6 +9,7 @@ module Elmer.Context exposing
   , update
   , state
   , updateState
+  , updateStateFor
   )
 
 import Html exposing (Html)
@@ -31,11 +32,11 @@ type Context model msg
 
 
 default : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
-default model view update =
+default modelValue viewFunction updateFunction =
   Context
-    { model = model
-    , view = view
-    , update = update
+    { model = modelValue
+    , view = viewFunction
+    , update = updateFunction
     , state = []
     }
 
@@ -46,9 +47,9 @@ model (Context context) =
 
 
 withModel : model -> Context model msg -> Context model msg
-withModel model (Context context) =
+withModel modelValue (Context context) =
   Context
-    { context | model = model }
+    { context | model = modelValue }
 
 
 render : Context model msg -> Html msg
@@ -80,3 +81,7 @@ updateState : Cmd msg -> Context model msg -> Context model msg
 updateState command (Context context) =
   Context
     { context | state = context.state ++ [ command ] }
+
+updateStateFor : Context model msg -> Cmd msg -> Context model msg
+updateStateFor context command =
+  updateState command context

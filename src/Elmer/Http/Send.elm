@@ -3,7 +3,8 @@ module Elmer.Http.Send exposing
   , spy
   )
 
-import Elmer.Http.Internal as HttpInternal exposing (..)
+import Elmer.Http.Internal as HttpInternal
+import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Printer exposing (..)

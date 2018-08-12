@@ -21,12 +21,12 @@ A route is an HTTP request method plus a URL, up to but not including a query st
 
 -}
 
-import Elmer.Http.Internal as Http_
+import Elmer.Http.Types as Types
 
 {-| Represents an HTTP route, which is a URL plus an HTTP request method.
 -}
 type alias HttpRoute =
-  Http_.HttpRoute
+  Types.HttpRoute
 
 {-| Create a route for an HTTP GET.
 
@@ -79,14 +79,14 @@ delete =
   make "DELETE"
 
 make : String -> String -> HttpRoute
-make method url =
+make methodValue urlValue =
   let
     cleanUrl =
-      String.split "?" url
+      String.split "?" urlValue
         |> List.head
         |> Maybe.withDefault ""
   in
-    { method = method
+    { method = methodValue
     , url = cleanUrl
     }
 

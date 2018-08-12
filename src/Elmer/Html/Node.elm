@@ -3,6 +3,13 @@ module Elmer.Html.Node exposing
   , asElement
   )
 
+{-| Node (exposed for testing)
+
+-- @docs from, asElement
+
+-}
+
+
 import Html exposing (Html)
 import Elmer.Html.Types exposing (..)
 import Elmer.Value as Value
@@ -13,12 +20,18 @@ import Dict exposing (Dict)
 type alias Tagger a b =
   (a -> b)
 
+type NodeType
+  = Normal
+  | Keyed
 
+{-|
+-}
 from : Html msg -> HtmlNode msg
 from =
   fromHtml [] Nothing
 
-
+{-|
+-}
 asElement : HtmlNode msg -> Maybe (HtmlElement msg)
 asElement node =
   case node of
@@ -28,70 +41,82 @@ asElement node =
       Nothing
 
 
+-- REVISIT: What about 'custom' nodes (I think that's what case 3 is ...). No tests for this as of now I think
 fromHtml : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
 fromHtml inheritedEvents tagger html =
-  case Value.field "type" html of
-    "text" ->
+  -- let
+    -- d = Elm.Kernel.Value.print "html" html
+  -- in
+  case Value.field "$" html of
+    0 ->
       fromText html
-    "node" ->
-      fromNode inheritedEvents tagger html
-    "keyed-node" ->
-      fromNode inheritedEvents tagger html
-    "tagger" ->
+    1 ->
+      fromNode Normal inheritedEvents tagger html
+    2 ->
+      fromNode Keyed inheritedEvents tagger html
+    4 ->
       fromTagger inheritedEvents tagger html
-    "thunk" ->
+    5 -> 
       ()
-        |> Value.field "thunk" html
+        |> Value.field "m" html
         |> fromHtml inheritedEvents tagger
     unknownType ->
-      Debug.crash <| "Unknown html type: " ++ unknownType
+      Debug.todo <| "Unknown html type: " ++ (String.fromInt unknownType)
 
 
 fromText : Html msg -> HtmlNode msg
 fromText html =
-  Value.field "text" html
+  Value.field "a" html
     |> Text
 
 
 fromTagger : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
 fromTagger inheritedEvents maybePreviousTagger html =
   let
-    thisTagger = Value.field "tagger" html
+    thisTagger = Value.field "j" html
     fullTagger =
       maybePreviousTagger
         |> Maybe.map (\previous -> previous << thisTagger)
         |> Maybe.withDefault thisTagger
   in
-    Value.field "node" html
+    Value.field "k" html
       |> fromHtml inheritedEvents (Just fullTagger)
 
 
-fromNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromNode inheritedEvents tagger node =
+fromNode : NodeType -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromNode nodeType inheritedEvents tagger node =
   let
     nodeEvents = eventHandlers tagger node
     eventsToInherit =
       List.append inheritedEvents nodeEvents
   in
     Element
-      { tag = Value.field "tag" node
-      , facts = facts node
-      , children = handleChildNodes eventsToInherit tagger node
+      { tag = Value.field "c" node
+      , properties = decodeDict propertiesDecoder node
+      , attributes = decodeDict attributesDecoder node
+      , styles = decodeDict stylesDecoder node
+      , children = 
+          case nodeType of
+            Normal ->
+              handleChildNodes identity eventsToInherit tagger node
+            Keyed ->
+              handleChildNodes Tuple.second eventsToInherit tagger node
       , inheritedEventHandlers = inheritedEvents
       , eventHandlers = nodeEvents
       }
 
 
-handleChildNodes : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> List (HtmlNode msg)
-handleChildNodes inheritedEvents tagger node =
+handleChildNodes : (a -> Html msg) -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> List (HtmlNode msg)
+handleChildNodes mapper inheritedEvents tagger node =
   Value.decode childrenDecoder node
     |> Result.withDefault []
+    |> List.map mapper
     |> List.map (fromHtml inheritedEvents tagger)
 
 
 childrenDecoder : Json.Decoder (List Json.Value)
 childrenDecoder =
-  Json.field "children" <| Json.list childDecoder
+  Json.field "e" <| Json.list Value.decoder
 
 
 childDecoder : Json.Decoder Json.Value
@@ -111,37 +136,70 @@ eventHandlers tagger html =
 
 eventDecoder : Json.Decoder (Dict String Json.Value)
 eventDecoder =
-  Json.dict Json.value
-    |> Json.at [ "facts", "EVENT" ]
+  Json.dict Value.decoder
+    |> Json.at [ "d", "a0" ]
 
 
 toEventHandler : Maybe (Tagger subMsg msg) -> (String, Json.Value) -> HtmlEventHandler msg
 toEventHandler tagger (name, event) =
   { eventType = name
-  , options = Value.field "options" event
   , decoder =
       case tagger of
         Just t ->
-          Value.field "decoder" event
-            |> Json.map t
+          Json.map (\m -> { message = t m, stopPropagation = False, preventDefault = False }) <|
+                Value.field "a" event
         Nothing ->
-          Value.field "decoder" event
+          case Value.constructor event of
+            "Custom" ->
+              Value.field "a" event
+            "MayStopPropagation" ->
+              Json.map (\t -> { message = Tuple.first t, stopPropagation = Tuple.second t, preventDefault = False }) <|
+                Value.field "a" event
+            "MayPreventDefault" ->
+              Json.map (\t -> { message = Tuple.first t, stopPropagation = False, preventDefault = Tuple.second t }) <|
+                Value.field "a" event
+            "Normal" ->
+              Json.map (\m -> { message = m, stopPropagation = False, preventDefault = False }) <|
+                Value.field "a" event
+            constructor ->
+              Json.fail <| "Unknown constructor for event: " ++ constructor
   }
 
 
-facts : Html msg -> Dict String HtmlFact
-facts node =
-  Value.decode factsDecoder node
+decodeDict : Json.Decoder (Dict String a) -> Html msg -> Dict String a
+decodeDict decoder node =
+  Value.decode decoder node
     |> Result.withDefault Dict.empty
 
 
-factsDecoder : Json.Decoder (Dict String HtmlFact)
-factsDecoder =
+propertiesDecoder : Json.Decoder (Dict String HtmlFact)
+propertiesDecoder =
   Json.oneOf
-    [ Json.map StringValue Json.string
-    , Json.map BoolValue Json.bool
-    , Json.map DictValue (Json.dict Json.string)
-    , Json.succeed <| Ignored
+    [ Json.map (\v -> Just (StringValue v)) Json.string
+    , Json.map (\v -> Just (BoolValue v)) Json.bool
+    , Json.succeed Nothing
     ]
-  |> Json.dict
-  |> Json.field "facts"
+      |> Json.dict
+      |> Json.map (\d ->
+        Dict.foldl (\key value result -> 
+            case value of
+              Just val ->
+                Dict.insert key val result
+              Nothing ->
+                result
+          ) Dict.empty d
+      )
+      |> Json.field "d"
+
+
+-- REVISIT -- Could attributes have boolean value or number values? Do we care?
+attributesDecoder : Json.Decoder (Dict String String)
+attributesDecoder =
+    Json.dict Json.string
+      |> Json.at [ "d", "a3" ]
+
+
+stylesDecoder : Json.Decoder (Dict String String)
+stylesDecoder =
+    Json.dict Json.string
+      |> Json.at [ "d", "a1" ]

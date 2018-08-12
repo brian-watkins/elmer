@@ -11,7 +11,7 @@ module Elmer.Spy.Function exposing
   )
 
 import Json.Decode as Json exposing (Value)
-import Native.Function
+import Elm.Kernel.Function
 import Elmer.Value as Value
 
 
@@ -24,7 +24,7 @@ type alias Function =
 
 globalIdentifier : (() -> a) -> Maybe String
 globalIdentifier namingThunk =
-  Native.Function.globalIdentifier namingThunk
+  Elm.Kernel.Function.globalIdentifier namingThunk
     |> Value.decode identifierDecoder
     |> Result.withDefault Nothing
 
@@ -68,7 +68,7 @@ isValue globalId =
 
 recordable : String -> (a -> b) -> Value
 recordable =
-  Native.Function.recordable
+  Elm.Kernel.Function.recordable
 
 
 identifierDecoder : Json.Decoder (Maybe String)
@@ -101,30 +101,33 @@ activateSpy function =
   case function.identifier of
     Just identifier ->
       Value.assign identifier function.fake
-        |> Native.Function.activate function.alias
+        |> Elm.Kernel.Function.activate function.alias
         |> always function
     Nothing ->
-      Native.Function.activate function.alias function.fake
+      Elm.Kernel.Function.activate function.alias function.fake
         |> always function
 
 
 deactivateSpy : Function -> Json.Value
 deactivateSpy function =
-  case Maybe.map2 (,) function.identifier function.original of
+  case Maybe.map2 toTuple function.identifier function.original of
     Just (identifier, original) ->
       Value.assign identifier original
-        |> always (Native.Function.deactivate function.alias)
+        |> always (Elm.Kernel.Function.deactivate function.alias)
     Nothing ->
-      Native.Function.deactivate function.alias
+      Elm.Kernel.Function.deactivate function.alias
 
+toTuple : a -> b -> (a, b)
+toTuple aArg bArg =
+  ( aArg, bArg )
 
 callable : String -> (a -> b)
 callable name =
   \args ->
     let
       spyFunc =
-        Native.Function.active name
-          |> Value.decode (Json.nullable Json.value)
+        Elm.Kernel.Function.active name
+          |> Value.decode (Json.nullable Value.decoder)
           |> Result.withDefault Nothing
     in
       case spyFunc of
@@ -132,4 +135,4 @@ callable name =
           spy args
         Nothing ->
           "Attempted to use Spy.callable with an unknown spy: " ++ name
-            |> Debug.crash
+            |> Debug.todo

@@ -16,7 +16,7 @@ type alias EventHandler msg =
   EventJson -> EventResult msg
 
 type alias EventResult msg =
-  Result String msg
+  Result String (HtmlEventValue msg)
 
 type alias EventJson =
   String

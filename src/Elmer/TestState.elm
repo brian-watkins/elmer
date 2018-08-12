@@ -9,30 +9,45 @@ module Elmer.TestState exposing
   , failure
   )
 
+{-| Functions for working with TestState
+
+@docs TestState, TestStateExtension, create, map, mapWithoutSpies, mapToExpectation, with, failure
+
+-}
+
 import Elmer.Context as Context exposing (..)
 import Elmer.Spy.Internal as Spy_ exposing (Spy)
 import Expect
 
-
+{-|
+-}
 type TestState model msg
     = Ready (Context model msg)
     | Failed String
 
+{-|
+-}
 type TestStateExtension
   = MapBeforeExpectationExtension
 
 
+{-|
+-}
 create : model -> ViewFunction model msg -> UpdateFunction model msg -> TestState model msg
 create model view update =
   Context.default model view update
     |> with
 
 
+{-|
+-}
 with : Context model msg -> TestState model msg
 with context =
   Ready context
 
 
+{-|
+-}
 failure : String -> TestState model msg
 failure message =
   Failed message
@@ -47,6 +62,8 @@ abstractMap failureMapper mapper testState =
       failureMapper message
 
 
+{-|
+-}
 map : (Context model msg -> TestState model msg) -> TestState model msg -> TestState model msg
 map mapper =
   abstractMap Failed <|
@@ -76,6 +93,8 @@ testStateWithDeactivatedSpies contextWithSpies =
     )
 
 
+{-|
+-}
 mapWithoutSpies : (Context model msg -> TestState model msg) -> TestState model msg -> TestState model msg
 mapWithoutSpies mapper =
   abstractMap Failed <|
@@ -83,6 +102,8 @@ mapWithoutSpies mapper =
       mapper context
 
 
+{-|
+-}
 mapToExpectation : (Context model msg -> Expect.Expectation) -> TestState model msg -> Expect.Expectation
 mapToExpectation mapper testState =
   mapBeforeExpectation testState

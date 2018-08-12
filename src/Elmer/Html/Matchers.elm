@@ -49,8 +49,8 @@ the given element matcher will only be applied to the first element selected.
 element : Matcher (Elmer.Html.HtmlElement msg) -> Matcher (Elmer.Html.HtmlTarget msg)
 element elementMatcher query =
   case Query.findElement query of
-    Ok element ->
-      elementMatcher element
+    Ok foundElement ->
+      elementMatcher foundElement
     Err msg ->
       Expect.fail msg
 
@@ -139,8 +139,8 @@ hasProperty (name, value) node =
 
 -}
 hasAttribute : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasAttribute (name, value) element =
-  case Html_.attribute name element of
+hasAttribute (name, value) targeted =
+  case Html_.attribute name targeted of
     Just attributeValue ->
       if value == attributeValue then
         Expect.pass
@@ -171,28 +171,31 @@ hasId expectedId node =
 
 -}
 hasStyle : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasStyle (name, value) element =
-  case Html_.styles element of
-    Just styles ->
-      case Dict.get name styles of
-        Just styleValue ->
-          if styleValue == value then
-            Expect.pass
-          else
+hasStyle (name, value) targeted =
+  let
+    styleDict = Html_.styles targeted
+  in
+    if Dict.isEmpty styleDict then
+      Expect.fail <| format
+          [ message "Expected element to have style" <| name ++ ": " ++ value
+          , description "but it has no style"
+          ]
+    else
+        case Dict.get name styleDict of
+          Just styleValue ->
+            if styleValue == value then
+              Expect.pass
+            else
+              Expect.fail <| format
+                [ message "Expected element to have style" <| name ++ ": " ++ value
+                , message "but it has style" (printDict styleDict)
+                ]
+          Nothing ->
             Expect.fail <| format
               [ message "Expected element to have style" <| name ++ ": " ++ value
-              , message "but it has style" (printDict styles)
+              , message "but it has style" (printDict styleDict)
               ]
-        Nothing ->
-          Expect.fail <| format
-            [ message "Expected element to have style" <| name ++ ": " ++ value
-            , message "but it has style" (printDict styles)
-            ]
-    Nothing ->
-      Expect.fail <| format
-        [ message "Expected element to have style" <| name ++ ": " ++ value
-        , description "but it has no style"
-        ]
+      
 
 {-| Expect that an element listens for an event of the given type.
 
@@ -202,20 +205,20 @@ Note: This will not consider event handlers on the element's ancestors.
 
 -}
 listensForEvent : String -> Matcher (Elmer.Html.HtmlElement msg)
-listensForEvent event element =
-  if List.isEmpty element.eventHandlers then
+listensForEvent event targeted =
+  if List.isEmpty targeted.eventHandlers then
     Expect.fail <| format
       [ message "Expected element to listen for event" event
       , description "but it has no event listeners"
       ]
   else
-    if List.any (\eventHandler -> eventHandler.eventType == event) element.eventHandlers then
+    if List.any (\eventHandler -> eventHandler.eventType == event) targeted.eventHandlers then
       Expect.pass
     else
       Expect.fail <| format
         [ message "Expected element to listen for event" event
         , message "but it listens for" <| (
-          List.map .eventType element.eventHandlers
+          List.map .eventType targeted.eventHandlers
             |> String.join "\n"
           )
         ]

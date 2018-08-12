@@ -29,8 +29,8 @@ import Elmer.Context as Context exposing (Context)
 import Elmer exposing (Matcher)
 import Expect
 import Elmer.Printer exposing (..)
-import Elmer.Navigation.Location as Location
-import Navigation
+import Elmer.Navigation.Location as Location exposing (Location)
+-- import Navigation
 import Html exposing (Html)
 
 
@@ -44,12 +44,12 @@ type NativationState
 The location parser function is the function you would provide to
 `Navigation.program` when you initialize your app.
 -}
-withLocationParser : ( Navigation.Location -> msg ) -> Elmer.TestState model msg -> Elmer.TestState model msg
+withLocationParser : ( Location -> msg ) -> Elmer.TestState model msg -> Elmer.TestState model msg
 withLocationParser parser =
   TestState.map <|
     \context ->
       RuntimeCommand.mapState LocationParser (\_ -> parser)
-        |> flip Context.updateState context
+        |> Context.updateStateFor context
         |> TestState.with
 
 
@@ -71,36 +71,36 @@ location to `/home` when clicked:
 -}
 spy : Spy
 spy =
-  Spy_.batch
-    [ Spy.create "Navigation.newUrl" (\_ -> Navigation.newUrl)
-        |> andCallFake fakeNavigateCommand
-    , Spy.create "Navigation.modifyUrl" (\_ -> Navigation.modifyUrl)
-        |> andCallFake fakeNavigateCommand
-    ]
+  Spy_.batch []
+    -- [ Spy.create "Navigation.newUrl" (\_ -> Navigation.newUrl)
+    --     |> andCallFake fakeNavigateCommand
+    -- , Spy.create "Navigation.modifyUrl" (\_ -> Navigation.modifyUrl)
+    --     |> andCallFake fakeNavigateCommand
+    -- ]
 
 
-fakeNavigateCommand : String -> Cmd msg
-fakeNavigateCommand url =
-  let
-    parseCommand = RuntimeCommand.generate <| generateCommandForLocation url
-    stateCommand = RuntimeCommand.mapState Location (\_ -> url)
-  in
-    Cmd.batch [ stateCommand, parseCommand ]
+-- fakeNavigateCommand : String -> Cmd msg
+-- fakeNavigateCommand url =
+--   let
+--     parseCommand = RuntimeCommand.generate <| generateCommandForLocation url
+--     stateCommand = RuntimeCommand.mapState Location (\_ -> url)
+--   in
+--     Cmd.batch [ stateCommand, parseCommand ]
 
-generateCommandForLocation : String -> Context model msg -> Cmd msg
-generateCommandForLocation url context =
-  case Context.state LocationParser context of
-    Just locationParser ->
-      let
-        message = handleLocationUpdate url locationParser
-      in
-        Command.fake message
-    Nothing ->
-      Cmd.none
+-- generateCommandForLocation : String -> Context model msg -> Cmd msg
+-- generateCommandForLocation url context =
+--   case Context.state LocationParser context of
+--     Just locationParser ->
+--       let
+--         message = handleLocationUpdate url locationParser
+--       in
+--         Command.fake message
+--     Nothing ->
+--       Cmd.none
 
-handleLocationUpdate : String -> (Navigation.Location -> msg) -> msg
-handleLocationUpdate url parser =
-    (parser (Location.asLocation url))
+-- handleLocationUpdate : String -> (Navigation.Location -> msg) -> msg
+-- handleLocationUpdate url parser =
+--     (parser (Location.asLocation url))
 
 
 {-| Expect that the current location is equal to the given string.
@@ -131,9 +131,10 @@ setLocation location =
     \context ->
       case Context.state LocationParser context of
         Just _ ->
-          let
-            commandThunk = \() -> fakeNavigateCommand location
-          in
-            Command.send commandThunk <| TestState.with context
+          TestState.failure "setLocation failed because we need to revisit Navigation for Elmer 2.0"
+          -- let
+          --   commandThunk = \() -> fakeNavigateCommand location
+          -- in
+          --   Command.send commandThunk <| TestState.with context
         Nothing ->
           TestState.failure "setLocation failed because no locationParser was set"

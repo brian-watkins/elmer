@@ -11,14 +11,14 @@ module Elmer.Http.Result exposing
 
 -}
 
-import Elmer.Http.Internal as Internal
+import Elmer.Http.Types as Types
 import Elmer.Http.Status exposing (HttpStatus)
 import Dict
 
 {-| Represents the stubbed result of an HTTP request.
 -}
 type alias HttpResult =
-  Internal.HttpResult
+  Types.HttpResult
 
 
 {-| Set the body of an HttpResult.
@@ -29,9 +29,9 @@ will do nothing.
 withBody : String -> HttpResult -> HttpResult
 withBody body result =
   case result of
-    Internal.Response response ->
-      Internal.Response { response | body = body }
-    Internal.Error _ ->
+    Types.Response response ->
+      Types.Response { response | body = body }
+    Types.Error _ ->
       result
 
 
@@ -43,9 +43,9 @@ will do nothing.
 withHeader : (String, String) -> HttpResult -> HttpResult
 withHeader (headerName, headerValue) result =
   case result of
-    Internal.Response response ->
-      Internal.Response { response | headers = Dict.insert headerName headerValue response.headers }
-    Internal.Error _ ->
+    Types.Response response ->
+      Types.Response { response | headers = Dict.insert headerName headerValue response.headers }
+    Types.Error _ ->
       result
 
 
@@ -55,9 +55,9 @@ If the given HttpResult is set to return an error, then this function
 will do nothing.
 -}
 withStatus : HttpStatus -> HttpResult -> HttpResult
-withStatus (Internal.HttpStatus newStatus) result =
+withStatus (Types.HttpStatus newStatus) result =
   case result of
-    Internal.Response response ->
-      Internal.Response { response | status = newStatus }
-    Internal.Error _ ->
+    Types.Response response ->
+      Types.Response { response | status = newStatus }
+    Types.Error _ ->
       result

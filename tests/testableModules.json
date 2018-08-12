@@ -1,0 +1,12 @@
+{
+    "exposed-modules": [
+        "Elmer.Html.Types",
+        "Elmer.Html.Query",
+        "Elmer.Html.Node",
+        "Elmer.TestState",
+        "Elmer.Printer",
+        "Elmer.Spy.Arg",
+        "Elmer.Runtime",
+        "Elmer.Http.Internal"
+    ]
+}

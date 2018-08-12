@@ -46,12 +46,10 @@ hasHandlersFor eventDescriptions context element =
 apply : List (EventDescription msg) -> Context model msg -> HtmlElement msg -> Result String (Context model msg)
 apply eventDescriptionList context element =
   List.foldl (\evtDescr result ->
-    case result of
-      Ok context ->
-        collectEventHandlers evtDescr.handlers context element
-          |> bubbleEvent evtDescr.eventJson context
-      Err _ ->
-        result
+    Result.andThen (\ctxt ->
+      collectEventHandlers evtDescr.handlers ctxt element
+        |> bubbleEvent evtDescr.eventJson (Ok ctxt)
+    ) result
   ) (Ok context) eventDescriptionList
 
 
@@ -65,31 +63,35 @@ targetedElement context =
 
 
 prepareHandler : HtmlEventHandler msg -> EventHandler msg
-prepareHandler eventHandler =
-  Json.decodeString eventHandler.decoder
+prepareHandler eventHandler eventJson =
+  Json.decodeString eventHandler.decoder eventJson
+    |> Result.mapError Debug.toString
 
 
 collectEventHandlers : EventHandlerQuery msg -> Context model msg -> HtmlElement msg -> List (EventHandler msg)
 collectEventHandlers eventHandlerQuery context element =
   eventHandlerQuery (Context.render context) element
-    |> takeUpTo (\handler -> handler.options.stopPropagation)
     |> List.map prepareHandler
 
 
-bubbleEvent : EventJson -> Context model msg -> List (EventHandler msg) -> Result String (Context model msg)
-bubbleEvent event context eventHandlers =
-  List.foldl (\eventHandler contextResult ->
-    case contextResult of
-      Ok context ->
-        updateContext (eventHandler event) context
-      Err _ ->
-        contextResult
-  ) (Ok context) eventHandlers
-
-
-updateContext : EventResult msg -> Context model msg -> Result String (Context model msg)
-updateContext result context =
-  Result.andThen (\msg -> Runtime.performUpdate msg context) result
+bubbleEvent : EventJson -> Result String (Context model msg) -> List (EventHandler msg) -> Result String (Context model msg)
+bubbleEvent event contextResult eventHandlers =
+  case eventHandlers of
+    [] ->
+      contextResult
+    eventHandler :: remaining ->
+      case eventHandler event of
+        Ok eventValue ->
+          let
+            result = 
+              Result.andThen (Runtime.performUpdate eventValue.message) contextResult 
+          in
+            if eventValue.stopPropagation == True then
+              result
+            else
+              bubbleEvent event result remaining
+        Err error ->
+          Err error
 
 
 toTestState : Result String (Context model msg) -> TestState model msg

@@ -3,7 +3,7 @@ module Elmer
         ( TestState
         , Matcher
         , given
-        , (<&&>)
+        , expectAll
         , expectNot
         , each
         , some
@@ -27,7 +27,7 @@ module Elmer
 @docs init
 
 # Working with Matchers
-@docs Matcher, (<&&>), expectNot
+@docs Matcher, expectAll, expectNot
 
 # List Matchers
 @docs each, exactly, some, atIndex, last, hasLength
@@ -69,28 +69,28 @@ given =
   TestState.create
 
 
-{-| Operator for conjoining matchers.
+{-| Expect that all matchers pass.
 If one fails, then the conjoined matcher fails, otherwise it passes.
 
     Elmer.given someModel view update
       |> Elmer.Html.expect (
         Elmer.Html.Matchers.element <|
-          Elmer.Html.Matchers.hasText "Awesome" <&&>
-          Elmer.Html.Matchers.hasClass "cool"
+          Elmer.Html.expectAll
+            [ Elmer.Html.Matchers.hasText "Awesome"
+            , Elmer.Html.Matchers.hasClass "cool"
+            ]
         )
 -}
-(<&&>) : Matcher a -> Matcher a -> Matcher a
-(<&&>) leftFunction rightFunction =
-  (\node ->
-    let
-      leftResult = leftFunction node
-      rightResult = rightFunction node
-    in
-      if leftResult == Expect.pass then
-        rightResult
-      else
-        leftResult
-  )
+expectAll : List (Matcher a) -> Matcher a
+expectAll matchers value =
+  List.foldl (\matcher result -> 
+    case Test.Runner.getFailureReason result of
+      Just _ ->
+        result
+      Nothing ->
+        matcher value
+  ) Expect.pass matchers
+
 
 {-| Make expectations about the model in its current state.
 
@@ -176,13 +176,13 @@ exactly expectedCount matcher list =
     else
       if List.isEmpty failures then
         Expect.fail <| format
-          [ description <| "Expected exactly " ++ (toString expectedCount) ++
+          [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
             " to pass but the list is empty"
           ]
       else
         Expect.fail <| format
-          [ description <| "Expected exactly " ++ (toString expectedCount) ++
-            " to pass but found " ++ (toString matchCount) ++ ". Here are the failures:"
+          [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
+            " to pass but found " ++ (String.fromInt matchCount) ++ ". Here are the failures:"
           , description <| formatFailures failures
           ]
 
@@ -195,14 +195,14 @@ atIndex index matcher list =
       case Test.Runner.getFailureReason <| matcher item of
         Just failure ->
           Expect.fail <| format
-            [ description <| "Expected item at index " ++ (toString index) ++ " to pass but it failed:"
+            [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but it failed:"
             , description <| formatFailure failure
             ]
         Nothing ->
           Expect.pass
     Nothing ->
       Expect.fail <| format
-        [ description <| "Expected item at index " ++ (toString index) ++ " to pass but there is no item at that index"
+        [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but there is no item at that index"
         ]
 
 takeFailures : Matcher a -> List a -> List FailureReason
@@ -245,8 +245,8 @@ hasLength expectedCount list =
   else
     Expect.fail <|
       format
-        [ message "Expected list to have size" (toString expectedCount)
-        , message "but it has size" (toString (List.length list))
+        [ message "Expected list to have size" (String.fromInt expectedCount)
+        , message "but it has size" (String.fromInt (List.length list))
         ]
 
 {-| Update the test context with the given model and Cmd.

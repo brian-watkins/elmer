@@ -1,0 +1,40 @@
+{
+    "type": "package",
+    "name": "elm-explorations/elmer",
+    "summary": "Behavior-driven development for Elm Html applications",
+    "license": "MIT",
+    "version": "2.0.0",
+    "exposed-modules": [
+        "Elmer",
+        "Elmer.Headless",
+        "Elmer.Html",
+        "Elmer.Html.Matchers",
+        "Elmer.Html.Event",
+        "Elmer.Html.Element",
+        "Elmer.Navigation",
+        "Elmer.Platform.Command",
+        "Elmer.Platform.Subscription",
+        "Elmer.Http",
+        "Elmer.Http.Stub",
+        "Elmer.Http.Matchers",
+        "Elmer.Http.Status",
+        "Elmer.Http.Result",
+        "Elmer.Http.Request",
+        "Elmer.Http.Route",
+        "Elmer.Spy",
+        "Elmer.Spy.Matchers"
+    ],
+    "elm-version": "0.19.0 <= v < 0.20.0",
+    "dependencies": {
+        "elm/browser": "1.0.0 <= v < 2.0.0",
+        "elm/core": "1.0.0 <= v < 2.0.0",
+        "elm/html": "1.0.0 <= v < 2.0.0",
+        "elm/http": "1.0.0 <= v < 2.0.0",
+        "elm/json": "1.0.0 <= v < 2.0.0",
+        "elm/parser": "1.0.0 <= v < 2.0.0",
+        "elm/random": "1.0.0 <= v < 2.0.0",
+        "elm/url": "1.0.0 <= v < 2.0.0",
+        "elm-explorations/test": "1.0.0 <= v < 2.0.0"
+    },
+    "test-dependencies": {}
+}
