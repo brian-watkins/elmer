@@ -24,24 +24,24 @@ type alias UpdateFunction model msg =
 
 type Context model msg
   = Context
-    { model : model
+    { model : Maybe model
     , view : ViewFunction model msg
     , update : UpdateFunction model msg
     , state : List (Cmd msg)
     }
 
 
-default : model -> ViewFunction model msg -> UpdateFunction model msg -> Context model msg
-default modelValue viewFunction updateFunction =
+default : ViewFunction model msg -> UpdateFunction model msg -> Context model msg
+default viewFunction updateFunction =
   Context
-    { model = modelValue
+    { model = Nothing
     , view = viewFunction
     , update = updateFunction
     , state = []
     }
 
 
-model : Context model msg -> model
+model : Context model msg -> Maybe model
 model (Context context) =
   context.model
 
@@ -49,24 +49,26 @@ model (Context context) =
 withModel : model -> Context model msg -> Context model msg
 withModel modelValue (Context context) =
   Context
-    { context | model = modelValue }
+    { context | model = Just modelValue }
 
 
-render : Context model msg -> Html msg
+render : Context model msg -> Maybe (Html msg)
 render (Context context) =
-  context.view context.model
+  Maybe.map context.view context.model
 
 
-update : msg -> Context model msg -> ( Context model msg, Cmd msg )
+update : msg -> Context model msg -> Maybe (Context model msg, Cmd msg)
 update message (Context context) =
-  let
-      ( updatedModel, command ) =
-          context.update message context.model
+  Maybe.map (\modelValue ->
+    let
+        ( updatedModel, command ) =
+            context.update message modelValue
 
-      updatedContext =
-          { context | model = updatedModel }
-  in
-      ( Context updatedContext, command )
+        updatedContext =
+            { context | model = Just updatedModel }
+    in
+        ( Context updatedContext, command )
+  ) context.model
 
 
 state : typeId -> Context model msg -> Maybe a

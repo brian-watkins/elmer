@@ -1,10 +1,10 @@
-module Elmer.Navigation
-    exposing
-        ( withLocationParser
-        , setLocation
-        , expectLocation
-        , spy
-        )
+module Elmer.Navigation exposing
+  ( fakeKey
+  , withLocationParser
+  , setLocation
+  , expectLocation
+  , spy
+  )
 
 {-| Functions for describing the behavior of components that use
 [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/latest/Navigation).
@@ -14,6 +14,9 @@ module Elmer.Navigation
 
 # Update the Location
 @docs setLocation
+
+# REVISIT
+@docs fakeKey
 
 # Make Expectations about the Location
 @docs spy, expectLocation
@@ -27,16 +30,24 @@ import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
 import Elmer exposing (Matcher)
+import Elmer.Value as Value
 import Expect
 import Elmer.Printer exposing (..)
 import Elmer.Navigation.Location as Location exposing (Location)
--- import Navigation
+import Browser.Navigation as Navigation
 import Html exposing (Html)
 
 
 type NativationState
   = LocationParser
   | Location
+
+
+{-|
+-}
+fakeKey : Navigation.Key
+fakeKey =
+  Value.encode (Value.for "Key") []
 
 
 {-| Register a location parser with the current test context.

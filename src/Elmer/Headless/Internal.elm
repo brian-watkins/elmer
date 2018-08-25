@@ -18,13 +18,15 @@ type HeadlessState
 
 create : model -> UpdateFunction model msg -> TestState model msg
 create model update =
-  Context.default model emptyView update
+  Context.default emptyView update
+    |> Context.withModel model
     |> TestState.with
 
 
 createWithCommand : (() -> Cmd msg) -> TestState () msg
 createWithCommand commandGenerator =
-  Context.default () emptyView messageCollectorUpdate
+  Context.default emptyView messageCollectorUpdate
+    |> Context.withModel ()
     |> withCommandGenerator commandGenerator
     |> TestState.with
 

@@ -42,6 +42,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))
 import Elmer.Context as Context
 import Elmer.Runtime.Command as RuntimeCommand
+import Elmer.Errors as Errors
 
 
 type SubscriptionState
@@ -78,12 +79,16 @@ with : (() -> (model -> Sub msg)) -> Elmer.TestState model msg -> Elmer.TestStat
 with subsThunk =
   TestState.map <|
     \context ->
-      let
-        subscription = subsThunk () <| Context.model context
-      in
-        RuntimeCommand.mapState Subscriptions (\_ -> subscription)
-          |> Context.updateStateFor context
-          |> TestState.with
+      case Context.model context of
+        Just model ->
+          let
+            subscription = subsThunk () model
+          in
+            RuntimeCommand.mapState Subscriptions (\_ -> subscription)
+              |> Context.updateStateFor context
+              |> TestState.with
+        Nothing ->
+          TestState.failure Errors.noModel
 
 
 describeSub : String -> (a -> msg) -> SubDescription a msg

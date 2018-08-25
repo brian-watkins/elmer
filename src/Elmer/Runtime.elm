@@ -14,17 +14,18 @@ import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime.Types exposing (..)
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))
+import Elmer.Errors as Errors
 
 
 {-|
 -}
 performUpdate : msg -> Context model msg -> Result String (Context model msg)
 performUpdate message context =
-    let
-        ( updatedContext, command ) =
-            Context.update message context
-    in
+    case Context.update message context of
+      Just ( updatedContext, command ) ->
         performCommand command updatedContext
+      Nothing ->
+        Err Errors.noModel
 
 
 {-|

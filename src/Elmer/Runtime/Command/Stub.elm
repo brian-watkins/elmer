@@ -7,6 +7,8 @@ module Elmer.Runtime.Command.Stub exposing
 import Elmer.Runtime.Types exposing (..)
 import Elmer.Runtime.Intention as Intention
 import Elmer.Context as Context exposing (Context)
+import Elmer.Runtime.Command.Fail as Fail
+import Elmer.Errors as Errors
 
 
 name : String
@@ -22,6 +24,18 @@ with =
 commandRunner : CommandRunner model subMsg msg
 commandRunner command tagger =
   let
-    msg = Intention.cmdValue command
+    msg = 
+      Intention.cmdValue command
+        |> tagger
   in
-    CommandSuccess (Context.update (tagger msg))
+    processStub msg
+      |> CommandSuccess
+
+
+processStub : msg -> CommandEffect model msg
+processStub msg context =
+  case Context.update msg context of
+    Just tuple ->
+      tuple
+    Nothing ->
+      (context, Fail.with Errors.noModel)

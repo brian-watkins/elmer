@@ -6,6 +6,7 @@
     "version": "2.0.0",
     "exposed-modules": [
         "Elmer",
+        "Elmer.Application",
         "Elmer.Headless",
         "Elmer.Html",
         "Elmer.Html.Matchers",

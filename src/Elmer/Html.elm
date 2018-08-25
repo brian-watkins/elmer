@@ -26,6 +26,7 @@ import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query
+import Elmer.Errors as Errors
 import Html exposing (Html)
 import Expect
 import Dict exposing (Dict)
@@ -118,8 +119,11 @@ expect matcher =
     \context ->
       case Context.state TargetSelector context of
         Just selector ->
-          matcher <|
-            Query.forHtml selector <| Context.render context
+          case Context.render context of
+            Just view ->
+              matcher <| Query.forHtml selector view
+            Nothing ->
+              Expect.fail Errors.noModel
         Nothing ->
           Expect.fail "No expectations could be made because no Html has been targeted.\n\nUse Elmer.Html.target to identify the Html you want to describe."
 

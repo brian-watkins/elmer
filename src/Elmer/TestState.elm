@@ -35,7 +35,8 @@ type TestStateExtension
 -}
 create : model -> ViewFunction model msg -> UpdateFunction model msg -> TestState model msg
 create model view update =
-  Context.default model view update
+  Context.default view update
+    |> Context.withModel model
     |> with
 
 

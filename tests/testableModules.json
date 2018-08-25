@@ -7,6 +7,7 @@
         "Elmer.Printer",
         "Elmer.Spy.Arg",
         "Elmer.Runtime",
-        "Elmer.Http.Internal"
+        "Elmer.Http.Internal",
+        "Elmer.Errors"
     ]
 }

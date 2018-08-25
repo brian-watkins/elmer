@@ -8,8 +8,10 @@ import Elmer.Html.Types exposing (..)
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime as Runtime
+import Elmer.Errors as Errors
 import Json.Decode as Json
 import Elmer.Html.Query as Query
+import Html exposing (Html)
 
 
 processEventsWhen : List (EventDescription msg) -> (Result String (HtmlElement msg) -> Result String (HtmlElement msg)) -> TestState model msg -> TestState model msg
@@ -31,7 +33,7 @@ processEvents eventDescriptions =
 hasHandlersFor : List (EventDescription msg) -> Context model msg -> HtmlElement msg -> Result String (HtmlElement msg)
 hasHandlersFor eventDescriptions context element =
   let
-    handlers = List.map (\ed -> ed.handlers (Context.render context) element) eventDescriptions
+    handlers = List.map (\ed -> ed.handlers (renderViewWithDefault context) element) eventDescriptions
       |> List.concat
   in
     if List.isEmpty handlers then
@@ -57,7 +59,11 @@ targetedElement : Context model msg -> Result String (HtmlElement msg)
 targetedElement context =
   case Context.state TargetSelector context of
     Just selector ->
-      Query.findElement <| Query.forHtml selector (Context.render context)
+      case Context.render context of
+        Just view ->
+          Query.findElement <| Query.forHtml selector view
+        Nothing ->
+          Err Errors.noModel
     Nothing ->
       Err "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
 
@@ -70,7 +76,7 @@ prepareHandler eventHandler eventJson =
 
 collectEventHandlers : EventHandlerQuery msg -> Context model msg -> HtmlElement msg -> List (EventHandler msg)
 collectEventHandlers eventHandlerQuery context element =
-  eventHandlerQuery (Context.render context) element
+  eventHandlerQuery (renderViewWithDefault context) element
     |> List.map prepareHandler
 
 
@@ -101,6 +107,12 @@ toTestState contextResult =
       TestState.with context
     Err message ->
       TestState.failure message
+
+
+renderViewWithDefault : Context model msg -> Html msg
+renderViewWithDefault context =
+  Context.render context
+    |> Maybe.withDefault (Html.text "")
 
 
 takeUpTo : (a -> Bool) -> List a -> List a

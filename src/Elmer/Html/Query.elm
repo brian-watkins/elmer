@@ -60,10 +60,9 @@ forElement selector element =
 -}
 forContext : Context model msg -> Maybe (HtmlTarget msg)
 forContext context =
-  Context.state TargetSelector context
-    |> Maybe.map (\selector ->
-      forHtml selector <| Context.render context
-    )
+  Maybe.map2 (\selector view -> forHtml selector view)
+    (Context.state TargetSelector context)
+    (Context.render context)
 
 
 {-| findElement

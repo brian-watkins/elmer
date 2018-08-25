@@ -31,17 +31,16 @@ import Elmer.SubscriptionTests as SubscriptionTests
 import Elmer.TestStateTests as TestsStateTests
 import Elmer.PortTests as PortTests
 import Elmer.RandomTests as RandomTests
--- import Elmer.ComponentTests as ComponentTests
 import Elmer.WorkerTests as WorkerTests
 import Elmer.TripleComponentTests as TripleComponentTests
-
+import Elmer.ApplicationTests as ApplicationTests
 
 all : Test
 all =
     Test.concat 
-    [ TripleComponentTests.all
+    [ ApplicationTests.all
+    , TripleComponentTests.all
     , WorkerTests.all
-    -- , ComponentTests.all
     , RandomTests.all
     , PortTests.all
     , TestsStateTests.all
