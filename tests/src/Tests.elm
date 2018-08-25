@@ -34,11 +34,13 @@ import Elmer.RandomTests as RandomTests
 import Elmer.WorkerTests as WorkerTests
 import Elmer.TripleComponentTests as TripleComponentTests
 import Elmer.ApplicationTests as ApplicationTests
+import Elmer.DocumentTests as DocumentTests
 
 all : Test
 all =
     Test.concat 
-    [ ApplicationTests.all
+    [ DocumentTests.all
+    , ApplicationTests.all
     , TripleComponentTests.all
     , WorkerTests.all
     , RandomTests.all

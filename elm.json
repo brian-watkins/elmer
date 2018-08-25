@@ -7,6 +7,8 @@
     "exposed-modules": [
         "Elmer",
         "Elmer.Application",
+        "Elmer.Document",
+        "Elmer.Document.Matchers",
         "Elmer.Headless",
         "Elmer.Html",
         "Elmer.Html.Matchers",

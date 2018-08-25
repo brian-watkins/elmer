@@ -1,10 +1,11 @@
 module Elmer.Context exposing
   ( Context
-  , ViewFunction
-  , UpdateFunction
+  , View(..)
+  , Update
   , default
   , model
   , withModel
+  , view
   , render
   , update
   , state
@@ -12,26 +13,33 @@ module Elmer.Context exposing
   , updateStateFor
   )
 
-import Html exposing (Html)
 import Elmer.Runtime.Intention as Intention
+import Html exposing (Html)
+import Browser exposing (Document)
 
 
-type alias ViewFunction model msg =
-    model -> Html msg
+type View model msg
+  = HtmlView (model -> Html msg)
+  | DocumentView (model -> Document msg)
 
-type alias UpdateFunction model msg =
+
+type alias Update model msg =
     msg -> model -> ( model, Cmd msg )
 
+
 type Context model msg
-  = Context
-    { model : Maybe model
-    , view : ViewFunction model msg
-    , update : UpdateFunction model msg
-    , state : List (Cmd msg)
-    }
+  = Context (ContextInfo model msg)
 
 
-default : ViewFunction model msg -> UpdateFunction model msg -> Context model msg
+type alias ContextInfo model msg =
+  { model : Maybe model
+  , view : View model msg
+  , update : Update model msg
+  , state : List (Cmd msg)
+  }
+
+
+default : View model msg -> Update model msg -> Context model msg
 default viewFunction updateFunction =
   Context
     { model = Nothing
@@ -52,9 +60,26 @@ withModel modelValue (Context context) =
     { context | model = Just modelValue }
 
 
+view : Context model msg -> View model msg
+view (Context context) =
+  context.view
+
+
 render : Context model msg -> Maybe (Html msg)
 render (Context context) =
-  Maybe.map context.view context.model
+  Maybe.map (htmlRenderable context) context.model
+
+
+htmlRenderable : ContextInfo model msg -> model -> Html msg
+htmlRenderable context =
+  case context.view of
+    HtmlView viewFunction ->
+      viewFunction
+    DocumentView viewFunction ->
+      \modelValue -> 
+        viewFunction modelValue
+          |> .body
+          |> Html.node "body" []
 
 
 update : msg -> Context model msg -> Maybe (Context model msg, Cmd msg)
@@ -83,6 +108,7 @@ updateState : Cmd msg -> Context model msg -> Context model msg
 updateState command (Context context) =
   Context
     { context | state = context.state ++ [ command ] }
+
 
 updateStateFor : Context model msg -> Cmd msg -> Context model msg
 updateStateFor context command =

@@ -5,7 +5,7 @@ module Elmer.Headless.Internal exposing
   )
 
 import Elmer.TestState as TestState exposing (TestState, TestStateExtension(..))
-import Elmer.Context as Context exposing (Context, UpdateFunction)
+import Elmer.Context as Context exposing (Context, Update, View(..))
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Runtime as Runtime
 import Html exposing (Html)
@@ -16,16 +16,16 @@ type HeadlessState
   = Messages
 
 
-create : model -> UpdateFunction model msg -> TestState model msg
+create : model -> Update model msg -> TestState model msg
 create model update =
-  Context.default emptyView update
+  Context.default (HtmlView emptyView) update
     |> Context.withModel model
     |> TestState.with
 
 
 createWithCommand : (() -> Cmd msg) -> TestState () msg
 createWithCommand commandGenerator =
-  Context.default emptyView messageCollectorUpdate
+  Context.default (HtmlView emptyView) messageCollectorUpdate
     |> Context.withModel ()
     |> withCommandGenerator commandGenerator
     |> TestState.with

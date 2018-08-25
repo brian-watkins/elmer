@@ -8,12 +8,14 @@ import Elmer.Html as Markup
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Event as Event
 import Elmer.Application
+import Elmer.Document.Matchers exposing (expectTitle)
 import Elmer.TestApps.ApplicationTestApp as App
 import Elmer.Navigation as Navigation
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Platform.Command as Command
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Errors as Errors
+import Elmer.UrlHelpers as UrlHelpers
 import Url exposing (Url)
 
 
@@ -32,9 +34,14 @@ applicationTests =
     [ test "it creates a TestState" <|
       \() ->
         Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
-          |> Elmer.init (\() -> App.init () (testUrl "http://localhost/app/fun") Navigation.fakeKey)
+          |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
           |> Markup.target "#some-element"
           |> Markup.expect (element <| hasText "Fun Stuff")
+    , test "it can handle title expectations" <|
+      \() ->
+          Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+          |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
+          |> expectTitle "Fun Title"
     ]
   ]
   
@@ -89,12 +96,3 @@ noInitTests =
             |> Expect.equal (Expect.fail Errors.noModel)
     ]
   ]
-  
-
-testUrl : String -> Url
-testUrl urlString =
-  case Url.fromString urlString of
-    Just url ->
-      url
-    Nothing ->
-      Debug.todo <| "Could not parse url: " ++ urlString

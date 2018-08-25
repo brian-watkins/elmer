@@ -1,7 +1,6 @@
 module Elmer.TestState exposing
   ( TestState
   , TestStateExtension(..)
-  , create
   , map
   , mapWithoutSpies
   , mapToExpectation
@@ -9,9 +8,9 @@ module Elmer.TestState exposing
   , failure
   )
 
-{-| Functions for working with TestState
+{-| Exposed for testing
 
-@docs TestState, TestStateExtension, create, map, mapWithoutSpies, mapToExpectation, with, failure
+@docs TestState, TestStateExtension, map, mapWithoutSpies, mapToExpectation, with, failure
 
 -}
 
@@ -29,15 +28,6 @@ type TestState model msg
 -}
 type TestStateExtension
   = MapBeforeExpectationExtension
-
-
-{-|
--}
-create : model -> ViewFunction model msg -> UpdateFunction model msg -> TestState model msg
-create model view update =
-  Context.default view update
-    |> Context.withModel model
-    |> with
 
 
 {-|

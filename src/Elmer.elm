@@ -39,7 +39,7 @@ import Html exposing (Html)
 import Expect
 import Test.Runner
 import Elmer.TestState as TestState
-import Elmer.Context as Context
+import Elmer.Context as Context exposing (View(..))
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors
@@ -66,8 +66,10 @@ given
   -> ( model -> Html msg )
   -> ( msg -> model -> ( model, Cmd msg ) )
   -> TestState model msg
-given =
-  TestState.create
+given model view update =
+  Context.default (HtmlView view) update
+    |> Context.withModel model
+    |> TestState.with
 
 
 {-| Expect that all matchers pass.
