@@ -1,70 +1,50 @@
-module Elmer.Navigation exposing
-  ( fakeKey
-  , withLocationParser
-  , setLocation
-  , expectLocation
-  , spy
-  )
+module Elmer.Navigation
+    exposing
+        ( fakeKey
+        , expectLocation
+        , spy
+        )
 
-{-| Functions for describing the behavior of components that use
-[elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/latest/Navigation).
+{-| Functions for describing the navigation behavior of Elm Html programs created with `Browser.application`.
 
-# Register the location parser
-@docs withLocationParser
-
-# Update the Location
-@docs setLocation
-
-# REVISIT
-@docs fakeKey
-
-# Make Expectations about the Location
+# Make Expectations about the Current Location
 @docs spy, expectLocation
+
+# Get a Fake Navigation Key
+@docs fakeKey
 
 -}
 
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
 import Elmer.Platform.Command as Command
+import Elmer.Runtime as Runtime
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
+import Elmer.Errors as Errors
 import Elmer exposing (Matcher)
 import Elmer.Value as Value
+import Elmer.Navigation.Internal exposing (..)
 import Expect
 import Elmer.Printer exposing (..)
-import Elmer.Navigation.Location as Location exposing (Location)
 import Browser.Navigation as Navigation
 import Html exposing (Html)
+import Browser exposing (UrlRequest)
+import Browser.Navigation exposing (Key)
+import Url exposing (Url)
 
 
-type NativationState
-  = LocationParser
-  | Location
+{-| Generate a fake `Browser.Navigation.Key` value.
 
-
-{-|
+Use this value when calling the init function of a `Browser.application` program during a test.
 -}
 fakeKey : Navigation.Key
 fakeKey =
   Value.encode (Value.for "Key") []
 
 
-{-| Register a location parser with the current test context.
-
-The location parser function is the function you would provide to
-`Navigation.program` when you initialize your app.
--}
-withLocationParser : ( Location -> msg ) -> Elmer.TestState model msg -> Elmer.TestState model msg
-withLocationParser parser =
-  TestState.map <|
-    \context ->
-      RuntimeCommand.mapState LocationParser (\_ -> parser)
-        |> Context.updateStateFor context
-        |> TestState.with
-
-
-{-| Stub `Navigation.newUrl` and `Navigation.modifyUrl` with a function that
+{-| Stub `Browser.Navigation.pushUrl` and `Browser.Navigation.replaceUrl` with a function that
 records the location as it is set.
 
 You must use this function with `Elmer.Spy.use` in order to make expectations
@@ -82,41 +62,55 @@ location to `/home` when clicked:
 -}
 spy : Spy
 spy =
-  Spy_.batch []
-    -- [ Spy.create "Navigation.newUrl" (\_ -> Navigation.newUrl)
-    --     |> andCallFake fakeNavigateCommand
-    -- , Spy.create "Navigation.modifyUrl" (\_ -> Navigation.modifyUrl)
-    --     |> andCallFake fakeNavigateCommand
-    -- ]
+  Spy_.batch
+    [ Spy.create "Navigation.pushUrl" (\_ -> Browser.Navigation.pushUrl)
+        |> andCallFake (fakeNavigateCommand "Browser.Navigation.pushUrl")
+    , Spy.create "Navigation.replaceUrl" (\_ -> Browser.Navigation.replaceUrl)
+        |> andCallFake (fakeNavigateCommand "Browser.Navigation.replaceUrl")
+    ]
 
 
--- fakeNavigateCommand : String -> Cmd msg
--- fakeNavigateCommand url =
---   let
---     parseCommand = RuntimeCommand.generate <| generateCommandForLocation url
---     stateCommand = RuntimeCommand.mapState Location (\_ -> url)
---   in
---     Cmd.batch [ stateCommand, parseCommand ]
+generateUrlChangeCommand : String -> String -> Context model msg -> Cmd msg
+generateUrlChangeCommand functionName urlString context =
+  case Context.state NavigationTaggers context of
+    Just { onUrlRequest, onUrlChange } ->
+      case Url.fromString urlString of
+        Just url ->
+          Command.fake <| onUrlChange url
+        Nothing ->
+          Command.fail <| Errors.badUrl functionName urlString
+    Nothing ->
+      Command.fail <| Errors.navigationSpyRequiresApplication functionName urlString
 
--- generateCommandForLocation : String -> Context model msg -> Cmd msg
--- generateCommandForLocation url context =
---   case Context.state LocationParser context of
---     Just locationParser ->
---       let
---         message = handleLocationUpdate url locationParser
---       in
---         Command.fake message
---     Nothing ->
---       Cmd.none
 
--- handleLocationUpdate : String -> (Navigation.Location -> msg) -> msg
--- handleLocationUpdate url parser =
---     (parser (Location.asLocation url))
+fakeNavigateCommand : String -> Key -> String -> Cmd msg
+fakeNavigateCommand functionName _ url =
+  let
+    parseCommand = RuntimeCommand.generate <| generateUrlChangeCommand functionName url
+    stateCommand = RuntimeCommand.mapState Location (\_ -> url)
+  in
+    Cmd.batch [ stateCommand, parseCommand ]
 
 
 {-| Expect that the current location is equal to the given string.
 
-Note: This expectation must be used in conjunction with `spy` above.
+This expectation must be used in conjunction with `spy` above, and your `TestState` must be 
+created with `Elmer.Application.given`. 
+
+Suppose your app calls `Browser.Navigation.pushUrl` when an element is clicked. You can describe
+this behavior as follows: 
+
+    Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+      |> Elmer.Spy.use [ Elmer.Navigation.spy ]
+      |> Elmer.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
+      |> Elmer.Html.target "#some-element"
+      |> Elmer.Html.Event.click
+      |> Elmer.Navigation.expectLocation "http://mydomain.com/funStuff.html"
+
+Note that `expectLocation` will only match on urls provided via `Browser.Navigation.pushUrl` or
+`Browser.Navigation.replaceUrl`. In particular, `expectLocation` will not match the url provided
+as part of the call to `Elmer.init` that provides the initial model and command values. 
+
 -}
 expectLocation : String -> Matcher (Elmer.TestState model msg)
 expectLocation expectedURL =
@@ -125,27 +119,6 @@ expectLocation expectedURL =
         case Context.state Location context of
           Just location ->
             Expect.equal location expectedURL
-                |> Expect.onFail (format [message "Expected to be at location:" expectedURL, message "but location is:" location])
+                |> Expect.onFail (Errors.wrongLocation expectedURL location)
           Nothing ->
-            Expect.fail (format [message "Expected to be at location:" expectedURL, description "but no location has been set"])
-
-
-{-| Set the location for the component.
-
-When the location is set and a location parser is defined for this component,
-then the parser will be applied to the location and the resulting message
-will be passed to the component's `update` function for processing.
--}
-setLocation : String -> Elmer.TestState model msg -> Elmer.TestState model msg
-setLocation location =
-  TestState.map <|
-    \context ->
-      case Context.state LocationParser context of
-        Just _ ->
-          TestState.failure "setLocation failed because we need to revisit Navigation for Elmer 2.0"
-          -- let
-          --   commandThunk = \() -> fakeNavigateCommand location
-          -- in
-          --   Command.send commandThunk <| TestState.with context
-        Nothing ->
-          TestState.failure "setLocation failed because no locationParser was set"
+            Expect.fail (Errors.noLocation expectedURL)

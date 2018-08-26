@@ -35,11 +35,18 @@ import Elmer.WorkerTests as WorkerTests
 import Elmer.TripleComponentTests as TripleComponentTests
 import Elmer.ApplicationTests as ApplicationTests
 import Elmer.DocumentTests as DocumentTests
+import Elmer.NavigationTests as NavigationTests
+import Elmer.ComponentTests as ComponentTests
+import Elmer.DemoAppTests as DemoAppTests
+
 
 all : Test
 all =
     Test.concat 
-    [ DocumentTests.all
+    [ DemoAppTests.all
+    , ComponentTests.all
+    , NavigationTests.all
+    , DocumentTests.all
     , ApplicationTests.all
     , TripleComponentTests.all
     , WorkerTests.all

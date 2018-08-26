@@ -9,41 +9,48 @@ import Elmer.Html.Event as Event
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Navigation as ElmerNav
-import Elmer.Navigation.Location as Location
+import Elmer.Application
 import Elmer.Html.Matchers as Matchers exposing (..)
 import Elmer.Printer exposing (..)
+import Elmer.Errors as Errors
 import Elmer.Html as Markup
-import Navigation
+import Elmer.UrlHelpers as UrlHelpers
+import Browser exposing (UrlRequest)
+import Url exposing (Url)
+
+
+all : Test
+all =
+  Test.concat
+  [ expectLocationTests
+  ]
 
 
 expectLocationTests =
-  describe "location tests"
+  describe "expect location"
   [ describe "when there is an upstream failure"
     [ test "it reports the failure" <|
       \() ->
-        let
-          initialState = TestState.failure "Nothing found!"
-        in
-          ElmerNav.expectLocation "http://blah.com" initialState
-            |> Expect.equal (Expect.fail "Nothing found!")
+        TestState.failure "Nothing found!"
+          |> ElmerNav.expectLocation "http://blah.com"
+          |> Expect.equal (Expect.fail "Nothing found!")
     ]
   , describe "when a location has not been set"
     [ test "it explains the failure" <|
       \() ->
-        let
-          initialState = Elmer.given App.defaultModel App.view App.update
-        in
-          ElmerNav.expectLocation "http://badplace.com" initialState
-            |> Expect.equal
-              (Expect.fail "Expected to be at location:\n\n\thttp://badplace.com\n\nbut no location has been set")
+        Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+          |> ElmerNav.expectLocation "http://badplace.com"
+          |> Expect.equal
+            (Expect.fail <| Errors.noLocation "http://badplace.com")
     ]
-  , describe "when a newURL command is sent"
+  , describe "when a pushUrl command is sent"
     [ describe "when the correct url is expected"
       [ test "it passes" <|
           \() ->
-            Elmer.given App.defaultModel App.view App.update
+            Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
-              |> Markup.target "#navigateButton"
+              |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+              |> Markup.target "#pushUrlButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://fun.com/fun.html"
               |> Expect.equal Expect.pass
@@ -52,23 +59,48 @@ expectLocationTests =
       [ describe "when a location has been set"
         [ test "it explains the failure" <|
           \() ->
-            Elmer.given App.defaultModel App.view App.update
+            Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
-              |> Markup.target "#navigateButton"
+              |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+              |> Markup.target "#pushUrlButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
               |> Expect.equal
-                (Expect.fail (format [message "Expected to be at location:" "http://badplace.com", message "but location is:" "http://fun.com/fun.html"]))
+                (Expect.fail <| Errors.wrongLocation "http://badplace.com" "http://fun.com/fun.html")
         ]
       ]
+    , describe "when the url cannot be parsed"
+      [ test "it fails" <|
+        \() ->
+          Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+            |> Spy.use [ ElmerNav.spy ]
+            |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+            |> Markup.target "#pushBadUrl"
+            |> Event.click
+            |> ElmerNav.expectLocation "http://badplace.com"
+            |> Expect.equal
+              (Expect.fail <| Errors.badUrl "Browser.Navigation.pushUrl" "kdshjfkdsjhfksd")
+      ]
+    , describe "when the test is not started as an application"
+      [ test "it fails" <|
+        \() ->
+          Elmer.given App.defaultModel App.pageView App.update
+            |> Spy.use [ ElmerNav.spy ]
+            |> Markup.target "#pushUrlButton"
+            |> Event.click
+            |> ElmerNav.expectLocation "http://badplace.com"
+            |> Expect.equal
+              (Expect.fail <| Errors.navigationSpyRequiresApplication "Browser.Navigation.pushUrl" "http://fun.com/fun.html")
+      ]
     ]
-  , describe "when a modifyUrl command is sent"
+  , describe "when a replaceUrl command is sent"
     [ describe "when the correct url is expected"
       [ test "it passes" <|
           \() ->
-            Elmer.given App.defaultModel App.view App.update
+            Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
-              |> Markup.target "#modifyLocationButton"
+              |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+              |> Markup.target "#replaceUrlButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://fun.com/awesome.html"
               |> Expect.equal Expect.pass
@@ -77,139 +109,38 @@ expectLocationTests =
       [ describe "when a location has been set"
         [ test "it explains the failure" <|
           \() ->
-            Elmer.given App.defaultModel App.view App.update
+            Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
-              |> Markup.target "#modifyLocationButton"
+              |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+              |> Markup.target "#replaceUrlButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
               |> Expect.equal
-                (Expect.fail (format [message "Expected to be at location:" "http://badplace.com", message "but location is:" "http://fun.com/awesome.html"]))
+                (Expect.fail <| Errors.wrongLocation "http://badplace.com" "http://fun.com/awesome.html")
         ]
       ]
-    ]
-  ]
-
-setLocationTests =
-  let
-    fullState =
-      Elmer.given App.defaultModel App.view App.update
-        |> ElmerNav.withLocationParser App.parseLocation
-  in
-  describe "set location"
-  [ describe "when there is an upstream failure"
-    [ test "it shows the message" <|
-      \() ->
-        let
-          failureState = TestState.failure "failed"
-        in
-          ElmerNav.setLocation "http://fun.com/fun.html" failureState
-            |> Markup.target ".error"
-            |> Markup.expect elementExists
-            |> Expect.equal (Expect.fail "failed")
-    ]
-  , describe "when no parser is set"
-    [ test "it fails with a message" <|
-      \() ->
-        let
-          stateWithoutParser = Elmer.given App.defaultModel App.view App.update
-        in
-          ElmerNav.setLocation "http://fun.com/fun.html" stateWithoutParser
-            |> Markup.target ".error"
-            |> Markup.expect elementExists
-            |> Expect.equal (Expect.fail "setLocation failed because no locationParser was set")
-    ]
-  , describe "when locationParser is set"
-    [ test "it updates the component state with the new location" <|
-      \() ->
-          ElmerNav.setLocation "http://fun.com/fun.html" fullState
-            |> Markup.target ".error"
-            |> Markup.expect (element <| hasText "Unknown path: /fun.html")
-    , test "it updates the component state with another location" <|
-      \() ->
-        ElmerNav.setLocation "http://fun.com/api/view" fullState
-          |> Markup.target ".error"
-          |> Markup.expect (element <| hasText "No error")
-    ]
-  ]
-
-asLocationTests =
-  describe "asLocation tests"
-  [ describe "hash"
-    [ test "it has a default value" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html"
-        in
-          Expect.equal location.hash ""
-    , test "it finds the hashed value" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html?key=value#some/fun/path"
-        in
-          Expect.equal location.hash "#some/fun/path"
-    , describe "when the hash is relative"
-      [ test "it finds the hashed value" <|
+    , describe "when the url cannot be parsed"
+      [ test "it fails" <|
         \() ->
-          let
-            location = Location.asLocation "#some/fun/path"
-          in
-            Expect.equal location.hash "#some/fun/path"
-      , test "it finds a single hashed value" <|
+          Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+            |> Spy.use [ ElmerNav.spy ]
+            |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+            |> Markup.target "#replaceBadUrl"
+            |> Event.click
+            |> ElmerNav.expectLocation "http://badplace.com"
+            |> Expect.equal
+              (Expect.fail <| Errors.badUrl "Browser.Navigation.replaceUrl" "kdshjfkdsjhfksd")
+      ]
+    , describe "when the test is not started as an application"
+      [ test "it fails" <|
         \() ->
-          let
-            location = Location.asLocation "#hash"
-          in
-            Expect.equal location.hash "#hash"
+          Elmer.given App.defaultModel App.pageView App.update
+            |> Spy.use [ ElmerNav.spy ]
+            |> Markup.target "#replaceUrlButton"
+            |> Event.click
+            |> ElmerNav.expectLocation "http://badplace.com"
+            |> Expect.equal
+              (Expect.fail <| Errors.navigationSpyRequiresApplication "Browser.Navigation.replaceUrl" "http://fun.com/awesome.html")
       ]
     ]
-  , describe "path"
-    [ test "it finds the path" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html?key=value#some/fun/path"
-        in
-          Expect.equal location.pathname "/fun.html?key=value#some/fun/path"
-    ]
-  , describe "href"
-    [ test "it contains the url" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html?key=value#some/fun/path"
-        in
-          Expect.equal location.href "http://fun.com/fun.html?key=value#some/fun/path"
-    ]
-  , describe "protocol"
-    [ test "it contains the protocol" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html?key=value#some/fun/path"
-        in
-          Expect.equal location.protocol "http:"
-    , test "it has a default value" <|
-      \() ->
-        let
-          location = Location.asLocation "/fun.html?key=value#some/fun/path"
-        in
-          Expect.equal location.protocol ""
-    ]
-  , describe "search"
-    [ test "it gets the query string" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html?key=value#some/fun/path"
-        in
-          Expect.equal location.search "?key=value"
-    , test "it gets the query string when there is no hash" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html?key=value"
-        in
-          Expect.equal location.search "?key=value"
-    , test "it returns an empty string when there is no query string" <|
-      \() ->
-        let
-          location = Location.asLocation "http://fun.com/fun.html"
-        in
-          Expect.equal location.search ""
-        ]
   ]

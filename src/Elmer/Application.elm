@@ -2,7 +2,7 @@ module Elmer.Application exposing
   ( given
   )
 
-{-| Functions for testing Elm HTML applications
+{-| Functions for testing Elm HTML programs created with `Browser.application`.
 
 # Test an Application
 @docs given
@@ -12,6 +12,8 @@ module Elmer.Application exposing
 import Elmer exposing (TestState)
 import Elmer.Context as Context exposing (View(..))
 import Elmer.TestState as TestState
+import Elmer.Navigation.Internal exposing (NavigationState(..))
+import Elmer.Runtime.Command exposing (mapState)
 import Browser exposing (UrlRequest, Document)
 import Url exposing (Url)
 import Html exposing (Html)
@@ -25,4 +27,14 @@ Use this function to initialize tests for Html applications created with `Browse
 given : (UrlRequest -> msg) -> (Url -> msg) -> (model -> Document msg) -> (msg -> model -> (model, Cmd msg)) -> TestState model msg
 given onUrlRequest onUrlChange view update =
   Context.default (DocumentView view) update
+    |> Context.updateState (storeNavigationTaggersCommand onUrlRequest onUrlChange)
     |> TestState.with
+
+
+storeNavigationTaggersCommand : (UrlRequest -> msg) -> (Url -> msg) -> Cmd msg
+storeNavigationTaggersCommand onUrlRequest onUrlChange =
+  mapState NavigationTaggers <|
+    \_ ->
+      { onUrlRequest = onUrlRequest
+      , onUrlChange = onUrlChange
+      }

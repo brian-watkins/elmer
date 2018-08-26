@@ -3,19 +3,23 @@ module Elmer.TestApps.DemoTestApp exposing (..)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
-import Navigation
+import Browser.Navigation as Navigation
+import Browser exposing (UrlRequest(..), Document)
+import Url exposing (Url)
 import Http
 
 type alias Model =
   { clicks : Int
   , route : Route
   , requestComponentModel : RequestComponentModel
+  , navigationKey : Navigation.Key
   }
 
 type Msg
   = DoClick
   | RequestComponentMsgWrapper RequestComponentMsg
-  | UpdateRoute Route
+  | OnUrlRequest UrlRequest
+  | OnUrlChange Url
 
 type Route
   = ClickRoute
@@ -23,11 +27,21 @@ type Route
   | RequestRoute
   | UnknownRoute
 
-defaultModel : Model
-defaultModel =
-  { clicks = 0
-  , route = UnknownRoute
-  , requestComponentModel = requestComponentDefaultModel
+
+init : () -> Url -> Navigation.Key -> (Model, Cmd Msg)
+init _ url key =
+  ( { clicks = 0
+    , route = UnknownRoute
+    , requestComponentModel = requestComponentDefaultModel
+    , navigationKey = key
+    }
+  , Navigation.replaceUrl key (Url.toString url)
+  )
+
+document : Model -> Document Msg
+document model =
+  { title = "Demo App"
+  , body = [ view model ]
   }
 
 view : Model -> Html Msg
@@ -49,7 +63,7 @@ viewForRoute model =
 clickView : Model -> Html Msg
 clickView model =
   Html.div [ Attr.id "clickView" ]
-  [ Html.div [ Attr.id "clickCount" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
+  [ Html.div [ Attr.id "clickCount" ] [ Html.text <| (String.fromInt model.clicks) ++ " clicks!" ]
   , Html.div [ Attr.class "button", onClick DoClick ] [ Html.text "Click me" ]
   ]
 
@@ -79,19 +93,22 @@ update msg model =
         ( { model | requestComponentModel = updatedRequestModel }
         , Cmd.map RequestComponentMsgWrapper updatedRequestMsg
         )
-    UpdateRoute route ->
-      ( { model | route = route }, Cmd.none )
+    OnUrlRequest urlRequest ->
+      case urlRequest of
+        Internal url ->
+          ( model, Navigation.pushUrl model.navigationKey (Url.toString url) )
+        External _ ->
+          ( model, Cmd.none )
+    OnUrlChange url ->
+      if url.path == "/click" then
+        ( { model | route = ClickRoute }, Cmd.none )
+      else if url.path == "/text" then
+        ( { model | route = TextRoute }, Cmd.none )
+      else if url.path == "/request" then
+        ( { model | route = RequestRoute }, Cmd.none )
+      else
+        ( { model | route = UnknownRoute }, Cmd.none )
 
-urlParser : Navigation.Location -> Msg
-urlParser location =
-  if location.pathname == "/click" then
-    UpdateRoute ClickRoute
-  else if location.pathname == "/text" then
-    UpdateRoute TextRoute
-  else if location.pathname == "/request" then
-    UpdateRoute RequestRoute
-  else
-    UpdateRoute UnknownRoute
 
 -- Request component
 
@@ -145,7 +162,7 @@ requestComponentUpdate msg model =
 
 errorStatus : Http.Response String -> String
 errorStatus response =
-  "Bad Status: " ++ (toString response.status.code) ++ " " ++ response.status.message
+  "Bad Status: " ++ (String.fromInt response.status.code) ++ " " ++ response.status.message
 
 request : Http.Request String
 request =
