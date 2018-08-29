@@ -11,7 +11,6 @@ module Elmer
         , atIndex
         , last
         , hasLength
-        , init
         , expectModel
         )
 
@@ -22,9 +21,6 @@ module Elmer
 
 # Make low-level expectations
 @docs expectModel
-
-# Test an init method
-@docs init
 
 # Working with Matchers
 @docs Matcher, expectAll, expectNot
@@ -255,32 +251,3 @@ hasLength expectedCount list =
         [ message "Expected list to have size" (String.fromInt expectedCount)
         , message "but it has size" (String.fromInt (List.length list))
         ]
-
-{-| Update the test context with the given model and Cmd.
-
-The current model will be replaced by the given model and the given command
-will then be executed. This is most useful for testing `init` functions.
-
-The first argument takes a wrapper around whatever function produces the initial
-model and command. This allows Elmer to evaluate the initializing function lazily,
-in case any stubs need to be applied.
-
-    Elmer.given MyComponent.defaultModel MyComponent.view MyComponent.update
-      |> init (\() -> MyComponent.init)
-      |> Elmer.Html.target "#title"
-      |> Elmer.Html.expectElementExists
-
--}
-init : (() -> (model, Cmd msg)) -> TestState model msg -> TestState model msg
-init initThunk =
-  TestState.map <|
-    \context ->
-      let
-        (initModel, initCommand) = initThunk ()
-        updatedContext = Context.withModel initModel context
-      in
-        case Runtime.performCommand initCommand updatedContext of
-          Ok initializeContext ->
-            TestState.with initializeContext
-          Err message ->
-            TestState.failure message

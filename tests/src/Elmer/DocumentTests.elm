@@ -2,8 +2,8 @@ module Elmer.DocumentTests exposing (all)
 
 import Test exposing (..)
 import Expect
-import Elmer.Document
-import Elmer.Document.Matchers exposing (expectTitle)
+import Elmer.Browser
+import Elmer.Browser.Matchers exposing (expectTitle)
 import Elmer.TestState as TestState
 import Elmer
 import Elmer.Printer exposing (..)
@@ -14,7 +14,7 @@ import Elmer.Errors as Errors
 import Elmer.UrlHelpers as UrlHelpers
 import Elmer.TestApps.DocumentTestApp as App
 import Elmer.TestApps.SimpleTestApp as SimpleApp
-import Elmer.Application
+
 
 all : Test
 all =
@@ -29,8 +29,8 @@ givenDocumentTests =
   describe "given a document"
   [ test "it creates a TestState" <|
     \() ->
-      Elmer.Document.given App.view App.update
-          |> Elmer.init (\() -> App.init ())
+      Elmer.Browser.givenDocument App.view App.update
+          |> Elmer.Browser.init (\() -> App.init ())
           |> Markup.target "#some-element"
           |> Markup.expect (element <| hasText "Fun Stuff")
   ]
@@ -56,23 +56,23 @@ expectTitleTests =
   , describe "when no model has been set via init"
     [ test "it fails" <|
       \() ->
-        Elmer.Document.given App.view App.update
+        Elmer.Browser.givenDocument App.view App.update
           |> expectTitle "Wrong Title"
           |> Expect.equal (Expect.fail Errors.noModel)
     ]
   , describe "when the title is not what is expected"
     [ test "it fails" <|
       \() ->
-        Elmer.Document.given App.view App.update
-          |> Elmer.init (\() -> App.init ())
+        Elmer.Browser.givenDocument App.view App.update
+          |> Elmer.Browser.init (\() -> App.init ())
           |> expectTitle "Wrong Title"
           |> Expect.equal (Expect.fail <| Errors.wrongTitle "Wrong Title" "Fun Title")
     ]
   , describe "when the expected title matches the title"
     [ test "it passes" <|
       \() ->
-        Elmer.Document.given App.view App.update
-          |> Elmer.init (\() -> App.init ())
+        Elmer.Browser.givenDocument App.view App.update
+          |> Elmer.Browser.init (\() -> App.init ())
           |> expectTitle "Fun Title"
     ]
   ]

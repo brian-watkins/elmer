@@ -38,12 +38,14 @@ import Elmer.DocumentTests as DocumentTests
 import Elmer.NavigationTests as NavigationTests
 import Elmer.ComponentTests as ComponentTests
 import Elmer.DemoAppTests as DemoAppTests
+import Elmer.BrowserTests as BrowserTests
 
 
 all : Test
 all =
     Test.concat 
-    [ DemoAppTests.all
+    [ BrowserTests.all
+    , DemoAppTests.all
     , ComponentTests.all
     , NavigationTests.all
     , DocumentTests.all

@@ -7,8 +7,8 @@ import Elmer.TestState as TestState exposing (..)
 import Elmer.Html as Markup
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Event as Event
-import Elmer.Application
-import Elmer.Document.Matchers exposing (expectTitle)
+import Elmer.Browser
+import Elmer.Browser.Matchers exposing (expectTitle)
 import Elmer.TestApps.ApplicationTestApp as App
 import Elmer.Navigation as Navigation
 import Elmer.Platform.Subscription as Subscription
@@ -33,14 +33,14 @@ applicationTests =
   [ describe "when init is called"
     [ test "it creates a TestState" <|
       \() ->
-        Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
-          |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
+        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
+          |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
           |> Markup.target "#some-element"
           |> Markup.expect (element <| hasText "Fun Stuff")
     , test "it can handle title expectations" <|
       \() ->
-          Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
-          |> Elmer.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
+          Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
+          |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
           |> expectTitle "Fun Title"
     ]
   ]
@@ -52,7 +52,7 @@ noInitTests =
   [ describe "when expecting an element"
     [ test "it shows an error" <|
       \() ->
-        Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Markup.target "#some-element"
           |> Markup.expect (element <| hasText "Fun Stuff")
           |> Expect.equal (Expect.fail Errors.noModel)
@@ -60,7 +60,7 @@ noInitTests =
   , describe "when simulating an event"
     [ test "it shows an error" <|
       \() ->
-        Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Markup.target "#some-element"
           |> Event.click
           |> Markup.expect (element <| hasText "Fun Stuff")
@@ -69,14 +69,14 @@ noInitTests =
   , describe "when making an expectation about the model"
     [ test "it shows an error" <|
       \() ->
-        Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Elmer.expectModel (\model -> Expect.fail "Should not get here")
           |> Expect.equal (Expect.fail Errors.noModel)
     ]
   , describe "when registering subscriptions"
     [ test "it shows an error" <|
       \() ->
-        Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Subscription.with (\_ -> App.subscriptions)
           |> Elmer.expectModel (\model -> Expect.fail "Should not get here")
           |> Expect.equal (Expect.fail Errors.noModel)
@@ -89,7 +89,7 @@ noInitTests =
             Spy.create "fun-spy" (\_ -> App.funCommand)
               |> andCallFake (\tagger message -> Command.fake <| tagger <| "FAKE: " ++ message)
         in
-          Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+          Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
             |> Spy.use [ funStub ]
             |> Command.send (\_ -> App.funCommand App.FunTaskResult "hey!")
             |> Elmer.expectModel (\model -> Expect.fail "Should not get here")
