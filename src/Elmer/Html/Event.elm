@@ -49,7 +49,7 @@ test needs a mouse event to occur at a specific position, use `trigger`.
 -}
 
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Internal as HtmlInternal
+import Elmer.Html.Printer as HtmlPrinter
 import Elmer.Html.Query as Query
 import Elmer.Html.Event.Description as EventDescription
 import Elmer.Html.Event.Types exposing (..)
@@ -226,7 +226,7 @@ hasOption value element =
         Nothing ->
           Err <| format
             [ message "No option found with value" value
-            , message "These are the options" ( HtmlInternal.toString element )
+            , message "These are the options" ( HtmlPrinter.toString element )
             ]
 
 findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)

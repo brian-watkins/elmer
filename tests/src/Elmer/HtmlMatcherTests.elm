@@ -5,11 +5,15 @@ import Elmer.TestHelpers exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Expect
 import Elmer exposing (..)
-import Elmer.Html exposing (HtmlElement)
+import Elmer.Html
 import Elmer.Html.Matchers as Matchers
-import Elmer.Html.Query as Query exposing (HtmlTarget(..))
+import Elmer.Html.Query as Query
 import Elmer.Html.Node as Node
+import Elmer.Html.Types exposing (..)
+import Elmer.Html.Printer as HtmlPrinter
 import Elmer.Printer exposing (..)
+import Elmer.Errors as Errors
+import Elmer.TestHelpers exposing (printHtml)
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
 
@@ -49,13 +53,17 @@ elementTests =
     [ test "it returns the failure message and prints the view" <|
       \() ->
         Matchers.element (\el -> Expect.fail "Should not get here") (testHtmlContext ".blah")
-          |> Expect.equal (Expect.fail "No html element found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
+          |> Expect.equal (Expect.fail <|
+            Errors.elementNotFound ".blah" (printHtml <| SimpleApp.view SimpleApp.defaultModel)
+          )
     ]
   , describe "when there are no elements in the html"
     [ test "it shows there are no elements found" <|
       \() ->
         Matchers.element (\el -> Expect.fail "Should not get here") (testTextHtmlContext ".blah")
-          |> Expect.equal (Expect.fail "No html element found with selector: .blah\n\nThe current view is:\n\n<No Elements>")
+          |> Expect.equal (Expect.fail <|
+            Errors.elementNotFound ".blah" (printHtml <| SimpleApp.textView SimpleApp.defaultModel)
+          )
     ]
   , describe "when the targeted element exists"
     [ test "it passes the element to the matcher" <|
@@ -95,7 +103,9 @@ elementExistsTests =
     [ test "it fails" <|
       \() ->
         Matchers.elementExists (testHtmlContext ".blah")
-          |> Expect.equal (Expect.fail "No html element found with selector: .blah\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text")
+          |> Expect.equal (Expect.fail <|
+            Errors.elementNotFound ".blah" (printHtml <| SimpleApp.view SimpleApp.defaultModel)
+          )
     ]
   , describe "when the targeted element exists"
     [ test "it passes" <|

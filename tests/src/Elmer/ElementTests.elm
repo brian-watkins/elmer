@@ -189,7 +189,7 @@ toStringTests =
           Just node ->
             let
               expected = "- div { className = 'myClass', id = 'title' } \n"
-                  ++ "  - p { className = 'button' } [ click ]\n"
+                  ++ "  - p { className = 'button', style = 'left: 21px; position: absolute; top: 27px' } [ click ]\n"
                   ++ "    - Some text\n"
                   ++ "  - p { data-fun-stuff = 'bowling', className = 'description' } \n"
                   ++ "    - More text"
@@ -223,7 +223,14 @@ type Msg
 sampleHtml : Html Msg
 sampleHtml =
   Html.div [ Attr.id "title", Attr.class "myClass" ]
-  [ Html.p [ Attr.class "button", Events.onClick Click ] [ Html.text "Some text" ]
+  [ Html.p 
+    [ Attr.class "button"
+    , Attr.style "position" "absolute"
+    , Attr.style "top" "27px"
+    , Attr.style "left" "21px"
+    , Events.onClick Click
+    ] 
+    [ Html.text "Some text" ]
   , Html.p [ Attr.class "description", Attr.attribute "data-fun-stuff" "bowling" ] [ Html.text "More text" ]
   ]
 

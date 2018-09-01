@@ -7,11 +7,13 @@ module Elmer.Errors exposing
   , sendUrlRequiresApplication
   , badUrl
   , navigationSpyRequiresApplication
+  , elementNotFound
   )
 
 {-| Exposed for testing
 
-@docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication, badUrl, navigationSpyRequiresApplication
+@docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
+@docs badUrl, navigationSpyRequiresApplication, elementNotFound
 
 -}
 
@@ -87,4 +89,14 @@ navigationSpyRequiresApplication fun expected =
   format
   [ message ("Fake " ++ fun ++ " could not process url") expected
   , description "Use Elmer.Application.given to initialize this test."
+  ]
+
+
+{-|
+-}
+elementNotFound : String -> String -> String
+elementNotFound selector dom =
+  format
+  [ message "No html element found with selector" selector
+  , message "The current view is" dom
   ]

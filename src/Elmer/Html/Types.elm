@@ -5,11 +5,12 @@ module Elmer.Html.Types exposing
   , HtmlEventHandler
   , HtmlEventValue
   , HtmlFact(..)
+  , HtmlTarget(..)
   )
 
 {-| Types for working with Html. Exposed for Testing only
 
-@docs HtmlState, HtmlNode, HtmlElement, HtmlEventHandler, HtmlEventValue, HtmlFact
+@docs HtmlState, HtmlNode, HtmlElement, HtmlEventHandler, HtmlEventValue, HtmlFact, HtmlTarget
 
 -}
 
@@ -54,13 +55,21 @@ type alias HtmlEventValue msg =
   , preventDefault : Bool
   }
 
--- type alias EventHandlerOptions =
---   { stopPropagation : Bool
---   , preventDefault : Bool
---   }
 
 {-| HtmlFact
 -}
 type HtmlFact
   = StringValue String
   | BoolValue Bool
+
+
+{-| HtmlTarget
+-}
+type HtmlTarget msg =
+  HtmlTarget (Selection msg)
+
+
+type alias Selection msg =
+  { selector : String
+  , element : Maybe (HtmlElement msg)
+  }

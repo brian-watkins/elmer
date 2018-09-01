@@ -6,7 +6,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html as Markup
 import Elmer
 import Elmer.Html.Matchers as Matchers exposing (..)
-import Elmer.Html.Query as Query exposing (HtmlTarget(..))
+import Elmer.Html.Query as Query
 import Elmer.TestHelpers exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestApps.SpyTestApp as SpyApp

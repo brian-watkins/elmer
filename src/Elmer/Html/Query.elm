@@ -1,6 +1,5 @@
 module Elmer.Html.Query exposing
-  ( HtmlTarget
-  , forHtml
+  ( forHtml
   , forElement
   , forContext
   , findElement
@@ -9,7 +8,7 @@ module Elmer.Html.Query exposing
 
 {-| Query Html (exposed for testing only)
 
-@docs HtmlTarget, forHtml, forElement, forContext, findElement, findElements
+@docs forHtml, forElement, forContext, findElement, findElements
 
 -}
 
@@ -17,21 +16,12 @@ import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Node as Node
 import Elmer.Html.TagSelector as TagSelector exposing (TagSelector)
+import Elmer.Html.Printer as ElementPrinter
 import Elmer.Context as Context exposing (Context)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Json.Decode as Json
-
-
-{-| HtmlTarget
--}
-type HtmlTarget msg =
-  HtmlTarget (Selection msg)
-
-type alias Selection msg =
-  { selector : String
-  , element : Maybe (HtmlElement msg)
-  }
+import Elmer.Errors as Errors
 
 
 {-| forHtml
@@ -212,16 +202,14 @@ takeElements =
 
 queryErrorMessage : HtmlTarget msg -> String
 queryErrorMessage (HtmlTarget selection) =
-  "No html element found with selector: "
-    ++ selection.selector
-    ++ "\n\nThe current view is:\n\n"
-    ++ (elementToString selection.element)
+  elementToString selection.element
+    |> Errors.elementNotFound selection.selector
 
 
 elementToString : Maybe (HtmlElement msg) -> String
 elementToString maybeElement =
   case maybeElement of
     Just element ->
-      Html_.toString element
+      ElementPrinter.toString element
     Nothing ->
       "<No Elements>"

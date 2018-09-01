@@ -8,6 +8,8 @@ import Expect
 import Elmer
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
+import Elmer.TestHelpers exposing (printHtml)
+import Elmer.Errors as Errors
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 
@@ -47,8 +49,8 @@ standardEventBehavior eventTypes eventFunction =
         in
           Markup.target "#nothing" initialState
             |> eventFunction
-            |> Expect.equal (TestState.failure
-              "No html element found with selector: #nothing\n\nThe current view is:\n\n- div { className = 'styled no-events', id = 'root' } \n  - Some text"
+            |> Expect.equal (TestState.failure <|
+              Errors.elementNotFound "#nothing" <| printHtml (SimpleApp.view SimpleApp.defaultModel)
             )
     ]
   , describe "when the event handler is not found"

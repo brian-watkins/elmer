@@ -3,6 +3,7 @@
         "Elmer.Html.Types",
         "Elmer.Html.Query",
         "Elmer.Html.Node",
+        "Elmer.Html.Printer",
         "Elmer.TestState",
         "Elmer.Printer",
         "Elmer.Spy.Arg",

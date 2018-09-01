@@ -42,8 +42,8 @@ type alias HtmlElement msg
 
 An `HtmlTarget` is determined by the last use of `Elmer.Html.target`.
 -}
-type alias HtmlTarget msg =
-  Query.HtmlTarget msg
+type alias HtmlTarget msg
+  = Elmer.Html.Types.HtmlTarget msg
 
 
 {-| Target an element or elements within the Html produced by the

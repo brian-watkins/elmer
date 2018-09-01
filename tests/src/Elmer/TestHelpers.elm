@@ -3,8 +3,21 @@ module Elmer.TestHelpers exposing (..)
 import Elmer.Html.Types exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
+import Html exposing (Html)
+import Elmer.Html.Node as Node
+import Elmer.Html.Printer as HtmlPrinter
 
 -- REVISIT: Whoa this is a lot of implementation detail here ... 
+
+
+printHtml : Html msg -> String
+printHtml html =
+  case Node.from html of
+    Element element ->
+      HtmlPrinter.toString element
+    Text text ->
+      "<No Elements>"
+
 
 emptyNode : String -> HtmlElement msg
 emptyNode tagName =

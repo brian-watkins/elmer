@@ -28,6 +28,7 @@ module Elmer.Html.Element exposing
 import Elmer.Html
 import Elmer.Html.Internal as Internal
 import Elmer.Html.Query as Query
+import Elmer.Html.Printer as HtmlPrinter
 import Dict exposing (Dict)
 
 
@@ -58,7 +59,8 @@ target selector =
 -}
 toString : Elmer.Html.HtmlElement msg -> String
 toString node =
-  Internal.toString node
+  HtmlPrinter.toString node
+
 
 {-| Get the tag of the element
 -}
@@ -66,11 +68,13 @@ tag : Elmer.Html.HtmlElement msg -> String
 tag =
   Internal.tag
 
+
 {-| Get the value of the element's `id` attribute, if it is defined.
 -}
 id : Elmer.Html.HtmlElement msg -> Maybe String
 id =
   Internal.elementId
+
 
 {-| Get a list of classes applied to this element.
 -}
@@ -78,12 +82,14 @@ classList : Elmer.Html.HtmlElement msg -> List String
 classList =
   Internal.classList
 
+
 {-| Get the value of a particular property belonging to this
 element, if that property is defined.
 -}
 property : String -> Elmer.Html.HtmlElement msg -> Maybe String
 property name =
   Internal.property name
+
 
 {-| Get the boolean value of a particular property belonging to
 this element, if that property is defined.
@@ -95,6 +101,7 @@ boolProperty : String -> Elmer.Html.HtmlElement msg -> Maybe Bool
 boolProperty name element =
   property name element
     |> Maybe.andThen toBool
+
 
 toBool : String -> Maybe Bool
 toBool str =
@@ -115,6 +122,7 @@ see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes
 properties : Elmer.Html.HtmlElement msg -> Dict String String
 properties =
   Internal.properties
+
 
 {-| Get this element's attributes as a `Dict`. If you define a custom attribute
 for an Html element, you can find it with this function.
