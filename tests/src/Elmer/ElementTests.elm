@@ -10,6 +10,7 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Elmer.TestHelpers exposing (..)
+import Dict
 
 
 all : Test
@@ -17,6 +18,7 @@ all =
   Test.concat
   [ tagTests
   , classListTests
+  , styleTests
   , idTests
   , propertyTests
   , boolPropertyTests
@@ -52,6 +54,31 @@ classListTests =
     ]
   ]
 
+
+styleTests : Test
+styleTests =
+  describe "styles"
+  [ describe "when the element has no styles"
+    [ test "it returns an empty dictionary" <|
+      \() ->
+        Element.styles (emptyNode "div")
+          |> Expect.equal Dict.empty
+    ]
+  , describe "when the element has styles"
+    [ test "it returns a dictionary with the styles" <|
+      \() ->
+        nodeWithAttributes [ Attr.style "position" "absolute", Attr.style "top" "21px", Attr.style "left" "27px" ]
+          |> Element.styles
+          |> Expect.equal (
+            Dict.fromList
+            [ ("position", "absolute")
+            , ("top", "21px")
+            , ("left", "27px")
+            ]
+          )
+    ]
+  ]
+
 idTests : Test
 idTests =
   describe "id"
@@ -75,20 +102,20 @@ propertyTests =
   [ describe "when the node has no properties" <|
     [ test "it returns nothing" <|
       \() ->
-        Element.property "innerHTML" (emptyNode "div")
+        Element.property "some-property" (emptyNode "div")
           |> Expect.equal Nothing
     ]
   , describe "when the node has properties"
     [ describe "when the node does not have the requested property"
       [ test "it returns nothing" <|
         \() ->
-          Element.property "innerHTML" (nodeWithProperty ("blah", "blah"))
+          Element.property "some-property" (nodeWithProperty ("blah", "blah"))
             |> Expect.equal Nothing
       ]
     , describe "when the node has the requested property"
       [ test "it returns the property" <|
         \() ->
-          Element.property "innerHTML" (nodeWithProperty ("innerHTML", "blah"))
+          Element.property "some-property" (nodeWithProperty ("some-property", "blah"))
             |> Expect.equal (Just "blah")
       ]
     , describe "when the node has a boolean property value"
@@ -120,7 +147,7 @@ boolPropertyTests =
       [ describe "when the property does not have a boolean value"
         [ test "it returns nothing" <|
           \() ->
-            Element.boolProperty "innerHTML" (nodeWithProperty ("innerHTML", "blah"))
+            Element.boolProperty "some-property" (nodeWithProperty ("some-property", "blah"))
               |> Expect.equal Nothing
         ]
       , describe "when the property has a boolean value"

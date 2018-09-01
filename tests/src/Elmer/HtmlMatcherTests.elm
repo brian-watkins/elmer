@@ -188,27 +188,33 @@ hasPropertyTests =
   [ describe "when the node has no properties"
     [ test "it fails with the right message" <|
       \() ->
-        Matchers.hasProperty ("innerHTML", "some <i>html</i>") (emptyNode "div")
-          |> Expect.equal (Expect.fail "Expected element to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
+        Matchers.hasProperty ("some-property", "some <i>html</i>") (emptyNode "div")
+          |> Expect.equal (
+            Expect.fail <| Errors.noProperty "some-property" "some <i>html</i>"
+          )
     ]
   , describe "when the node has properties"
     [ describe "when the node does not have the specified property"
       [ test "it fails with the right message" <|
         \() ->
-          Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
-            |> Expect.equal (Expect.fail "Expected element to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has no property with that name")
+          Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
+            |> Expect.equal (
+              Expect.fail <| Errors.noProperty "some-property" "some <i>html</i>"
+            )
       ]
     , describe "when the node has the specified property"
       [ describe "when the value is incorrect"
         [ test "it fails" <|
           \() ->
-            Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "blah"))
-              |> Expect.equal (Expect.fail "Expected element to have property\n\n\tinnerHTML = some <i>html</i>\n\nbut it has\n\n\tinnerHTML = blah")
+            Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "blah"))
+              |> Expect.equal (
+                Expect.fail <| Errors.wrongProperty "some-property" "some <i>html</i>" "blah"
+              )
         ]
       , describe "when the value is correct"
         [ test "it passes" <|
           \() ->
-            Matchers.hasProperty ("innerHTML", "some <i>html</i>") (nodeWithProperty ("innerHTML", "some <i>html</i>"))
+            Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "some <i>html</i>"))
               |> Expect.equal Expect.pass
         ]
       ]
@@ -363,7 +369,7 @@ listensForEventTests =
           |> Expect.equal (Expect.fail <|
             format
               [ message "Expected element to listen for event" "click"
-              , message "but it listens for" "mouseup\nmousedown"
+              , message "but it listens for" "mousedown\nmouseup"
               ]
             )
     ]

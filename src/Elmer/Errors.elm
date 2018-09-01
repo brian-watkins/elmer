@@ -8,12 +8,14 @@ module Elmer.Errors exposing
   , badUrl
   , navigationSpyRequiresApplication
   , elementNotFound
+  , wrongProperty
+  , noProperty
   )
 
 {-| Exposed for testing
 
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
-@docs badUrl, navigationSpyRequiresApplication, elementNotFound
+@docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongProperty, noProperty
 
 -}
 
@@ -99,4 +101,23 @@ elementNotFound selector dom =
   format
   [ message "No html element found with selector" selector
   , message "The current view is" dom
+  ]
+
+
+{-|
+-}
+wrongProperty : String -> String -> String -> String
+wrongProperty property expectedValue actualValue =
+  format
+  [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
+  , message "but it has" <| property ++ " = " ++ actualValue
+  ]
+
+{-|
+-}
+noProperty : String -> String -> String
+noProperty property expectedValue =
+  format
+  [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
+  , description "but it has no property with that name"
   ]

@@ -4,10 +4,12 @@ import Elmer.Html.Types exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Html exposing (Html)
+import Html.Attributes as Attr
+import Html.Events as Events
 import Elmer.Html.Node as Node
 import Elmer.Html.Printer as HtmlPrinter
-
--- REVISIT: Whoa this is a lot of implementation detail here ... 
+import Json.Encode as Encode
+import Json.Decode as Json
 
 
 printHtml : Html msg -> String
@@ -19,133 +21,119 @@ printHtml html =
       "<No Elements>"
 
 
+toElement : Html msg -> HtmlElement msg
+toElement html =
+  case
+    html
+      |> Node.from
+      |> Node.asElement
+  of
+    Just element ->
+      element
+    Nothing ->
+      Debug.todo "Could not parse html!"
+
+
 emptyNode : String -> HtmlElement msg
 emptyNode tagName =
-  { tag = tagName
-  , properties = Dict.empty
-  , attributes = Dict.empty
-  , styles = Dict.empty
-  , children = []
-  , inheritedEventHandlers = []
-  , eventHandlers = []
-  }
+  Html.node tagName [] []
+    |> toElement
+
+
+nodeWithAttributes : List (Html.Attribute msg) -> HtmlElement msg 
+nodeWithAttributes attrs =
+  Html.div attrs []
+    |> toElement
+
 
 nodeWithClass : String -> HtmlElement msg
 nodeWithClass className =
-  let
-    node = emptyNode "div"
-  in
-    { node
-    | properties =
-        factsWithStringValues [ ("className", className ++ " funClass") ]
-    }
+  nodeWithAttributes
+  [ Attr.class className
+  , Attr.class "funClass"
+  ]
+
 
 nodeWithId : String -> HtmlElement msg
 nodeWithId id =
-  let
-    node = emptyNode "div"
-  in
-    { node | properties =
-        factsWithStringValues [ ("id", id) ]
-    }
+  nodeWithAttributes
+  [ Attr.id id
+  ]
+
 
 nodeWithClassAndId : String -> String -> HtmlElement msg
 nodeWithClassAndId className id =
-  let
-    node = emptyNode "div"
-  in
-    { node | properties =
-      factsWithStringValues
-        [ ("className", className ++ " funClass")
-        , ("id", id)
-        ]
-    }
+  nodeWithAttributes
+  [ Attr.id id
+  , Attr.class className
+  , Attr.class "funClass"
+  ]
 
-factsWithStringValues : List (String, String) -> Dict String HtmlFact
-factsWithStringValues values =
-  List.map (\(key, value) -> (key, StringValue value)) values
-    |> Dict.fromList
-
-factsWithBoolValues : List (String, Bool) -> Dict String HtmlFact
-factsWithBoolValues values =
-  List.map (\(key, value) -> (key, BoolValue value)) values
-    |> Dict.fromList
-
-
-textNode : String -> HtmlNode msg
-textNode text =
-  Text text
 
 nodeWithText : String -> HtmlElement msg
 nodeWithText text =
-  let
-    node = emptyNode "div"
-  in
-    { node | children = [(textNode text)] }
+  Html.div []
+  [ Html.text text 
+  ]
+    |> toElement
+
 
 nodeWithList : HtmlElement msg
 nodeWithList =
-  let
-    ul = emptyNode "ul"
-  in
-    { ul | children =
-      [ Element (emptyNode "li")
-      , Element (emptyNode "li")
-      , Element (emptyNode "li")
-      ]
-    }
+  Html.ul []
+  [ Html.li [] []
+  , Html.li [] []
+  , Html.li [] []
+  ]
+    |> toElement
+
 
 nodeWithMultipleChildren : String -> HtmlElement msg
 nodeWithMultipleChildren text =
-  let
-    node = emptyNode "div"
-  in
-    { node | children = [(textNode "fun stuff"), Element (emptyNode "div"), (textNode text)] }
+  Html.div []
+  [ Html.text "fun stuff"
+  , Html.div [] []
+  , Html.text text
+  ]
+    |> toElement
+
 
 nodeWithNestedChildren : String -> HtmlElement msg
 nodeWithNestedChildren text =
-  { tag = "div"
-  , properties = Dict.empty
-  , attributes = Dict.empty
-  , styles = Dict.empty
-  , children =
-    [ (textNode "fun stuff")
-    , Element (emptyNode "div")
-    , (textNode "another sibling")
-    , Element (nodeWithText text)
+  Html.div []
+  [ Html.text "fun stuff"
+  , Html.div [] []
+  , Html.text "another sibling"
+  , Html.div []
+    [ Html.text text
     ]
-  , inheritedEventHandlers = []
-  , eventHandlers = []
-  }
+  ]
+    |> toElement
+
 
 nodeWithProperty : (String, String) -> HtmlElement msg
 nodeWithProperty (name, value) =
-  let
-    node = emptyNode "div"
-  in
-    { node | properties =
-      factsWithStringValues [ (name, value) ]
-    }
+  Html.div
+  [ Attr.property name <| Encode.string value 
+  ] []
+    |> toElement
+
 
 nodeWithBooleanProperty : (String, Bool) -> HtmlElement msg
 nodeWithBooleanProperty (name, value) =
-  let
-    node = emptyNode "div"
-  in
-    { node | properties =
-      factsWithBoolValues [ (name, value) ]
-    }
+  Html.div
+  [ Attr.property name <| Encode.bool value 
+  ] []
+    |> toElement
+
 
 nodeWithEvents : List String -> HtmlElement String
 nodeWithEvents events =
-  let
-    node = emptyNode "div"
-    eventHandlers = List.map eventHandler events
-  in
-    { node | eventHandlers = eventHandlers }
+  Html.div
+  ( List.map toEventHandler events)
+  []
+    |> toElement
 
-eventHandler : String -> HtmlEventHandler String
-eventHandler event =
-  { eventType = event
-  , decoder = Json.succeed { message = "fakeEvent", stopPropagation = False, preventDefault = False }
-  }
+toEventHandler : String -> Html.Attribute String
+toEventHandler event =
+  Events.on event <| Json.succeed "fakeEvent"

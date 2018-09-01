@@ -27,6 +27,7 @@ import Elmer.Html.Types exposing (..)
 import Elmer.Html
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query
+import Elmer.Errors as Errors
 import Elmer.Printer exposing (..)
 import Expect
 import String
@@ -121,17 +122,16 @@ hasClass className node =
 
 -}
 hasProperty : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasProperty (name, value) node =
+hasProperty (name, expectedValue) node =
   case Html_.property name node of
-    Just propertyValue ->
-      if value == propertyValue then
+    Just actualValue ->
+      if expectedValue == actualValue then
         Expect.pass
       else
-        Expect.fail (format [message "Expected element to have property" (name ++ " = " ++ value),
-          message "but it has" (name ++ " = " ++ propertyValue) ])
+        Expect.fail <| Errors.wrongProperty name expectedValue actualValue
     Nothing ->
-      Expect.fail (format [message "Expected element to have property" (name ++ " = " ++ value),
-          description "but it has no property with that name" ])
+      Expect.fail <| Errors.noProperty name expectedValue
+
 
 {-| Expect that an element has the specified attribute with the specified value.
 

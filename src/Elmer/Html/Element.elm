@@ -7,13 +7,14 @@ module Elmer.Html.Element exposing
   , boolProperty
   , properties
   , attributes
+  , styles
   , toString
   )
 
 {-| Functions for working directly with HtmlElements.
 
 # Element Characteristics
-@docs tag, id, classList, property, boolProperty, properties, attributes
+@docs tag, id, classList, styles, property, boolProperty, properties, attributes
 
 # Target Descendants
 @docs target
@@ -23,7 +24,6 @@ module Elmer.Html.Element exposing
 
 -}
 
--- REVISIT: We might want to add a function to get the styles here?
 
 import Elmer.Html
 import Elmer.Html.Internal as Internal
@@ -81,6 +81,13 @@ id =
 classList : Elmer.Html.HtmlElement msg -> List String
 classList =
   Internal.classList
+
+
+{-| Get this element's styles as a `Dict`.
+-}
+styles : Elmer.Html.HtmlElement msg -> Dict String String
+styles =
+  Internal.styles
 
 
 {-| Get the value of a particular property belonging to this
