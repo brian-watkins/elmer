@@ -39,6 +39,7 @@ import Elmer.NavigationTests as NavigationTests
 import Elmer.ComponentTests as ComponentTests
 import Elmer.DemoAppTests as DemoAppTests
 import Elmer.BrowserTests as BrowserTests
+import Elmer.HtmlCustomTests as HtmlCustomTests
 
 
 all : Test
@@ -74,6 +75,7 @@ all =
     , ElmerTests.all
     , HtmlKeyedTests.all
     , HtmlLazyTests.all
+    , HtmlCustomTests.all
     , HtmlTests.all
     , HtmlQueryTests.all
     , HtmlMatcherTests.all

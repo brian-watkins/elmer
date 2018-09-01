@@ -41,25 +41,21 @@ asElement node =
       Nothing
 
 
--- REVISIT: What about 'custom' nodes (I think that's what case 3 is ...). No tests for this as of now I think
 fromHtml : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
 fromHtml inheritedEvents tagger html =
-  -- let
-    -- d = Elm.Kernel.Value.print "html" html
-  -- in
   case Value.field "$" html of
     0 ->
       fromText html
     1 ->
-      fromNode Normal inheritedEvents tagger html
+      fromNode inheritedEvents tagger html
     2 ->
-      fromNode Keyed inheritedEvents tagger html
+      fromKeyedNode inheritedEvents tagger html
+    3 ->
+      fromCustomNode inheritedEvents tagger html
     4 ->
-      fromTagger inheritedEvents tagger html
+      fromTaggedNode inheritedEvents tagger html
     5 -> 
-      ()
-        |> Value.field "m" html
-        |> fromHtml inheritedEvents tagger
+      fromLazyNode inheritedEvents tagger html
     unknownType ->
       Debug.todo <| "Unknown html type: " ++ (String.fromInt unknownType)
 
@@ -70,8 +66,8 @@ fromText html =
     |> Text
 
 
-fromTagger : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromTagger inheritedEvents maybePreviousTagger html =
+fromTaggedNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromTaggedNode inheritedEvents maybePreviousTagger html =
   let
     thisTagger = Value.field "j" html
     fullTagger =
@@ -83,27 +79,58 @@ fromTagger inheritedEvents maybePreviousTagger html =
       |> fromHtml inheritedEvents (Just fullTagger)
 
 
-fromNode : NodeType -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromNode nodeType inheritedEvents tagger node =
-  let
-    nodeEvents = eventHandlers tagger node
-    eventsToInherit =
-      List.append inheritedEvents nodeEvents
-  in
-    Element
-      { tag = Value.field "c" node
-      , properties = decodeDict propertiesDecoder node
-      , attributes = decodeDict attributesDecoder node
-      , styles = decodeDict stylesDecoder node
-      , children = 
-          case nodeType of
-            Normal ->
-              handleChildNodes identity eventsToInherit tagger node
-            Keyed ->
-              handleChildNodes Tuple.second eventsToInherit tagger node
-      , inheritedEventHandlers = inheritedEvents
-      , eventHandlers = nodeEvents
-      }
+fromLazyNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromLazyNode inheritedEvents tagger html =
+  ()
+    |> Value.field "m" html
+    |> fromHtml inheritedEvents tagger
+
+
+fromNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromNode =
+  fromNodeWithChildren identity
+
+
+fromKeyedNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromKeyedNode =
+  fromNodeWithChildren Tuple.second
+  
+
+fromNodeWithChildren : (a -> Html msg) -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromNodeWithChildren childMapper inheritedEvents tagger node =
+  basicElement (Value.field "c" node) inheritedEvents tagger node
+    |> withChildren (
+        handleChildNodes 
+          childMapper
+          ( List.append inheritedEvents <| eventHandlers tagger node )
+          tagger
+          node
+    )
+    |> Element
+
+
+fromCustomNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+fromCustomNode inheritedEvents tagger html =
+  basicElement "div" inheritedEvents tagger html
+    |> withChildren [ Text "<Custom Element -- Content not rendered>" ]
+    |> Element
+
+
+basicElement : String -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlElement msg
+basicElement tag inheritedEvents tagger html =
+  { tag = tag
+  , properties = decodeDict propertiesDecoder html
+  , attributes = decodeDict attributesDecoder html
+  , styles = decodeDict stylesDecoder html
+  , children = []
+  , inheritedEventHandlers = inheritedEvents
+  , eventHandlers = eventHandlers tagger html
+  }
+
+
+withChildren : List (HtmlNode msg) -> HtmlElement msg -> HtmlElement msg
+withChildren children element =
+  { element | children = children }
 
 
 handleChildNodes : (a -> Html msg) -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> List (HtmlNode msg)
