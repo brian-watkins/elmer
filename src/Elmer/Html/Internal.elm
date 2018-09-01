@@ -1,5 +1,6 @@
 module Elmer.Html.Internal exposing
   ( toString
+  , tag
   , elementId
   , classList
   , attributes
@@ -22,6 +23,11 @@ import Dict exposing (Dict)
 toString : HtmlElement msg -> String
 toString node =
   (printElement "" (Element node))
+
+
+tag : HtmlElement msg -> String
+tag element =
+  element.tag
 
 
 elementId : HtmlElement msg -> Maybe String

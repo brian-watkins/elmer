@@ -1,5 +1,6 @@
 module Elmer.Html.Element exposing
   ( id
+  , tag
   , target
   , classList
   , property
@@ -12,7 +13,7 @@ module Elmer.Html.Element exposing
 {-| Functions for working directly with HtmlElements.
 
 # Element Characteristics
-@docs id, classList, property, boolProperty, properties, attributes
+@docs tag, id, classList, property, boolProperty, properties, attributes
 
 # Target Descendants
 @docs target
@@ -58,6 +59,12 @@ target selector =
 toString : Elmer.Html.HtmlElement msg -> String
 toString node =
   Internal.toString node
+
+{-| Get the tag of the element
+-}
+tag : Elmer.Html.HtmlElement msg -> String
+tag =
+  Internal.tag
 
 {-| Get the value of the element's `id` attribute, if it is defined.
 -}

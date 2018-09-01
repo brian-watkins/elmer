@@ -15,13 +15,25 @@ import Elmer.TestHelpers exposing (..)
 all : Test
 all =
   Test.concat
-  [ classListTests
+  [ tagTests
+  , classListTests
   , idTests
   , propertyTests
   , boolPropertyTests
   , targetTests
   , toStringTests
   ]
+
+
+tagTests : Test
+tagTests =
+  describe "tag"
+  [ test "it returns the tag" <|
+    \() ->
+      Element.tag (emptyNode "div")
+        |> Expect.equal "div"
+  ]
+
 
 classListTests : Test
 classListTests =
