@@ -13,7 +13,7 @@ import Expect
 import Elmer exposing (Matcher)
 import Elmer.TestState as TestState
 import Elmer.Context as Context exposing (Context, View(..))
-import Elmer.Errors as Errors
+import Elmer.Errors as Errors exposing (failWith)
 import Elmer.Printer exposing (..)
 
 
@@ -30,11 +30,11 @@ expectTitle expectedTitle =
               if expectedTitle == actualTitle then
                 Expect.pass
               else
-                Expect.fail <| Errors.wrongTitle expectedTitle actualTitle
+                failWith <| Errors.wrongTitle expectedTitle actualTitle
             Nothing ->
-              Expect.fail <| Errors.noTitle expectedTitle
+              failWith <| Errors.noTitle expectedTitle
         Nothing ->
-          Expect.fail Errors.noModel
+          failWith Errors.noModel
       
 
 renderTitle : model -> Context model msg -> Maybe String

@@ -63,7 +63,7 @@ targetedElement context =
         Just view ->
           Query.findElement <| Query.forHtml selector view
         Nothing ->
-          Err Errors.noModel
+          Err <| Errors.print Errors.noModel
     Nothing ->
       Err "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
 

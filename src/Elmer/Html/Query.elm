@@ -204,6 +204,7 @@ queryErrorMessage : HtmlTarget msg -> String
 queryErrorMessage (HtmlTarget selection) =
   elementToString selection.element
     |> Errors.elementNotFound selection.selector
+    |> Errors.print
 
 
 elementToString : Maybe (HtmlElement msg) -> String

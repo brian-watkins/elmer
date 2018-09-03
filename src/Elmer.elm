@@ -38,7 +38,7 @@ import Elmer.TestState as TestState
 import Elmer.Context as Context exposing (View(..))
 import Elmer.Runtime as Runtime
 import Elmer.Printer exposing (..)
-import Elmer.Errors as Errors
+import Elmer.Errors as Errors exposing (failWith)
 import Array
 
 {-| Represents the current state of the test.
@@ -111,7 +111,7 @@ expectModel matcher =
         Just model ->
           matcher model
         Nothing ->
-          Expect.fail Errors.noModel
+          failWith Errors.noModel
 
 
 {-| Expect that a matcher fails.

@@ -88,7 +88,7 @@ with subsThunk =
               |> Context.updateStateFor context
               |> TestState.with
         Nothing ->
-          TestState.failure Errors.noModel
+          TestState.failure <| Errors.print Errors.noModel
 
 
 describeSub : String -> (a -> msg) -> SubDescription a msg

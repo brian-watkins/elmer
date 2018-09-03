@@ -1,5 +1,6 @@
 module Elmer.TestHelpers exposing (..)
 
+import Expect exposing (Expectation)
 import Elmer.Html.Types exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
@@ -8,8 +9,14 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Elmer.Html.Node as Node
 import Elmer.Html.Printer as HtmlPrinter
+import Elmer.Errors as Errors exposing (CustomError)
 import Json.Encode as Encode
 import Json.Decode as Json
+
+
+expectError : CustomError -> Expectation -> Expectation
+expectError expected actual =
+  Expect.equal (Errors.failWith expected) actual
 
 
 printHtml : Html msg -> String

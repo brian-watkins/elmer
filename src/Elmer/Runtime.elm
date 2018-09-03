@@ -25,7 +25,7 @@ performUpdate message context =
       Just ( updatedContext, command ) ->
         performCommand command updatedContext
       Nothing ->
-        Err Errors.noModel
+        Err <| Errors.print Errors.noModel
 
 
 {-|

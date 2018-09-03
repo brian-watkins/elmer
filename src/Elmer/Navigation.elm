@@ -21,7 +21,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
-import Elmer.Errors as Errors
+import Elmer.Errors as Errors exposing (failWith)
 import Elmer exposing (Matcher)
 import Elmer.Value as Value
 import Elmer.Navigation.Internal exposing (..)
@@ -77,9 +77,9 @@ generateUrlChangeCommand functionName urlString context =
         Just url ->
           Command.fake <| onUrlChange url
         Nothing ->
-          Command.fail <| Errors.badUrl functionName urlString
+          Command.fail <| Errors.print <| Errors.badUrl functionName urlString
     Nothing ->
-      Command.fail <| Errors.navigationSpyRequiresApplication functionName urlString
+      Command.fail <| Errors.print <| Errors.navigationSpyRequiresApplication functionName urlString
 
 
 fakeNavigateCommand : String -> Key -> String -> Cmd msg
@@ -118,6 +118,6 @@ expectLocation expectedURL =
         case Context.state Location context of
           Just location ->
             Expect.equal location expectedURL
-                |> Expect.onFail (Errors.wrongLocation expectedURL location)
+                |> Expect.onFail (Errors.print <| Errors.wrongLocation expectedURL location)
           Nothing ->
-            Expect.fail (Errors.noLocation expectedURL)
+            failWith <| Errors.noLocation expectedURL

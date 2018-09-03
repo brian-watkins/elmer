@@ -12,6 +12,7 @@ import Elmer.Html as Markup
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Errors as Errors
 import Elmer.UrlHelpers as UrlHelpers
+import Elmer.TestHelpers exposing (expectError)
 import Elmer.TestApps.DocumentTestApp as App
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 
@@ -51,14 +52,14 @@ expectTitleTests =
       \() ->
         Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           |> expectTitle "Document Title"
-          |> Expect.equal (Expect.fail <| Errors.noTitle "Document Title")
+          |> expectError (Errors.noTitle "Document Title")
     ]
   , describe "when no model has been set via init"
     [ test "it fails" <|
       \() ->
         Elmer.Browser.givenDocument App.view App.update
           |> expectTitle "Wrong Title"
-          |> Expect.equal (Expect.fail Errors.noModel)
+          |> expectError Errors.noModel
     ]
   , describe "when the title is not what is expected"
     [ test "it fails" <|
@@ -66,7 +67,7 @@ expectTitleTests =
         Elmer.Browser.givenDocument App.view App.update
           |> Elmer.Browser.init (\() -> App.init ())
           |> expectTitle "Wrong Title"
-          |> Expect.equal (Expect.fail <| Errors.wrongTitle "Wrong Title" "Fun Title")
+          |> expectError (Errors.wrongTitle "Wrong Title" "Fun Title")
     ]
   , describe "when the expected title matches the title"
     [ test "it passes" <|

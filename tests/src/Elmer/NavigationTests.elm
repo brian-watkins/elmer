@@ -15,6 +15,7 @@ import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors
 import Elmer.Html as Markup
 import Elmer.UrlHelpers as UrlHelpers
+import Elmer.TestHelpers exposing (expectError)
 import Browser exposing (UrlRequest)
 import Url exposing (Url)
 
@@ -40,8 +41,7 @@ expectLocationTests =
       \() ->
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> ElmerNav.expectLocation "http://badplace.com"
-          |> Expect.equal
-            (Expect.fail <| Errors.noLocation "http://badplace.com")
+          |> expectError (Errors.noLocation "http://badplace.com")
     ]
   , describe "when a pushUrl command is sent"
     [ describe "when the correct url is expected"
@@ -65,8 +65,7 @@ expectLocationTests =
               |> Markup.target "#pushUrlButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
-              |> Expect.equal
-                (Expect.fail <| Errors.wrongLocation "http://badplace.com" "http://fun.com/fun.html")
+              |> expectError (Errors.wrongLocation "http://badplace.com" "http://fun.com/fun.html")
         ]
       ]
     , describe "when the url cannot be parsed"
@@ -78,8 +77,7 @@ expectLocationTests =
             |> Markup.target "#pushBadUrl"
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
-            |> Expect.equal
-              (Expect.fail <| Errors.badUrl "Browser.Navigation.pushUrl" "kdshjfkdsjhfksd")
+            |> expectError (Errors.badUrl "Browser.Navigation.pushUrl" "kdshjfkdsjhfksd")
       ]
     , describe "when the test is not started as an application"
       [ test "it fails" <|
@@ -89,8 +87,7 @@ expectLocationTests =
             |> Markup.target "#pushUrlButton"
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
-            |> Expect.equal
-              (Expect.fail <| Errors.navigationSpyRequiresApplication "Browser.Navigation.pushUrl" "http://fun.com/fun.html")
+            |> expectError (Errors.navigationSpyRequiresApplication "Browser.Navigation.pushUrl" "http://fun.com/fun.html")
       ]
     ]
   , describe "when a replaceUrl command is sent"
@@ -115,8 +112,7 @@ expectLocationTests =
               |> Markup.target "#replaceUrlButton"
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
-              |> Expect.equal
-                (Expect.fail <| Errors.wrongLocation "http://badplace.com" "http://fun.com/awesome.html")
+              |> expectError (Errors.wrongLocation "http://badplace.com" "http://fun.com/awesome.html")
         ]
       ]
     , describe "when the url cannot be parsed"
@@ -128,8 +124,7 @@ expectLocationTests =
             |> Markup.target "#replaceBadUrl"
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
-            |> Expect.equal
-              (Expect.fail <| Errors.badUrl "Browser.Navigation.replaceUrl" "kdshjfkdsjhfksd")
+            |> expectError (Errors.badUrl "Browser.Navigation.replaceUrl" "kdshjfkdsjhfksd")
       ]
     , describe "when the test is not started as an application"
       [ test "it fails" <|
@@ -139,8 +134,7 @@ expectLocationTests =
             |> Markup.target "#replaceUrlButton"
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
-            |> Expect.equal
-              (Expect.fail <| Errors.navigationSpyRequiresApplication "Browser.Navigation.replaceUrl" "http://fun.com/awesome.html")
+            |> expectError (Errors.navigationSpyRequiresApplication "Browser.Navigation.replaceUrl" "http://fun.com/awesome.html")
       ]
     ]
   ]

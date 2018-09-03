@@ -38,4 +38,4 @@ processStub msg context =
     Just tuple ->
       tuple
     Nothing ->
-      (context, Fail.with Errors.noModel)
+      (context, Fail.with <| Errors.print Errors.noModel)

@@ -50,7 +50,7 @@ standardEventBehavior eventTypes eventFunction =
           Markup.target "#nothing" initialState
             |> eventFunction
             |> Expect.equal (TestState.failure <|
-              Errors.elementNotFound "#nothing" <| printHtml (SimpleApp.view SimpleApp.defaultModel)
+              Errors.print <| Errors.elementNotFound "#nothing" <| printHtml (SimpleApp.view SimpleApp.defaultModel)
             )
     ]
   , describe "when the event handler is not found"

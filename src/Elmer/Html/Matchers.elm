@@ -27,7 +27,7 @@ import Elmer.Html.Types exposing (..)
 import Elmer.Html
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query
-import Elmer.Errors as Errors
+import Elmer.Errors as Errors exposing (failWith)
 import Elmer.Printer exposing (..)
 import Expect
 import String
@@ -128,9 +128,9 @@ hasProperty (name, expectedValue) node =
       if expectedValue == actualValue then
         Expect.pass
       else
-        Expect.fail <| Errors.wrongProperty name expectedValue actualValue
+        failWith <| Errors.wrongProperty name expectedValue actualValue
     Nothing ->
-      Expect.fail <| Errors.noProperty name expectedValue
+      failWith <| Errors.noProperty name expectedValue
 
 
 {-| Expect that an element has the specified attribute with the specified value.

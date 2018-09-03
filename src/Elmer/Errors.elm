@@ -1,5 +1,8 @@
 module Elmer.Errors exposing
-  ( noModel
+  ( CustomError
+  , failWith
+  , print
+  , noModel
   , noTitle
   , wrongTitle
   , noLocation
@@ -14,24 +17,32 @@ module Elmer.Errors exposing
 
 {-| Exposed for testing
 
+@docs CustomError, print, failWith
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
 @docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongProperty, noProperty
 
 -}
 
+import Expect exposing (Expectation)
 import Elmer.Printer exposing (..)
 
 {-|
 -}
-noModel : String
-noModel =
-  "No model! Call Elmer.init to provide a model."
+type alias CustomError
+  = List Message
 
 {-|
 -}
-wrongTitle : String -> String -> String
+noModel : CustomError
+noModel =
+  [ description "No model! Call Elmer.init to provide a model."
+  ]
+
+
+{-|
+-}
+wrongTitle : String -> String -> CustomError
 wrongTitle expected actual =
-  format 
   [ message "Expected document to have title" expected
   , message "but it has" actual
   ]
@@ -39,27 +50,26 @@ wrongTitle expected actual =
 
 {-|
 -}
-noTitle : String -> String
+noTitle : String -> CustomError
 noTitle expected =
-  format
   [ message "Expected document to have title" expected
   , description "but the supplied view function does not result in a Document value"
   ]
 
+
 {-|
 -}
-noLocation : String -> String
+noLocation : String -> CustomError
 noLocation expected =
-  format
   [ message "Expected to be at location:" expected
   , description "but no location has been set"
   ]
 
+
 {-|
 -}
-wrongLocation : String -> String -> String
+wrongLocation : String -> String -> CustomError
 wrongLocation expected actual =
-  format
   [ message "Expected to be at location:" expected
   , message "but location is:" actual
   ]
@@ -67,9 +77,8 @@ wrongLocation expected actual =
 
 {-|
 -}
-sendUrlRequiresApplication : String
+sendUrlRequiresApplication : CustomError
 sendUrlRequiresApplication =
-  format
   [ description "sendUrlRequest can only be used when testing an Elm Html application."
   , description "Use Elmer.Application.given to initialize this test."
   ]
@@ -77,18 +86,17 @@ sendUrlRequiresApplication =
 
 {-|
 -}
-badUrl : String -> String -> String
+badUrl : String -> String -> CustomError
 badUrl fun expected =
-  format
   [ message ("Fake " ++ fun ++ " could not process url") expected
   , description "because it does not appear to be a url"
   ]
 
+
 {-|
 -}
-navigationSpyRequiresApplication : String -> String -> String
+navigationSpyRequiresApplication : String -> String -> CustomError
 navigationSpyRequiresApplication fun expected =
-  format
   [ message ("Fake " ++ fun ++ " could not process url") expected
   , description "Use Elmer.Application.given to initialize this test."
   ]
@@ -96,9 +104,8 @@ navigationSpyRequiresApplication fun expected =
 
 {-|
 -}
-elementNotFound : String -> String -> String
+elementNotFound : String -> String -> CustomError
 elementNotFound selector dom =
-  format
   [ message "No html element found with selector" selector
   , message "The current view is" dom
   ]
@@ -106,18 +113,29 @@ elementNotFound selector dom =
 
 {-|
 -}
-wrongProperty : String -> String -> String -> String
+wrongProperty : String -> String -> String -> CustomError
 wrongProperty property expectedValue actualValue =
-  format
   [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
   , message "but it has" <| property ++ " = " ++ actualValue
   ]
 
+
 {-|
 -}
-noProperty : String -> String -> String
+noProperty : String -> String -> CustomError
 noProperty property expectedValue =
-  format
   [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
   , description "but it has no property with that name"
   ]
+
+{-|
+-}
+failWith : CustomError -> Expectation
+failWith =
+  Expect.fail << print
+
+{-|
+-}
+print : CustomError -> String
+print =
+  format

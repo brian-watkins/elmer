@@ -3,7 +3,7 @@ module Elmer.HtmlMatcherTests exposing (..)
 import Test exposing (..)
 import Elmer.TestHelpers exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
-import Expect
+import Expect exposing (Expectation)
 import Elmer exposing (..)
 import Elmer.Html
 import Elmer.Html.Matchers as Matchers
@@ -12,8 +12,8 @@ import Elmer.Html.Node as Node
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Printer as HtmlPrinter
 import Elmer.Printer exposing (..)
-import Elmer.Errors as Errors
-import Elmer.TestHelpers exposing (printHtml)
+import Elmer.Errors as Errors exposing (CustomError)
+import Elmer.TestHelpers exposing (printHtml, expectError)
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
 
@@ -53,7 +53,7 @@ elementTests =
     [ test "it returns the failure message and prints the view" <|
       \() ->
         Matchers.element (\el -> Expect.fail "Should not get here") (testHtmlContext ".blah")
-          |> Expect.equal (Expect.fail <|
+          |> expectError (
             Errors.elementNotFound ".blah" (printHtml <| SimpleApp.view SimpleApp.defaultModel)
           )
     ]
@@ -61,7 +61,7 @@ elementTests =
     [ test "it shows there are no elements found" <|
       \() ->
         Matchers.element (\el -> Expect.fail "Should not get here") (testTextHtmlContext ".blah")
-          |> Expect.equal (Expect.fail <|
+          |> expectError (
             Errors.elementNotFound ".blah" (printHtml <| SimpleApp.textView SimpleApp.defaultModel)
           )
     ]
@@ -103,7 +103,7 @@ elementExistsTests =
     [ test "it fails" <|
       \() ->
         Matchers.elementExists (testHtmlContext ".blah")
-          |> Expect.equal (Expect.fail <|
+          |> expectError (
             Errors.elementNotFound ".blah" (printHtml <| SimpleApp.view SimpleApp.defaultModel)
           )
     ]
@@ -182,6 +182,7 @@ hasClassTests =
     ]
   ]
 
+
 hasPropertyTests : Test
 hasPropertyTests =
   describe "hasProperty"
@@ -189,27 +190,21 @@ hasPropertyTests =
     [ test "it fails with the right message" <|
       \() ->
         Matchers.hasProperty ("some-property", "some <i>html</i>") (emptyNode "div")
-          |> Expect.equal (
-            Expect.fail <| Errors.noProperty "some-property" "some <i>html</i>"
-          )
+          |> expectError (Errors.noProperty "some-property" "some <i>html</i>")
     ]
   , describe "when the node has properties"
     [ describe "when the node does not have the specified property"
       [ test "it fails with the right message" <|
         \() ->
           Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
-            |> Expect.equal (
-              Expect.fail <| Errors.noProperty "some-property" "some <i>html</i>"
-            )
+            |> expectError (Errors.noProperty "some-property" "some <i>html</i>")
       ]
     , describe "when the node has the specified property"
       [ describe "when the value is incorrect"
         [ test "it fails" <|
           \() ->
             Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "blah"))
-              |> Expect.equal (
-                Expect.fail <| Errors.wrongProperty "some-property" "some <i>html</i>" "blah"
-              )
+              |> expectError (Errors.wrongProperty "some-property" "some <i>html</i>" "blah")
         ]
       , describe "when the value is correct"
         [ test "it passes" <|

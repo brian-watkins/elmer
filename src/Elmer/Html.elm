@@ -26,7 +26,7 @@ import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as Html_
 import Elmer.Html.Query as Query
-import Elmer.Errors as Errors
+import Elmer.Errors as Errors exposing (failWith)
 import Html exposing (Html)
 import Expect
 import Dict exposing (Dict)
@@ -123,7 +123,7 @@ expect matcher =
             Just view ->
               matcher <| Query.forHtml selector view
             Nothing ->
-              Expect.fail Errors.noModel
+              failWith Errors.noModel
         Nothing ->
           Expect.fail "No expectations could be made because no Html has been targeted.\n\nUse Elmer.Html.target to identify the Html you want to describe."
 

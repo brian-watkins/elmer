@@ -16,6 +16,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Errors as Errors
 import Elmer.UrlHelpers as UrlHelpers
+import Elmer.TestHelpers exposing (expectError)
 import Url exposing (Url)
 
 
@@ -55,7 +56,7 @@ noInitTests =
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Markup.target "#some-element"
           |> Markup.expect (element <| hasText "Fun Stuff")
-          |> Expect.equal (Expect.fail Errors.noModel)
+          |> expectError Errors.noModel
     ]
   , describe "when simulating an event"
     [ test "it shows an error" <|
@@ -64,14 +65,14 @@ noInitTests =
           |> Markup.target "#some-element"
           |> Event.click
           |> Markup.expect (element <| hasText "Fun Stuff")
-          |> Expect.equal (Expect.fail Errors.noModel)
+          |> expectError Errors.noModel
     ]
   , describe "when making an expectation about the model"
     [ test "it shows an error" <|
       \() ->
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Elmer.expectModel (\model -> Expect.fail "Should not get here")
-          |> Expect.equal (Expect.fail Errors.noModel)
+          |> expectError Errors.noModel
     ]
   , describe "when registering subscriptions"
     [ test "it shows an error" <|
@@ -79,7 +80,7 @@ noInitTests =
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Subscription.with (\_ -> App.subscriptions)
           |> Elmer.expectModel (\model -> Expect.fail "Should not get here")
-          |> Expect.equal (Expect.fail Errors.noModel)
+          |> expectError Errors.noModel
     ]
   , describe "when processing a stubbed command"
     [ test "it shows an error" <|
@@ -93,6 +94,6 @@ noInitTests =
             |> Spy.use [ funStub ]
             |> Command.send (\_ -> App.funCommand App.FunTaskResult "hey!")
             |> Elmer.expectModel (\model -> Expect.fail "Should not get here")
-            |> Expect.equal (Expect.fail Errors.noModel)
+            |> expectError Errors.noModel
     ]
   ]
