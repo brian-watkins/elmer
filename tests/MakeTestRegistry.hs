@@ -69,5 +69,5 @@ main =
     encodeFile "./versions.dat" $
         PackageRegistry 0 $
             fromList
-                [ ( Name "elm-explorations" "elmer", [ Version 2 0 0 ] )
+                [ ( Name "elm-explorations" "elmer", [ Version 4 0 0 ] )
                 ]

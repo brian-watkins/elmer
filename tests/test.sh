@@ -2,16 +2,19 @@
 
 set -ex
 
+export ELMER_VERSION="4.0.0"
+export ELM_HOME="$(pwd)"/elm_home
+export ELM_PACKAGES_HOME="${ELM_HOME}/0.19.0/package"
+export ELMER_HOME="${ELM_PACKAGES_HOME}/elm-explorations/elmer/${ELMER_VERSION}"
+
 rm -f elm.js
 rm -Rf elm-stuff
-rm -Rf elm_home/0.19.0/package/elm-explorations/elmer
+rm -Rf ${ELMER_HOME}
 
-mkdir -p elm_home
-mkdir -p elm_home/0.19.0/package
-mkdir -p elm_home/0.19.0/package/elm-explorations/elmer/2.0.0
+mkdir -p ${ELMER_HOME}
 
-cp -R ../src ./elm_home/0.19.0/package/elm-explorations/elmer/2.0.0/
-node ./prepareElmJson.js ./testableModules.json ../elm.json ./elm_home/0.19.0/package/elm-explorations/elmer/2.0.0/elm.json
+cp -R ../src ${ELMER_HOME}/
+node ./prepareElmJson.js ./testableModules.json ../elm.json ${ELMER_HOME}/elm.json
 
 # Note -- Don't need to do this everytime, only when the dependencies change
 # if which runhaskell; then
@@ -20,9 +23,7 @@ node ./prepareElmJson.js ./testableModules.json ../elm.json ./elm_home/0.19.0/pa
     # haskell is not available (such as on CI)
     # runhaskell MakeTestRegistry.hs
 # fi
-# cp ./versions.dat elm_home/0.19.0/package/versions.dat
-
-export ELM_HOME="$(pwd)"/elm_home
+# cp ./versions.dat ${ELM_PACKAGES_HOME}/versions.dat
 
 elm make src/Main.elm --output elm.js
 
