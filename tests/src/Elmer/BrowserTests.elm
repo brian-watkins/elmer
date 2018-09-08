@@ -50,7 +50,7 @@ initTests =
       , test "it sends the command" <|
         \() ->
           state
-            |> Elmer.Http.expect (Route.get "http://fun.com/api/token")
+            |> Elmer.Http.expectRequest (Route.get "http://fun.com/api/token")
       ]
   , describe "when the command fails"
     [ test "it fails" <|

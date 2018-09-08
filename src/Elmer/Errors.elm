@@ -13,6 +13,9 @@ module Elmer.Errors exposing
   , elementNotFound
   , wrongProperty
   , noProperty
+  , noRequest
+  , wrongRequest
+  , requestMatcherFailed
   )
 
 {-| Exposed for testing
@@ -20,6 +23,7 @@ module Elmer.Errors exposing
 @docs CustomError, print, failWith
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
 @docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongProperty, noProperty
+@docs noRequest, wrongRequest, requestMatcherFailed
 
 -}
 
@@ -126,6 +130,33 @@ noProperty : String -> String -> CustomError
 noProperty property expectedValue =
   [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
   , description "but it has no property with that name"
+  ]
+
+
+{-|
+-}
+noRequest : String -> CustomError
+noRequest expectedRoute =
+  [ message "Expected request for" expectedRoute
+  , description "but no requests have been made"
+  ]
+
+
+{-|
+-}
+wrongRequest : String -> String -> CustomError
+wrongRequest expectedRoute actualRequests =
+  [ message "Expected request for" expectedRoute
+  , message "but only found these requests" actualRequests
+  ]
+
+{-|
+-}
+requestMatcherFailed : String -> String -> CustomError
+requestMatcherFailed expectedRoute failure =
+  [ message "Requests matching" expectedRoute
+  , description "failed to meet the expectations:"
+  , description failure
   ]
 
 {-|

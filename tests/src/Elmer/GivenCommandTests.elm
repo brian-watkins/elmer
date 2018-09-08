@@ -28,7 +28,7 @@ httpTests =
     \() ->
       Headless.givenCommand (\() -> App.httpCommand "http://fake.com/my-fake-stuff")
         |> Spy.use [ Elmer.Http.spy ]
-        |> Elmer.Http.expect (get "http://fake.com/my-fake-stuff")
+        |> Elmer.Http.expectRequest (get "http://fake.com/my-fake-stuff")
   ]
 
 

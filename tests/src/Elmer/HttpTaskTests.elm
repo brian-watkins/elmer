@@ -15,6 +15,7 @@ import Elmer.Http.Matchers exposing (hasQueryParam, wasRequested)
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Printer exposing (..)
+import Elmer.Errors as Errors
 
 import Elmer.TestApps.HttpTestApp as App
 
@@ -52,7 +53,7 @@ httpServerTests =
     , test "it records the request" <|
       \() ->
         state
-          |> Elmer.Http.expect (get "http://fun.com/fun.html")
+          |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
     ]
   , describe "when the request is not stubbed"
     [ test "it reports an error" <|
@@ -65,7 +66,7 @@ httpServerTests =
             |> Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
             |> Markup.target << by [ id "request-data-with-task-click" ]
             |> Event.click
-            |> Elmer.Http.expect (get "http://fun.com/fun.html")
+            |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
             |> Expect.equal (Expect.fail (format
               [ message "Received a request for" "GET http://fun.com/fun.html"
               , message "but it does not match any of the stubbed requests" "GET http://awesome.com/awesome.html"
@@ -92,16 +93,14 @@ httpSpyTests =
   , test "it records the first request" <|
     \() ->
       state
-        |> Elmer.Http.expect (get "http://fun.com/fun.html")
+        |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
   , test "it does not record subsequent requests" <|
     \() ->
       state
-        |> Elmer.Http.expect (get "http://fun.com/super.html")
-        |> Expect.equal (Expect.fail (format
-          [ message "Expected request for" "GET http://fun.com/super.html"
-          , message "but only found these requests" "GET http://fun.com/fun.html"
-          ]
-        ))
+        |> Elmer.Http.expectRequest (get "http://fun.com/super.html")
+        |> Expect.equal (Errors.failWith <|
+          Errors.wrongRequest "GET http://fun.com/super.html" "GET http://fun.com/fun.html"
+        )
   ]
 
 
@@ -137,7 +136,7 @@ deferredResponseServerTests =
       \() ->
         state
           |> Command.resolveDeferred
-          |> Elmer.Http.expect (get "http://fun.com/fun.html")
+          |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
     ]
   ]
 
@@ -164,11 +163,11 @@ andThenTaskTests =
     , test "it records the first request" <|
       \() ->
         state
-          |> Elmer.Http.expect (get "http://fun.com/fun.html")
+          |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
     , test "it records the second request" <|
       \() ->
         state
-          |> Elmer.Http.expectThat (get "http://fun.com/super.html") (
+          |> Elmer.Http.expect (get "http://fun.com/super.html") (
             exactly 1 <| hasQueryParam ("name", "Jerry")
           )
     ]
@@ -192,11 +191,11 @@ andThenTaskTests =
     , test "it records the first request" <|
       \() ->
         state
-          |> Elmer.Http.expect (get "http://fun.com/fun.html")
+          |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
     , test "it does not record the second request" <|
       \() ->
         state
-          |> Elmer.Http.expectThat (get "http://fun.com/super.html") (
+          |> Elmer.Http.expect (get "http://fun.com/super.html") (
             wasRequested 0
           )
     ]
@@ -220,11 +219,11 @@ andThenTaskTests =
     , test "it records the first request" <|
       \() ->
         state
-          |> Elmer.Http.expect (get "http://fun.com/fun.html")
+          |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
     , test "it records the second request" <|
       \() ->
         state
-          |> Elmer.Http.expectThat (get "http://fun.com/super.html") (
+          |> Elmer.Http.expect (get "http://fun.com/super.html") (
             exactly 1 <| hasQueryParam ("name", "Jerry")
           )
     ]

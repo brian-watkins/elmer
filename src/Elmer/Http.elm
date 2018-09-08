@@ -1,7 +1,7 @@
 module Elmer.Http exposing
   ( HttpResponseStub
+  , expectRequest
   , expect
-  , expectThat
   , clearRequestHistory
   , serve
   , spy
@@ -22,7 +22,7 @@ component. What to do?
 @docs HttpResponseStub, serve, spy
 
 # Make Expectations about Http Requests
-@docs expect, expectThat, clearRequestHistory
+@docs expectRequest, expect, clearRequestHistory
 
 -}
 
@@ -41,6 +41,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
 import Elmer.Printer exposing (..)
+import Elmer.Errors as Errors
 import Expect exposing (Expectation)
 import Test.Runner
 
@@ -51,6 +52,7 @@ Use `Elmer.Http.Stub` to build an `HttpResponseStub`.
 -}
 type alias HttpResponseStub
   = Types.HttpResponseStub
+
 
 {-| Override `Http.send` and `Http.toTask` to register HttpResponseStubs that will be
 returned when the appropriate request is received. Used in conjunction with
@@ -109,7 +111,6 @@ spy =
     ]
 
 
-
 {-| Clear any Http requests that may have been recorded at an earlier point
 in the history of this TestState.
 -}
@@ -132,14 +133,14 @@ clearRequestHistory =
 
 {-| Expect one or more requests to the specified route.
 
-    expect (Elmer.Http.Route.get "http://fun.com/fun.html")
+    expectRequest (Elmer.Http.Route.get "http://fun.com/fun.html")
 
 If no requests have been made to the specified route, the test will fail.
 
 Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expect : HttpRoute -> Matcher (Elmer.TestState model msg)
-expect route =
+expectRequest : HttpRoute -> Matcher (Elmer.TestState model msg)
+expectRequest route =
   TestState.mapToExpectation <|
     \context ->
       let
@@ -148,10 +149,7 @@ expect route =
             |> Maybe.withDefault []
       in
         if List.isEmpty requests then
-          Expect.fail <| format
-            [ message "Expected request for" (route.method ++ " " ++ route.url)
-            , description "but no requests have been made"
-            ]
+          Errors.failWith <| Errors.noRequest (routeToString route)
         else
           case hasRequest requests route.method route.url of
             Just _ ->
@@ -163,14 +161,12 @@ expect route =
                     |> List.map (\r -> r.method ++ " " ++ r.url)
                     |> String.join "\n"
               in
-                Expect.fail <| format
-                  [ message "Expected request for" (route.method ++ " " ++ route.url)
-                  , message "but only found these requests" requestInfo
-                  ]
+                Errors.failWith <| Errors.wrongRequest (routeToString route) requestInfo
+
 
 {-| Make some expectation about requests to the specified route.
 
-    expectThat (Elmer.Http.Route.get "http://fun.com/fun") (
+    expect (Elmer.Http.Route.get "http://fun.com/fun") (
       Elmer.each <| Elmer.Http.Matchers.hasHeader ("X-Auth-Token", "MY-TOKEN")
     )
 
@@ -179,8 +175,8 @@ will be passed to the `Matcher (List HttpRequest)`.
 
 Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.spy`.
 -}
-expectThat : HttpRoute -> Matcher (List HttpRequest) -> Matcher (Elmer.TestState model msg)
-expectThat route matcher =
+expect : HttpRoute -> Matcher (List HttpRequest) -> Matcher (Elmer.TestState model msg)
+expect route matcher =
   TestState.mapToExpectation <|
     \context ->
       let
@@ -194,19 +190,25 @@ expectThat route matcher =
       in
         case Test.Runner.getFailureReason result of
           Just failure ->
-            Expect.fail <| format
-              [ message "Requests matching" (route.method ++ " " ++ route.url)
-              , description "failed to meet the expectations:"
-              , description <| formatFailure failure
-              ]
+            Errors.failWith <| 
+              Errors.requestMatcherFailed
+                (routeToString route)
+                (formatFailure failure)
           Nothing ->
             Expect.pass
+
 
 hasRequest : List HttpRequest -> String -> String -> Maybe HttpRequest
 hasRequest requests method url =
   List.filter (matchesRequest method url) requests
     |> List.head
 
+
 matchesRequest : String -> String -> HttpRequest -> Bool
 matchesRequest method url request =
   request.method == method && (Http_.route request.url) == url
+
+
+routeToString : HttpRoute -> String
+routeToString route =
+  route.method ++ " " ++ route.url
