@@ -21,6 +21,7 @@ all =
   , classListTests
   , styleTests
   , idTests
+  , textTests
   , propertyTests
   , boolPropertyTests
   , targetTests
@@ -96,6 +97,25 @@ idTests =
           |> Expect.equal (Just "fun")
     ]
   ]
+
+
+textTests : Test
+textTests =
+  describe "texts"
+  [ describe "when the element has no text children"
+    [ test "it returns an empty list" <|
+      \() ->
+        Element.texts (emptyNode "div")
+          |> Expect.equal []
+    ]
+  , describe "when the element has some text"
+    [ test "it returns a list with all the text values" <|
+      \() ->
+        Element.texts (nodeWithTexts [ "hey", "yo", "fun" ])
+          |> Expect.equal [ "hey", "yo", "fun" ]
+    ]
+  ]
+
 
 propertyTests : Test
 propertyTests =

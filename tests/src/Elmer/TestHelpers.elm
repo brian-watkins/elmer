@@ -47,6 +47,13 @@ emptyNode tagName =
     |> toElement
 
 
+nodeWithTexts : List String -> HtmlElement msg
+nodeWithTexts texts =
+  List.map Html.text texts
+    |> Html.div []
+    |> toElement
+
+
 nodeWithAttributes : List (Html.Attribute msg) -> HtmlElement msg 
 nodeWithAttributes attrs =
   Html.div attrs []

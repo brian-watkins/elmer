@@ -8,13 +8,14 @@ module Elmer.Html.Element exposing
   , properties
   , attributes
   , styles
+  , texts
   , toString
   )
 
 {-| Functions for working directly with HtmlElements.
 
 # Element Characteristics
-@docs tag, id, classList, styles, property, boolProperty, properties, attributes
+@docs tag, id, classList, styles, property, boolProperty, properties, attributes, texts
 
 # Target Descendants
 @docs target
@@ -84,6 +85,13 @@ id =
 classList : Elmer.Html.HtmlElement msg -> List String
 classList =
   Internal.classList
+
+
+{-| Get the `Html.text` values that are children of this element.
+-}
+texts : Elmer.Html.HtmlElement msg -> List String
+texts =
+  Internal.texts
 
 
 {-| Get this element's styles as a `Dict`.
