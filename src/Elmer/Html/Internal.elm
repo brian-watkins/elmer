@@ -12,6 +12,7 @@ module Elmer.Html.Internal exposing
   , isSubmitButton
   , isSubmitInput
   , texts
+  , childElements
   )
 
 import Json.Decode as Json
@@ -33,6 +34,17 @@ texts element =
         Nothing
       Text text ->
         Just text
+  ) element.children
+
+
+childElements : HtmlElement msg -> List (HtmlElement msg)
+childElements element =
+  List.filterMap (\el ->
+    case el of
+      Element child ->
+        Just child
+      Text _ ->
+        Nothing
   ) element.children
 
 

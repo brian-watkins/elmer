@@ -25,6 +25,7 @@ all =
   , propertyTests
   , boolPropertyTests
   , targetTests
+  , childrenTests
   , toStringTests
   ]
 
@@ -113,6 +114,27 @@ textTests =
       \() ->
         Element.texts (nodeWithTexts [ "hey", "yo", "fun" ])
           |> Expect.equal [ "hey", "yo", "fun" ]
+    ]
+  ]
+
+
+childrenTests : Test
+childrenTests =
+  describe "children"
+  [ describe "when the element has no children"
+    [ test "it returns an empty list" <|
+      \() ->
+        Element.children (emptyNode "div")
+          |> Expect.equal []
+    ]
+  , describe "when there are children"
+    [ test "it returns the children" <|
+      \() ->
+        Element.children (nodeWithNestedChildren "beach")
+          |> Expect.equal
+            [ Html.div [] [] |> toElement
+            , Html.div [] [ Html.text "beach" ] |> toElement
+            ]
     ]
   ]
 

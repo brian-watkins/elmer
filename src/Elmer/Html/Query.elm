@@ -6,6 +6,7 @@ module Elmer.Html.Query exposing
 
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Printer as ElementPrinter
+import Elmer.Html.Internal as Html_
 import Elmer.Errors as Errors
 
 
@@ -46,7 +47,7 @@ findAll selector element =
 
 matchingChildren : HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
 matchingChildren selector element =
-    takeElements element.children
+    Html_.childElements element
         |> List.concatMap (findAll selector)
 
 
@@ -59,17 +60,6 @@ matchesAll selectors element =
             False ->
                 False
     ) True selectors
-
-
-takeElements : List (HtmlNode msg) -> List (HtmlElement msg)
-takeElements =
-    List.filterMap <|
-        \e ->
-            case e of
-                Element n ->
-                    Just n
-                _ ->
-                    Nothing
 
 
 queryErrorMessage : Selection msg -> String
