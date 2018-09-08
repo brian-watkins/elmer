@@ -11,6 +11,7 @@ module Elmer.Html.Internal exposing
   , isCheckbox
   , isSubmitButton
   , isSubmitInput
+  , texts
   )
 
 import Json.Decode as Json
@@ -22,6 +23,17 @@ import Dict exposing (Dict)
 tag : HtmlElement msg -> String
 tag element =
   element.tag
+
+
+texts : HtmlElement msg -> List String
+texts element =
+  List.filterMap (\el ->
+    case el of
+      Element _ ->
+        Nothing
+      Text text ->
+        Just text
+  ) element.children
 
 
 elementId : HtmlElement msg -> Maybe String

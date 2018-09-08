@@ -28,6 +28,7 @@ all =
     , findDescendantsTests
     , findWithAll
     , customSelectorTest
+    , findByText
     ]
 
 noElementFound : Test
@@ -175,6 +176,49 @@ findByTag =
           |> expect (element <| Matchers.hasText "the description")
     ]
   ]
+
+
+findByText : Test
+findByText =
+  describe "find by text" <|
+    let
+      html =
+        Html.div []
+        [ Html.div []
+          [ Html.text "One"
+          , Html.div [ Attr.class "first" ]
+            [ Html.text "Three"
+            ]
+          ]
+        , Html.div [ Attr.class "second" ]
+          [ Html.text "Two"
+          , Html.text "Three"
+          ]
+        ]
+    in
+      [ describe "when the element has the text"
+        [ test "it finds the element" <|
+          \() ->
+            initialState html
+              |> target << by [ text "Three" ]
+              |> expect (elements <| Elmer.expectAll
+                [ Elmer.hasLength 2
+                , Elmer.atIndex 0 <| Matchers.hasText "Three"
+                , Elmer.atIndex 1 <| Matchers.hasText "Three"
+                , Elmer.some <| Matchers.hasClass "first"
+                , Elmer.some <| Matchers.hasClass "second"
+                ]
+              )
+        , describe "when there is on element with the text"
+          [ test "it finds no elements" <|
+            \() ->
+              initialState html
+                |> target << by [ text "nothing" ]
+                |> expect (Elmer.expectNot <| Matchers.elementExists)
+          ]
+        ]
+      ]
+
 
 findByAttribute =
   let

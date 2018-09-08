@@ -3,6 +3,7 @@ module Elmer.Html.Selector exposing
   , tag
   , class
   , characteristic
+  , text
   , within
   , by
   )
@@ -10,7 +11,7 @@ module Elmer.Html.Selector exposing
 {-| Functions for selecting Html elements to be targeted during a test.
 
 # Basic Selectors
-@docs id, tag, class, characteristic
+@docs id, tag, class, characteristic, text
 
 # Group Selectors
 @docs by, within
@@ -81,6 +82,26 @@ characteristic (expectedName, maybeExpectedValue) element =
         Dict.member expectedName characteristics
 
 
+{-| Select Html elements that have the given text as an immediate descendant.
+
+For example,
+
+    testState
+      |> target << by [ text "Some text" ]
+
+would select only the `p` element in the following:
+
+    Html.div []
+    [ Html.p [] [ Html.text "Some text" ]
+    ]
+
+-}
+text : String -> Elmer.Html.HtmlSelector msg
+text expectedText element =
+  Internal.texts element
+    |> List.member expectedText
+
+
 {-| Select Html elements by which to narrow the scope of further selections.
 
 Suppose you want to select all `li` that are descendants of an `ol` that is itself a descendant of
@@ -104,13 +125,14 @@ Note that `within` is inclusive. In the above example, if an `ol` tag itself has
 
 would select
 
-    <p class="some-class">Some text</p>
+    Html.p [ Html.Attributes.class "some-class" ] [ Html.text "Some text" ]
 
-and the `p` from
+and the `p` element from
 
-    <div class="some-class">
-      <p>Some text</p>
-    </div>
+    Html.div [ Html.attributes.class "some-class" ]
+    [ Html.p []
+      [ Html.text "Some text" ]
+    ]
 
 -}
 within : List (Elmer.Html.HtmlSelector msg) -> (Elmer.Html.HtmlSelectorGroup msg, targetable) -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
