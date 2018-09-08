@@ -8,6 +8,7 @@ import Expect
 import Elmer
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
+import Elmer.Html.Selector as Sel
 import Elmer.TestHelpers exposing (printHtml)
 import Elmer.Errors as Errors
 import Elmer.Platform.Command as Command
@@ -44,24 +45,20 @@ standardEventBehavior eventTypes eventFunction =
   , describe "when the targeted element is not found"
     [ test "it returns a failure" <|
       \() ->
-        let
-          initialState = Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-        in
-          Markup.target "#nothing" initialState
-            |> eventFunction
-            |> Expect.equal (TestState.failure <|
-              Errors.print <| Errors.elementNotFound "#nothing" <| printHtml (SimpleApp.view SimpleApp.defaultModel)
-            )
+        Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+          |> Markup.target << Sel.by [ Sel.id "nothing" ]
+          |> eventFunction
+          |> Expect.equal (TestState.failure <|
+            Errors.print <| Errors.elementNotFound <| printHtml (SimpleApp.view SimpleApp.defaultModel)
+          )
     ]
   , describe "when the event handler is not found"
     [ test "it returns an event not found error" <|
       \() ->
-        let
-          initialState = Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-        in
-          Markup.target ".no-events" initialState
-            |> eventFunction
-            |> Expect.equal (TestState.failure ("No event handlers found for any of the triggered events: " ++ eventTypes))
+        Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
+          |> Markup.target << Sel.by [ Sel.class "no-events" ]
+          |> eventFunction
+          |> Expect.equal (TestState.failure ("No event handlers found for any of the triggered events: " ++ eventTypes))
     ]
   ]
 
@@ -73,7 +70,7 @@ multiEventPropagationBehavior allEvents nonPropagatingEvents eventFunc eventName
       \() ->
         let
           state = Elmer.given EventApp.defaultModel EventApp.view EventApp.update
-                    |> Markup.target "#no-events"
+                    |> Markup.target << Sel.by [ Sel.id "no-events" ]
                     |> eventFunc
         in
           Elmer.expectModel (\model ->
@@ -85,7 +82,7 @@ multiEventPropagationBehavior allEvents nonPropagatingEvents eventFunc eventName
       \() ->
         let
           state = Elmer.given EventApp.defaultModel (EventApp.viewWithNonPropagatingEvent eventName) EventApp.update
-                    |> Markup.target "#no-events"
+                    |> Markup.target << Sel.by [ Sel.id "no-events" ]
                     |> eventFunc
         in
           Elmer.expectModel (\model ->
@@ -108,7 +105,7 @@ customEventTests =
       [ test "it updates the model accordingly" <|
         \() ->
           Elmer.given InputApp.defaultModel InputApp.view InputApp.update
-            |> Markup.target "input[name='first-name']"
+            |> Markup.target << Sel.by [ Sel.tag "input", Sel.characteristic ( "name", Just "first-name" ) ]
             |> Event.trigger "keyup" keyUpEventJson
             |> Elmer.expectModel (\model ->
               Expect.equal model.lastLetter 65

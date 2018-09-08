@@ -51,6 +51,8 @@ test needs a mouse event to occur at a specific position, use `trigger`.
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Printer as HtmlPrinter
 import Elmer.Html.Query as Query
+import Elmer.Html.Target as Target
+import Elmer.Html.Selector as Selector
 import Elmer.Html.Event.Description as EventDescription
 import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Event.Processor exposing (processEvents, processEventsWhen)
@@ -214,7 +216,7 @@ hasOption : String -> HtmlElement msg -> Result String (HtmlElement msg)
 hasOption value element =
   let
     options =
-      Query.forElement "option" element
+      Target.forElement (Batch [ Selector.tag "option" ]) element
         |> Query.findElements
   in
     if List.isEmpty options then
@@ -231,7 +233,8 @@ hasOption value element =
 
 findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)
 findOption value element =
-  Query.forElement ("option[value='" ++ value ++ "']") element
+  element
+    |> Target.forElement (Batch [ Selector.tag "option", Selector.characteristic ("value", Just value) ])
     |> Query.findElements
     |> List.head
 

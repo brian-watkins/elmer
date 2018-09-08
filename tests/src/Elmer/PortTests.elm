@@ -10,6 +10,7 @@ import Elmer
 import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (..)
+import Elmer.Html.Selector as Sel exposing (..)
 
 
 all : Test
@@ -31,7 +32,7 @@ portCommandTests =
       in
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ spy ]
-          |> Markup.target "#send-port-command-button"
+          |> Markup.target << by [ id "send-port-command-button" ]
           |> Event.click
           |> Spy.expect "port-spy" (wasCalled 1)
   ]
@@ -49,6 +50,6 @@ portSubscriptionTests =
           |> Spy.use [ spy ]
           |> Subscription.with (\_ -> App.subscriptions)
           |> Subscription.send "fakeReceive" "some fake data"
-          |> Markup.target "#js-data"
+          |> Markup.target << by [ id "js-data" ]
           |> Markup.expect (element <| hasText "some fake data")
   ]

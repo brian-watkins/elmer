@@ -7,6 +7,7 @@ import Elmer exposing (..)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Spy as Spy
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
@@ -27,8 +28,8 @@ appTests =
   [ test "it handles a click from the grandchild component" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target "button"
+        |> Markup.target << by [ Sel.tag "button" ]
         |> Event.click
-        |> Markup.target "#grand-child-name"
+        |> Markup.target << by [ Sel.id "grand-child-name" ]
         |> Markup.expect (element <| hasText "Handled Click")
   ]

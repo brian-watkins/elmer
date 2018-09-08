@@ -1,14 +1,19 @@
 module Elmer.HtmlQueryTests exposing (..)
 
 import Test exposing (..)
-import Expect
-import Elmer.Html exposing (HtmlElement)
-import Elmer.Html.Query as Query
-import Elmer.Html.Matchers as Matchers
+import Expect exposing (Expectation)
+import Elmer
+import Elmer.Html.Matchers as Matchers exposing (element, elements)
 import Elmer.Html.Node as Node
+import Elmer.Html.Element as Element
+import Elmer.Html exposing (..)
+import Elmer.Html.Selector as S exposing (..)
+import Elmer.Html.Types exposing (HtmlSelectorGroup)
+import Elmer.TestState as TestState exposing (TestState)
 import Elmer.TestHelpers exposing (..)
 import Html.Attributes as Attr
 import Html exposing (Html)
+
 
 all : Test
 all =
@@ -21,6 +26,8 @@ all =
     , findByProperty
     , descendantTests
     , findDescendantsTests
+    , findWithAll
+    , customSelectorTest
     ]
 
 noElementFound : Test
@@ -32,7 +39,9 @@ noElementFound =
           let
             html = Html.div [ Attr.id "something" ] []
           in
-            Expect.equal ( Query.forHtml "#nothing" html |> Query.findElement |> Result.toMaybe ) Nothing
+            initialState html
+              |> target << by [ id "nothing" ]
+              |> expect (Elmer.expectNot <| Matchers.elementExists)
       ]
     , describe "with bad class"
       [ test "it returns nothing" <|
@@ -40,7 +49,9 @@ noElementFound =
           let
             html = Html.div [ Attr.class "something" ] []
           in
-            Expect.equal ( Query.forHtml ".nothing" html |> Query.findElement |> Result.toMaybe ) Nothing
+            initialState html
+              |> target << by [ class "nothing" ]
+              |> expect (Elmer.expectNot <| Matchers.elementExists)
       ]
     , describe "when there is only text"
       [ test "it returns nothing" <|
@@ -48,7 +59,9 @@ noElementFound =
           let
             html = Html.text "Something"
           in
-            Expect.equal ( Query.forHtml ".anything" html |> Query.findElement |> Result.toMaybe ) Nothing
+            initialState html
+              |> target << by [ class "anything" ]
+              |> expect (Elmer.expectNot <| Matchers.elementExists)
       ]
     ]
 
@@ -62,18 +75,14 @@ findById =
     describe "find by id"
       [ test "it finds the top element by id" <|
         \() ->
-          case (Query.findElement <| Query.forHtml "#root" html) of
-            Ok a ->
-              Matchers.hasId "root" a
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ id "root" ]
+            |> expect (element <| Matchers.hasId "root")
       , test "finds a nested element by id" <|
         \() ->
-          case (Query.findElement <| Query.forHtml "#nested" html) of
-            Ok a ->
-              Matchers.hasId "nested" a
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ id "nested" ]
+            |> expect (element <| Matchers.hasId "nested")
       ]
 
 findByClass : Test
@@ -87,18 +96,14 @@ findByClass =
         describe "when there is one class"
         [ test "it finds the top element by class" <|
           \() ->
-            case ( Query.findElement <| Query.forHtml ".content_class_2" html ) of
-              Ok a ->
-                Matchers.hasClass "content_class_2" a
-              Err msg ->
-                Expect.fail <| "Nothing found -- " ++ msg
+            initialState html
+              |> target << by [ class "content_class_2" ]
+              |> expect (element <| Matchers.hasClass "content_class_2")
         , test "it finds a nested element by class" <|
           \() ->
-            case ( Query.findElement <| Query.forHtml ".nested-class" html ) of
-              Ok a ->
-                Matchers.hasClass "nested-class" a
-              Err _ ->
-                Expect.fail "Nothing found"
+            initialState html
+              |> target << by [ class "nested-class" ]
+              |> expect (element <| Matchers.hasClass "nested-class")
         ]
     , let
         html = Html.div [ Attr.classList [ ("awesome", True), ("super", True), ("root", True) ] ] []
@@ -106,11 +111,9 @@ findByClass =
         describe "when there is more than one class"
         [ test "it finds the element" <|
           \() ->
-            case ( Query.findElement <| Query.forHtml ".super" html ) of
-              Ok a ->
-                Matchers.hasClass "super" a
-              Err _ ->
-                Expect.fail "Nothing found"
+            initialState html
+              |> target << by [ class "super" ]
+              |> expect (element <| Matchers.hasClass "super")
         ]
     , let
         html = Html.div [ Attr.id "root", Attr.class "root" ] []
@@ -118,11 +121,9 @@ findByClass =
         describe "when the class name is the same as an id"
         [ test "it returns the element with the class name" <|
           \() ->
-            case ( Query.findElement <| Query.forHtml ".root" html ) of
-              Ok a ->
-                Matchers.hasClass "root" a
-              Err _ ->
-                Expect.fail "Nothing found"
+            initialState html
+              |> target << by [ class "root" ]
+              |> expect (element <| Matchers.hasClass "root")
         ]
     , let
         html = Html.div [ Attr.id "root" ]
@@ -134,11 +135,9 @@ findByClass =
         describe "when the node is nested"
         [ test "it returns the node with the class name" <|
           \() ->
-            case ( Query.findElement <| Query.forHtml ".deeplyNested" html ) of
-              Ok a ->
-                Matchers.hasClass "deeplyNested" a
-              Err _ ->
-                Expect.fail "Nothing found"
+            initialState html
+              |> target << by [ class "deeplyNested" ]
+              |> expect (element <| Matchers.hasClass "deeplyNested")
         ]
     ]
 
@@ -152,18 +151,14 @@ findByTag =
     in
     [ test "it finds the first element" <|
       \() ->
-        case Query.findElement <| Query.forHtml "div" html of
-          Ok node ->
-            Matchers.hasId "root" node
-          Err msg ->
-            Expect.fail <| "Nothing found -- " ++ msg
+        initialState html
+          |> target << by [ tag "div" ]
+          |> expect (element <| Matchers.hasId "root")
     , test "it finds a nested element" <|
       \() ->
-        case Query.findElement <| Query.forHtml "input" html of
-          Ok node ->
-            Matchers.hasClass "inputField" node
-          Err _ ->
-            Expect.fail "Nothing found"
+        initialState html
+          |> target << by [ tag "input" ]
+          |> expect (element <| Matchers.hasClass "inputField")
     ]
   , describe "when the tag is qualified by a class" <|
     let
@@ -175,11 +170,9 @@ findByTag =
     in
     [ test "it finds the tag with the class" <|
       \() ->
-        case Query.findElement <| Query.forHtml "p.description_2" html of
-          Ok node ->
-            Matchers.hasText "the description" node
-          Err _ ->
-            Expect.fail "Nothing found"
+        initialState html
+          |> target << by [ tag "p", class "description_2" ]
+          |> expect (element <| Matchers.hasText "the description")
     ]
   ]
 
@@ -203,65 +196,46 @@ findByAttribute =
     [ describe "when nothing is specified"
       [ test "it fails" <|
         \() ->
-          case Query.findElement <| Query.forHtml "" html of
-            Ok node ->
-              Expect.fail "Should not have found anything!"
-            Err _ ->
-              Expect.pass
-      ]
-    , describe "when the selector is not parseable"
-      [ test "it fails" <|
-        \() ->
-          case Query.findElement <| Query.forHtml "[blah='stuff'" html of
-            Ok node ->
-              Expect.fail "Should not have found anything!"
-            Err _ ->
-              Expect.pass
+          initialState html
+            |> target << by []
+            |> expect (Elmer.expectNot <| Matchers.elementExists)
       ]
     , describe "when only an attribute is specified"
       [ test "it finds the first node with the attribute" <|
         \() ->
-          case Query.findElement <| Query.forHtml "[data-attribute_name-1]" html of
-            Ok node ->
-              Matchers.hasClass "withAttribute" node
-            Err msg ->
-              Expect.fail <| "Nothing found -- " ++ msg
+          initialState html
+            |> target << by [ characteristic ("data-attribute_name-1", Nothing) ]
+            |> expect (element <| Matchers.hasClass "withAttribute")
       ]
     , describe "when an attribute and value is specified"
       [ test "it finds the node with the attribute and value" <|
         \() ->
-          case Query.findElement <| Query.forHtml "[data-attribute_name-1='myDifferent-Attribute_Value2']" html of
-            Ok node ->
-              Matchers.hasClass "anotherWithAttribute" node
-            Err msg ->
-              Expect.fail <| "Nothing found -- " ++ msg
+          initialState html
+            |> target << by [ characteristic ("data-attribute_name-1", Just "myDifferent-Attribute_Value2") ]
+            |> expect (element <| Matchers.hasClass "anotherWithAttribute")
       ]
     , describe "when a tag and attribute is specified"
       [ test "it finds the node with the tag and attribute" <|
         \() ->
-          case Query.findElement <| Query.forHtml "p[data-attribute_name-1]" html of
-            Ok node ->
-              Matchers.hasClass "thirdWithAttribute" node
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ tag "p", characteristic ("data-attribute_name-1", Nothing) ]
+            |> expect (element <| Matchers.hasClass "thirdWithAttribute")
       ]
     , describe "when a tag, attribute, and value is specified"
       [ test "it finds the node with the tag and attribute and value" <|
         \() ->
-          case Query.findElement <| Query.forHtml "div[data-attribute_name-1='myDifferent-Attribute_Value2']" html of
-            Ok node ->
-              Matchers.hasClass "anotherWithAttribute" node
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ tag "div", characteristic ("data-attribute_name-1", Just "myDifferent-Attribute_Value2") ]
+            |> expect (element <| Matchers.hasClass "anotherWithAttribute")
       ]
     , describe "when an attribute and class is specified"
       [ test "it finds the element with the attribute and the class" <|
         \() ->
-          case Query.findElement <| Query.forHtml "[data-attribute_name-1].anotherWithAttribute" html of
-            Ok element ->
-              Matchers.hasAttribute ("data-attribute_name-1", "myDifferent-Attribute_Value2") element
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ characteristic ("data-attribute_name-1", Nothing), class "anotherWithAttribute" ]
+            |> expect (element <| 
+              Matchers.hasAttribute ("data-attribute_name-1", "myDifferent-Attribute_Value2")
+            )
       ]
     ]
 
@@ -276,40 +250,56 @@ findByProperty =
     [ describe "when only a property is specified"
       [ test "it finds the node with the property" <|
         \() ->
-          case Query.findElement <| Query.forHtml "[name]" html of
-            Ok node ->
-              Matchers.hasId "name-field" node
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ characteristic ("name", Nothing) ]
+            |> expect (element <| Matchers.hasId "name-field")
       ]
     , describe "when a property and value is specified"
       [ test "it finds the node with the property and value" <|
         \() ->
-          case Query.findElement <| Query.forHtml "[name='telephone']" html of
-            Ok node ->
-              Matchers.hasId "telephone-field" node
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ characteristic ("name", Just "telephone") ]
+            |> expect (element <| Matchers.hasId "telephone-field")
       ]
     , describe "when a tag and attribute is specified"
       [ test "it finds the node with the tag and attribute" <|
         \() ->
-          case Query.findElement <| Query.forHtml "input[name]" html of
-            Ok node ->
-              Matchers.hasId "name-field" node
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ tag "input", characteristic ("name", Nothing) ]
+            |> expect (element <| Matchers.hasId "name-field")
       ]
     , describe "when a tag, attribute, and value is specified"
       [ test "it finds the node with the tag and attribute and value" <|
         \() ->
-          case Query.findElement <| Query.forHtml "input[name='telephone']" html of
-            Ok node ->
-              Matchers.hasId "telephone-field" node
-            Err _ ->
-              Expect.fail "Nothing found"
+          initialState html
+            |> target << by [ tag "input", characteristic ("name", Just "telephone") ]
+            |> expect (element <| Matchers.hasId "telephone-field")
       ]
     ]
+
+findWithAll : Test
+findWithAll =
+  let
+      html =
+        Html.div [ Attr.id "my-form" ]
+        [ Html.input [ Attr.id "telephone-field", Attr.name "telephone" ]
+          [ Html.div [ Attr.class "funny"] []
+          ]
+        , Html.input [ Attr.id "name-field", Attr.class "funny", Attr.name "name" ] []
+        ]
+  in
+    describe "when multiple selectors are provided"
+    [ test "it finds only the element with all the selectors" <|
+      \() ->
+        initialState html
+          |> target << by [ tag "input", class "funny" ]
+          |> expect (elements <| Elmer.expectAll
+            [ Elmer.hasLength 1
+            , Elmer.atIndex 0 <| (\element -> Expect.equal "input" <| Element.tag element)
+            ]
+          )
+    ]
+
 
 descendantTests : Test
 descendantTests =
@@ -334,26 +324,30 @@ descendantTests =
       , Html.div [ Attr.class "footer" ] [ Html.text "Footer text" ]
       ]
   in
-  describe "when there are multiple selectors separated by spaces"
+  describe "when an element is targeted within another"
   [ describe "when all the selectors match"
     [ test "it finds the element" <|
       \() ->
-        case Query.findElement <| Query.forHtml "li[data-item='2'] .author" html of
-          Ok element ->
-            Matchers.hasClass "author" element
-          Err _ ->
-            Expect.fail "Nothing found"
+        initialState html
+          |> target << within [ tag "li", characteristic ("data-item", Just "2") ] << by [ class "author" ]
+          |> expect (Matchers.element <| Elmer.expectAll 
+            [ Matchers.hasClass "author"
+            , Matchers.hasText "Some awesome person"
+            ]
+          )
     ]
   , describe "when one selector fails"
     [ test "it fails to find the element" <|
       \() ->
-        case Query.findElement <| Query.forHtml "li[data-item='99'] .author" html of
-          Ok _ ->
-            Expect.fail "Should not find anything!"
-          Err _ ->
-            Expect.pass
+        initialState html
+          |> target << within [ tag "li", characteristic ("data-item", Just "99") ] << by [ class "author" ]
+          |> expect (Elmer.expectNot <| Matchers.elementExists)
     ]
   ]
+
+initialState : Html () -> TestState () ()
+initialState html =
+  Elmer.given () (\_ -> html) (\_ _ -> ((), Cmd.none))
 
 getElement : Html msg -> HtmlElement msg
 getElement html =
@@ -371,38 +365,72 @@ divWithClass name =
   Html.div [ Attr.class name ] []
     |> getElement
 
--- NOTE: Are these tests still necessary?
+
 findDescendantsTests : Test
 findDescendantsTests =
   let
     html =
-      Html.ul []
+      Html.ul [ Attr.class "fun" ]
         [ Html.li [] [ Html.div [ Attr.class "fun" ] [] ]
         , Html.li [] [ Html.div [ Attr.class "awesome" ] [] ]
         , Html.li [] [ Html.div [ Attr.class "fun" ] [] ]
         ]
-    element = getElement html
   in
   describe "findChildren"
   [ describe "when the node has no matching children"
     [ test "it fails" <|
       \() ->
-        Query.forElement ".some-class" element
-          |> Query.findElements
-          |> Expect.equal []
+        initialState html
+          |> target << by [ class "some-class" ]
+          |> expect (elements <| Expect.equal [])
     ]
   , describe "when the node has matching children"
     [ test "it finds the children" <|
       \() ->
-        Query.forElement "li" element
-          |> Query.findElements
-          |> Expect.equal [liWithDiv "fun", liWithDiv "awesome", liWithDiv "fun"]
+        initialState html
+          |> target << by [ tag "li" ]
+          |> expect (elements <| 
+            Expect.equal [liWithDiv "fun", liWithDiv "awesome", liWithDiv "fun"]
+          )
     ]
   , describe "when finding descendants"
     [ test "it finds the descendants" <|
       \() ->
-        Query.forElement "li .fun" element
-          |> Query.findElements
-          |> Expect.equal [ divWithClass "fun", divWithClass "fun" ]
+        initialState html
+          |> target << within [ tag "li" ] << by [ class "fun" ]
+          |> expect (elements <|
+            Expect.equal [ divWithClass "fun", divWithClass "fun" ]
+          )
     ]
   ]
+
+
+customSelectorTest : Test
+customSelectorTest =
+  describe "custom selector" <|
+    let
+      html =
+        Html.div [ Attr.class "funny" ]
+        [ Html.ul [ Attr.class "list-fun" ]
+          [ Html.li [] [ Html.div [ Attr.class "fun" ] [] ]
+          , Html.li [] [ Html.div [ Attr.class "awesome" ] [] ]
+          , Html.li [] [ Html.div [ Attr.class "fun" ] [] ]
+          ]
+        , Html.div [ Attr.class "super" ] []
+        ]
+    in
+      [ test "it matches with the custom selector" <|
+        \() ->
+          initialState html
+            |> target << within [ tag "ul" ] << by [ testOrClassSelector [ "super", "awesome", "funny" ] ]
+            |> expect (element <|
+                Matchers.hasClass "awesome"
+            )
+      ]
+
+
+testOrClassSelector : List String -> HtmlSelector msg
+testOrClassSelector expectedClasses element =
+  Element.classList element
+    |> List.filter (\c -> List.member c expectedClasses)
+    |> not << List.isEmpty

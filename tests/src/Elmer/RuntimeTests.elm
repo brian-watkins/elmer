@@ -9,6 +9,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Platform.Command as Command
@@ -50,12 +51,14 @@ batchCommandTest =
     describe "when a batch command is sent"
     [ test "it processes the first command" <|
       \() ->
-          Markup.target "#first-message" result
-            |> Markup.expect (element <| hasText "Cool stuff!")
+        result
+          |> Markup.target << by [ id "first-message" ]
+          |> Markup.expect (element <| hasText "Cool stuff!")
     , test "it processes the second command" <|
       \() ->
-          Markup.target "#second-message" result
-            |> Markup.expect (element <| hasText "Fun stuff!")
+        result
+          |> Markup.target << by [ id "second-message" ]
+          |> Markup.expect (element <| hasText "Fun stuff!")
     ]
 
 batchCommandFailureTest : Test
@@ -90,12 +93,14 @@ mappedBatchCommandTest =
     describe "when a batched command is mapped"
     [ test "it maps the first command" <|
       \() ->
-          Markup.target "#first-message" result
-            |> Markup.expect (element <| hasText "Cool stuff!")
+        result
+          |> Markup.target << by [ id "first-message" ]
+          |> Markup.expect (element <| hasText "Cool stuff!")
     , test "it maps the second command" <|
       \() ->
-          Markup.target "#second-message" result
-            |> Markup.expect (element <| hasText "Fun stuff!")
+        result
+          |> Markup.target << by [ id "second-message" ]
+          |> Markup.expect (element <| hasText "Fun stuff!")
     ]
 
 type ParentMsg

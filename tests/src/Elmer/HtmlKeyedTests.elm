@@ -7,6 +7,8 @@ import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer exposing (expectAll, hasLength, exactly)
 import Elmer.Html.Matchers as Matchers exposing (..)
+import Elmer.Html.Selector as Sel exposing (..)
+import Elmer.Html.Types exposing (..)
 import Html.Attributes as Attr
 import Html exposing (Html)
 import Elmer.TestApps.HtmlKeyedTestApp as App
@@ -18,13 +20,14 @@ all =
   [ keyedTests
   ]
 
+
 keyedTests : Test
 keyedTests =
   describe "keyed nodes"
   [ test "it renders the keyed nodes" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target "#fruit-list li"
+        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"
@@ -35,7 +38,7 @@ keyedTests =
   , test "it handles inherited events" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target "#fruit-list li"
+        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
         |> Event.click
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
@@ -47,9 +50,9 @@ keyedTests =
   , test "it maps events for keyed nodes" <|
     \() ->
       Elmer.given defaultWrappedModel wrappedView wrappedUpdate
-        |> Markup.target "#special-node"
+        |> Markup.target << by [ id "special-node" ]
         |> Event.click
-        |> Markup.target "#fruit-list li"
+        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"
@@ -60,7 +63,7 @@ keyedTests =
   , test "it handles lazy keyed nodes" <|
     \() ->
       Elmer.given App.defaultModel App.viewLazyNode App.update
-        |> Markup.target "#fruit-list li"
+        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"
@@ -71,7 +74,7 @@ keyedTests =
   , test "it lazily handles keyed nodes" <|
     \() ->
       Elmer.given App.defaultModel App.lazyKeyedView App.update
-        |> Markup.target "#fruit-list li"
+        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"

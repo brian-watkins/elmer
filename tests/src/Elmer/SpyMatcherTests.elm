@@ -10,6 +10,7 @@ import Elmer.Spy.Arg exposing (Arg(..))
 import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (hasText)
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Printer exposing (..)
 import Elmer
 
@@ -72,7 +73,7 @@ wasCalledTests =
         \() ->
           Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
-            |> Markup.target "#button"
+            |> Markup.target << by [ id "button" ]
             |> Event.click
             |> Event.click
             |> Spy.expect "clearName" (Matchers.wasCalled 3)
@@ -88,7 +89,7 @@ wasCalledTests =
         \() ->
           Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
             |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
-            |> Markup.target "#button"
+            |> Markup.target << by [ id "button" ]
             |> Event.click
             |> Event.click
             |> Spy.expect "clearName" (Matchers.wasCalled 2)

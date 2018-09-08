@@ -7,6 +7,7 @@ import Elmer.Spy as Spy
 import Elmer.Spy.Matchers exposing (..)
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Html.Event as Event
 import Elmer.TestApps.SpyFakeTestApp as App
 import Task
@@ -38,7 +39,7 @@ createWithTests =
         in
           Elmer.given App.initialModel App.view (App.update dependencies)
             |> Spy.use [ spy ]
-            |> Markup.target "#fetch-name-button"
+            |> Markup.target << by [ id "fetch-name-button" ]
             |> Event.click
             |> Spy.expect "my-fake" (
               wasCalledWith [ functionArg, stringArg "Cool Dude" ]
@@ -61,7 +62,7 @@ createWithTests =
           state =
             Elmer.given App.initialModel App.view (App.update dependencies)
               |> Spy.use [ funSpy, awesomeSpy ]
-              |> Markup.target "#fetch-name-button"
+              |> Markup.target << by [ id "fetch-name-button" ]
               |> Event.click
               |> Event.click
       in
@@ -108,7 +109,7 @@ callableTests =
         \() ->
           Elmer.given App.initialModel App.view (App.update dependencies)
             |> Spy.use [ spy ]
-            |> Markup.target "#fetch-name-button"
+            |> Markup.target << by [ id "fetch-name-button" ]
             |> Event.click
             |> Spy.expect "task-spy" (
               wasCalledWith [ functionArg, stringArg "Cool Dude" ]

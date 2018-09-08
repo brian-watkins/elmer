@@ -5,9 +5,9 @@ import Elmer.TestHelpers exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Expect exposing (Expectation)
 import Elmer exposing (..)
-import Elmer.Html
+import Elmer.Html as Markup
 import Elmer.Html.Matchers as Matchers
-import Elmer.Html.Query as Query
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Html.Node as Node
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Printer as HtmlPrinter
@@ -33,17 +33,18 @@ all =
   , listensForEventTests
   ]
 
-testHtmlContext : String -> HtmlTarget SimpleApp.Msg
-testHtmlContext selector =
-  Query.forHtml selector <| SimpleApp.view SimpleApp.defaultModel
 
-testTextHtmlContext : String -> HtmlTarget SimpleApp.Msg
-testTextHtmlContext selector =
-  Query.forHtml selector <| SimpleApp.textView SimpleApp.defaultModel
+simpleState : TestState SimpleApp.Model SimpleApp.Msg
+simpleState =
+  Elmer.given SimpleApp.defaultModel SimpleApp.view (\_ model -> (model, Cmd.none))
 
-testChildrenHtmlContext : String -> HtmlTarget SimpleApp.Msg
-testChildrenHtmlContext selector =
-  Query.forHtml selector <| SimpleApp.viewWithChildren SimpleApp.defaultModel
+testTextHtmlState : TestState SimpleApp.Model SimpleApp.Msg
+testTextHtmlState =
+  Elmer.given SimpleApp.defaultModel SimpleApp.textView (\_ model -> (model, Cmd.none))
+
+testChildrenHtmlState : TestState SimpleApp.Model SimpleApp.Msg
+testChildrenHtmlState =
+  Elmer.given SimpleApp.defaultModel SimpleApp.viewWithChildren (\_ model -> (model, Cmd.none))
 
 
 elementTests : Test
@@ -52,23 +53,29 @@ elementTests =
   [ describe "when the targeted element does not exist"
     [ test "it returns the failure message and prints the view" <|
       \() ->
-        Matchers.element (\el -> Expect.fail "Should not get here") (testHtmlContext ".blah")
+        simpleState
+          |> Markup.target << by [ class "blah" ]
+          |> Markup.expect (Matchers.element <| Matchers.hasClass "blah" )
           |> expectError (
-            Errors.elementNotFound ".blah" (printHtml <| SimpleApp.view SimpleApp.defaultModel)
+            Errors.elementNotFound <| printHtml <| SimpleApp.view SimpleApp.defaultModel
           )
     ]
   , describe "when there are no elements in the html"
     [ test "it shows there are no elements found" <|
       \() ->
-        Matchers.element (\el -> Expect.fail "Should not get here") (testTextHtmlContext ".blah")
+        testTextHtmlState
+          |> Markup.target << by [ class "blah" ]
+          |> Markup.expect (Matchers.element <| Matchers.hasClass "blah")
           |> expectError (
-            Errors.elementNotFound ".blah" (printHtml <| SimpleApp.textView SimpleApp.defaultModel)
+            Errors.elementNotFound <| printHtml <| SimpleApp.textView SimpleApp.defaultModel
           )
     ]
   , describe "when the targeted element exists"
     [ test "it passes the element to the matcher" <|
       \() ->
-        Matchers.element (Matchers.hasText "Some text") (testHtmlContext "#root")
+        simpleState
+          |> Markup.target << by [ id "root" ]
+          |> Markup.expect (Matchers.element <| Matchers.hasText "Some text")
           |> Expect.equal Expect.pass
     ]
   ]
@@ -79,20 +86,20 @@ elementsTests =
   [ describe "when the targeted element does not exist"
     [ test "it passes an empty list to the matcher" <|
       \() ->
-        testChildrenHtmlContext "blah"
-          |> Matchers.elements (\els ->
+        testChildrenHtmlState
+          |> Markup.target << by [ tag "blah" ]
+          |> Markup.expect (Matchers.elements <| \els ->
             Expect.equal True <| List.isEmpty els
           )
-          |> Expect.equal Expect.pass
     ]
   , describe "when the targeted element exists"
     [ test "it passes the matching elements to the matcher" <|
       \() ->
-        testChildrenHtmlContext "div"
-          |> Matchers.elements (\els ->
+        testChildrenHtmlState
+          |> Markup.target << by [ tag "div" ]
+          |> Markup.expect (Matchers.elements <| \els ->
             Expect.equal 4 <| List.length els
           )
-          |> Expect.equal Expect.pass
     ]
   ]
 
@@ -102,15 +109,19 @@ elementExistsTests =
   [ describe "when the targeted element does not exist"
     [ test "it fails" <|
       \() ->
-        Matchers.elementExists (testHtmlContext ".blah")
+        simpleState
+          |> Markup.target << by [ class "blah" ]
+          |> Markup.expect Matchers.elementExists
           |> expectError (
-            Errors.elementNotFound ".blah" (printHtml <| SimpleApp.view SimpleApp.defaultModel)
+            Errors.elementNotFound <| printHtml <| SimpleApp.view SimpleApp.defaultModel
           )
     ]
   , describe "when the targeted element exists"
     [ test "it passes" <|
       \() ->
-        Matchers.elementExists (testHtmlContext "#root")
+        simpleState
+          |> Markup.target << by [ id "root" ]
+          |> Markup.expect Matchers.elementExists
           |> Expect.equal Expect.pass
     ]
   ]

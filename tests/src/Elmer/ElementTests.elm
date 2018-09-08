@@ -6,6 +6,7 @@ import Elmer exposing (..)
 import Elmer.Html.Element as Element
 import Elmer.Html.Node as Node
 import Elmer.Html.Matchers as Matchers
+import Elmer.Html.Selector as Sel
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
@@ -163,42 +164,35 @@ boolPropertyTests =
 targetTests : Test
 targetTests =
   let
-    nodeResult =
-      Node.from sampleHtml
-        |> Node.asElement
+    element = toElement sampleHtml
   in
   describe "target element"
   [ test "it targets a child" <|
     \() ->
-      case nodeResult of
-        Just element ->
-          element
-            |> Element.target ".description"
-            |> Matchers.element (
-              Matchers.hasText "More text"
-            )
-        Nothing ->
-          Expect.fail "Expected an element"
+      element
+        |> Element.target << Sel.by [ Sel.class "description" ]
+        |> Matchers.element (
+          Matchers.hasText "More text"
+        )
   , test "it targets multiple children" <|
     \() ->
-      case nodeResult of
-        Just element ->
-          element
-            |> Element.target "p"
-            |> Matchers.elements (
-              Elmer.hasLength 2
-            )
-        Nothing ->
-          Expect.fail "Expected an element"
+      element
+        |> Element.target << Sel.by [ Sel.tag "p" ]
+        |> Matchers.elements (
+          Elmer.hasLength 2
+        )
+  , test "it finds an element within another" <|
+    \() ->
+      element
+        |> Element.target << Sel.within [ Sel.tag "div" ] << Sel.by [ Sel.class "description" ]
+        |> Matchers.element (
+          Matchers.hasText "More text"
+        )
   , test "it fails when the selector matches no children" <|
     \() ->
-      case nodeResult of
-        Just element ->
-          element
-            |> Element.target "#matches-nothing"
-            |> (Elmer.expectNot <| Matchers.elementExists)
-        Nothing ->
-          Expect.fail "Expected an element"
+      element
+        |> Element.target << Sel.by [ Sel.id "matches-nothing" ]
+        |> (Elmer.expectNot <| Matchers.elementExists)
   ]
 
 

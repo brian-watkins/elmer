@@ -27,8 +27,10 @@ module Elmer.Html.Element exposing
 
 import Elmer.Html
 import Elmer.Html.Internal as Internal
-import Elmer.Html.Query as Query
+import Elmer.Html.Target as Target
 import Elmer.Html.Printer as HtmlPrinter
+import Elmer.Html.Selector as Selector
+import Elmer.Html.Types exposing (HtmlSelectorGroup(..))
 import Dict exposing (Dict)
 
 
@@ -38,21 +40,22 @@ Use this function in conjunction with `HtmlTarget` matchers like `element` or `e
 to make expectations about descendants of an element.
 
     Elmer.given someModel view update
-      |> Elmer.Html.target "#some-element"
+      |> Elmer.Html.target << by [ id "some-element" ]
       |> Elmer.Html.expect (Elmer.Html.Matchers.element <|
         \element ->
-          target "div" element
+          element
+            |> target << by [ tag "div" ]
             |> Elmer.Html.Matchers.elements (
               Elmer.hasLength 3
             )
 
-Note that `Elmer.Html.target "#some-element div"` would allow you to write the
+Note that `Elmer.Html.target << within [ id "some-element" ] << by [ tag "div" ]` would allow you to write the
 same expectation. Use `Element.target` for complex expectations about nested elements.
 
 -}
-target : String -> Elmer.Html.HtmlElement msg -> Elmer.Html.HtmlTarget msg
-target selector =
-  Query.forElement selector
+target : (HtmlSelectorGroup msg, Elmer.Html.HtmlElement msg) -> Elmer.Html.HtmlTarget msg
+target (selectors, element) =
+  Target.forElement selectors element
 
 
 {-| Represent an `HtmlElement` as a String.

@@ -9,6 +9,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
+import Elmer.Html.Selector exposing (..)
 
 
 all : Test
@@ -33,7 +34,8 @@ focusTests =
           Expect.equal initialModel.isFocused False
       , test "the event updates the model" <|
         \() ->
-          Markup.target "#name-field" initialState
+          initialState
+            |> Markup.target << by [ id "name-field" ]
             |> Event.focus
             |> Elmer.expectModel (\model ->
                 Expect.equal model.isFocused True
@@ -56,7 +58,8 @@ blurTests =
           Expect.equal initialModel.isBlurred False
       , test "the event updates the model" <|
         \() ->
-          Markup.target "#name-field" initialState
+          initialState
+            |> Markup.target << by [ id "name-field" ]
             |> Event.blur
             |> Elmer.expectModel (\model ->
                 Expect.equal model.isBlurred True

@@ -10,6 +10,7 @@ import Elmer.Printer exposing (..)
 import Elmer.Navigation as Navigation
 import Elmer.Html as Markup
 import Elmer.Html.Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Errors as Errors
 import Elmer.UrlHelpers as UrlHelpers
 import Elmer.TestHelpers exposing (expectError)
@@ -32,7 +33,7 @@ givenDocumentTests =
     \() ->
       Elmer.Browser.givenDocument App.view App.update
           |> Elmer.Browser.init (\() -> App.init ())
-          |> Markup.target "#some-element"
+          |> Markup.target << by [ Sel.id "some-element" ]
           |> Markup.expect (element <| hasText "Fun Stuff")
   ]
 

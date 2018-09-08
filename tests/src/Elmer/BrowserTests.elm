@@ -10,6 +10,7 @@ import Elmer.Http.Route as Route
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html
 import Elmer.Html.Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Printer exposing (..)
 import Elmer.TestApps.InitTestApp as InitApp
 import Task
@@ -44,7 +45,7 @@ initTests =
       [ test "it sets the model" <|
         \() ->
           state
-            |> Elmer.Html.target "#base-url"
+            |> Elmer.Html.target << by [ Sel.id "base-url" ]
             |> Elmer.Html.expect (element <| hasText "http://fun.com/api")
       , test "it sends the command" <|
         \() ->

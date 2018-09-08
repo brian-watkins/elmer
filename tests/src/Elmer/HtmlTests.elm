@@ -6,7 +6,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html as Markup
 import Elmer
 import Elmer.Html.Matchers as Matchers exposing (..)
-import Elmer.Html.Query as Query
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.TestHelpers exposing (..)
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestApps.SpyTestApp as SpyApp
@@ -31,11 +31,9 @@ targetTests =
   [ describe "when there is an upstream failure"
     [ test "it returns the failure" <|
       \() ->
-        let
-          initialState = TestState.failure "upstream failure"
-        in
-          Markup.target ".button" initialState
-            |> Expect.equal initialState
+        TestState.failure "upstream failure"
+          |> Markup.target << by [ class "button" ]
+          |> Expect.equal (TestState.failure "upstream failure")
     ]
   ]
 
@@ -57,7 +55,7 @@ expectTests =
             initialState = TestState.failure "upstream failure"
           in
             initialState
-              |> Markup.target "#no-element"
+              |> Markup.target << by [ Sel.id "no-element" ]
               |> Markup.expect (Elmer.expectNot elementExists)
               |> Expect.equal (Expect.fail "upstream failure")
       ]
@@ -73,11 +71,8 @@ expectTests =
     [ test "it defines the HtmlContext based on the selector and the rendered view" <|
       \() ->
         Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
-          |> Markup.target "#root"
-          |> Markup.expect (\query ->
-              Expect.equal (Query.forHtml "#root" (SimpleApp.view SimpleApp.defaultModel)) query
-            )
-          |> Expect.equal Expect.pass
+          |> Markup.target << by [ Sel.id "root" ]
+          |> Markup.expect (element <| hasId "root")
     ]
   ]
 
@@ -89,7 +84,8 @@ childNodeTests =
         let
           initialState = Elmer.given SimpleApp.defaultModel SimpleApp.viewWithChildren SimpleApp.update
         in
-          Markup.target "#root" initialState
+          initialState
+            |> Markup.target << by [ Sel.id "root" ]
             |> Markup.expect (element <| hasText "Child text")
             |> Expect.equal Expect.pass
     ]

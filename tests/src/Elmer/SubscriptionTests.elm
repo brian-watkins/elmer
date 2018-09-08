@@ -9,6 +9,7 @@ import Elmer.Platform.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.TestApps.SubscriptionTestApp as App
 import Time
 
@@ -97,7 +98,7 @@ sendTests =
               |> Spy.use [ override ]
               |> Subscription.with (\() -> App.subscriptions)
               |> Subscription.send "fakeTime-1000" (Time.millisToPosix 23000)
-              |> Markup.target "#time"
+              |> Markup.target << by [ id "time" ]
               |> Markup.expect ( element <| hasText "23 seconds" )
       ]
     , describe "when the subscription is a batch of Subs"
@@ -113,7 +114,7 @@ sendTests =
             Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.batchedSubscriptions)
               |> Subscription.send "fakeTime-60000" (Time.millisToPosix (1000 * 60 * 37))
-              |> Markup.target "#minute"
+              |> Markup.target << by [ id "minute" ]
               |> Markup.expect ( element <| hasText "37 minutes" )
       ]
     , describe "when the subscription is a mapped Sub"
@@ -129,7 +130,7 @@ sendTests =
             Spy.use [ override ] initialState
               |> Subscription.with (\() -> App.mappedSubscriptions)
               |> Subscription.send "fakeTime-3600000" (Time.millisToPosix (1000 * 60 * 60 * 18))
-              |> Markup.target "#child-hours"
+              |> Markup.target << by [ id "child-hours" ]
               |> Markup.expect ( element <| hasText "18 hours" )
       ]
     ]

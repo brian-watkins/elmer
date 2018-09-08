@@ -11,6 +11,7 @@ import Elmer
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Http.Status as Status
@@ -54,9 +55,9 @@ serveTests =
         in
           Elmer.given App.defaultModel App.view App.update
             |> Spy.use [ ElmerHttp.serve [ stubbedResponse, anotherStubbedResponse ] ]
-            |> Markup.target "#request-data-click"
+            |> Markup.target << by [ id "request-data-click" ]
             |> Event.click
-            |> Markup.target "#data-result"
+            |> Markup.target << by [ id "data-result" ]
             |> Markup.expect (element <| hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format
               [ message "Received a request for" "GET http://fun.com/fun.html"
@@ -74,9 +75,9 @@ serveTests =
           in
             Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-              |> Markup.target "#request-data-click"
+              |> Markup.target << by [ id "request-data-click" ]
               |> Event.click
-              |> Markup.target "#data-result"
+              |> Markup.target << by [ id "data-result" ]
               |> Markup.expect (element <| hasText "Name: Super Fun Person")
               |> Expect.equal (Expect.fail (format
                 [ message "Received a request for" "GET http://fun.com/fun.html"
@@ -94,9 +95,9 @@ serveTests =
             in
               Elmer.given App.defaultModel App.view App.update
                 |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-                |> Markup.target "#request-data-click"
+                |> Markup.target << by [ id "request-data-click" ]
                 |> Event.click
-                |> Markup.target "#data-result"
+                |> Markup.target << by [ id "data-result" ]
                 |> Markup.expect (element <| hasText "BadStatus Error: 404 Not Found")
         ]
       , describe "when the response status is in the 200 range"
@@ -109,9 +110,9 @@ serveTests =
               in
                 Elmer.given App.defaultModel App.view App.update
                   |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-                  |> Markup.target "#request-data-click"
+                  |> Markup.target << by [ id "request-data-click" ]
                   |> Event.click
-                  |> Markup.target "#data-result"
+                  |> Markup.target << by [ id "data-result" ]
                   |> Markup.expect (element <| hasText "Name: Super Fun Person")
                   |> Expect.equal (Expect.fail (format
                     [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
@@ -128,9 +129,9 @@ serveTests =
                 in
                   Elmer.given App.defaultModel App.view App.update
                     |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-                    |> Markup.target "#request-data-click"
+                    |> Markup.target << by [ id "request-data-click" ]
                     |> Event.click
-                    |> Markup.target "#data-result"
+                    |> Markup.target << by [ id "data-result" ]
                     |> Markup.expect (element <| hasText "Name: Super Fun Person")
                     |> Expect.equal (Expect.fail (format
                       [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
@@ -152,9 +153,9 @@ serveTests =
               in
                 Elmer.given testModel App.view App.update
                   |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-                  |> Markup.target "#request-data-click"
+                  |> Markup.target << by [ id "request-data-click" ]
                   |> Event.click
-                  |> Markup.target "#data-result"
+                  |> Markup.target << by [ id "data-result" ]
                   |> Markup.expect (element <| hasText "awesome things")
                   |> Expect.equal Expect.pass
           ]
@@ -167,9 +168,9 @@ serveTests =
               in
                 Elmer.given App.defaultModel App.view App.update
                   |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-                  |> Markup.target "#request-data-click"
+                  |> Markup.target << by [ id "request-data-click" ]
                   |> Event.click
-                  |> Markup.target "#data-result"
+                  |> Markup.target << by [ id "data-result" ]
                   |> Markup.expect (element <| hasText "Super Fun Person")
                   |> Expect.equal Expect.pass
           ]
@@ -180,19 +181,21 @@ serveTests =
               |> HttpStub.withBody "{\"message\":\"This is great!\"}"
             state = Elmer.given App.defaultModel App.view App.update
               |> Spy.use [ ElmerHttp.serve [ stubbedResponse, otherStub ] ]
-              |> Markup.target "#request-data-click"
+              |> Markup.target << by [ id "request-data-click" ]
               |> Event.click
-              |> Markup.target "#request-other-data-click"
+              |> Markup.target << by [ id "request-other-data-click" ]
               |> Event.click
           in
             describe "when multiple stubs are provided"
             [ test "it decodes the response for one stub" <|
               \() ->
-                Markup.target "#data-result" state
+                state
+                  |> Markup.target << by [ id "data-result" ]
                   |> Markup.expect (element <| hasText "Super Fun Person")
             , test "it decodes the response for the other stub" <|
               \() ->
-                Markup.target "#other-data-result" state
+                state
+                  |> Markup.target << by [ id "other-data-result" ]
                   |> Markup.expect (element <| hasText "This is great!")
             ]
         ]
@@ -205,7 +208,7 @@ spyTests =
   let
     requestedState = Elmer.given App.defaultModel App.view App.update
       |> Spy.use [ ElmerHttp.spy ]
-      |> Markup.target "#request-data-click"
+      |> Markup.target << by [ id "request-data-click" ]
       |> Event.click
   in
     describe "Http Spy"
@@ -214,7 +217,8 @@ spyTests =
         ElmerHttp.expect (Route.get "http://fun.com/fun.html") requestedState
     , test "it is as if the response never returned" <|
       \() ->
-        Markup.target "#data-result" requestedState
+        requestedState
+          |> Markup.target << by [ id "data-result" ]
           |> Markup.expect (element <| hasText "")
           |> Expect.equal Expect.pass
     ]
@@ -230,9 +234,9 @@ errorResponseTests =
       in
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-          |> Markup.target "#request-data-click"
+          |> Markup.target << by [ id "request-data-click" ]
           |> Event.click
-          |> Markup.target "#data-result"
+          |> Markup.target << by [ id "data-result" ]
           |> Markup.expect (element <| hasText "Timeout Error")
   ]
 
@@ -484,7 +488,7 @@ expectRequestDataTests =
     \() ->
       Elmer.given App.defaultModel App.view App.update
         |> Spy.use [ ElmerHttp.spy ]
-        |> Markup.target "#request-data-click"
+        |> Markup.target << by [ id "request-data-click" ]
         |> Event.click
         |> ElmerHttp.expectThat (Route.get "http://fun.com/fun.html") (Elmer.some <|
             Elmer.expectAll
@@ -502,7 +506,7 @@ resolveTests =
       |> HttpStub.deferResponse
     requestedState = Elmer.given App.defaultModel App.view App.update
       |> Spy.use [ ElmerHttp.serve [ stubbedResponse ] ]
-      |> Markup.target "#request-data-click"
+      |> Markup.target << by [ id "request-data-click" ]
       |> Event.click
   in
     describe "when there is no upstream failure"
@@ -512,14 +516,16 @@ resolveTests =
           ElmerHttp.expect (Route.get "http://fun.com/fun.html") requestedState
       , test "it does not yet resolve the response" <|
         \() ->
-          Markup.target "#data-result" requestedState
+          requestedState
+            |> Markup.target << by [ id "data-result" ]
             |> Markup.expect (element <| hasText "")
       ]
     , describe "when resolve is called"
       [ test "it resolves the response" <|
         \() ->
-          Command.resolveDeferred requestedState
-            |> Markup.target "#data-result"
+          requestedState
+            |> Command.resolveDeferred
+            |> Markup.target << by [ id "data-result" ]
             |> Markup.expect (element <| hasText "Cool Dude")
       ]
     ]

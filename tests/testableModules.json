@@ -1,7 +1,6 @@
 {
     "exposed-modules": [
         "Elmer.Html.Types",
-        "Elmer.Html.Query",
         "Elmer.Html.Node",
         "Elmer.Html.Printer",
         "Elmer.TestState",

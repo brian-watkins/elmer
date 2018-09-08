@@ -8,6 +8,8 @@ import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Internal as HtmlInternal
 import Elmer.Html.Query as Query
+import Elmer.Html.Target as Target
+import Elmer.Html.Selector as Selector
 import Html exposing (Html)
 
 
@@ -46,7 +48,7 @@ triggersSubmit element =
 
 formFor : String -> Html msg -> Maybe (HtmlElement msg)
 formFor formId html =
-  Query.forHtml ("#" ++ formId) html
+  Target.forHtml (Batch [ Selector.id formId ]) html
     |> Query.findElement
     |> Result.toMaybe
 

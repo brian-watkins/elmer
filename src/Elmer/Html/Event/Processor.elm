@@ -11,6 +11,7 @@ import Elmer.Runtime as Runtime
 import Elmer.Errors as Errors
 import Json.Decode as Json
 import Elmer.Html.Query as Query
+import Elmer.Html.Target as Target
 import Html exposing (Html)
 
 
@@ -61,7 +62,7 @@ targetedElement context =
     Just selector ->
       case Context.render context of
         Just view ->
-          Query.findElement <| Query.forHtml selector view
+          Query.findElement <| Target.forHtml selector view
         Nothing ->
           Err <| Errors.print Errors.noModel
     Nothing ->

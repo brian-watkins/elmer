@@ -7,6 +7,7 @@ import Elmer.TestState as TestState exposing (..)
 import Elmer.Html as Markup
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Event as Event
+import Elmer.Html.Selector as Selector exposing (by)
 import Elmer.Browser
 import Elmer.Browser.Matchers exposing (expectTitle)
 import Elmer.TestApps.ApplicationTestApp as App
@@ -36,7 +37,7 @@ applicationTests =
       \() ->
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
           |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/app/fun") Navigation.fakeKey)
-          |> Markup.target "#some-element"
+          |> Markup.target << by [ Selector.id "some-element" ]
           |> Markup.expect (element <| hasText "Fun Stuff")
     , test "it can handle title expectations" <|
       \() ->
@@ -54,7 +55,7 @@ noInitTests =
     [ test "it shows an error" <|
       \() ->
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
-          |> Markup.target "#some-element"
+          |> Markup.target << by [ Selector.id "some-element" ]
           |> Markup.expect (element <| hasText "Fun Stuff")
           |> expectError Errors.noModel
     ]
@@ -62,7 +63,7 @@ noInitTests =
     [ test "it shows an error" <|
       \() ->
         Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
-          |> Markup.target "#some-element"
+          |> Markup.target << by [ Selector.id "some-element" ]
           |> Event.click
           |> Markup.expect (element <| hasText "Fun Stuff")
           |> expectError Errors.noModel

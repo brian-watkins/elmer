@@ -1,16 +1,19 @@
 module Elmer.Html.Types exposing
-  ( HtmlState(..)
+  ( HtmlSelector
+  , HtmlSelectorGroup(..)
+  , HtmlState(..)
   , HtmlNode(..)
   , HtmlElement
   , HtmlEventHandler
   , HtmlEventValue
   , HtmlFact(..)
   , HtmlTarget(..)
+  , Selection
   )
 
 {-| Types for working with Html. Exposed for Testing only
 
-@docs HtmlState, HtmlNode, HtmlElement, HtmlEventHandler, HtmlEventValue, HtmlFact, HtmlTarget
+@docs HtmlState, HtmlNode, HtmlElement, HtmlEventHandler, HtmlEventValue, HtmlFact, HtmlTarget, HtmlSelectorGroup, HtmlSelector, Selection
 
 -}
 
@@ -68,8 +71,22 @@ type HtmlFact
 type HtmlTarget msg =
   HtmlTarget (Selection msg)
 
-
+{-|
+-}
 type alias Selection msg =
-  { selector : String
+  { selector : HtmlSelectorGroup msg
   , element : Maybe (HtmlElement msg)
   }
+
+
+{-| HtmlSelector
+-}
+type HtmlSelectorGroup msg
+  = Batch (List (HtmlSelector msg))
+  | Within (List (HtmlSelector msg)) (HtmlSelectorGroup msg)
+
+
+{-|
+-}
+type alias HtmlSelector msg =
+  HtmlElement msg -> Bool

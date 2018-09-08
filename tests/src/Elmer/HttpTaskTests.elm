@@ -6,6 +6,7 @@ import Elmer exposing (exactly)
 import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (element, hasText)
+import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Http
 import Elmer.Http.Stub as HttpStub exposing (withBody, deferResponse, withStatus)
 import Elmer.Http.Status as Status
@@ -40,13 +41,13 @@ httpServerTests =
       state =
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ Elmer.Http.serve [ stubbedResponse, otherStubbedResponse ] ]
-          |> Markup.target "#request-data-with-task-click"
+          |> Markup.target << by [ id "request-data-with-task-click" ]
           |> Event.click
     in
     [ test "it processes the stubbed response" <|
       \() ->
         state
-          |> Markup.target "#data-result"
+          |> Markup.target << by [ id "data-result" ]
           |> Markup.expect (element <| hasText "Data from Http Task: Super Fun Person is cool")
     , test "it records the request" <|
       \() ->
@@ -62,7 +63,7 @@ httpServerTests =
         in
           Elmer.given App.defaultModel App.view App.update
             |> Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
-            |> Markup.target "#request-data-with-task-click"
+            |> Markup.target << by [ id "request-data-with-task-click" ]
             |> Event.click
             |> Elmer.Http.expect (get "http://fun.com/fun.html")
             |> Expect.equal (Expect.fail (format
@@ -80,13 +81,13 @@ httpSpyTests =
     state =
       Elmer.given App.defaultModel App.view App.update
         |> Spy.use [ Elmer.Http.spy ]
-        |> Markup.target "#request-data-with-task-click"
+        |> Markup.target << by [ id "request-data-with-task-click" ]
         |> Event.click
   in
   [ test "it does nothing in response to the request" <|
     \() ->
       state
-        |> Markup.target "#data-result"
+        |> Markup.target << by [ id "data-result" ]
         |> Markup.expect (element <| hasText "")
   , test "it records the first request" <|
     \() ->
@@ -117,20 +118,20 @@ deferredResponseServerTests =
     state =
       Elmer.given App.defaultModel App.view App.update
         |> Spy.use [ Elmer.Http.serve [ stubbedResponse, otherStubbedResponse ] ]
-        |> Markup.target "#request-data-with-task-click"
+        |> Markup.target << by [ id "request-data-with-task-click" ]
         |> Event.click
   in
   [ test "it does nothing" <|
     \() ->
       state
-        |> Markup.target "#data-result"
+        |> Markup.target << by [ id "data-result" ]
         |> Markup.expect (element <| hasText "")
   , describe "when the deferred responses are resolved"
     [ test "it processes the stubbed response" <|
       \() ->
         state
           |> Command.resolveDeferred
-          |> Markup.target "#data-result"
+          |> Markup.target << by [ id "data-result" ]
           |> Markup.expect (element <| hasText "Data from Http Task: Super Awesome Person is fun")
     , test "it records the request" <|
       \() ->
@@ -152,13 +153,13 @@ andThenTaskTests =
       state =
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ Elmer.Http.serve [ stubbedResponse, otherStubbedResponse ] ]
-          |> Markup.target "#request-other-data-with-task-click"
+          |> Markup.target << by [ id "request-other-data-with-task-click" ]
           |> Event.click
     in
     [ test "it processes the stubbed response" <|
       \() ->
         state
-          |> Markup.target "#other-data-result"
+          |> Markup.target << by [ id "other-data-result" ]
           |> Markup.expect (element <| hasText "Data from Task: bowling")
     , test "it records the first request" <|
       \() ->
@@ -180,13 +181,13 @@ andThenTaskTests =
       state =
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ Elmer.Http.serve [ stubbedResponse, otherStubbedResponse ] ]
-          |> Markup.target "#request-other-data-with-task-click"
+          |> Markup.target << by [ id "request-other-data-with-task-click" ]
           |> Event.click
     in
     [ test "it processes the stubbed response" <|
       \() ->
         state
-          |> Markup.target "#other-data-result"
+          |> Markup.target << by [ id "other-data-result" ]
           |> Markup.expect (element <| hasText "Error!")
     , test "it records the first request" <|
       \() ->
@@ -208,13 +209,13 @@ andThenTaskTests =
       state =
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ Elmer.Http.serve [ stubbedResponse, otherStubbedResponse ] ]
-          |> Markup.target "#request-other-data-with-task-click"
+          |> Markup.target << by [ id "request-other-data-with-task-click" ]
           |> Event.click
     in
     [ test "it processes the stubbed response" <|
       \() ->
         state
-          |> Markup.target "#other-data-result"
+          |> Markup.target << by [ id "other-data-result" ]
           |> Markup.expect (element <| hasText "Error!")
     , test "it records the first request" <|
       \() ->

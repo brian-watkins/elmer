@@ -13,6 +13,7 @@
         "Elmer.Html.Matchers",
         "Elmer.Html.Event",
         "Elmer.Html.Element",
+        "Elmer.Html.Selector",
         "Elmer.Navigation",
         "Elmer.Platform.Command",
         "Elmer.Platform.Subscription",

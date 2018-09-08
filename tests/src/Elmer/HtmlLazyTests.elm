@@ -7,6 +7,7 @@ import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer
 import Elmer.Html.Matchers as Matchers exposing (..)
+import Elmer.Html.Selector as S exposing (..)
 import Html.Attributes as Attr
 import Html exposing (Html)
 import Elmer.TestApps.LazyTestApp as App
@@ -26,18 +27,18 @@ lazyTests =
   [ test "it renders the lazy html" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target "#lazy-div"
+        |> Markup.target << by [ id "lazy-div" ]
         |> Markup.expect (element <| hasText "Some name: Cool Person")
   , test "it passes inherited events" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target "#lazy-div"
+        |> Markup.target << by [ id "lazy-div" ]
         |> Event.click
         |> Markup.expect (element <| hasText "Some name: Awesome Person")
   , test "it maps events from lazy html" <|
     \() ->
       Elmer.given defaultWrappedModel wrappedView wrappedUpdate
-        |> Markup.target "#lazy-div"
+        |> Markup.target << by [ id "lazy-div" ]
         |> Event.click
         |> Markup.expect (element <| hasText "Happy Cool Person likes bowling")
   ]
@@ -49,7 +50,7 @@ lazy2Tests =
   [ test "it renders the lazy html" <|
     \() ->
       Elmer.given App.defaultModel App.lazyView2 App.update
-        |> Markup.target "#lazy-div"
+        |> Markup.target << by [ id "lazy-div" ]
         |> Markup.expect (element <| hasText "Cool Person likes bowling")
   ]
 
@@ -60,7 +61,7 @@ lazy3Tests =
   [ test "it renders the lazy html" <|
     \() ->
       Elmer.given App.defaultModel App.lazyView3 App.update
-        |> Markup.target "#root"
+        |> Markup.target << by [ id "root" ]
         |> Markup.expect (element <| hasText "Cool Person likes bowling 5 times a week!")
   ]
 

@@ -11,6 +11,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Navigation as ElmerNav
 import Elmer.Browser
 import Elmer.Html.Matchers as Matchers exposing (..)
+import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors
 import Elmer.Html as Markup
@@ -50,7 +51,7 @@ expectLocationTests =
             Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
-              |> Markup.target "#pushUrlButton"
+              |> Markup.target << by [ Sel.id "pushUrlButton" ]
               |> Event.click
               |> ElmerNav.expectLocation "http://fun.com/fun.html"
               |> Expect.equal Expect.pass
@@ -62,7 +63,7 @@ expectLocationTests =
             Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
-              |> Markup.target "#pushUrlButton"
+              |> Markup.target << by [ Sel.id "pushUrlButton" ]
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
               |> expectError (Errors.wrongLocation "http://badplace.com" "http://fun.com/fun.html")
@@ -74,7 +75,7 @@ expectLocationTests =
           Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
             |> Spy.use [ ElmerNav.spy ]
             |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
-            |> Markup.target "#pushBadUrl"
+            |> Markup.target << by [ Sel.id "pushBadUrl" ]
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
             |> expectError (Errors.badUrl "Browser.Navigation.pushUrl" "kdshjfkdsjhfksd")
@@ -84,7 +85,7 @@ expectLocationTests =
         \() ->
           Elmer.given App.defaultModel App.pageView App.update
             |> Spy.use [ ElmerNav.spy ]
-            |> Markup.target "#pushUrlButton"
+            |> Markup.target << by [ Sel.id "pushUrlButton" ]
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
             |> expectError (Errors.navigationSpyRequiresApplication "Browser.Navigation.pushUrl" "http://fun.com/fun.html")
@@ -97,7 +98,7 @@ expectLocationTests =
             Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
-              |> Markup.target "#replaceUrlButton"
+              |> Markup.target << by [ Sel.id "replaceUrlButton" ]
               |> Event.click
               |> ElmerNav.expectLocation "http://fun.com/awesome.html"
               |> Expect.equal Expect.pass
@@ -109,7 +110,7 @@ expectLocationTests =
             Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
               |> Spy.use [ ElmerNav.spy ]
               |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
-              |> Markup.target "#replaceUrlButton"
+              |> Markup.target << by [ Sel.id "replaceUrlButton" ]
               |> Event.click
               |> ElmerNav.expectLocation "http://badplace.com"
               |> expectError (Errors.wrongLocation "http://badplace.com" "http://fun.com/awesome.html")
@@ -121,7 +122,7 @@ expectLocationTests =
           Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
             |> Spy.use [ ElmerNav.spy ]
             |> Elmer.Browser.init (\() -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
-            |> Markup.target "#replaceBadUrl"
+            |> Markup.target << by [ Sel.id "replaceBadUrl" ]
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
             |> expectError (Errors.badUrl "Browser.Navigation.replaceUrl" "kdshjfkdsjhfksd")
@@ -131,7 +132,7 @@ expectLocationTests =
         \() ->
           Elmer.given App.defaultModel App.pageView App.update
             |> Spy.use [ ElmerNav.spy ]
-            |> Markup.target "#replaceUrlButton"
+            |> Markup.target << by [ Sel.id "replaceUrlButton" ]
             |> Event.click
             |> ElmerNav.expectLocation "http://badplace.com"
             |> expectError (Errors.navigationSpyRequiresApplication "Browser.Navigation.replaceUrl" "http://fun.com/awesome.html")

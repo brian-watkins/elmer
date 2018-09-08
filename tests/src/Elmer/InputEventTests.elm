@@ -7,7 +7,8 @@ import Elmer.TestApps.InputTestApp as App
 import Elmer.EventTests as EventTests
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
-import Elmer.Html as Markup
+import Elmer.Html as Markup exposing (HtmlSelector)
+import Elmer.Html.Selector exposing (..)
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalled)
 import Elmer.Printer exposing (..)
@@ -31,7 +32,7 @@ inputTests =
     [ test "it updates the model accordingly" <|
       \() ->
         Elmer.given App.defaultModel App.view App.update
-          |> Markup.target "input[name='first-name']"
+          |> Markup.target << by (inputSelector "first-name")
           |> Event.input "Mr. Fun Stuff"
           |> Elmer.expectModel (\model ->
               Expect.equal model.name "Mr. Fun Stuff"
@@ -55,7 +56,8 @@ checkTests =
           Expect.equal initialModel.isChecked False
       , test "the event updates the model" <|
         \() ->
-          Markup.target "input[name='is-cool']" initialState
+          initialState
+            |> Markup.target << by (inputSelector "is-cool")
             |> Event.check
             |> Elmer.expectModel (\model ->
                 Expect.equal model.isChecked True
@@ -79,7 +81,8 @@ uncheckTests =
           Expect.equal initialModel.isChecked False
       , test "the event updates the model" <|
         \() ->
-          Markup.target "input[name='is-cool']" initialState
+          initialState
+            |> Markup.target << by (inputSelector "is-cool")
             |> Event.check
             |> Event.uncheck
             |> Elmer.expectModel (\model ->
@@ -88,7 +91,7 @@ uncheckTests =
       ]
   ]
 
-triggersSubmit : String -> Test
+triggersSubmit : List (HtmlSelector App.Msg) -> Test
 triggersSubmit selector =
   describe "submittable behavior"
   [ describe "when there is no submit handler on an ancestor"
@@ -96,7 +99,7 @@ triggersSubmit selector =
       \() ->
         let
           state = Elmer.given App.defaultModel App.submitWithoutFormView App.update
-            |> Markup.target selector
+            |> Markup.target << by selector
             |> Event.click
         in
           Expect.equal state <| TestState.failure "No event handlers found for any of the triggered events: click, mousedown, mouseup, submit"
@@ -104,7 +107,7 @@ triggersSubmit selector =
   , let
       initialModel = App.defaultModel
       state = Elmer.given initialModel App.view App.update
-        |> Markup.target selector
+        |> Markup.target << by selector
         |> Event.click
     in
       describe "when there is a submit handler on an ancestor"
@@ -121,7 +124,7 @@ triggersSubmit selector =
   , let
       initialModel = App.defaultModel
       state = Elmer.given initialModel App.submitOutsideFormView App.update
-        |> Markup.target selector
+        |> Markup.target << by selector
         |> Event.click
     in
       describe "when the submit handler is on a form referenced by the submit button"
@@ -139,7 +142,7 @@ triggersSubmit selector =
     [ let
         initialModel = App.defaultModel
         state = Elmer.given initialModel App.submitBadFormDescendentView App.update
-          |> Markup.target selector
+          |> Markup.target << by selector
           |> Event.click
       in
         describe "when the targeted element is not the descendent of a form"
@@ -153,7 +156,7 @@ triggersSubmit selector =
       , let
           initialModel = App.defaultModel
           state = Elmer.given initialModel App.submitBadFormView App.update
-            |> Markup.target selector
+            |> Markup.target << by selector
             |> Event.click
         in
           describe "when the targeted element is the descendent of a form with a submit handler"
@@ -167,12 +170,12 @@ triggersSubmit selector =
       ]
   ]
 
-doesNotTriggerSubmit : String -> Test
+doesNotTriggerSubmit : List (HtmlSelector App.Msg) -> Test
 doesNotTriggerSubmit selector =
   let
       initialModel = App.defaultModel
       state = Elmer.given initialModel App.view App.update
-          |> Markup.target selector
+          |> Markup.target << by selector
           |> Event.click
     in
       describe "when there is a submit handler on an ancestor"
@@ -191,19 +194,19 @@ submitTests : Test
 submitTests =
   describe "submit event"
   [ describe "input with type submit"
-    [ triggersSubmit "input[type='submit']"
+    [ triggersSubmit [ tag "input", characteristic ("type", Just "submit") ]
     ]
   , describe "input with type other than submit"
-    [ doesNotTriggerSubmit "input[type='text']"
+    [ doesNotTriggerSubmit [ tag "input", characteristic ("type", Just "text") ]
     ]
   , describe "button with submit type"
-    [ triggersSubmit "button[type='submit']"
+    [ triggersSubmit [ tag "button", characteristic ("type", Just "submit") ]
     ]
   , describe "button with no type"
-    [ triggersSubmit "#default-type-button"
+    [ triggersSubmit [ id "default-type-button" ]
     ]
   , describe "button with type other than submit"
-    [ doesNotTriggerSubmit "button[type='button']"
+    [ doesNotTriggerSubmit [ tag "button", characteristic ("type", Just "button") ]
     ]
   ]
 
@@ -220,7 +223,7 @@ submitWithSpyTests =
         in
           Elmer.given App.defaultModel App.spyTestView App.update
             |> Spy.use [ viewSpy ]
-            |> Markup.target "#default-type-button"
+            |> Markup.target << by [ id "default-type-button" ]
             |> Event.click
             |> Elmer.expectModel (\model ->
                 Expect.equal model.isSubmitted True
@@ -254,7 +257,7 @@ selectTests =
       \() ->
         let
           state = Elmer.given App.defaultModel App.view App.update
-            |> Markup.target "#root"
+            |> Markup.target << by [ id "root" ]
             |> Event.select "some-value"
         in
           Expect.equal state (TestState.failure "The targeted element is not selectable")
@@ -265,7 +268,7 @@ selectTests =
         \() ->
           let
             state = Elmer.given App.defaultModel App.selectWithNoHandlerView App.update
-              |> Markup.target "select"
+              |> Markup.target << by [ tag "select" ]
               |> Event.select "some-value"
           in
             Expect.equal state (TestState.failure "No event handlers found for any of the triggered events: input")
@@ -275,7 +278,7 @@ selectTests =
         \() ->
           let
             state = Elmer.given App.defaultModel App.selectWithNoOptionsView App.update
-              |> Markup.target "select"
+              |> Markup.target << by [ tag "select" ]
               |> Event.select "some-value"
           in
             Expect.equal state (TestState.failure (format [ message "No option found with value" "some-value" ]))
@@ -286,7 +289,7 @@ selectTests =
           \() ->
             let
               state = Elmer.given App.defaultModel App.selectView App.update
-                |> Markup.target "select"
+                |> Markup.target << by [ tag "select" ]
                 |> Event.select "bad-value"
             in
               Expect.equal state (
@@ -300,7 +303,7 @@ selectTests =
         [ test "it triggers the event handler" <|
           \() ->
             Elmer.given App.defaultModel App.selectView App.update
-              |> Markup.target "select"
+              |> Markup.target << by [ tag "select" ]
               |> Event.select "mouse"
               |> Elmer.expectModel (\model ->
                   Expect.equal model.selectedValue "mouse"
@@ -308,4 +311,11 @@ selectTests =
         ]
       ]
     ]
+  ]
+
+
+inputSelector : String -> List (HtmlSelector msg)
+inputSelector name =
+  [ tag "input"
+  , characteristic ("name", Just name)
   ]
