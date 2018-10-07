@@ -22,7 +22,7 @@ import Elmer.Context as Context
 {-| Initialize a `TestState` with a model and update function.
 
 Use this function to initialize tests for headless 'worker' programs
-created with `Elmer.platform.program` or `Elmer.platform.programWithFlags`.
+created with `Elm.Platform.worker`.
 -}
 given
   :  model

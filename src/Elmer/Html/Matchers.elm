@@ -48,12 +48,13 @@ the given element matcher will only be applied to the first element selected.
 
 -}
 element : Matcher (Elmer.Html.HtmlElement msg) -> Matcher (Elmer.Html.HtmlTarget msg)
-element elementMatcher query =
-  case Query.findElement query of
-    Ok foundElement ->
-      elementMatcher foundElement
-    Err msg ->
-      Expect.fail msg
+element elementMatcher =
+  \query ->
+    case Query.findElement query of
+      Ok foundElement ->
+        elementMatcher foundElement
+      Err msg ->
+        Expect.fail msg
 
 {-| Expect that the selected element exists.
 
@@ -61,12 +62,13 @@ element elementMatcher query =
       |> Elmer.Html.expect elementExists
 -}
 elementExists : Matcher (Elmer.Html.HtmlTarget msg)
-elementExists query =
-  case Query.findElement query of
-    Ok _ ->
-      Expect.pass
-    Err msg ->
-      Expect.fail msg
+elementExists =
+  \query ->
+    case Query.findElement query of
+      Ok _ ->
+        Expect.pass
+      Err msg ->
+        Expect.fail msg
 
 
 {-| Make expectations about the selected elements.
@@ -79,16 +81,18 @@ be passed to the given matcher.
 
 -}
 elements : Matcher (List (Elmer.Html.HtmlElement msg)) -> Matcher (Elmer.Html.HtmlTarget msg)
-elements listMatcher query =
-  Query.findElements query
-    |> listMatcher
+elements listMatcher =
+  \query ->
+    Query.findElements query
+      |> listMatcher
 
 
 {-| Expect that an element has some text. This matcher will pass only if the element
 or any of its descendents contains some `Html.text` with the specified text.
 -}
 hasText : String -> Matcher (Elmer.Html.HtmlElement msg)
-hasText text node =
+hasText text =
+  \node ->
     let
         texts =
             flattenTexts node.children
@@ -103,7 +107,8 @@ hasText text node =
 {-| Expect that an element has the specified class. No need to prepend the class name with a dot.
 -}
 hasClass : String -> Matcher (Elmer.Html.HtmlElement msg)
-hasClass className node =
+hasClass className =
+  \node ->
     let
         classList =
             Html_.classList node
@@ -122,15 +127,16 @@ hasClass className node =
 
 -}
 hasProperty : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasProperty (name, expectedValue) node =
-  case Html_.property name node of
-    Just actualValue ->
-      if expectedValue == actualValue then
-        Expect.pass
-      else
-        failWith <| Errors.wrongProperty name expectedValue actualValue
-    Nothing ->
-      failWith <| Errors.noProperty name expectedValue
+hasProperty (name, expectedValue) =
+  \node ->
+    case Html_.property name node of
+      Just actualValue ->
+        if expectedValue == actualValue then
+          Expect.pass
+        else
+          failWith <| Errors.wrongProperty name expectedValue actualValue
+      Nothing ->
+        failWith <| Errors.noProperty name expectedValue
 
 
 {-| Expect that an element has the specified attribute with the specified value.
@@ -139,31 +145,33 @@ hasProperty (name, expectedValue) node =
 
 -}
 hasAttribute : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasAttribute (name, value) targeted =
-  case Html_.attribute name targeted of
-    Just attributeValue ->
-      if value == attributeValue then
-        Expect.pass
-      else
+hasAttribute (name, value) =
+  \targeted ->
+    case Html_.attribute name targeted of
+      Just attributeValue ->
+        if value == attributeValue then
+          Expect.pass
+        else
+          Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
+            message "but it has" (name ++ " = " ++ attributeValue) ])
+      Nothing ->
         Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
-          message "but it has" (name ++ " = " ++ attributeValue) ])
-    Nothing ->
-      Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
-          description "but it has no attribute with that name" ])
+            description "but it has no attribute with that name" ])
 
 
 {-| Expect that an element has the specified id. No need to prepend the id with a pound sign.
 -}
 hasId : String -> Matcher (Elmer.Html.HtmlElement msg)
-hasId expectedId node =
-  case Html_.elementId node of
-    Just nodeId ->
-      if nodeId == expectedId then
-        Expect.pass
-      else
-        Expect.fail (format [message "Expected element to have id" expectedId, message "but it has id" nodeId ])
-    Nothing ->
-      Expect.fail (format [message "Expected element to have id" expectedId, description "but it has no id" ])
+hasId expectedId =
+  \node ->
+    case Html_.elementId node of
+      Just nodeId ->
+        if nodeId == expectedId then
+          Expect.pass
+        else
+          Expect.fail (format [message "Expected element to have id" expectedId, message "but it has id" nodeId ])
+      Nothing ->
+        Expect.fail (format [message "Expected element to have id" expectedId, description "but it has no id" ])
 
 {-| Expect that an element has the specified style.
 
@@ -171,30 +179,31 @@ hasId expectedId node =
 
 -}
 hasStyle : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasStyle (name, value) targeted =
-  let
-    styleDict = Html_.styles targeted
-  in
-    if Dict.isEmpty styleDict then
-      Expect.fail <| format
-          [ message "Expected element to have style" <| name ++ ": " ++ value
-          , description "but it has no style"
-          ]
-    else
-        case Dict.get name styleDict of
-          Just styleValue ->
-            if styleValue == value then
-              Expect.pass
-            else
+hasStyle (name, value) =
+  \targeted ->
+    let
+      styleDict = Html_.styles targeted
+    in
+      if Dict.isEmpty styleDict then
+        Expect.fail <| format
+            [ message "Expected element to have style" <| name ++ ": " ++ value
+            , description "but it has no style"
+            ]
+      else
+          case Dict.get name styleDict of
+            Just styleValue ->
+              if styleValue == value then
+                Expect.pass
+              else
+                Expect.fail <| format
+                  [ message "Expected element to have style" <| name ++ ": " ++ value
+                  , message "but it has style" (printDict styleDict)
+                  ]
+            Nothing ->
               Expect.fail <| format
                 [ message "Expected element to have style" <| name ++ ": " ++ value
                 , message "but it has style" (printDict styleDict)
                 ]
-          Nothing ->
-            Expect.fail <| format
-              [ message "Expected element to have style" <| name ++ ": " ++ value
-              , message "but it has style" (printDict styleDict)
-              ]
       
 
 {-| Expect that an element listens for an event of the given type.
@@ -205,23 +214,24 @@ Note: This will not consider event handlers on the element's ancestors.
 
 -}
 listensForEvent : String -> Matcher (Elmer.Html.HtmlElement msg)
-listensForEvent event targeted =
-  if List.isEmpty targeted.eventHandlers then
-    Expect.fail <| format
-      [ message "Expected element to listen for event" event
-      , description "but it has no event listeners"
-      ]
-  else
-    if List.any (\eventHandler -> eventHandler.eventType == event) targeted.eventHandlers then
-      Expect.pass
-    else
+listensForEvent event =
+  \targeted ->
+    if List.isEmpty targeted.eventHandlers then
       Expect.fail <| format
         [ message "Expected element to listen for event" event
-        , message "but it listens for" <| (
-          List.map .eventType targeted.eventHandlers
-            |> String.join "\n"
-          )
+        , description "but it has no event listeners"
         ]
+    else
+      if List.any (\eventHandler -> eventHandler.eventType == event) targeted.eventHandlers then
+        Expect.pass
+      else
+        Expect.fail <| format
+          [ message "Expected element to listen for event" event
+          , message "but it listens for" <| (
+            List.map .eventType targeted.eventHandlers
+              |> String.join "\n"
+            )
+          ]
 
 
 -- Private functions

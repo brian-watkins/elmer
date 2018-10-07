@@ -57,11 +57,11 @@ type alias Matcher a =
 
 {-| Initialize a test with a model, view function, and update function.
 -}
-given
-  :  model
-  -> ( model -> Html msg )
-  -> ( msg -> model -> ( model, Cmd msg ) )
-  -> TestState model msg
+given : 
+  model
+    -> ( model -> Html msg )
+    -> ( msg -> model -> ( model, Cmd msg ) )
+    -> TestState model msg
 given model view update =
   Context.default (HtmlView view) update
     |> Context.withModel model
@@ -81,14 +81,15 @@ If one fails, then the conjoined matcher fails, otherwise it passes.
         )
 -}
 expectAll : List (Matcher a) -> Matcher a
-expectAll matchers value =
-  List.foldl (\matcher result -> 
-    case Test.Runner.getFailureReason result of
-      Just _ ->
-        result
-      Nothing ->
-        matcher value
-  ) Expect.pass matchers
+expectAll matchers =
+  \value ->
+    List.foldl (\matcher result ->
+      case Test.Runner.getFailureReason result of
+        Just _ ->
+          result
+        Nothing ->
+          matcher value
+    ) Expect.pass matchers
 
 
 {-| Make expectations about the model in its current state.
@@ -131,82 +132,86 @@ expectNot matcher =
 {-| Expect that all items in a list satisfy the given matcher.
 -}
 each : Matcher a -> Matcher (List a)
-each matcher list =
-  let
-    failures = takeFailures matcher list
-  in
-    if List.isEmpty list then
-      Expect.fail <| format
-        [ description "Expected all to pass but the list is empty" ]
-    else
-      if List.isEmpty failures then
-        Expect.pass
-      else
+each matcher =
+  \list ->
+    let
+      failures = takeFailures matcher list
+    in
+      if List.isEmpty list then
         Expect.fail <| format
-          [ description "Expected all to pass but some failed:"
-          , description <| formatFailures failures
-          ]
+          [ description "Expected all to pass but the list is empty" ]
+      else
+        if List.isEmpty failures then
+          Expect.pass
+        else
+          Expect.fail <| format
+            [ description "Expected all to pass but some failed:"
+            , description <| formatFailures failures
+            ]
 
 {-| Expect that at least one item in a list satisfies the given matcher.
 -}
 some : Matcher a -> Matcher (List a)
-some matcher list =
-  let
-    failures = takeFailures matcher list
-  in
-    if List.isEmpty list then
-      Expect.fail <| format
-        [ description "Expected some to pass but the list is empty" ]
-    else
-      if List.length failures < List.length list then
-        Expect.pass
-      else
+some matcher =
+  \list ->
+    let
+      failures = takeFailures matcher list
+    in
+      if List.isEmpty list then
         Expect.fail <| format
-          [ description "Expected some to pass but found none. Here are the failures:"
-          , description <| formatFailures failures
-          ]
+          [ description "Expected some to pass but the list is empty" ]
+      else
+        if List.length failures < List.length list then
+          Expect.pass
+        else
+          Expect.fail <| format
+            [ description "Expected some to pass but found none. Here are the failures:"
+            , description <| formatFailures failures
+            ]
 
 {-| Expect that exactly some number of items in a list satisfy the given matcher.
 -}
 exactly : Int -> Matcher a -> Matcher (List a)
-exactly expectedCount matcher list =
-  let
-    failures = takeFailures matcher list
-    matchCount = List.length list - List.length failures
-  in
-    if matchCount == expectedCount then
-      Expect.pass
-    else
-      if List.isEmpty failures then
-        Expect.fail <| format
-          [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
-            " to pass but the list is empty"
-          ]
+exactly expectedCount matcher =
+  \list ->
+    let
+      failures = takeFailures matcher list
+      matchCount = List.length list - List.length failures
+    in
+      if matchCount == expectedCount then
+        Expect.pass
       else
-        Expect.fail <| format
-          [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
-            " to pass but found " ++ (String.fromInt matchCount) ++ ". Here are the failures:"
-          , description <| formatFailures failures
-          ]
+        if List.isEmpty failures then
+          Expect.fail <| format
+            [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
+              " to pass but the list is empty"
+            ]
+        else
+          Expect.fail <| format
+            [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
+              " to pass but found " ++ (String.fromInt matchCount) ++ ". Here are the failures:"
+            , description <| formatFailures failures
+            ]
 
 {-| Expect that the item at the given index satisfies the given matcher.
 -}
 atIndex : Int -> Matcher a -> Matcher (List a)
-atIndex index matcher list =
-  case Array.fromList list |> Array.get index of
-    Just item ->
-      case Test.Runner.getFailureReason <| matcher item of
-        Just failure ->
-          Expect.fail <| format
-            [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but it failed:"
-            , description <| formatFailure failure
-            ]
-        Nothing ->
-          Expect.pass
-    Nothing ->
-      Expect.fail <| format
-        [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but there is no item at that index"
-        ]
+atIndex index matcher =
+  \list ->
+    case Array.fromList list |> Array.get index of
+      Just item ->
+        case Test.Runner.getFailureReason <| matcher item of
+          Just failure ->
+            Expect.fail <| format
+              [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but it failed:"
+              , description <| formatFailure failure
+              ]
+          Nothing ->
+            Expect.pass
+      Nothing ->
+        Expect.fail <| format
+          [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but there is no item at that index"
+          ]
 
 takeFailures : Matcher a -> List a -> List FailureReason
 takeFailures matcher =
@@ -217,37 +222,39 @@ takeFailures matcher =
 {-| Expect that the last item in a list satisfies the given matcher.
 -}
 last : Matcher a -> Matcher (List a)
-last matcher list =
-  let
-    maybeItem =
-      List.drop ((List.length list) - 1) list
-        |> List.head
-  in
-    case maybeItem of
-      Just item ->
-        case Test.Runner.getFailureReason <| matcher item of
-          Just failure ->
-            Expect.fail <| format
-              [ description <| "Expected the last item to pass but it failed:"
-              , description <| formatFailure failure
-              ]
-          Nothing ->
-            Expect.pass
-      Nothing ->
-        Expect.fail <| format
-          [ description <| "Expected the last item to pass but the list is empty"
-          ]
+last matcher =
+  \list ->
+    let
+      maybeItem =
+        List.drop ((List.length list) - 1) list
+          |> List.head
+    in
+      case maybeItem of
+        Just item ->
+          case Test.Runner.getFailureReason <| matcher item of
+            Just failure ->
+              Expect.fail <| format
+                [ description <| "Expected the last item to pass but it failed:"
+                , description <| formatFailure failure
+                ]
+            Nothing ->
+              Expect.pass
+        Nothing ->
+          Expect.fail <| format
+            [ description <| "Expected the last item to pass but the list is empty"
+            ]
 
 
 {-| Expect that a list has the given length.
 -}
 hasLength : Int -> Matcher (List a)
-hasLength expectedCount list =
-  if List.length list == expectedCount then
-    Expect.pass
-  else
-    Expect.fail <|
-      format
-        [ message "Expected list to have size" (String.fromInt expectedCount)
-        , message "but it has size" (String.fromInt (List.length list))
-        ]
+hasLength expectedCount =
+  \list ->
+    if List.length list == expectedCount then
+      Expect.pass
+    else
+      Expect.fail <|
+        format
+          [ message "Expected list to have size" (String.fromInt expectedCount)
+          , message "but it has size" (String.fromInt (List.length list))
+          ]

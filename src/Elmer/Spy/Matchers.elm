@@ -55,18 +55,19 @@ This is shorthand for:
 
 -}
 wasCalled : Int -> Matcher Calls
-wasCalled expectedCallCount spy =
-  let
-    callCount = List.length spy.calls
-  in
-    if callCount == expectedCallCount then
-      Expect.pass
-    else
-      Expect.fail <|
-        format
-          [ message ("Expected spy " ++ spy.name ++ " to have been called") <| timesString expectedCallCount
-          , message "but it was called" <| timesString callCount
-          ]
+wasCalled expectedCallCount =
+  \spy ->
+    let
+      callCount = List.length spy.calls
+    in
+      if callCount == expectedCallCount then
+        Expect.pass
+      else
+        Expect.fail <|
+          format
+            [ message ("Expected spy " ++ spy.name ++ " to have been called") <| timesString expectedCallCount
+            , message "but it was called" <| timesString callCount
+            ]
 
 timesString : Int -> String
 timesString times =
@@ -159,16 +160,17 @@ Here's how you would expect that exactly 2 of the calls had a certain argument.
 
 -}
 calls : Matcher (List Call) -> Matcher Calls
-calls callMatcher spy =
-  case Test.Runner.getFailureReason <| callMatcher spy.calls of
-    Just failure ->
-      Expect.fail <|
-        format
-          [ description <| "Expectation for " ++ spy.name ++ " failed."
-          , description <| formatFailure failure
-          ]
-    Nothing ->
-      Expect.pass
+calls callMatcher =
+  \spy ->
+    case Test.Runner.getFailureReason <| callMatcher spy.calls of
+      Just failure ->
+        Expect.fail <|
+          format
+            [ description <| "Expectation for " ++ spy.name ++ " failed."
+            , description <| formatFailure failure
+            ]
+      Nothing ->
+        Expect.pass
 
 {-| Expect that a call has some arguments.
 
@@ -184,8 +186,9 @@ of a specific call.
 
 -}
 hasArgs : List Arg -> Matcher Call
-hasArgs args call =
-  evaluateCalls Nothing args [ call ]
+hasArgs args =
+  \call ->
+    evaluateCalls Nothing args [ call ]
 
 
 {-| Expect that a spy was called at least once with the given arguments.
@@ -208,12 +211,14 @@ This is shorthand for:
 
 -}
 wasCalledWith : List Arg -> Matcher Calls
-wasCalledWith args spy =
-  evaluateCalls (Just spy.name) args spy.calls
+wasCalledWith args =
+  \spy ->
+    evaluateCalls (Just spy.name) args spy.calls
 
 
 evaluateCalls : Maybe String -> List Arg -> Matcher (List (List Arg))
-evaluateCalls maybeSpyName args callsArgList =
+evaluateCalls maybeSpyName args =
+  \callsArgList ->
     if List.isEmpty callsArgList then
       noCallsFailure maybeSpyName args
     else
