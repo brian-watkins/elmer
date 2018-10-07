@@ -27,7 +27,7 @@ keyedTests =
   [ test "it renders the keyed nodes" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
+        |> Markup.target << descendantsOf [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"
@@ -38,7 +38,7 @@ keyedTests =
   , test "it handles inherited events" <|
     \() ->
       Elmer.given App.defaultModel App.view App.update
-        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
+        |> Markup.target << descendantsOf [ id "fruit-list" ] << by [ tag "li" ]
         |> Event.click
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
@@ -52,7 +52,7 @@ keyedTests =
       Elmer.given defaultWrappedModel wrappedView wrappedUpdate
         |> Markup.target << by [ id "special-node" ]
         |> Event.click
-        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
+        |> Markup.target << descendantsOf [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"
@@ -63,7 +63,7 @@ keyedTests =
   , test "it handles lazy keyed nodes" <|
     \() ->
       Elmer.given App.defaultModel App.viewLazyNode App.update
-        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
+        |> Markup.target << descendantsOf [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"
@@ -74,7 +74,7 @@ keyedTests =
   , test "it lazily handles keyed nodes" <|
     \() ->
       Elmer.given App.defaultModel App.lazyKeyedView App.update
-        |> Markup.target << within [ id "fruit-list" ] << by [ tag "li" ]
+        |> Markup.target << descendantsOf [ id "fruit-list" ] << by [ tag "li" ]
         |> Markup.expect (elements <| expectAll
           [ hasLength 3
           , exactly 1 <| hasText "apple"

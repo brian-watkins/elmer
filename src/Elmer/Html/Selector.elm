@@ -4,7 +4,7 @@ module Elmer.Html.Selector exposing
   , class
   , characteristic
   , text
-  , within
+  , descendantsOf
   , by
   )
 
@@ -14,7 +14,7 @@ module Elmer.Html.Selector exposing
 @docs id, tag, class, characteristic, text
 
 # Group Selectors
-@docs by, within
+@docs by, descendantsOf
 
 -}
 
@@ -102,25 +102,25 @@ text expectedText element =
     |> List.member expectedText
 
 
-{-| Select Html elements by which to narrow the scope of further selections.
+{-| Narrow the scope of further selections to elements that are descendants of the selected elements.
 
 Suppose you want to select all `li` that are descendants of an `ol` that is itself a descendant of
 an element with a particular class:
 
     testState
       |> Elmer.Html.target
-        << within [ class "some-class" ] 
-        << within [ tag "ol" ] 
+        << descendantsOf [ class "some-class" ]
+        << descendantsOf [ tag "ol" ]
         << by [ tag "li" ]
 
-You can chain as many `within` calls as you like, but the chain must be terminated with a call to `by`.
+You can chain as many `descendantsOf` calls as you like, but the chain must be terminated with a call to `by`.
 
-Note that `within` is inclusive. In the above example, if an `ol` tag itself has the class 
+Note that `descendantsOf` is inclusive. In the above example, if an `ol` tag itself has the class
 `some-class` then all its descending `li` elements will be selected. Likewise, the following:
 
     testState
       |> Elmer.Html.target
-        << within [ class "some-class" ]
+        << descendantsOf [ class "some-class" ]
         << by [ tag "p" ]
 
 would select
@@ -135,9 +135,9 @@ and the `p` element from
     ]
 
 -}
-within : List (Elmer.Html.HtmlSelector msg) -> (Elmer.Html.HtmlSelectorGroup msg, targetable) -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
-within selectors (next, targetable) =
-  ( Types.Within selectors next, targetable )
+descendantsOf : List (Elmer.Html.HtmlSelector msg) -> (Elmer.Html.HtmlSelectorGroup msg, targetable) -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
+descendantsOf selectors (next, targetable) =
+  ( Types.Descendants selectors next, targetable )
 
 
 {-| Select Html elements that match all the given selectors.

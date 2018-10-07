@@ -37,16 +37,16 @@ findAll selector element =
             sels ->
                 if matchesAll sels element then
                     element ::
-                        matchingChildren selector element
+                        matchingDescendants selector element
                 else
-                    matchingChildren selector element
-    Within selectors next ->
+                    matchingDescendants selector element
+    Descendants selectors next ->
       findAll (Batch selectors) element
         |> List.concatMap (findAll next)
 
 
-matchingChildren : HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
-matchingChildren selector element =
+matchingDescendants : HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
+matchingDescendants selector element =
     Html_.childElements element
         |> List.concatMap (findAll selector)
 

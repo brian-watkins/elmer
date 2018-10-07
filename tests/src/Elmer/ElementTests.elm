@@ -226,7 +226,7 @@ targetTests =
   , test "it finds an element within another" <|
     \() ->
       element
-        |> Element.target << Sel.within [ Sel.tag "div" ] << Sel.by [ Sel.class "description" ]
+        |> Element.target << Sel.descendantsOf [ Sel.tag "div" ] << Sel.by [ Sel.class "description" ]
         |> Matchers.element (
           Matchers.hasText "More text"
         )

@@ -373,7 +373,7 @@ descendantTests =
     [ test "it finds the element" <|
       \() ->
         initialState html
-          |> target << within [ tag "li", characteristic ("data-item", Just "2") ] << by [ class "author" ]
+          |> target << descendantsOf [ tag "li", characteristic ("data-item", Just "2") ] << by [ class "author" ]
           |> expect (Matchers.element <| Elmer.expectAll 
             [ Matchers.hasClass "author"
             , Matchers.hasText "Some awesome person"
@@ -384,7 +384,7 @@ descendantTests =
     [ test "it fails to find the element" <|
       \() ->
         initialState html
-          |> target << within [ tag "li", characteristic ("data-item", Just "99") ] << by [ class "author" ]
+          |> target << descendantsOf [ tag "li", characteristic ("data-item", Just "99") ] << by [ class "author" ]
           |> expect (Elmer.expectNot <| Matchers.elementExists)
     ]
   ]
@@ -441,7 +441,7 @@ findDescendantsTests =
     [ test "it finds the descendants" <|
       \() ->
         initialState html
-          |> target << within [ tag "li" ] << by [ class "fun" ]
+          |> target << descendantsOf [ tag "li" ] << by [ class "fun" ]
           |> expect (elements <|
             Expect.equal [ divWithClass "fun", divWithClass "fun" ]
           )
@@ -466,7 +466,7 @@ customSelectorTest =
       [ test "it matches with the custom selector" <|
         \() ->
           initialState html
-            |> target << within [ tag "ul" ] << by [ testOrClassSelector [ "super", "awesome", "funny" ] ]
+            |> target << descendantsOf [ tag "ul" ] << by [ testOrClassSelector [ "super", "awesome", "funny" ] ]
             |> expect (element <|
                 Matchers.hasClass "awesome"
             )
