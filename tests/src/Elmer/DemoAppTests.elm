@@ -17,7 +17,7 @@ import Elmer.Http.Route as Route
 import Elmer.Spy as Spy exposing (Spy)
 import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
-import Elmer.Browser
+import Elmer.Program
 import Elmer.UrlHelpers as UrlHelpers
 
 import Time exposing (Posix)
@@ -46,9 +46,9 @@ appFlowTests =
   describe "app flow"
     [ test "it updates the model as events are processed and passes the expectation" <|
       \() ->
-        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
+        Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
           |> Spy.use [ ElmerNav.spy, Elmer.Http.serve [ (successStub "Ok" ) ] ]
-          |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/click") ElmerNav.fakeKey)
+          |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/click") ElmerNav.fakeKey)
           |> Markup.target << by [ Sel.class "button" ]
           |> Event.click
           |> Event.click
@@ -57,9 +57,9 @@ appFlowTests =
           |> Expect.equal (Expect.pass)
     , test "it makes multiple expectations about a node" <|
       \() ->
-        Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
+        Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
           |> Spy.use [ ElmerNav.spy ]
-          |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/text") ElmerNav.fakeKey)
+          |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/text") ElmerNav.fakeKey)
           |> Markup.target << by [ Sel.tag "ul" ]
           |> Markup.expect (element <| expectAll
               [ hasText "Fun Item 1"
@@ -69,9 +69,9 @@ appFlowTests =
             )
     , let
         resultState =
-          Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
+          Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
             |> Spy.use [ ElmerNav.spy, Elmer.Http.serve [ (successStub "A message from the server!") ] ]
-            |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/request") ElmerNav.fakeKey)
+            |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/request") ElmerNav.fakeKey)
             |> Markup.target << by [ Sel.id "requestButton" ]
             |> Event.click
       in
@@ -89,9 +89,9 @@ appFlowTests =
         ]
     , let
         resultState =
-          Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
+          Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.document App.update
             |> Spy.use [ ElmerNav.spy, Elmer.Http.serve [ failureStub ] ]
-            |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/request") ElmerNav.fakeKey)
+            |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://local/request") ElmerNav.fakeKey)
             |> Markup.target << by [ Sel.id "requestButton" ]
             |> Event.click
       in

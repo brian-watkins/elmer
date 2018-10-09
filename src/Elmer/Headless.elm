@@ -1,13 +1,9 @@
 module Elmer.Headless exposing
-  ( given
-  , givenCommand
+  ( givenCommand
   , expectMessages
   )
 
 {-| Functions for testing 'headless' Elm modules
-
-# Test a Worker
-@docs given
 
 # Test a Command
 @docs givenCommand, expectMessages
@@ -19,17 +15,6 @@ import Elmer.TestState as TestState
 import Elmer.Headless.Internal as Headless exposing (HeadlessState(..))
 import Elmer.Context as Context
 
-{-| Initialize a `TestState` with a model and update function.
-
-Use this function to initialize tests for headless 'worker' programs
-created with `Elm.Platform.worker`.
--}
-given
-  :  model
-  -> ( msg -> model -> ( model, Cmd msg ) )
-  -> TestState model msg
-given =
-  Headless.create
 
 {-| Initialize a `TestState` with a command.
 

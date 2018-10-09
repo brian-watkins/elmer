@@ -1,6 +1,5 @@
 module Elmer.Headless.Internal exposing
   ( HeadlessState(..)
-  , create
   , createWithCommand
   )
 
@@ -14,13 +13,6 @@ import Expect
 
 type HeadlessState
   = Messages
-
-
-create : model -> Update model msg -> TestState model msg
-create model update =
-  Context.default (HtmlView emptyView) update
-    |> Context.withModel model
-    |> TestState.with
 
 
 createWithCommand : (() -> Cmd msg) -> TestState () msg

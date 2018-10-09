@@ -13,7 +13,7 @@ import Elmer.Platform.Command as Command
 import Elmer.Html as Markup
 import Elmer.Navigation as ElmerNav
 import Elmer.UrlHelpers as UrlHelpers
-import Elmer.Browser
+import Elmer.Program
 import Elmer.TestApps.ComponentTestApp as App exposing (..)
 
 
@@ -58,8 +58,8 @@ mapCommandTest =
       \() ->
         let
           initialState = 
-            Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.parentDocument App.parentUpdate
-              |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+            Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.parentDocument App.parentUpdate
+              |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
           mapCommand = Cmd.map DoFun subTask
           parentMapCommand = \() -> Cmd.map MsgAWrapper mapCommand
         in
@@ -70,8 +70,8 @@ mapCommandTest =
       \() ->
         let
           initialState = 
-            Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.parentDocument App.parentUpdate
-              |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+            Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.parentDocument App.parentUpdate
+              |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
           mapCommand = Cmd.map DoFun subTask
           parentMapCommand = \() -> Cmd.map MsgAWrapper mapCommand
         in
@@ -83,9 +83,9 @@ mapCommandTest =
     , describe "when the mapped command has a custom update method"
       [ test "it handles a mapped message from the child view" <|
         \() ->
-          Elmer.Browser.givenApplication App.OnUrlRequest App.OnUrlChange App.parentDocument App.parentUpdate
+          Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.parentDocument App.parentUpdate
             |> Spy.use [ ElmerNav.spy ]
-            |> Elmer.Browser.init (\_ -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
+            |> Elmer.Program.init (\_ -> App.init () (UrlHelpers.asUrl "http://localhost/fun.html") ElmerNav.fakeKey)
             |> Markup.target << by [ Sel.id "change-location" ]
             |> Event.click
             |> Markup.target << by [ Sel.id "fun-stuff" ]

@@ -1,4 +1,4 @@
-module Elmer.Browser.Matchers exposing
+module Elmer.Program.Matchers exposing
   ( expectTitle
   )
 

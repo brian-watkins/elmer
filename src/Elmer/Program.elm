@@ -1,10 +1,11 @@
-module Elmer.Browser exposing
+module Elmer.Program exposing
   ( givenApplication
   , givenDocument
+  , givenWorker
   , init
   )
 
-{-| Functions for working with browser-based programs.
+{-| Functions for working with Elm programs.
 
 # Test an Elm Html Application
 @docs givenApplication
@@ -12,7 +13,10 @@ module Elmer.Browser exposing
 # Test an Elm Html Document
 @docs givenDocument
 
-# Initialize an Elm Browser program
+# Test am Elm Worker Program
+@docs givenWorker
+
+# Initialize an Elm program
 @docs init
 
 -}
@@ -25,10 +29,18 @@ import Elmer.Runtime.Command exposing (mapState)
 import Elmer.Runtime as Runtime
 import Browser exposing (UrlRequest, Document)
 import Url exposing (Url)
+import Html exposing (Html)
 
 
-{-| Initialize a `TestState` with the basic requirements for a program created with `Browser.application`: taggers for responding to new url requests
-and url changes, a view function that results in a Document value, and an update function. 
+{-| Initialize a `TestState` with the basic requirements for a program
+created with `Browser.application`. 
+
+The arguments are:
+1. Function that maps a new `Browser.UrlRequest` to a `msg`
+2. Function that maps a `Url` to a `msg` when the url changes
+3. View function that results in a `Browser.Document`
+4. Update function
+
 -}
 givenApplication : (UrlRequest -> msg) -> (Url -> msg) -> (model -> Document msg) -> (msg -> model -> (model, Cmd msg)) -> TestState model msg
 givenApplication onUrlRequest onUrlChange view update =
@@ -46,13 +58,33 @@ storeNavigationTaggersCommand onUrlRequest onUrlChange =
       }
 
 
-{-| Initialize a `TestState` with the basic requirements for a program created with `Browser.document`: a view function that results
-in a Document value and an update function.
+{-| Initialize a `TestState` with the basic requirements for a program
+created with `Browser.document`.
+
+The arguments are:
+1. View function that results in a `Browser.Document`
+2. Update function.
+
 -}
 givenDocument : (model -> Document msg) -> (msg -> model -> (model, Cmd msg)) -> TestState model msg
 givenDocument view update =
   Context.default (DocumentView view) update
     |> TestState.with
+
+
+{-| Initialize a `TestState` with the basic requirements for
+a headless worker program created with `Platform.worker`.
+
+The argument is an update function.
+-}
+givenWorker : ( msg -> model -> ( model, Cmd msg ) ) -> TestState model msg
+givenWorker update =
+  Context.default (HtmlView emptyView) update
+    |> TestState.with
+
+emptyView : model -> Html msg
+emptyView _ =
+  Html.text ""
 
 
 {-| Update the test context with the given model and Cmd.

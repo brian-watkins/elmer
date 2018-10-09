@@ -14,7 +14,7 @@ import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Printer exposing (..)
 import Elmer
-import Elmer.Browser
+import Elmer.Program
 import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Platform.Command as Command
@@ -301,7 +301,7 @@ spyArgumentTests =
       in
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.use [ spy ]
-          |> Elmer.Browser.init (\_ ->
+          |> Elmer.Program.init (\_ ->
               SpyApp.init
                 { name = "test-name"
                 , times = 23
