@@ -1,6 +1,6 @@
-module Elmer.Headless.Internal exposing
-  ( HeadlessState(..)
-  , createWithCommand
+module Elmer.Command.Internal exposing
+  ( CommandState(..)
+  , testStateWithCommand
   )
 
 import Elmer.TestState as TestState exposing (TestState, TestStateExtension(..))
@@ -11,12 +11,12 @@ import Html exposing (Html)
 import Expect
 
 
-type HeadlessState
+type CommandState
   = Messages
 
 
-createWithCommand : (() -> Cmd msg) -> TestState () msg
-createWithCommand commandGenerator =
+testStateWithCommand : (() -> Cmd msg) -> TestState () msg
+testStateWithCommand commandGenerator =
   Context.default (HtmlView emptyView) messageCollectorUpdate
     |> Context.withModel ()
     |> withCommandGenerator commandGenerator

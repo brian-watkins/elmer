@@ -7,7 +7,7 @@ import Elmer exposing (..)
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Spy as Spy
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Navigation as ElmerNav
 import Elmer.Program
 import Elmer.Html.Matchers as Matchers exposing (..)

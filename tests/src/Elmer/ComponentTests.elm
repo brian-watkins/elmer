@@ -5,11 +5,10 @@ import Expect
 
 import Elmer exposing (..)
 import Elmer.Html.Event as Event
-import Elmer.Platform.Command as Command
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Spy as Spy
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Navigation as ElmerNav
 import Elmer.UrlHelpers as UrlHelpers

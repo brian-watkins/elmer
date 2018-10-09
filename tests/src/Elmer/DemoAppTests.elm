@@ -15,7 +15,7 @@ import Elmer.Http.Stub as Stub
 import Elmer.Http.Status as Status
 import Elmer.Http.Route as Route
 import Elmer.Spy as Spy exposing (Spy)
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Program
 import Elmer.UrlHelpers as UrlHelpers

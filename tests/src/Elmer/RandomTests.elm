@@ -3,9 +3,9 @@ module Elmer.RandomTests exposing (..)
 import Test exposing (..)
 import Expect
 import Elmer exposing (exactly)
-import Elmer.Headless as Headless
+import Elmer.Command as Command
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Random
 
 
@@ -44,9 +44,9 @@ randomTest =
   describe "when a random value is requested"
   [ test "it returns a value provided by the generator" <|
     \() ->
-      Headless.givenCommand (\_ -> randomCommand RandomInt)
+      Command.given (\_ -> randomCommand RandomInt)
         |> Spy.use [ randomGenerateSpy ]
-        |> Headless.expectMessages (exactly 1 <|
+        |> Command.expectMessages (exactly 1 <|
           Expect.equal <| RandomInt 8
         )
   ]

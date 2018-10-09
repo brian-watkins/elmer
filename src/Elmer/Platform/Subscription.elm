@@ -38,7 +38,7 @@ import Elmer
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Printer exposing (..)
 import Elmer.Runtime as Runtime
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))
 import Elmer.Context as Context
 import Elmer.Runtime.Command as RuntimeCommand

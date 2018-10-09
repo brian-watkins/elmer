@@ -6,7 +6,6 @@
     "version": "4.0.0",
     "exposed-modules": [
         "Elmer",
-        "Elmer.Headless",
         "Elmer.Html",
         "Elmer.Html.Matchers",
         "Elmer.Html.Event",
@@ -20,7 +19,7 @@
         "Elmer.Http.Request",
         "Elmer.Http.Route",
         "Elmer.Navigation",
-        "Elmer.Platform.Command",
+        "Elmer.Command",
         "Elmer.Platform.Subscription",
         "Elmer.Program",
         "Elmer.Program.Matchers",

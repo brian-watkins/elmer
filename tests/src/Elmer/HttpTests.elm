@@ -20,7 +20,7 @@ import Elmer.Http.Route as Route
 import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Spy as Spy
 import Elmer.Printer exposing (..)
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Errors as Errors
 

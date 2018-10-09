@@ -7,7 +7,7 @@ import Elmer
 import Elmer.EventTests as EventTests
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Html.Selector exposing (..)
 

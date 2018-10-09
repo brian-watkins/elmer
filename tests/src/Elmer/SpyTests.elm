@@ -17,7 +17,7 @@ import Elmer
 import Elmer.Program
 import Elmer.Http
 import Elmer.Http.Matchers as HttpMatchers
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 
 
 all : Test

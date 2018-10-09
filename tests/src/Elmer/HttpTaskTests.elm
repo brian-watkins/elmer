@@ -13,7 +13,7 @@ import Elmer.Http.Status as Status
 import Elmer.Http.Route as Route exposing (get)
 import Elmer.Http.Matchers exposing (hasQueryParam, wasRequested)
 import Elmer.Spy as Spy
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors
 

@@ -11,7 +11,7 @@ import Elmer.Html.Event as Event
 import Elmer.Html.Selector as Sel
 import Elmer.TestHelpers exposing (printHtml)
 import Elmer.Errors as Errors
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Html as Markup
 
 

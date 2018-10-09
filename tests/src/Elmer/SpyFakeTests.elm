@@ -5,7 +5,7 @@ import Expect
 import Elmer
 import Elmer.Spy as Spy
 import Elmer.Spy.Matchers exposing (..)
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Html.Event as Event

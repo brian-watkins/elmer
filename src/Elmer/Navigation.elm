@@ -17,7 +17,7 @@ module Elmer.Navigation
 
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)

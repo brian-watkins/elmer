@@ -10,7 +10,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Spy as Spy
-import Elmer.Platform.Command as Command
+import Elmer.Command as Command
 import Elmer.Http
 import Elmer.Http.Route as Route
 import Elmer.Http.Matchers as HttpMatchers

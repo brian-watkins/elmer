@@ -3,7 +3,7 @@ module Elmer.HttpResultTests exposing (..)
 import Test exposing (..)
 import Expect exposing (Expectation)
 import Elmer exposing (exactly)
-import Elmer.Headless as Headless
+import Elmer.Command as Command
 import Elmer.Spy as Spy
 import Elmer.Http.Result as HttpResult
 import Elmer.Http.Status as Status
@@ -48,9 +48,9 @@ expectMessageFor stub result =
         , withCredentials = False
         }
   in
-    Headless.givenCommand (\() -> Http.send ResponseResult request)
+    Command.given (\() -> Http.send ResponseResult request)
       |> Spy.use [ Elmer.Http.serve [ stub ] ]
-      |> Headless.expectMessages (
+      |> Command.expectMessages (
         exactly 1 <| Expect.equal (ResponseResult result)
       )
 
@@ -103,9 +103,9 @@ expectHeadersFor stub expectedHeaders =
         , withCredentials = False
         }
   in
-    Headless.givenCommand (\() -> Http.send ResponseResult request)
+    Command.given (\() -> Http.send ResponseResult request)
       |> Spy.use [ Elmer.Http.serve [ stub ] ]
-      |> Headless.expectMessages (
+      |> Command.expectMessages (
         exactly 1 <| Expect.equal (ResponseResult <| Ok "Found headers!")
       )
 
@@ -161,9 +161,9 @@ expectStatusFor stub expectedStatus =
         , withCredentials = False
         }
   in
-    Headless.givenCommand (\() -> Http.send ResponseResult request)
+    Command.given (\() -> Http.send ResponseResult request)
       |> Spy.use [ Elmer.Http.serve [ stub ] ]
-      |> Headless.expectMessages (
+      |> Command.expectMessages (
         exactly 1 <| Expect.equal (ResponseResult <| Ok "Found status!")
       )
 

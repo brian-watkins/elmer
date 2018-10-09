@@ -5,7 +5,6 @@ import Expect
 import Elmer
 import Elmer.Platform.Subscription as Subscription
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
-import Elmer.Headless as Headless
 import Elmer.Program
 import Elmer.TestApps.WorkerTestApp as App
 
