@@ -5,6 +5,7 @@ module Elmer.Html.Selector exposing
   , characteristic
   , text
   , descendantsOf
+  , childrenOf
   , by
   )
 
@@ -14,7 +15,7 @@ module Elmer.Html.Selector exposing
 @docs id, tag, class, characteristic, text
 
 # Group Selectors
-@docs by, descendantsOf
+@docs by, descendantsOf, childrenOf
 
 -}
 
@@ -102,7 +103,7 @@ text expectedText element =
     |> List.member expectedText
 
 
-{-| Narrow the scope of further selections to elements that are descendants of the selected elements.
+{-| Narrow the scope of further selections to descendants of the selected elements.
 
 Suppose you want to select all `li` that are descendants of an `ol` that is itself a descendant of
 an element with a particular class:
@@ -114,30 +115,24 @@ an element with a particular class:
         << by [ tag "li" ]
 
 You can chain as many `descendantsOf` calls as you like, but the chain must be terminated with a call to `by`.
-
-Note that `descendantsOf` is inclusive. In the above example, if an `ol` tag itself has the class
-`some-class` then all its descending `li` elements will be selected. Likewise, the following:
-
-    testState
-      |> Elmer.Html.target
-        << descendantsOf [ class "some-class" ]
-        << by [ tag "p" ]
-
-would select
-
-    Html.p [ Html.Attributes.class "some-class" ] [ Html.text "Some text" ]
-
-and the `p` element from
-
-    Html.div [ Html.attributes.class "some-class" ]
-    [ Html.p []
-      [ Html.text "Some text" ]
-    ]
-
 -}
 descendantsOf : List (Elmer.Html.HtmlSelector msg) -> (Elmer.Html.HtmlSelectorGroup msg, targetable) -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
 descendantsOf selectors (next, targetable) =
-  ( Types.Descendants selectors next, targetable )
+  ( Types.DescendantsOf selectors next, targetable )
+
+
+{-| Narrow the scope of further selections to those elements that are children of the selected elements.
+
+Suppose you want to select all `li` that are children of an `ol`:
+
+    testState
+      |> Elmer.Html.target
+        << childrenOf [ tag "ol" ]
+        << by [ tag "li" ]
+-}
+childrenOf : List (Elmer.Html.HtmlSelector msg) -> (Elmer.Html.HtmlSelectorGroup msg, targetable) -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
+childrenOf selectors (next, targetable) =
+  ( Types.ChildrenOf selectors next, targetable )
 
 
 {-| Select Html elements that match all the given selectors.
@@ -150,4 +145,4 @@ This would select all `div` elements that have the class `some-class`:
 -}
 by : List (Elmer.Html.HtmlSelector msg) -> targetable -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
 by selectors targetable =
-  ( Types.Batch selectors, targetable )
+  ( Types.ElementWith selectors, targetable )

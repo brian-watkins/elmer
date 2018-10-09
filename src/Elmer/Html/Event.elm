@@ -216,7 +216,7 @@ hasOption : String -> HtmlElement msg -> Result String (HtmlElement msg)
 hasOption value element =
   let
     options =
-      Target.forElement (Batch [ Selector.tag "option" ]) element
+      Target.forElement (ElementWith [ Selector.tag "option" ]) element
         |> Query.findElements
   in
     if List.isEmpty options then
@@ -234,7 +234,7 @@ hasOption value element =
 findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)
 findOption value element =
   element
-    |> Target.forElement (Batch [ Selector.tag "option", Selector.characteristic ("value", Just value) ])
+    |> Target.forElement (ElementWith [ Selector.tag "option", Selector.characteristic ("value", Just value) ])
     |> Query.findElements
     |> List.head
 

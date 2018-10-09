@@ -26,6 +26,7 @@ all =
     , findByProperty
     , descendantTests
     , findDescendantsTests
+    , childrenTests
     , findWithAll
     , customSelectorTest
     , findByText
@@ -348,7 +349,7 @@ findWithAll =
 descendantTests : Test
 descendantTests =
   let
-    html = Html.ul [ Attr.id "list" ]
+    html = Html.ul [ Attr.id "list", Attr.class "funny" ]
       [ Html.li [ Attr.attribute "data-item" "1" ]
         [ Html.div [] [ Html.text "Another Item" ]
         , Html.div [ Attr.class "header" ]
@@ -379,6 +380,11 @@ descendantTests =
             , Matchers.hasText "Some awesome person"
             ]
           )
+    , test "it does not match the parent" <|
+      \() ->
+        initialState html
+          |> target << descendantsOf [ id "list" ] << by [ class "funny" ]
+          |> expect (elements <| Elmer.hasLength 0)
     ]
   , describe "when one selector fails"
     [ test "it fails to find the element" <|
@@ -388,6 +394,41 @@ descendantTests =
           |> expect (Elmer.expectNot <| Matchers.elementExists)
     ]
   ]
+
+childrenTests =
+  describe "when children of an element are targeted" <|
+    let
+      html =
+        Html.div [ Attr.id "root", Attr.class "funny" ]
+        [ Html.div []
+          [ Html.div [ Attr.class "super" ] []
+          ]
+        , Html.div [ Attr.class "funny", Attr.id "child" ]
+          [ Html.div [ Attr.class "funny", Attr.id "grandchild" ] 
+            [ Html.div [ Attr.class "funny", Attr.id "great-grandchild" ] []
+            ]
+          ]
+        ]
+    in
+  [ test "it finds the element" <|
+    \() ->
+      initialState html
+        |> target << childrenOf [ id "root" ] << by [ class "funny" ]
+        |> expect (elements <| Elmer.hasLength 1)
+  , describe "when the children are nested"
+    [ test "it finds the elements" <|
+      \() ->
+        initialState html
+          |> target << childrenOf [ id "root" ] << childrenOf [ tag "div" ] << by [ class "funny" ]  
+          |> expect (elements <| Elmer.expectAll
+            [ Elmer.hasLength 2
+            , Elmer.atIndex 0 <| Matchers.hasId "grandchild"
+            , Elmer.atIndex 1 <| Matchers.hasId "great-grandchild"
+            ]
+          )
+    ]
+  ]
+
 
 initialState : Html () -> TestState () ()
 initialState html =

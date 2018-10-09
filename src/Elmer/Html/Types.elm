@@ -82,8 +82,9 @@ type alias Selection msg =
 {-| HtmlSelector
 -}
 type HtmlSelectorGroup msg
-  = Batch (List (HtmlSelector msg))
-  | Descendants (List (HtmlSelector msg)) (HtmlSelectorGroup msg)
+  = ElementWith (List (HtmlSelector msg))
+  | DescendantsOf (List (HtmlSelector msg)) (HtmlSelectorGroup msg)
+  | ChildrenOf (List (HtmlSelector msg)) (HtmlSelectorGroup msg)
 
 
 {-|

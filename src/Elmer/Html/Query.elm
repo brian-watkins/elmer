@@ -14,7 +14,7 @@ findElement : HtmlTarget msg -> Result String (HtmlElement msg)
 findElement (HtmlTarget selection) =
     selection.element
       |> Maybe.andThen (\rootElement ->
-          findAll selection.selector rootElement
+          find matchAllDescendants selection.selector rootElement
             |> List.head
         )
       |> Result.fromMaybe (queryErrorMessage selection)
@@ -23,36 +23,61 @@ findElement (HtmlTarget selection) =
 findElements : HtmlTarget msg -> List (HtmlElement msg)
 findElements (HtmlTarget selection) =
   selection.element
-    |> Maybe.map (findAll selection.selector)
+    |> Maybe.map (find matchAllDescendants selection.selector)
     |> Maybe.withDefault []
 
 
-findAll : HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
-findAll selector element =
+type alias ElementMatcher msg =
+    HtmlSelectorGroup msg -> List (HtmlSelector msg) -> HtmlElement msg -> List (HtmlElement msg)
+
+
+find : ElementMatcher msg -> HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
+find matcher selector element =
   case selector of
-    Batch selectors ->
-        case selectors of
-            [] ->
-                []
-            sels ->
-                if matchesAll sels element then
-                    element ::
-                        matchingDescendants selector element
-                else
-                    matchingDescendants selector element
-    Descendants selectors next ->
-      findAll (Batch selectors) element
-        |> List.concatMap (findAll next)
+    ElementWith selectors ->
+        if List.isEmpty selectors then
+            []
+        else
+            matcher selector selectors element
+    DescendantsOf selectors next ->
+        findWithin selectors element
+            |> List.concatMap (find matchAllDescendants next)
+    ChildrenOf selectors next ->
+        findWithin selectors element
+            |> List.concatMap (find matchElementOnly next)
 
 
-matchingDescendants : HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
-matchingDescendants selector element =
+findWithin : List (HtmlSelector msg) -> HtmlElement msg -> List (HtmlElement msg)
+findWithin selectors element =
+    find matchAllDescendants (ElementWith selectors) element
+        |> List.concatMap Html_.childElements
+
+
+matchElementOnly : HtmlSelectorGroup msg -> List (HtmlSelector msg) -> HtmlElement msg -> List (HtmlElement msg)
+matchElementOnly _ selectors element =
+    if matches selectors element then
+        [ element ]
+    else
+        []
+
+
+matchAllDescendants : HtmlSelectorGroup msg -> List (HtmlSelector msg) -> HtmlElement msg -> List (HtmlElement msg)
+matchAllDescendants selector selectors element =
+    if matches selectors element then
+        element ::
+            descendantsThatMatch selector element
+    else
+        descendantsThatMatch selector element
+
+
+descendantsThatMatch : HtmlSelectorGroup msg -> HtmlElement msg -> List (HtmlElement msg)
+descendantsThatMatch selector element =
     Html_.childElements element
-        |> List.concatMap (findAll selector)
+        |> List.concatMap (find matchAllDescendants selector)
 
 
-matchesAll : List (HtmlSelector msg) -> HtmlElement msg -> Bool
-matchesAll selectors element =
+matches : List (HtmlSelector msg) -> HtmlElement msg -> Bool
+matches selectors element =
     List.foldl (\sel result -> 
         case result of
             True ->

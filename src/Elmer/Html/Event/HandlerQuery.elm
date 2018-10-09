@@ -48,7 +48,7 @@ triggersSubmit element =
 
 formFor : String -> Html msg -> Maybe (HtmlElement msg)
 formFor formId html =
-  Target.forHtml (Batch [ Selector.id formId ]) html
+  Target.forHtml (ElementWith [ Selector.id formId ]) html
     |> Query.findElement
     |> Result.toMaybe
 

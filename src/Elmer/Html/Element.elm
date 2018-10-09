@@ -51,7 +51,7 @@ to make expectations about descendants of an element.
               Elmer.hasLength 3
             )
 
-Note that `Elmer.Html.target << within [ id "some-element" ] << by [ tag "div" ]` would allow you to write the
+Note that `Elmer.Html.target << descendantsOf [ id "some-element" ] << by [ tag "div" ]` would allow you to write the
 same expectation. Use `Element.target` for complex expectations about nested elements.
 
 -}

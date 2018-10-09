@@ -80,15 +80,16 @@ Use this function to specify which element will receive an event or which should
 be the subject of any expectations.
 
 See `Elmer.Html.Selector` for some common selectors. For example, to target
-a `div` that has a class `.some-class` within a `li` that's part of an ordered list:
+a `div` that has a class `.some-class` and is a child of a `li` whose ancestor is an
+element with `root` as the value of its `id` attribute:
 
     target 
-      << within [ tag "ol" ] 
-      << within [ tag "li" ] 
+      << descendantsOf [ id "root" ]
+      << childrenOf [ tag "li" ]
       << by [ tag "div", class ".some-class" ]
 
-You can chain as many `Elmer.Html.Selector.within` calls as you like; the chain
-must end with a call to `Elmer.Html.Selector.by`.
+You can chain as many `Elmer.Html.Selector.descendantsOf` or `Elmer.Html.Selector.childrenOf` calls
+as you like; the chain must end with a call to `Elmer.Html.Selector.by`.
 -}
 target : (HtmlSelectorGroup msg, Elmer.TestState model msg) -> Elmer.TestState model msg
 target (selector, testState) =
