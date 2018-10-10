@@ -2,6 +2,7 @@ module Elmer.Html.Internal exposing
   ( tag
   , elementId
   , classList
+  , allAttrs
   , attributes
   , attribute
   , properties
@@ -104,6 +105,11 @@ attribute : String -> HtmlElement msg -> Maybe String
 attribute name element =
   attributes element
     |> Dict.get name
+
+
+allAttrs : HtmlElement msg -> Dict String String
+allAttrs element =
+  Dict.union (attributes element) (properties element)
 
 
 isCheckbox : HtmlElement msg -> Bool

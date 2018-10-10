@@ -239,7 +239,7 @@ mouseEnterTests =
         [ test "it fails to find the event" <|
           \() ->
             initialState
-              |> Markup.target << by [ tag "li", characteristic ("data-option", Just "2") ]
+              |> Markup.target << by [ tag "li", attributeWith "data-option" "2" ]
               |> Event.moveMouseIn
               |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: mouseenter, mouseover")
         ]
@@ -269,7 +269,7 @@ mouseEnterTests =
         [ test "it triggers only the handler on the element" <|
           \() ->
             initialState
-              |> Markup.target << by [ tag "li", characteristic ("data-option", Just "1") ]
+              |> Markup.target << by [ tag "li", attributeWith "data-option" "1" ]
               |> Event.moveMouseIn
               |> Elmer.expectModel (\model ->
                   Expect.equal model.mouseEnters 1
@@ -289,7 +289,7 @@ mouseLeaveTests =
         [ test "it fails to find the event" <|
           \() ->
             initialState
-              |> Markup.target << by [ tag "li", characteristic ("data-option", Just "2") ]
+              |> Markup.target << by [ tag "li", attributeWith "data-option" "2" ]
               |> Event.moveMouseOut
               |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: mouseleave, mouseout")
         ]
@@ -319,7 +319,7 @@ mouseLeaveTests =
         [ test "it triggers only the handler on the element" <|
           \() ->
             initialState
-              |> Markup.target << by [ tag "li", characteristic ("data-option", Just "1") ]
+              |> Markup.target << by [ tag "li", attributeWith "data-option" "1" ]
               |> Event.moveMouseOut
               |> Elmer.expectModel (\model ->
                   Expect.equal model.mouseLeaves 1

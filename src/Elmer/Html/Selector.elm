@@ -2,7 +2,8 @@ module Elmer.Html.Selector exposing
   ( id
   , tag
   , class
-  , characteristic
+  , attribute
+  , attributeWith
   , text
   , descendantsOf
   , childrenOf
@@ -12,7 +13,7 @@ module Elmer.Html.Selector exposing
 {-| Functions for selecting Html elements to be targeted during a test.
 
 # Basic Selectors
-@docs id, tag, class, characteristic, text
+@docs id, tag, class, attribute, attributeWith, text
 
 # Group Selectors
 @docs by, descendantsOf, childrenOf
@@ -49,38 +50,28 @@ class expectedClass element =
   List.member expectedClass (Internal.classList element)
 
 
-{-| Select Html elements by attribute or property.
-
-Select elements by attribute or property name and value like so:
-
-    testState
-      |> Elmer.Html.target 
-        << by [ characteristic ( "data-some-attribute", "some-value" ) ]
-
-Specify `Nothing` for the value to select elements that have the named attribute
-or property with *any* value.
-
-    testState
-      |> Elmer.Html.target 
-        << by [ characteristic ( "data-some-attribute", Nothing ) ]
+{-| Select Html elements that have an attribute or proprty with the given name, regardless of the associated value.
 
 On the difference between attributes and properties,
 see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
-
 -}
-characteristic : (String, Maybe String) -> Elmer.Html.HtmlSelector msg
-characteristic (expectedName, maybeExpectedValue) element =
-  let
-    characteristics = 
-        Dict.union (Internal.attributes element) (Internal.properties element)
-  in
-    case maybeExpectedValue of
-      Just value ->
-        Dict.get expectedName characteristics
-          |> Maybe.map ((==) value)
-          |> Maybe.withDefault False
-      Nothing ->
-        Dict.member expectedName characteristics
+attribute : String -> Elmer.Html.HtmlSelector msg
+attribute expectedName element =
+  Internal.allAttrs element
+    |> Dict.member expectedName
+
+
+{-| Select Html elements that have an attribute or property with the given name and value.
+
+On the difference between attributes and properties,
+see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
+-}
+attributeWith : String -> String -> Elmer.Html.HtmlSelector msg
+attributeWith expectedName expectedValue element =
+  Internal.allAttrs element
+    |> Dict.get expectedName
+    |> Maybe.map ((==) expectedValue)
+    |> Maybe.withDefault False
 
 
 {-| Select Html elements that have the given text as an immediate descendant.

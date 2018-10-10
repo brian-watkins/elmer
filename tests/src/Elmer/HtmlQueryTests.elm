@@ -249,35 +249,35 @@ findByAttribute =
       [ test "it finds the first node with the attribute" <|
         \() ->
           initialState html
-            |> target << by [ characteristic ("data-attribute_name-1", Nothing) ]
+            |> target << by [ attribute "data-attribute_name-1" ]
             |> expect (element <| Matchers.hasClass "withAttribute")
       ]
     , describe "when an attribute and value is specified"
       [ test "it finds the node with the attribute and value" <|
         \() ->
           initialState html
-            |> target << by [ characteristic ("data-attribute_name-1", Just "myDifferent-Attribute_Value2") ]
+            |> target << by [ attributeWith "data-attribute_name-1" "myDifferent-Attribute_Value2" ]
             |> expect (element <| Matchers.hasClass "anotherWithAttribute")
       ]
     , describe "when a tag and attribute is specified"
       [ test "it finds the node with the tag and attribute" <|
         \() ->
           initialState html
-            |> target << by [ tag "p", characteristic ("data-attribute_name-1", Nothing) ]
+            |> target << by [ tag "p", attribute "data-attribute_name-1" ]
             |> expect (element <| Matchers.hasClass "thirdWithAttribute")
       ]
     , describe "when a tag, attribute, and value is specified"
       [ test "it finds the node with the tag and attribute and value" <|
         \() ->
           initialState html
-            |> target << by [ tag "div", characteristic ("data-attribute_name-1", Just "myDifferent-Attribute_Value2") ]
+            |> target << by [ tag "div", attributeWith "data-attribute_name-1" "myDifferent-Attribute_Value2" ]
             |> expect (element <| Matchers.hasClass "anotherWithAttribute")
       ]
     , describe "when an attribute and class is specified"
       [ test "it finds the element with the attribute and the class" <|
         \() ->
           initialState html
-            |> target << by [ characteristic ("data-attribute_name-1", Nothing), class "anotherWithAttribute" ]
+            |> target << by [ attribute "data-attribute_name-1", class "anotherWithAttribute" ]
             |> expect (element <| 
               Matchers.hasAttribute ("data-attribute_name-1", "myDifferent-Attribute_Value2")
             )
@@ -296,28 +296,28 @@ findByProperty =
       [ test "it finds the node with the property" <|
         \() ->
           initialState html
-            |> target << by [ characteristic ("name", Nothing) ]
+            |> target << by [ attribute "name" ]
             |> expect (element <| Matchers.hasId "name-field")
       ]
     , describe "when a property and value is specified"
       [ test "it finds the node with the property and value" <|
         \() ->
           initialState html
-            |> target << by [ characteristic ("name", Just "telephone") ]
+            |> target << by [ attributeWith "name" "telephone" ]
             |> expect (element <| Matchers.hasId "telephone-field")
       ]
     , describe "when a tag and attribute is specified"
       [ test "it finds the node with the tag and attribute" <|
         \() ->
           initialState html
-            |> target << by [ tag "input", characteristic ("name", Nothing) ]
+            |> target << by [ tag "input", attribute "name" ]
             |> expect (element <| Matchers.hasId "name-field")
       ]
     , describe "when a tag, attribute, and value is specified"
       [ test "it finds the node with the tag and attribute and value" <|
         \() ->
           initialState html
-            |> target << by [ tag "input", characteristic ("name", Just "telephone") ]
+            |> target << by [ tag "input", attributeWith "name" "telephone" ]
             |> expect (element <| Matchers.hasId "telephone-field")
       ]
     ]
@@ -374,7 +374,7 @@ descendantTests =
     [ test "it finds the element" <|
       \() ->
         initialState html
-          |> target << descendantsOf [ tag "li", characteristic ("data-item", Just "2") ] << by [ class "author" ]
+          |> target << descendantsOf [ tag "li", attributeWith "data-item" "2" ] << by [ class "author" ]
           |> expect (Matchers.element <| Elmer.expectAll 
             [ Matchers.hasClass "author"
             , Matchers.hasText "Some awesome person"
@@ -390,7 +390,7 @@ descendantTests =
     [ test "it fails to find the element" <|
       \() ->
         initialState html
-          |> target << descendantsOf [ tag "li", characteristic ("data-item", Just "99") ] << by [ class "author" ]
+          |> target << descendantsOf [ tag "li", attributeWith "data-item" "99" ] << by [ class "author" ]
           |> expect (Elmer.expectNot <| Matchers.elementExists)
     ]
   ]
