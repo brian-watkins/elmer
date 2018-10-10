@@ -11,8 +11,9 @@ module Elmer.Errors exposing
   , badUrl
   , navigationSpyRequiresApplication
   , elementNotFound
-  , wrongProperty
-  , noProperty
+  , wrongAttribute
+  , wrongAttributeName
+  , noAttribute
   , noRequest
   , wrongRequest
   , requestMatcherFailed
@@ -22,13 +23,14 @@ module Elmer.Errors exposing
 
 @docs CustomError, print, failWith
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
-@docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongProperty, noProperty
+@docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongAttribute, wrongAttributeName, noAttribute
 @docs noRequest, wrongRequest, requestMatcherFailed
 
 -}
 
 import Expect exposing (Expectation)
 import Elmer.Printer exposing (..)
+import Dict exposing (Dict)
 
 {-|
 -}
@@ -117,20 +119,33 @@ elementNotFound dom =
 
 {-|
 -}
-wrongProperty : String -> String -> String -> CustomError
-wrongProperty property expectedValue actualValue =
-  [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
+wrongAttribute : String -> String -> String -> CustomError
+wrongAttribute property expectedValue actualValue =
+  [ message "Expected element to have attribute" <| property ++ " = " ++ expectedValue
   , message "but it has" <| property ++ " = " ++ actualValue
   ]
 
 
 {-|
 -}
-noProperty : String -> String -> CustomError
-noProperty property expectedValue =
-  [ message "Expected element to have property" <| property ++ " = " ++ expectedValue
-  , description "but it has no property with that name"
+noAttribute : String -> String -> CustomError
+noAttribute property expectedValue =
+  [ message "Expected element to have attribute" <| property ++ " = " ++ expectedValue
+  , description "but it has no attribute with that name"
   ]
+
+{-|
+-}
+wrongAttributeName : String -> String -> Dict String String -> CustomError
+wrongAttributeName property expectedValue attrs =
+  let
+      messages =
+        Dict.toList attrs
+          |> List.map (\(key, val) -> key ++ " = " ++ val)
+          |> String.join "\n"
+  in
+  [ message "Expected element to have attribute" <| property ++ " = " ++ expectedValue
+  , message "but it has these attributes" messages ]
 
 
 {-|

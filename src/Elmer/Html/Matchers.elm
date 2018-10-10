@@ -4,7 +4,6 @@ module Elmer.Html.Matchers exposing
   , elementExists
   , hasText
   , hasClass
-  , hasProperty
   , hasAttribute
   , hasId
   , hasStyle
@@ -17,7 +16,7 @@ module Elmer.Html.Matchers exposing
 @docs element, elementExists, elements
 
 # HtmlElement Matchers
-@docs hasText, hasId, hasClass, hasStyle, hasAttribute, hasProperty, listensForEvent
+@docs hasText, hasId, hasClass, hasStyle, hasAttribute, listensForEvent
 
 -}
 
@@ -121,42 +120,31 @@ hasClass className =
         else
             Expect.fail (format [message "Expected element to have class" className, description "but it has no classes" ])
 
-{-| Expect that an element has the specified property with the specified value.
 
-    hasProperty ( "innerHtml", "Fun <i>stuff</i>" ) element
-
--}
-hasProperty : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasProperty (name, expectedValue) =
-  \node ->
-    case Html_.property name node of
-      Just actualValue ->
-        if expectedValue == actualValue then
-          Expect.pass
-        else
-          failWith <| Errors.wrongProperty name expectedValue actualValue
-      Nothing ->
-        failWith <| Errors.noProperty name expectedValue
-
-
-{-| Expect that an element has the specified attribute with the specified value.
+{-| Expect that an element has the specified attribute or property with the specified value.
 
     hasAttribute ( "src", "http://fun.com" ) element
 
+On the difference between attributes and properties,
+see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
 -}
 hasAttribute : (String, String) -> Matcher (Elmer.Html.HtmlElement msg)
-hasAttribute (name, value) =
-  \targeted ->
-    case Html_.attribute name targeted of
-      Just attributeValue ->
-        if value == attributeValue then
-          Expect.pass
-        else
-          Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
-            message "but it has" (name ++ " = " ++ attributeValue) ])
-      Nothing ->
-        Expect.fail (format [message "Expected element to have attribute" (name ++ " = " ++ value),
-            description "but it has no attribute with that name" ])
+hasAttribute (expectedName, expectedValue) =
+  \node ->
+    let
+      allAttrs = Html_.allAttrs node
+    in
+      case Dict.get expectedName allAttrs of
+        Just actualValue ->
+          if expectedValue == actualValue then
+            Expect.pass
+          else
+            failWith <| Errors.wrongAttribute expectedName expectedValue actualValue
+        Nothing ->
+          if Dict.isEmpty allAttrs then
+            failWith <| Errors.noAttribute expectedName expectedValue
+          else
+            failWith <| Errors.wrongAttributeName expectedName expectedValue allAttrs
 
 
 {-| Expect that an element has the specified id. No need to prepend the id with a pound sign.

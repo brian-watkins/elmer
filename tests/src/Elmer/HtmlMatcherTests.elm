@@ -16,6 +16,7 @@ import Elmer.Errors as Errors exposing (CustomError)
 import Elmer.TestHelpers exposing (printHtml, expectError)
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attr
+import Dict
 
 
 all : Test
@@ -200,27 +201,27 @@ hasPropertyTests =
   [ describe "when the node has no properties"
     [ test "it fails with the right message" <|
       \() ->
-        Matchers.hasProperty ("some-property", "some <i>html</i>") (emptyNode "div")
-          |> expectError (Errors.noProperty "some-property" "some <i>html</i>")
+        Matchers.hasAttribute ("some-property", "some <i>html</i>") (emptyNode "div")
+          |> expectError (Errors.noAttribute "some-property" "some <i>html</i>")
     ]
   , describe "when the node has properties"
     [ describe "when the node does not have the specified property"
       [ test "it fails with the right message" <|
         \() ->
-          Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
-            |> expectError (Errors.noProperty "some-property" "some <i>html</i>")
+          Matchers.hasAttribute ("some-property", "some <i>html</i>") (nodeWithProperty ("someProperty", "blah"))
+            |> expectError (Errors.wrongAttributeName "some-property" "some <i>html</i>" <| Dict.fromList [("someProperty", "blah")])
       ]
     , describe "when the node has the specified property"
       [ describe "when the value is incorrect"
         [ test "it fails" <|
           \() ->
-            Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "blah"))
-              |> expectError (Errors.wrongProperty "some-property" "some <i>html</i>" "blah")
+            Matchers.hasAttribute ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "blah"))
+              |> expectError (Errors.wrongAttribute "some-property" "some <i>html</i>" "blah")
         ]
       , describe "when the value is correct"
         [ test "it passes" <|
           \() ->
-            Matchers.hasProperty ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "some <i>html</i>"))
+            Matchers.hasAttribute ("some-property", "some <i>html</i>") (nodeWithProperty ("some-property", "some <i>html</i>"))
               |> Expect.equal Expect.pass
         ]
       ]
@@ -245,21 +246,21 @@ hasAttributeTests =
     [ test "it fails with the right message" <|
       \() ->
         Matchers.hasAttribute ("data-fun-attribute", "something") (emptyNode "div")
-          |> Expect.equal (Expect.fail (format [ message "Expected element to have attribute" "data-fun-attribute = something", description "but it has no attribute with that name" ]))
+          |> expectError (Errors.noAttribute "data-fun-attribute" "something")
     ]
   , describe "when the element has attributes"
     [ describe "when the node does not have the specified attribute"
       [ test "it fails with the right message" <|
         \() ->
           Matchers.hasAttribute ("data-fun-attribute", "something") (elementWithAttributes [("someProperty", "blah")])
-            |> Expect.equal (Expect.fail (format [ message "Expected element to have attribute" "data-fun-attribute = something", description "but it has no attribute with that name" ]))
+            |> expectError (Errors.wrongAttributeName "data-fun-attribute" "something" <| Dict.fromList [("someProperty", "blah")])
       ]
     , describe "when the element has the specified attribute"
       [ describe "when the value is incorrect"
         [ test "it fails" <|
           \() ->
             Matchers.hasAttribute ("data-fun-attribute", "something") (elementWithAttributes [("data-fun-attribute", "blah")])
-              |> Expect.equal (Expect.fail ( format [ message "Expected element to have attribute" "data-fun-attribute = something", message "but it has" "data-fun-attribute = blah" ]))
+              |> expectError (Errors.wrongAttribute "data-fun-attribute" "something" "blah")
         ]
       , describe "when the value is correct"
         [ test "it passes" <|
