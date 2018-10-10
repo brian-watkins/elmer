@@ -1,4 +1,4 @@
-module Elmer.Platform.Subscription exposing
+module Elmer.Subscription exposing
   ( with
   , send
   , fake
@@ -64,7 +64,7 @@ could do the following:
     let
       fakeSub = Elmer.Spy.create "fake-time" (\_ -> Time.every)
         |> Elmer.Spy.andCallFake (\interval tagger ->
-          Elmer.Platform.Subscription.fake "everySecond" tagger
+          Elmer.Subscription.fake "everySecond" tagger
         )
     in
       testState
@@ -99,7 +99,7 @@ describeSub name tagger =
 
 {-| Generate a fake subscription with an identifier and the appropriate tagger.
 
-Use `Elmer.Platform.spy` along with `Elmer.Platform.andCallFake` to stub a function
+Use `Elmer.Spy.create` along with `Elmer.Spy.andCallFake` to stub a function
 that generates a subscription so that it returns a fake instead. Then, once
 the faked subscription is registered using `with`,
 you can `send` data on behalf of it subscription during your test.
@@ -108,13 +108,13 @@ Here's an example that creates a fake subscription for mouse ups, registers it
 and sends some data through it.
 
     let
-      subSpy = Elmer.Platform.spy "fake-ups" (\_ -> Mouse.ups)
-        |> Elmer.Platform.andCallFake (\tagger ->
-          Subscription.fake "mouseUps" tagger
+      subSpy = Elmer.Spy.create "fake-ups" (\_ -> Mouse.ups)
+        |> Elmer.Spy.andCallFake (\tagger ->
+          Elmer.Subscription.fake "mouseUps" tagger
         )
     in
       Elmer.given defaultModel view update
-        |> Spy.use [ subSpy ]
+        |> Elmer.Spy.use [ subSpy ]
         |> with (\() -> subscriptions)
         |> send "mouseUps" { x = 10, y = 50 }
 

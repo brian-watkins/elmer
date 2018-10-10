@@ -159,10 +159,10 @@ withResult builder (Types.HttpResponseStub stub) =
 
 {-| Defer a response.
 
-The response will not be processed until `Elmer.Platform.Command.resolveDeferred` is called.
+The response will not be processed until `Elmer.Command.resolveDeferred` is called.
 
 Note: If this stub is processed as part of a request made with `Http.toTask` then the
-entire Task chain will be deferred until `Elmer.Platform.Command.resolveDeferred` is called.
+entire Task chain will be deferred until `Elmer.Command.resolveDeferred` is called.
 
 -}
 deferResponse : HttpResponseStub -> HttpResponseStub

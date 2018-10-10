@@ -3,7 +3,7 @@ module Elmer.WorkerTests exposing (..)
 import Test exposing (..)
 import Expect
 import Elmer
-import Elmer.Platform.Subscription as Subscription
+import Elmer.Subscription as Subscription
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Program
 import Elmer.TestApps.WorkerTestApp as App

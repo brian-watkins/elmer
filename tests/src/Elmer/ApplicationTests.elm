@@ -12,7 +12,7 @@ import Elmer.Program
 import Elmer.Program.Matchers exposing (expectTitle)
 import Elmer.TestApps.ApplicationTestApp as App
 import Elmer.Navigation as Navigation
-import Elmer.Platform.Subscription as Subscription
+import Elmer.Subscription as Subscription
 import Elmer.Command as Command
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Errors as Errors

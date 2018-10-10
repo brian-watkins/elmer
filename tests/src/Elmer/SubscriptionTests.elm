@@ -5,7 +5,7 @@ import Expect
 import Elmer
 import Elmer.TestState as TestState exposing (..)
 import Elmer.Spy as Spy
-import Elmer.Platform.Subscription as Subscription
+import Elmer.Subscription as Subscription
 import Elmer.Printer exposing (..)
 import Elmer.Html as Markup
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)

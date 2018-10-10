@@ -165,7 +165,7 @@ where `testImplementation` is some function with the very same signature as
 the one being spied upon.
 
 If you are spying on a function that returns a `Cmd`, then your fake
-should return `Cmd.none` or one of the fake commands described in `Elmer.Platform.Command`.
+should return `Cmd.none` or one of the fake commands described in `Elmer.Command`.
 
 For example, you could override `Random.generate` so that it returns a set value during a test
 like so:
@@ -175,7 +175,7 @@ like so:
         Random.initialeSeed 10001
           |> Random.step generator
           |> tagger
-          |> Elmer.Platform.Command.fake
+          |> Elmer.Command.fake
       )
 
 If you are spying on a function that returns a `Sub`, then your fake should
@@ -242,7 +242,7 @@ you could do something like the following:
         create "fake-random" (\_ -> Random.generate)
           |> andCallFake (\tagger _ ->
             tagger 27
-              |> Elmer.Platform.Command.fake
+              |> Elmer.Command.fake
           )
     in
       testState

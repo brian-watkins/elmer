@@ -5,7 +5,7 @@ import Expect
 import Elmer.TestApps.PortTestApp as App
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalled)
-import Elmer.Platform.Subscription as Subscription
+import Elmer.Subscription as Subscription
 import Elmer
 import Elmer.Html as Markup
 import Elmer.Html.Event as Event
