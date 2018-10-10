@@ -40,16 +40,16 @@ find matcher selector element =
         else
             matcher selector selectors element
     DescendantsOf selectors next ->
-        findWithin selectors element
+        findWithin matcher selectors element
             |> List.concatMap (find matchAllDescendants next)
     ChildrenOf selectors next ->
-        findWithin selectors element
+        findWithin matcher selectors element
             |> List.concatMap (find matchElementOnly next)
 
 
-findWithin : List (HtmlSelector msg) -> HtmlElement msg -> List (HtmlElement msg)
-findWithin selectors element =
-    find matchAllDescendants (ElementWith selectors) element
+findWithin : ElementMatcher msg -> List (HtmlSelector msg) -> HtmlElement msg -> List (HtmlElement msg)
+findWithin matcher selectors element =
+    find matcher (ElementWith selectors) element
         |> List.concatMap Html_.childElements
 
 

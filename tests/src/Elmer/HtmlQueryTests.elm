@@ -421,9 +421,8 @@ childrenTests =
         initialState html
           |> target << childrenOf [ id "root" ] << childrenOf [ tag "div" ] << by [ class "funny" ]  
           |> expect (elements <| Elmer.expectAll
-            [ Elmer.hasLength 2
+            [ Elmer.hasLength 1
             , Elmer.atIndex 0 <| Matchers.hasId "grandchild"
-            , Elmer.atIndex 1 <| Matchers.hasId "great-grandchild"
             ]
           )
     ]
