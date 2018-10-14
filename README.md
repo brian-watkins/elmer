@@ -1,6 +1,7 @@
 # Elmer
 
-Elmer makes it easy to describe the behavior of Elm HTML applications.
+Elmer makes it easy to describe the behavior of Elm HTML applications. If you love TDD and
+you love Elm, then you'll probably appreciate Elmer.
 
 ### Why?
 
@@ -26,71 +27,186 @@ describe the behavior of your app under whatever conditions you need. Elmer
 allows you to write tests first, which gives you the freedom and confidence
 to change your code later on.
 
-### Installation
+## Getting Started
 
-Elmer requires Elm 0.18 and the latest version of [elm-test](https://github.com/elm-community/elm-test).
+Because Elmer uses some native Javascript code to accomplish its magic, you cannot install Elmer through the elm package repository. Instead, you can install Elmer with the `elmer-test` package on NPM. Follow these steps to TDD bliss ...
 
-Since Elmer uses some native code, it cannot be installed via the official Elm package
-repository. Instead, you can use [elm-github-install](https://github.com/gdotdesign/elm-github-install)
-to install it.
+### Install
 
-### Getting Started
+First, you'll need to install 
+- Elm (0.19)
+- The latest version of the [node test runner](https://www.npmjs.com/package/elm-test)
+for the elm test package that works with Elm 0.19 (`elm-test@0.19.0`)
+- This package
 
-First, install elm-test -- Elmer has been tested with version 0.18.11 of the elm-test node-test-runner.
-
-```
-$ npm install -g elm-test@0.18.11
-```
-
-Next, initialize your project with elm-test.
+I recommend installing these dependencies locally in your project directory so you can track versions carefully. Here's the command to install all these at once:
 
 ```
-$ elm-test init
+$ npm install --save-dev elm elm-test@0.19.0 elmer-test
 ```
 
-Then, go into the `tests` directory and install Elmer. You'll need to manually edit the
-`elm-package.json` file and add to the `dependencies` like so:
+Now install the elm test library:
 
 ```
-"dependencies": {
-  "brian-watkins/elmer": "3.0.0 <= v < 4.0.0",
-  ...
+$ npx elm install elm-explorations/test
+```
+
+### Update the elm.json file
+
+In your `elm.json` file, you'll need to manually add elmer to the `test-dependencies` section like so:
+
+```
+"test-dependencies": {
+  "direct": {
+    "elm-explorations/test": "1.1.0",
+    "elm-explorations/elmer": "4.0.0"
+  },
+  "indirect": {}
 }
 ```
 
-Then, if you are using elm-github-install, inside the tests directory run:
+Notice the `indirect` section under `test-dependencies`. Elmer itself has the following dependencies:
 
 ```
-$ elm-install
+"dependencies": {
+  "elm/browser": "1.0.0 <= v < 2.0.0",
+  "elm/core": "1.0.0 <= v < 2.0.0",
+  "elm/html": "1.0.0 <= v < 2.0.0",
+  "elm/http": "1.0.0 <= v < 2.0.0",
+  "elm/json": "1.0.0 <= v < 2.0.0",
+  "elm/random": "1.0.0 <= v < 2.0.0",
+  "elm/url": "1.0.0 <= v < 2.0.0",
+  "elm-explorations/test": "1.1.0 <= v < 2.0.0"
+},
 ```
 
-Note that each time you add a new dependency you'll need to manually run
-`elm-install` in the tests directory before running your tests.
+If any of these dependencies are not already listed as direct or indirect dependencies of your app, you'll need to list these in the `indirect` section of your `test-dependencies`. 
 
-### Documentation
+If you just try to run elm-test (see below) and you're missing any dependencies, the compiler will give you an error message. Take the missing dependencies it mentions and list them as indirect test dependencies.
 
-The latest documentation can be found [here](http://elmer-test.cfapps.io/packages/brian-watkins/elmer/latest).
+For example, here's what the `test-dependencies` would look like for an app that doesn't use `elm/http`:
 
-Earlier versions of the documentation can be found [here](http://elmer-test.cfapps.io).
+```
+"test-dependencies": {
+  "direct": {
+    "elm-explorations/test": "1.1.0",
+    "elm-explorations/elmer": "4.0.0"
+  },
+  "indirect": {
+    "elm/http": "1.0.0"
+  }
+}
+```
 
-### Writing Tests
+### Run
 
-Elmer functions generally pass around `TestState` values. To get started describing some
-behavior with Elmer, you'll need to generate an initial test state with the `Elmer.given`
-function. Just pass it your model, view method, and update method.
+Now that everything's in place, you're ready to write tests with Elmer. In order to run those tests, you'll need to set the `ELM_HOME` environment variable to the `home` directory under the `elmer-test` install. If you've installed `elmer-test` locally, the directory should look like this:
 
-#### Finding an Element
+```
+<Project Home>/node_modules/elmer-test/home
+```
 
-Use `Elmer.Html.target` to target an `HtmlElement`, which describes an HTML element in your view. The `target`
-function takes a selector and a `TestState` as arguments. The selector can take the following
-formats:
+I recommend adding a test script to your `package.json` that sets the environment variable for you. The following will work on a Mac running bash:
 
-+ To target the first element with the class myClass, use `.myClass`
-+ To target a element with the id myId, use `#myId`
-+ To target the first div tag, use `div`
-+ To target the first div tag with the custom data attribute data-node, use `div[data-node]`
-+ To target the first div tag with the attribute data-node and the value myData, use `div[data-node='myData']`
-+ To target the descendants of an element add another selector separated by a space: `div a`
+```
+"scripts": {
+  "test": "ELM_HOME=$(pwd)/node_modules/elmer-test/home elm-test"
+}
+```
+
+Note that `ELM_HOME` must be an absolute path (thus the `$(pwd)` in the test command).
+
+### Caveats
+
+The `elm` command searches for test dependencies any time you invoke it (so, even if you aren't running tests). This means that you will need to set the `ELM_HOME` environment variable as described above, any time you invoke the `elm` command. For example, to build your app, you'll need to do something like:
+
+```
+$ ELM_HOME=$(pwd)/node_modules/elmer-test/home elm make src/Main.elm
+```
+
+## Documentation
+
+Read the [latest documentation](https://elmer-test.cfapps.io/).
+
+If you're interested in Elmer for Elm 0.18, you should read the documentation for Elmer 3.3.1, which
+you can find [here](http://elmer-test.cfapps.io/versions).
+
+## Describing Behavior
+
+While tests can be written with Elmer in a variety of ways, the goal is use Elmer to describe *behavior*
+rather than implementation details. What do I mean? Let's say that an application is a collection of 
+behaviors. Each behavior has some pre-conditions -- these are characteristics of the world *outside* the 
+application that must be true for the behavior to occur -- and some set of resulting post-conditions --
+characteristics of the world *outside* the application that are a consequence of the behavior. To
+describe the *behavior* of an application, then, is to describe all the relationships that hold between
+relevant states of the world outside the application due to the use of that application. 
+
+Here's an example of a behavior from some game application that displays high scores:
+
+- Given that there is an HTTP web service that responds with a 200 status and a JSON document
+that lists the high scores in some format.
+- When the user starts the game application, then the high scores are displayed as list items in HTML.
+
+This behavior links one state of the world -- where there is an HTTP web service that successfully
+returns a JSON document in some known format -- and another -- where some HTML document contains
+several `<li>` elements whose text shows the high scores from the web service. 
+
+To describe this behavior, we should not care how the application accomplishes the mapping between
+these two states. We only care about describing the two states. To make the test pass, we will need
+to provide some implementation, but the test gives us freedom to choose whatever implementation makes
+sense for us now. Most importantly, however, as we add new behaviors to our application, we will be
+able to refactor our code with confidence. No matter what implementation we end up with, we should
+still be able to run this test and ensure that the same mapping between pre-conditions and post-conditions
+still holds. 
+
+Like I've said, you can use Elmer to write tests in a variety of ways, but I encourage you to
+write tests that describe *behavior* so that you can refactor your code with confidence later on. This means
+your tests should know as little as they can about the implementation of your Elm application. Strive to write
+tests that do not know the shape of your model or the particular messages that flow through the update function.
+Don't unit test functions. Begin each test only with references to the functions that must exist -- `view`, `update`,
+`init` -- and use Elmer to describe the pre- and post-conditions associated with some behavior. 
+
+### Create a TestState
+
+To begin a test with Elmer, you need to generate a `TestState` value. There are a variety of ways to do this:
+
+- Use `Elmer.given` to test a model, view method, and update method.
+- Use `givenApplication`, `givenDocument`, or `givenWorker` from the `Elmer.Program` module to test particular
+kinds of programs. In these cases, you'll use `Elmer.Program.init` to provide an initial model and command.
+- Use `Elmer.Command.given` to test a command-generating function in isolation.
+
+### Working with HTML
+
+Since Elm is primarily designed for writing HTML applications, much of the work that goes into describing
+the pre- and post-conditions that characterize some behavior will involve working with HTML elements.
+
+Elmer allows you to simulate events on elements and examine the state of elements. In order to do either, 
+you'll need to first target an element.
+
+#### Targeting an Element
+
+Use `Elmer.Html.target` along with the functions from `Elmer.Html.Selector` to target an element. Here's
+a partial test that targets all the `<li>` elements that are children of an `<ol>` with a class `scores`
+in the current view:
+
+```
+allTests : Test
+allTests =
+  describe "My Fun Game"
+  [ describe "High Score Screen"
+    [ test "it shows the high scores" <|
+      \() ->
+        Elmer.given App.defaultModel App.view App.update
+          |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
+              [ Elmer.Html.Selector.tag "ol"
+              , Elmer.Html.Selector.class "score-list"
+              ]
+            << Elmer.Html.Selector.by
+              [ Elmer.Html.Selector.tag "li" ]
+    ...
+```
+
+See `Elmer.Html.Selector` for more examples of selectors. It's also possible to write your own.
 
 #### Taking action on an element
 
@@ -101,141 +217,54 @@ you target another element. The following functions define actions on elements:
 + Input events: `Elmer.Html.Event.input <text> <testState>`
 + Custom events: `Elmer.Html.Event.trigger <eventName> <eventJson> <testState>`
 + There are also events for mouse movements, and checking and selecting input elements. See
-the [docs](http://elmer-test.cfapps.io/packages/brian-watkins/elmer/latest) for more information.
+the [docs](https://elmer-test.cfapps.io/) for more information.
 
 #### Element Matchers
 
-You can make expectations about the Html generated by a component's view function with the
-`Elmer.Html.expect` function.
+You can make expectations about targeted elements with the `Elmer.Html.expect` function.
 
 First, specify whether you want to match against a single element (with `element`)
 or a list of elements (with `elements`).
 Then you provide the appropriate matchers for the element or the list. You can also
 expect that an element exists with the `elementExists` matcher.
 
-The following matchers can be used to make expectations about an `HtmlElement`:
-
-+ `hasId <string> <HtmlElement>`
-+ `hasClass <string> <HtmlElement>`
-+ `hasText <string> <HtmlElement>`
-+ `hasProperty (<string>, <string>) <HtmlElement>`
-+ More to come ...
-
-You can combine multiple matchers using the `<&&>` operator like so:
-
-```
-Elmer.Html.expect (element <|
-  Matchers.hasText "Text one" <&&>
-  Matchers.hasText "Text two"
-) testStateResult
-```
-
-Make expectations about a list of elements like so:
-
-```
-Elmer.Html.target "div" testState
-  |> Elmer.Html.expect (elements <| Elmer.hasLength 4)
-```
-
-### Example
-
-Let's test-drive a simple Elm HTML Application. We want to have a button on the screen that, when clicked, updates a counter. First, we write a test, using [Elm-Test](https://github.com/elm-community/elm-test) and Elmer:
+See `Elmer.Html.Matchers` for a full list of matchers. Let's add to the example above to make
+an expectation about the elements we targeted. We'll use `Elmer.expectAll` to chain together several
+assertions. We'll expect that the list of `<li>` we've targeted has 2 elements, with the first containing
+text of "700 Points" and the second "900 Points". 
 
 ```
 allTests : Test
 allTests =
-  let
-    initialState = Elmer.given App.defaultModel App.view App.update
-  in
-    describe "my app"
-    [ describe "initial state"
-      [ test "it shows that no clicks have occurred" <|
-        \() ->
-          Elmer.Html.target "#clickCount" initialState
-            |> Elmer.Html.expect (
-                Elmer.Html.Matchers.element <|
-                  Elmer.Html.Matchers.hasText "0 clicks!"
-            )      
-      ]
+  describe "My Fun Game"
+  [ describe "High Score Screen"
+    [ test "it shows the high scores" <|
+      \() ->
+        Elmer.given App.defaultModel App.view App.update
+          |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
+              [ Elmer.Html.Selector.tag "ol"
+              , Elmer.Html.Selector.class "score-list"
+              ]
+            << Elmer.Html.Selector.by
+              [ Elmer.Html.Selector.tag "li" ]
+          |> Elmer.Html.expect (Elmer.Html.Matchers.elements <|
+              Elmer.expectAll
+              [ Elmer.hasLength 2
+              , Elmer.atIndex 0 <| Elmer.Html.Matchers.hasText "700 Points"
+              , Elmer.atIndex 1 <| Elmer.Html.Matchers.hasText "900 Points"
+              ]
+            )
     ]
-```
-
-Our test finds the html element containing the counter text by its id and checks that it has the text we expect when the app first appears. Let's make it pass:
-
-```
-import Html as Html
-import Html.Attributes as Attr
-
-type alias Model =
-  { clicks: Int }
-
-defaultModel : Model
-defaultModel =
-  { clicks = 0 }
-
-type Msg =
-  NothingYet
-
-view : Model -> Html Msg
-view model =
-  Html.div [ Attr.id "clickCount" ] [ Html.text "0 clicks!" ]
-
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
-  ( model, Cmd.None )
-```
-
-If we run our test now, it should pass.
-
-Now, let's add a new test that describes what we expect to happen when a button is clicked.
-
-```
-  describe "when the button is clicked"
-  [ test "it updates the counter" <|
-    \() ->
-      Elmer.Html.target ".button" initialState
-        |> Elmer.Html.Event.click
-        |> Elmer.Html.Event.click
-        |> Elmer.Html.target "#clickCount"
-        |> Elmer.Html.expect (
-            Elmer.Html.Matchers.element <|
-              Elmer.Html.Matchers.hasText "2 clicks!"
-        )
   ]
 ```
 
-This should fail, since we don't even have a button in our view yet. Let's fix that. We'll add a button with a click event handler that sends a message we can handle in the update function. We update the `Msg` type, the `view` function, and the `update` function like so:
-
-```
-import Html.Events as Events
-
-type Msg =
-  HandleClick
-
-view : Model -> Html Msg
-view model =
-  Html.div []
-    [ Html.div [ Attr.id "clickCount" ] [ Html.text ((toString model.clicks) ++ " clicks!") ]
-    , Html.div [ Attr.class "button", Events.onClick HandleClick ] [ Html.text "Click Me" ]
-    ]
-
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
-  case msg of
-    HandleClick ->
-      ( { model | clicks = model.clicks + 1 }, Cmd.None )
-```
-
-And our test should pass.
-
-Notice that we were able to test-drive our app, writing our tests first, without worrying about implementation details like the names of the messages our `update` function will use and so on. Elmer simulates the elm architecture workflow, delivering messages to the `update` function when events occur and passing the result to the `view` function so you can write expectations about the updated html.
-
 ### Commands
 
-Commands describe actions to be performed by the Elm runtime. Elmer simulates the Elm runtime in order to
+Commands describe actions to be performed by the Elm runtime; the result of a command depends on the state of the
+world outside the Elm application. Elmer simulates the Elm runtime in order to
 facilitate testing, but it is not intended to replicate the Elm runtime's ability to carry out commands.
-Instead, Elmer allows you to specify what effect should result from running a command so that you can then
-describe the behavior that follows.
+Instead, Elmer allows you to specify what effect should result from running a command. This is one important
+way that Elmer allows you to describe the pre-conditions that characterize an application behavior.
 
 #### Faking Effects
 
@@ -249,7 +278,7 @@ commands and subscriptions during a test.
 
 Note that while Elmer is not capable of processing any commands, it does support
 the general operations on commands in the core `Platform.Cmd` module, namely, `batch` and `map`. So, you
-can use these functions as expected in your components and Elmer should do the right thing.
+can use these functions as expected in your application and Elmer should do the right thing.
 
 Elmer provides additional support for HTTP request commands and navigation commands.
 
@@ -257,22 +286,57 @@ Elmer provides additional support for HTTP request commands and navigation comma
 
 Modern web apps often need to make HTTP requests to some backend server. Elmer makes it easy to stub HTTP
 responses and write expectations about the requests made. The `Elmer.Http.Stub` module contains methods
-for constructing an `HttpResponseStub` that describes how to respond to some request. For example:
+for constructing an `HttpResponseStub` that describes how to respond to some request. For example,
+we might stub a request to the server for our game to return high scores like so:
 
 ```
 let
-  stubbedResponse = Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fake.com/search")
-    |> Elmer.Http.Stub.withBody "{\"name\":\"Super Fun Person\",\"type\":\"person\"}"
+  stubbedResponse = Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fakeGameServer.com/scores")
+    |> Elmer.Http.Stub.withBody "[{\"score\":700,\"player\":\"Brian\"},{\"score\":900,\"player\":\"Holly\"}]"
 in
 ```
 
 In this case, a GET request to the given route will result in a response with the given body.
-See `Elmer.Http.Stub` for the full list of builder functions. (With more on the way ...)
+See `Elmer.Http.Stub` for the full list of builder functions.
 
 Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.serve` function
-along with `Elmer.Spy.use` to override `Http.send` and `Http.toTask` from [elm-lang/http](http://package.elm-lang.org/packages/elm-lang/http/1.0.0/) during your test.
+along with `Elmer.Spy.use` to override `Http.send` and `Http.toTask` from [elm/http](https://package.elm-lang.org/packages/elm/http/latest/) during your test.
 When your application code calls `Http.send` or `Http.toTask`, the request will be checked against the
 provided stubs and if a match occurs, the given response will be returned.
+
+Here's how we can extend our test to describe more of its pre-conditions:
+
+```
+allTests : Test
+allTests =
+  describe "My Fun Game"
+  [ describe "High Score Screen"
+    [ test "it shows the high scores" <|
+      \() ->
+        let
+          stubbedResponse =
+            Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fakeGameServer.com/scores")
+              |> Elmer.Http.Stub.withBody 
+                "[{\"score\":700,\"player\":\"Brian\"},{\"score\":900,\"player\":\"Holly\"}]"
+        in
+          Elmer.given App.defaultModel App.view App.update
+            |> Elmer.spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
+            |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
+                [ Elmer.Html.Selector.tag "ol"
+                , Elmer.Html.Selector.class "score-list"
+                ]
+              << Elmer.Html.Selector.by
+                [ Elmer.Html.Selector.tag "li" ]
+            |> Elmer.Html.expect (Elmer.Html.Matchers.elements <|
+                Elmer.expectAll
+                [ Elmer.hasLength 2
+                , Elmer.atIndex 0 <| Elmer.Html.Matchers.hasText "700 Points"
+                , Elmer.atIndex 1 <| Elmer.Html.Matchers.hasText "900 Points"
+                ]
+              )
+    ]
+  ]
+```
 
 Elmer also allows you to write tests that expect some HTTP request to have been made, in a
 manner similar to how you can write expectations about some element in an HTML document. For
@@ -280,11 +344,11 @@ example, this test inputs search terms into a field, clicks a search button, and
 that a request is made to a specific route with the search terms in the query string:
 
 ```
-initialTestState
+Elmer.given App.defaultModel App.view App.update
   |> Elmer.Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
-  |> Elmer.Html.target "input[name='query']"
+  |> Elmer.Html.target << by [ tag "input", attributeWith "name" "query" ]
   |> Elmer.Html.Event.input "Fun Stuff"
-  |> Elmer.Html.target "#search-button"
+  |> Elmer.Html.target << by [ id "search-button" ]
   |> Elmer.Html.Event.click
   |> Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/search") (
     Elmer.some <| Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
@@ -300,84 +364,81 @@ See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 
 #### Elmer.Navigation
 
-Elmer provides support for functions in the [elm-lang/navigation](http://package.elm-lang.org/packages/elm-lang/navigation/2.0.1/)
+Elmer provides support for functions in the [Browser.Navigation](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation)
 module that allow you to handle navigation for single-page web applications.
 
-To simulate location updates, you must construct a `TestState` and
-set the location parser function (`Navigation.Location -> msg`) that you provide to `Navigation.program` when you initialize your app using `Elmer.Navigation.withLocationParser`. This provides
-Elmer with the information it needs to process location updates as they occur in a test.
+You'll need to begin your test with `Elmer.Program.givenApplication` since only Elm
+'application' programs can handle navigation. Provide a reference to the messages
+that handle new url requests and url changes along with the view and update functions. Then 
+provide `Elmer.Spy.use` with `Elmer.Navigation.spy`
+so that Elmer will be able to record and process location updates by overriding
+ `Browser.Navigation.pushUrl` and `Browser.Navigation.replaceUrl`.
 
-You can send a command to update the location manually with the `Elmer.Navigation.setLocation` function.
-If your component produces commands to update the location using `Navigation.newUrl` or
-`Navigation.modifyUrl`, your tests you should provide `Elmer.Spy.use` with `Elmer.Navigation.spy`
-so that Elmer will be able to record and process location updates.
+When you call `Elmer.Program.init` you'll need to use `Elmer.Navigation.fakeKey` to
+give your `init` function a `Browser.Navigation.Key` value. Here's an example of a test
+that expects the location to change when an element is clicked. 
+
+```
+Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+  |> Elmer.Spy.use [ Elmer.Navigation.spy ]
+  |> Elmer.Program.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
+  |> Elmer.Html.target "#some-element"
+  |> Elmer.Html.Event.click
+  |> Elmer.Navigation.expectLocation "http://mydomain.com/funStuff.html"
+```
 
 You can write an expectation about the current location with `Elmer.Navigation.expectLocation`.
 
-See `tests/Elmer/TestApps/NavigationTestApp.elm` and `tests/Elmer/NavigationTests.elm` for
+See `tests/src/Elmer/TestApps/NavigationTestApp.elm` and `tests/src/Elmer/NavigationTests.elm` for
 examples.
-
-#### Sending Arbitrary Commands
-
-Sometimes, a component may be sent a command, either from its parent or as part of initialization.
-You can use the `Elmer.Platform.Command.send` function to simulate this.
 
 #### Deferred Command Processing
 
-It's often necessary to test the state of a component while some command is running. For example,
+It's often necessary to describe the behavior of an application while some command is running. For example,
 one might want to show a progress indicator while an HTTP request is in process. Elmer provides
-general support for deferred commands. Use `Elmer.Platform.Command.defer` to create a command that
-will not be processed until `Elmer.Platform.Command.resolveDeferred` is called. Note that all currently
+general support for deferred commands. Use `Elmer.Command.defer` to create a command that
+will not be processed until `Elmer.Command.resolveDeferred` is called. Note that all currently
 deferred commands will be resolved when this function is called.
 
 `Elmer.Http` allows you to specify when the processing of a stubbed response should be deferred.
 When you create your `HttpResponseStub` just use the `Elmer.Http.Stub.deferResponse` builder function
-to indicate that this response should be deferred until `Elmer.Platform.Command.resolveDeferred` is called.
-
-#### Dummy Commands
-
-You might want to write a test that expects a command to be sent, but doesn't care to describe the
-behavior that results from processing that command -- perhaps that is tested somewhere else. In
-that case, you could use `Elmer.Platform.Command.dummy <identifier>` to create a dummy command.
-When Elmer processes a dummy command, it simply records the fact that the command was sent; otherwise
-it treats the command just like `Cmd.none`. In your test, use `Elmer.command.expectDummy <identifier>`
-to expect that the command was sent.
+to indicate that this response should be deferred until `Elmer.Command.resolveDeferred` is called.
 
 #### Testing Commands in Isolation
 
 You might want to test a command independently of any module that might use it. In that case,
-use `Elmer.Headless.givenCommand` and provide it with a function that generates the command you
+use `Elmer.Command.given` and provide it with a function that generates the command you
 want to test. This will initiate a `TestState` that simply records any messages that result when
-the given command is processed. You can use the `Elmer.Headless.expectMessages` matcher to
+the given command is processed. You can use the `Elmer.Command.expectMessages` function to
 make any expectations about the messages received. For example, here's a test that expects a
 certain message when a certain command is processed:
 
 ```
-Elmer.Headless.givenCommand (\_ -> MyModule.myCommand MyTagger withSomeArgument)
-  |> Elmer.Headless.expectMessages (\messages ->
+Elmer.Command.given (\_ -> MyModule.myCommand MyTagger withSomeArgument)
+  |> Elmer.Command.expectMessages (\messages ->
     Expect.equal [ MyTagger "Fun Result" ]
   )
 ```
 
-You can use `Elmer.Headless.givenCommand` with other matchers as it makes sense. So, you might
+You can use `Elmer.Command.given` with other functions as it makes sense. So, you might
 write a test that expects a certain Http request to result from the processing of a command:
 
 ```
-Elmer.Headless.givenCommand (\_ -> MyModule.sendRequest MyTagger someArgument)
+Elmer.Command.given (\_ -> MyModule.sendRequest MyTagger someArgument)
   |> Elmer.Spy.use [ Elmer.Http.spy ]
   |> Elmer.Http.expect (Elmer.Http.Route.get "http://fun.com/api/someArgument")
 ```
 
 ### Subscriptions
 
-Using subscriptions, your component can register to be notified when certain effects occur.
-To describe the behavior of a component that has subscriptions, you'll need to do these things:
+Using subscriptions, your application can register to be notified when certain effects occur.
+To describe the behavior of an application that has subscriptions, you'll need to do these things:
 
 1. Override the function that generates the subscription using `Elmer.Spy.create` along with
 `Elmer.Spy.andCallFake`
-and replace it with a fake subscription using `Elmer.Platform.Subscription.fake`
-2. Register the subscriptions using `Elmer.Platform.Subscription.with`
-2. Simulate the effect you've subscribed to receive with `Elmer.Platform.Subscription.send`
+and replace it with a fake subscription using `Elmer.Subscription.fake`
+2. Register the subscriptions using `Elmer.Subscription.with`
+2. Simulate the effect you've subscribed to receive with `Elmer.Subscription.send`
 
 Here's an example test:
 
@@ -390,14 +451,14 @@ timeSubscriptionTest =
       let
         timeSpy = Elmer.Spy.create "fake-time" (\_ -> Time.every)
           |> Elmer.Spy.andCallFake (\_ tagger ->
-            Elmer.Platform.Subscription.fake "timeEffect" tagger
+            Elmer.Subscription.fake "timeEffect" tagger
           )
       in
         Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ timeSpy ]
-          |> Elmer.Platform.Subscription.with (\() -> App.subscriptions)
-          |> Elmer.Platform.Subscription.send "timeEffect" (3 * 1000)
-          |> Elmer.Html.target "#num-seconds"
+          |> Elmer.Subscription.with (\() -> App.subscriptions)
+          |> Elmer.Subscription.send "timeEffect" (Time.millisToPosix 3000)
+          |> Elmer.Html.target << by [ id "num-seconds" ]
           |> Elmer.Html.expect (
               Elmer.Html.Matchers.element <|
                 Elmer.Html.Matchers.hasText "3 seconds"
@@ -452,13 +513,13 @@ let
   spy =
     Elmer.Spy.create "port-spy" (\_ -> MyModule.receiveData)
       |> Elmer.Spy.andCallFake (\tagger ->
-           Elmer.Platform.Subscription.fake "fake-receive" tagger
+           Elmer.Subscription.fake "fake-receive" tagger
          )
 in
   Elmer.given MyModule.defaultModel MyModule.view MyModule.update
     |> Elmer.Spy.use [ spy ]
-    |> Elmer.Platform.Subscription.with (\_ -> MyModule.subscriptions)
-    |> Elmer.Platform.Subscription.send "fake-receive" "some fake data"
+    |> Elmer.Subscription.with (\_ -> MyModule.subscriptions)
+    |> Elmer.Subscription.send "fake-receive" "some fake data"
     |> ...
 ```
 
@@ -490,14 +551,14 @@ that resolves to the time you want.
 
     let
       timeSpy =
-        Task.succeed 1515281017615
+        Task.succeed (Time.millisToPosix 1515281017615)
           |> Spy.replaceValue (\_ -> Time.now)
     in
       testState
         |> Spy.use [ timeSpy ]
-        |> Elmer.Html.target "#get-current-time"
+        |> Elmer.Html.target << by [ id "get-current-time" ]
         |> Elmer.Html.Event.click
-        |> Elmer.Html.target "#current-time"
+        |> Elmer.Html.target << by [ id "current-time" ]
         |> Elmer.Html.expect (
           element <| hasText "1/6/2018 23:23:37"
         )
@@ -505,7 +566,8 @@ that resolves to the time you want.
 ### Spies and Fakes
 
 Elmer generalizes the pattern for managing the effects of `Subs` and `Cmds`, allowing
-you to spy on any function you like.
+you to spy on any function you like. *NOTE* You should use Elmer spies sparingly and
+with care. Each spy that you add to your test couples that test to implementation details. 
 
 Suppose you need to write a test that expects a certain function to be called, but
 you don't need to describe the resulting behavior. You can spy on a function with
@@ -526,35 +588,36 @@ parseTest =
       in
         Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ spy ]
-          |> Elmer.Html.target "input[type='text']"
+          |> Elmer.Html.target << by [ tag "input", attributeWith "type" "text" ]
           |> Elmer.Html.Event.input "A string to be parsed"
           |> Elmer.Spy.expect "parser-spy" (wasCalled 1)
   ]
 ```
 
 Elmer also allows you to provide a fake implementation for any function.
-Suppose that you are testing a routing
-module. Given a certain route, you want to see that the result of a certain
-component's view function is displayed. You could write the test like so:
+Suppose that you want to stub the result of the parsing function:
 
 ```
-routeTest : Test
-routeTest =
-  describe "when the /things route is accessed"
-  [ test "it shows the things" <|
+parseTest : Test
+parseTest =
+  describe "when the string is submitted"
+  [ test "it displays the parsed result" <|
     \() ->
       let
-        thingsViewSpy = Elmer.Spy.create "things-view" (\() -> ThingsModule.view)
-          |> Elmer.Spy.andCallFake (\_ ->
-            Html.div [ Html.Attributes.id "thingsView" ] []
-          )
+        spy =
+          Elmer.Spy.create "parser-spy" (\_ -> MyParserModule.parse)
+            |> Elmer.Spy.andCallFake (\_ ->
+              "Some Parsed String"
+            )
       in
         Elmer.given App.defaultModel App.view App.update
-          |> Elmer.Navigation.withLocationParser App.locationParser
-          |> Elmer.Spy.use [ thingsViewSpy ]
-          |> Elmer.Navigation.setLocation "http://fun.com/things"
-          |> Elmer.Html.target "#thingsView"
-          |> Elmer.Html.expect Elmer.Html.Matcher.elementExists
+          |> Elmer.Spy.use [ spy ]
+          |> Elmer.Html.target << by [ tag "input", attributeWith "type" "text" ]
+          |> Elmer.Html.Event.input "A string to be parsed"
+          |> Elmer.Html.target << by [ id "parsing-result" ]
+          |> Elmer.Html.expect (Elmer.Html.element <|
+            Elmer.Html.Matchers.hasText "Some Parsed String
+          )
   ]
 ```
 
@@ -586,15 +649,15 @@ You can use `Elmer.Spy.createWith` to produce a function that is nothing more th
 
 ```
 let
-  spy = createWith "my-spy" (tagger ->
+  spy = createWith "my-spy" (\tagger ->
     Command.fake <| tagger "Success!"
   )
 in
   Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.callable "my-spy")
     |> Elmer.Spy.use [ spy ]
-    |> Elmer.Html.target "input"
+    |> Elmer.Html.target << by [ tag "input" ]
     |> Elmer.Html.Event.input "some text"
-    |> Elmer.Html.target "button"
+    |> Elmer.Html.target << by [ tag "button" ]
     |> Elmer.Html.Event.click
     |> Elmer.Spy.expect "my-spy" (
       Elmer.Spy.Matchers.wasCalledWith
@@ -609,14 +672,9 @@ way; `Spy.replaceValue` is just a convenient way to inject fake values during a 
 
 ### Development
 
-For development purposes, it's possible to deploy Elmer to a local project.
-
-Use something like [elm-github-install](https://github.com/gdotdesign/elm-github-install) for the test
-dependencies of the project using Elmer. You can set elm-github-install to install Elmer from a directory
-in the local filesystem. 
-
 To run the tests:
 
 ```
-$ elm test
+$ cd tests
+$ ./test.sh
 ```
