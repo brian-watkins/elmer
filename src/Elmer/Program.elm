@@ -93,7 +93,7 @@ Provide a function that calls a program's `init` function and returns a model an
 The the returns model will become the current model for the system under test and the given command
 will be executed. 
 
-    Elmer.Browser.givenDocument MyDocument.view MyDocument.update
+    Elmer.Program.givenDocument MyDocument.view MyDocument.update
       |> init (\() -> MyDocument.init)
       |> Elmer.Html.target "#title"
       |> Elmer.Html.expectElementExists

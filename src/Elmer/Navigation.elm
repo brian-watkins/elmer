@@ -94,14 +94,14 @@ fakeNavigateCommand functionName _ url =
 {-| Expect that the current location is equal to the given string.
 
 This expectation must be used in conjunction with `spy` above, and your `TestState` must be 
-created with `Elmer.Application.given`. 
+created with `Elmer.Program.givenApplication`. 
 
 Suppose your app calls `Browser.Navigation.pushUrl` when an element is clicked. You can describe
 this behavior as follows: 
 
-    Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+    Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
       |> Elmer.Spy.use [ Elmer.Navigation.spy ]
-      |> Elmer.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
+      |> Elmer.Program.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
       |> Elmer.Html.target "#some-element"
       |> Elmer.Html.Event.click
       |> Elmer.Navigation.expectLocation "http://mydomain.com/funStuff.html"
