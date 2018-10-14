@@ -16,17 +16,16 @@ module Elmer
 
 {-| Basic types and functions for working with tests and matchers
 
-# Initializing a test
-@docs TestState, given
-
-# Make low-level expectations
-@docs expectModel
+@docs TestState
 
 # Working with Matchers
 @docs Matcher, expectAll, expectNot
 
 # List Matchers
 @docs each, exactly, some, atIndex, last, hasLength
+
+# Make low-level expectations
+@docs given, expectModel
 
 -}
 

@@ -170,9 +170,10 @@ Don't unit test functions. Begin each test only with references to the functions
 
 To begin a test with Elmer, you need to generate a `TestState` value. There are a variety of ways to do this:
 
-- Use `Elmer.given` to test a model, view method, and update method.
-- Use `givenApplication`, `givenDocument`, or `givenWorker` from the `Elmer.Program` module to test particular
-kinds of programs. In these cases, you'll use `Elmer.Program.init` to provide an initial model and command.
+- Use `givenElement`, `givenApplication`, `givenDocument`, or `givenWorker` from
+the `Elmer.Program` module to test particular kinds of programs. In these cases, you'll
+use `Elmer.Program.init` to provide an initial model and command.
+- Use `Elmer.given` to test an arbitrary model, view method, and update method.
 - Use `Elmer.Command.given` to test a command-generating function in isolation.
 
 ### Working with HTML
@@ -196,7 +197,8 @@ allTests =
   [ describe "High Score Screen"
     [ test "it shows the high scores" <|
       \() ->
-        Elmer.given App.defaultModel App.view App.update
+        Elmer.Program.givenElement App.view App.update
+          |> Elmer.Program.init (\_ -> App.init testFlags)
           |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
               [ Elmer.Html.Selector.tag "ol"
               , Elmer.Html.Selector.class "score-list"
@@ -240,7 +242,8 @@ allTests =
   [ describe "High Score Screen"
     [ test "it shows the high scores" <|
       \() ->
-        Elmer.given App.defaultModel App.view App.update
+        Elmer.Program.givenElement App.view App.update
+          |> Elmer.Program.init (\_ -> App.init testFlags)
           |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
               [ Elmer.Html.Selector.tag "ol"
               , Elmer.Html.Selector.class "score-list"
@@ -319,8 +322,9 @@ allTests =
               |> Elmer.Http.Stub.withBody 
                 "[{\"score\":700,\"player\":\"Brian\"},{\"score\":900,\"player\":\"Holly\"}]"
         in
-          Elmer.given App.defaultModel App.view App.update
+          Elmer.Program.givenElement App.view App.update
             |> Elmer.spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
+            |> Elmer.Program.init (\_ -> App.init testFlags)
             |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
                 [ Elmer.Html.Selector.tag "ol"
                 , Elmer.Html.Selector.class "score-list"
@@ -379,7 +383,7 @@ give your `init` function a `Browser.Navigation.Key` value. Here's an example of
 that expects the location to change when an element is clicked. 
 
 ```
-Elmer.Application.given App.OnUrlRequest App.OnUrlChange App.view App.update
+Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
   |> Elmer.Spy.use [ Elmer.Navigation.spy ]
   |> Elmer.Program.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
   |> Elmer.Html.target "#some-element"

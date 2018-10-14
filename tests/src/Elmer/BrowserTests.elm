@@ -37,7 +37,7 @@ initTests =
             |> Expect.equal (TestState.failure "You failed!")
     ]
   , let
-      state = Elmer.given (InitApp.defaultModel "") InitApp.view InitApp.update
+      state = Elmer.Program.givenElement InitApp.view InitApp.update
         |> Spy.use [ Elmer.Http.spy ]
         |> Elmer.Program.init (\() -> InitApp.init { baseUrl = "http://fun.com/api" })
     in
@@ -57,7 +57,7 @@ initTests =
       \() ->
         let
           state = 
-            Elmer.given (InitApp.defaultModel "") InitApp.view InitApp.update
+            Elmer.Program.givenElement InitApp.view InitApp.update
               |> Elmer.Program.init ( \() -> 
                 ( InitApp.defaultModel ""
                 , Task.perform InitApp.Tag ( Time.now |> Task.map ( \p -> Time.posixToMillis p |> String.fromInt ) )

@@ -1,11 +1,15 @@
 module Elmer.Program exposing
-  ( givenApplication
+  ( givenElement
+  , givenApplication
   , givenDocument
   , givenWorker
   , init
   )
 
 {-| Functions for working with Elm programs.
+
+# Test an Elm Html Sandbox or Element Program
+@docs givenElement
 
 # Test an Elm Html Application
 @docs givenApplication
@@ -32,6 +36,25 @@ import Url exposing (Url)
 import Html exposing (Html)
 
 
+
+{-| Initialize a `TestState` with the basic requirements for a program created with
+`Browser.sandbox` or `Browser.element`.
+
+The arguments are:
+1. View function
+2. Update function
+
+You'll need to call `Elmer.Program.init` with the program's `init` function to properly
+start your test.
+-}
+givenElement : ( model -> Html msg )
+    -> ( msg -> model -> ( model, Cmd msg ) )
+    -> TestState model msg
+givenElement view update =
+  Context.default (HtmlView view) update
+    |> TestState.with
+
+
 {-| Initialize a `TestState` with the basic requirements for a program
 created with `Browser.application`. 
 
@@ -41,6 +64,8 @@ The arguments are:
 3. View function that results in a `Browser.Document`
 4. Update function
 
+You'll need to call `Elmer.Program.init` with the program's `init` function to properly
+start your test.
 -}
 givenApplication : (UrlRequest -> msg) -> (Url -> msg) -> (model -> Document msg) -> (msg -> model -> (model, Cmd msg)) -> TestState model msg
 givenApplication onUrlRequest onUrlChange view update =
@@ -65,6 +90,8 @@ The arguments are:
 1. View function that results in a `Browser.Document`
 2. Update function.
 
+You'll need to call `Elmer.Program.init` with the program's `init` function to properly
+start your test.
 -}
 givenDocument : (model -> Document msg) -> (msg -> model -> (model, Cmd msg)) -> TestState model msg
 givenDocument view update =
@@ -76,6 +103,9 @@ givenDocument view update =
 a headless worker program created with `Platform.worker`.
 
 The argument is an update function.
+
+You'll need to call `Elmer.Program.init` with the program's `init` function to properly
+start your test.
 -}
 givenWorker : ( msg -> model -> ( model, Cmd msg ) ) -> TestState model msg
 givenWorker update =
@@ -90,7 +120,7 @@ emptyView _ =
 {-| Update the test context with the given model and Cmd.
 
 Provide a function that calls a program's `init` function and returns a model and a command. 
-The the returns model will become the current model for the system under test and the given command
+The resuling model will become the current model for the system under test and the given command
 will be executed. 
 
     Elmer.Program.givenDocument MyDocument.view MyDocument.update
