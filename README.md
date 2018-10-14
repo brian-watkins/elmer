@@ -76,7 +76,7 @@ Notice the `indirect` section under `test-dependencies`. Elmer itself has the fo
   "elm/json": "1.0.0 <= v < 2.0.0",
   "elm/random": "1.0.0 <= v < 2.0.0",
   "elm/url": "1.0.0 <= v < 2.0.0",
-  "elm-explorations/test": "1.1.0 <= v < 2.0.0"
+  "elm-explorations/test": "1.0.0 <= v < 2.0.0"
 },
 ```
 
