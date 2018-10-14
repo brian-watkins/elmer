@@ -105,7 +105,7 @@ customEventTests =
       [ test "it updates the model accordingly" <|
         \() ->
           Elmer.given InputApp.defaultModel InputApp.view InputApp.update
-            |> Markup.target << Sel.by [ Sel.tag "input", Sel.attributeWith "name" "first-name" ]
+            |> Markup.target << Sel.by [ Sel.tag "input", Sel.attribute ("name", "first-name") ]
             |> Event.trigger "keyup" keyUpEventJson
             |> Elmer.expectModel (\model ->
               Expect.equal model.lastLetter 65

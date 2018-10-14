@@ -3,7 +3,7 @@ module Elmer.Html.Selector exposing
   , tag
   , class
   , attribute
-  , attributeWith
+  , attributeName
   , text
   , descendantsOf
   , childrenOf
@@ -13,7 +13,7 @@ module Elmer.Html.Selector exposing
 {-| Functions for selecting Html elements to be targeted during a test.
 
 # Basic Selectors
-@docs id, tag, class, attribute, attributeWith, text
+@docs id, tag, class, attribute, attributeName, text
 
 # Group Selectors
 @docs by, descendantsOf, childrenOf
@@ -55,8 +55,8 @@ class expectedClass element =
 On the difference between attributes and properties,
 see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
 -}
-attribute : String -> Elmer.Html.HtmlSelector msg
-attribute expectedName element =
+attributeName : String -> Elmer.Html.HtmlSelector msg
+attributeName expectedName element =
   Internal.allAttrs element
     |> Dict.member expectedName
 
@@ -66,8 +66,8 @@ attribute expectedName element =
 On the difference between attributes and properties,
 see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
 -}
-attributeWith : String -> String -> Elmer.Html.HtmlSelector msg
-attributeWith expectedName expectedValue element =
+attribute : (String, String) -> Elmer.Html.HtmlSelector msg
+attribute (expectedName, expectedValue) element =
   Internal.allAttrs element
     |> Dict.get expectedName
     |> Maybe.map ((==) expectedValue)

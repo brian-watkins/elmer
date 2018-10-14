@@ -234,7 +234,7 @@ hasOption value element =
 findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)
 findOption value element =
   element
-    |> Target.forElement (ElementWith [ Selector.tag "option", Selector.attributeWith "value" value ])
+    |> Target.forElement (ElementWith [ Selector.tag "option", Selector.attribute ("value", value) ])
     |> Query.findElements
     |> List.head
 

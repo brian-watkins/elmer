@@ -350,7 +350,7 @@ that a request is made to a specific route with the search terms in the query st
 ```
 Elmer.given App.defaultModel App.view App.update
   |> Elmer.Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
-  |> Elmer.Html.target << by [ tag "input", attributeWith "name" "query" ]
+  |> Elmer.Html.target << by [ tag "input", attribute ("name", "query") ]
   |> Elmer.Html.Event.input "Fun Stuff"
   |> Elmer.Html.target << by [ id "search-button" ]
   |> Elmer.Html.Event.click
@@ -592,7 +592,7 @@ parseTest =
       in
         Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ spy ]
-          |> Elmer.Html.target << by [ tag "input", attributeWith "type" "text" ]
+          |> Elmer.Html.target << by [ tag "input", attribute ("type", "text") ]
           |> Elmer.Html.Event.input "A string to be parsed"
           |> Elmer.Spy.expect "parser-spy" (wasCalled 1)
   ]
@@ -616,7 +616,7 @@ parseTest =
       in
         Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ spy ]
-          |> Elmer.Html.target << by [ tag "input", attributeWith "type" "text" ]
+          |> Elmer.Html.target << by [ tag "input", attribute ("type", "text") ]
           |> Elmer.Html.Event.input "A string to be parsed"
           |> Elmer.Html.target << by [ id "parsing-result" ]
           |> Elmer.Html.expect (Elmer.Html.element <|

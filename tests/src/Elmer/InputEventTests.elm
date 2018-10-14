@@ -194,19 +194,19 @@ submitTests : Test
 submitTests =
   describe "submit event"
   [ describe "input with type submit"
-    [ triggersSubmit [ tag "input", attributeWith "type" "submit" ]
+    [ triggersSubmit [ tag "input", attribute ("type", "submit") ]
     ]
   , describe "input with type other than submit"
-    [ doesNotTriggerSubmit [ tag "input", attributeWith "type" "text" ]
+    [ doesNotTriggerSubmit [ tag "input", attribute ("type", "text") ]
     ]
   , describe "button with submit type"
-    [ triggersSubmit [ tag "button", attributeWith "type" "submit" ]
+    [ triggersSubmit [ tag "button", attribute ("type", "submit") ]
     ]
   , describe "button with no type"
     [ triggersSubmit [ id "default-type-button" ]
     ]
   , describe "button with type other than submit"
-    [ doesNotTriggerSubmit [ tag "button", attributeWith "type" "button" ]
+    [ doesNotTriggerSubmit [ tag "button", attribute ("type", "button") ]
     ]
   ]
 
@@ -317,5 +317,5 @@ selectTests =
 inputSelector : String -> List (HtmlSelector msg)
 inputSelector name =
   [ tag "input"
-  , attributeWith "name" name
+  , attribute ("name", name)
   ]
