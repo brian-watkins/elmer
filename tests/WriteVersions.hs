@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import System.Environment
 import Control.Monad (liftM, liftM2, liftM3)
 import Data.Binary (Binary, encodeFile, get, put, getWord8, putWord8)
 import Data.Map (Map, fromList)
 import Data.Text (Text)
 import Data.Word (Word16)
+import Data.List.Split (splitOn)
 
 
 data Name =
@@ -66,8 +68,10 @@ instance Binary Version where
 
 main :: IO ()
 main =
-    encodeFile "./versions.dat" $
-        PackageRegistry 0 $
-            fromList
-                [ ( Name "elm-explorations" "elmer", [ Version 4 0 0 ] )
-                ]
+    do  [version] <- getArgs
+        let [major, minor, patch] = map (\v -> read v :: Word16) (splitOn "." version)
+        encodeFile "./versions.dat" $
+            PackageRegistry 0 $
+                fromList
+                    [ ( Name "elm-explorations" "elmer", [ Version major minor patch ] )
+                    ]
