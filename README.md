@@ -36,13 +36,13 @@ Because Elmer uses some native Javascript code to accomplish its magic, you cann
 First, you'll need to install 
 - Elm (0.19)
 - The latest version of the [node test runner](https://www.npmjs.com/package/elm-test)
-for the elm test package that works with Elm 0.19 (`elm-test@0.19.0`)
+for the elm test package that works with Elm 0.19 (`elm-test@elm0.19.0`)
 - This package
 
 I recommend installing these dependencies locally in your project directory so you can track versions carefully. Here's the command to install all these at once:
 
 ```
-$ npm install --save-dev elm elm-test@0.19.0 elmer-test
+$ npm install --save-dev elm elm-test@elm0.19.0 elmer-test
 ```
 
 Now install the elm test library:
