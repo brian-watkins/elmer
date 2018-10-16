@@ -28,9 +28,9 @@ module Elmer.Html.Element exposing
 
 
 import Elmer.Html
-import Elmer.Html.Internal as Internal
+import Elmer.Html.Element.Internal as Internal
 import Elmer.Html.Target as Target
-import Elmer.Html.Printer as HtmlPrinter
+import Elmer.Html.Element.Printer as HtmlPrinter
 import Elmer.Html.Selector as Selector
 import Elmer.Html.Types exposing (HtmlSelectorGroup(..))
 import Dict exposing (Dict)
@@ -64,7 +64,7 @@ target (selectors, element) =
 -}
 toString : Elmer.Html.HtmlElement msg -> String
 toString node =
-  HtmlPrinter.toString node
+  HtmlPrinter.print node
 
 
 {-| Get the tag of the element

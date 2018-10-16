@@ -5,8 +5,9 @@ module Elmer.Html.Query exposing
 
 
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Printer as ElementPrinter
-import Elmer.Html.Internal as Html_
+import Elmer.Html.Element.Printer as ElementPrinter
+import Elmer.Html.Selector.Printer as SelectorPrinter
+import Elmer.Html.Element.Internal as Html_
 import Elmer.Errors as Errors
 
 
@@ -78,19 +79,20 @@ descendantsThatMatch selector element =
 
 matches : List (HtmlSelector msg) -> HtmlElement msg -> Bool
 matches selectors element =
-    List.foldl (\sel result -> 
+    List.map .predicate selectors
+      |> List.foldl (\sel result ->
         case result of
             True ->
                 sel element
             False ->
                 False
-    ) True selectors
+      ) True
 
 
 queryErrorMessage : Selection msg -> String
 queryErrorMessage selection =
   elementToString selection.element
-    |> Errors.elementNotFound
+    |> Errors.elementNotFound (SelectorPrinter.printGroup selection.selector)
     |> Errors.print
 
 
@@ -98,6 +100,6 @@ elementToString : Maybe (HtmlElement msg) -> String
 elementToString maybeElement =
   case maybeElement of
     Just element ->
-      ElementPrinter.toString element
+      ElementPrinter.print element
     Nothing ->
       "<No Elements>"

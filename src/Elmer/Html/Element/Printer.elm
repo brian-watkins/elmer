@@ -1,10 +1,10 @@
-module Elmer.Html.Printer exposing
-  ( toString
+module Elmer.Html.Element.Printer exposing
+  ( print
   )
 
 {-| Exposed for testing
 
-@docs toString
+@docs print
 
 -}
 
@@ -15,8 +15,8 @@ import Dict
 
 {-|
 -}
-toString : HtmlElement msg -> String
-toString node =
+print : HtmlElement msg -> String
+print node =
   (printElement "" (Element node))
 
 

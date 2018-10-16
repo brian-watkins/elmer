@@ -1,4 +1,4 @@
-module Elmer.Html.Internal exposing
+module Elmer.Html.Element.Internal exposing
   ( tag
   , elementId
   , classList

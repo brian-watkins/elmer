@@ -110,9 +110,9 @@ navigationSpyRequiresApplication fun expected =
 
 {-|
 -}
-elementNotFound : String -> CustomError
-elementNotFound dom =
-  [ description "The targeted html element was not found."
+elementNotFound : String -> String -> CustomError
+elementNotFound selector dom =
+  [ message "The targeted html element was not found" selector
   , message "The current view is" dom
   ]
 

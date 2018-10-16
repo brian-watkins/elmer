@@ -2,7 +2,7 @@
     "exposed-modules": [
         "Elmer.Html.Types",
         "Elmer.Html.Node",
-        "Elmer.Html.Printer",
+        "Elmer.Html.Element.Printer",
         "Elmer.TestState",
         "Elmer.Printer",
         "Elmer.Spy.Arg",

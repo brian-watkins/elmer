@@ -10,7 +10,7 @@ import Elmer.Html.Matchers as Matchers
 import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Html.Node as Node
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Printer as HtmlPrinter
+import Elmer.Html.Element.Printer as HtmlPrinter
 import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors exposing (CustomError)
 import Elmer.TestHelpers exposing (printHtml, expectError)
@@ -58,7 +58,8 @@ elementTests =
           |> Markup.target << by [ class "blah" ]
           |> Markup.expect (Matchers.element <| Matchers.hasClass "blah" )
           |> expectError (
-            Errors.elementNotFound <| printHtml <| SimpleApp.view SimpleApp.defaultModel
+            Errors.elementNotFound "by [ class 'blah' ]" <| 
+              printHtml <| SimpleApp.view SimpleApp.defaultModel
           )
     ]
   , describe "when there are no elements in the html"
@@ -68,7 +69,8 @@ elementTests =
           |> Markup.target << by [ class "blah" ]
           |> Markup.expect (Matchers.element <| Matchers.hasClass "blah")
           |> expectError (
-            Errors.elementNotFound <| printHtml <| SimpleApp.textView SimpleApp.defaultModel
+            Errors.elementNotFound "by [ class 'blah' ]" <|
+              printHtml <| SimpleApp.textView SimpleApp.defaultModel
           )
     ]
   , describe "when the targeted element exists"
@@ -114,7 +116,8 @@ elementExistsTests =
           |> Markup.target << by [ class "blah" ]
           |> Markup.expect Matchers.elementExists
           |> expectError (
-            Errors.elementNotFound <| printHtml <| SimpleApp.view SimpleApp.defaultModel
+            Errors.elementNotFound "by [ class 'blah' ]" <|
+              printHtml <| SimpleApp.view SimpleApp.defaultModel
           )
     ]
   , describe "when the targeted element exists"

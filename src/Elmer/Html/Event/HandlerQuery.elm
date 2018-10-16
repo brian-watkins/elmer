@@ -6,7 +6,7 @@ module Elmer.Html.Event.HandlerQuery exposing
 
 import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Types exposing (..)
-import Elmer.Html.Internal as HtmlInternal
+import Elmer.Html.Element.Internal as HtmlInternal
 import Elmer.Html.Query as Query
 import Elmer.Html.Target as Target
 import Elmer.Html.Selector as Selector

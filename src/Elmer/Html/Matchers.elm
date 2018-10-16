@@ -24,7 +24,7 @@ import Elmer exposing (Matcher)
 import Elmer.Internal exposing (..)
 import Elmer.Html.Types exposing (..)
 import Elmer.Html
-import Elmer.Html.Internal as Html_
+import Elmer.Html.Element.Internal as Html_
 import Elmer.Html.Query as Query
 import Elmer.Errors as Errors exposing (failWith)
 import Elmer.Printer exposing (..)

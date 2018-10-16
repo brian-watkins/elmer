@@ -49,7 +49,9 @@ standardEventBehavior eventTypes eventFunction =
           |> Markup.target << Sel.by [ Sel.id "nothing" ]
           |> eventFunction
           |> Expect.equal (TestState.failure <|
-            Errors.print <| Errors.elementNotFound <| printHtml (SimpleApp.view SimpleApp.defaultModel)
+            Errors.print <| 
+              Errors.elementNotFound "by [ id 'nothing' ]" <|
+              printHtml (SimpleApp.view SimpleApp.defaultModel)
           )
     ]
   , describe "when the event handler is not found"

@@ -90,4 +90,6 @@ type HtmlSelectorGroup msg
 {-|
 -}
 type alias HtmlSelector msg =
-  HtmlElement msg -> Bool
+  { description : String
+  , predicate : HtmlElement msg -> Bool
+  }

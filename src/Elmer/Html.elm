@@ -54,9 +54,12 @@ of the given classes:
 
     oneOfClasses : List String -> HtmlSelector msg
     oneOfClasses expectedClasses element =
-      Element.classList element
-        |> List.filter (\c -> List.member c expectedClasses)
-        |> not << List.isEmpty
+      { description = "one of " ++ String.join "," expectedClasses
+      , predicate = \element ->
+          Element.classList element
+            |> List.filter (\c -> List.member c expectedClasses)
+            |> not << List.isEmpty
+      }
 
 which you could use to target elements that have either the class `funny` or `awesome`
 like so:
@@ -64,7 +67,9 @@ like so:
     target << by [ oneOfClasses [ "funny", "awesome" ] ]
 -}
 type alias HtmlSelector msg =
-  HtmlElement msg -> Bool
+  { description : String
+  , predicate : HtmlElement msg -> Bool
+  }
 
 
 {-| Represents a group of `HtmlSelector` used to match an Html Element.

@@ -8,7 +8,7 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Elmer.Html.Node as Node
-import Elmer.Html.Printer as HtmlPrinter
+import Elmer.Html.Element.Printer as HtmlPrinter
 import Elmer.Errors as Errors exposing (CustomError)
 import Json.Encode as Encode
 import Json.Decode as Json
@@ -23,7 +23,7 @@ printHtml : Html msg -> String
 printHtml html =
   case Node.from html of
     Element element ->
-      HtmlPrinter.toString element
+      HtmlPrinter.print element
     Text text ->
       "<No Elements>"
 

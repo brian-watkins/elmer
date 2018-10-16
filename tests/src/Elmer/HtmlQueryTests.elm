@@ -9,6 +9,7 @@ import Elmer.Html.Element as Element
 import Elmer.Html exposing (..)
 import Elmer.Html.Selector as S exposing (..)
 import Elmer.Html.Types exposing (HtmlSelectorGroup)
+import Elmer.Errors as Errors
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.TestHelpers exposing (..)
 import Html.Attributes as Attr
@@ -30,6 +31,7 @@ all =
     , findWithAll
     , customSelectorTest
     , findByText
+    , selectorErrorTests
     ]
 
 noElementFound : Test
@@ -503,18 +505,126 @@ customSelectorTest =
         , Html.div [ Attr.class "super" ] []
         ]
     in
-      [ test "it matches with the custom selector" <|
-        \() ->
-          initialState html
-            |> target << descendantsOf [ tag "ul" ] << by [ testOrClassSelector [ "super", "awesome", "funny" ] ]
-            |> expect (element <|
-                Matchers.hasClass "awesome"
-            )
+      [ describe "when the selector matches"
+        [ test "it matches with the custom selector" <|
+          \() ->
+            initialState html
+              |> target << descendantsOf [ tag "ul" ] << by [ testOrClassSelector [ "super", "awesome", "funny" ] ]
+              |> expect (element <|
+                  Matchers.hasClass "awesome"
+              )
+        ]
+      , describe "when the selector fails to match"
+        [ test "it shows the error with the description" <|
+          \() ->
+            initialState html
+              |> target << descendantsOf [ tag "ul" ] << by [ testOrClassSelector [ "apple", "pear", "banana" ] ]
+              |> expect (element <|
+                  Matchers.hasClass "awesome"
+              )
+              |> expectError (
+                Errors.elementNotFound "descendants of [ tag 'ul' ] by [ one of classes: apple, pear, banana ]" <|
+                  printHtml html
+              )
+        ]
       ]
 
 
 testOrClassSelector : List String -> HtmlSelector msg
-testOrClassSelector expectedClasses element =
-  Element.classList element
-    |> List.filter (\c -> List.member c expectedClasses)
-    |> not << List.isEmpty
+testOrClassSelector expectedClasses =
+  { description = "one of classes: " ++ String.join ", " expectedClasses
+  , predicate = \element ->
+      Element.classList element
+        |> List.filter (\c -> List.member c expectedClasses)
+        |> not << List.isEmpty
+  }
+  
+
+selectorErrorTests : Test
+selectorErrorTests =
+  describe "selector errors" <|
+    let
+      html =
+        Html.div [ Attr.id "root" ]
+        [ Html.text "Nothing"
+        ]
+    in
+    [ describe "when the id selector fails"
+      [ test "it shows an error" <|
+        \() ->
+          initialState html
+            |> target << by [ id "fun" ]
+            |> expectSelectorError html "by [ id 'fun' ]"
+      ]
+    , describe "when the tag selector fails"
+      [ test "it shows an error" <|
+        \() ->
+          initialState html
+            |> target << by [ tag "funTag" ]
+            |> expectSelectorError html "by [ tag 'funTag' ]"
+      ]
+    , describe "when the class selector fails"
+      [ test "it shows an error" <|
+        \() ->
+          initialState html
+            |> target << by [ class "fun-class" ]
+            |> expectSelectorError html "by [ class 'fun-class' ]"
+      ]
+    , describe "when the attributeName selector fails"
+      [ test "it shows an error" <|
+        \() ->
+          initialState html
+            |> target << by [ attributeName "data-fun" ]
+            |> expectSelectorError html "by [ attributeName 'data-fun' ]"
+      ]
+    , describe "when the attribute selector fails"
+      [ test "it shows an error" <|
+        \() ->
+          initialState html
+            |> target << by [ attribute ("data-fun", "bowling") ]
+            |> expectSelectorError html "by [ attribute 'data-fun' = 'bowling' ]"
+      ]
+    , describe "when the text selector fails"
+      [ test "it shows an error" <|
+        \() ->
+          initialState html
+            |> target << by [ text "fun text" ]
+            |> expectSelectorError html "by [ text 'fun text' ]"
+      ]
+    , describe "when there are multiple selectors and the selector fails"
+      [ test "it prints all the selectors in the error" <|
+        \() ->
+          initialState html
+            |> target << by [ class "fun-class", attributeName "data-fun" ]
+            |> expectSelectorError html "by [ class 'fun-class', attributeName 'data-fun' ]"  
+      ]
+    , describe "when there are descendants selected and the selector fails"
+      [ test "it prints the error" <|
+        \() ->
+          initialState html
+            |> target << descendantsOf [ class "funny", class "awesome" ] << by [ class "fun-class" ]
+            |> expectSelectorError html "descendants of [ class 'funny', class 'awesome' ] by [ class 'fun-class' ]"  
+      ]
+    , describe "when there are children selected and the selector fails"
+      [ test "it prints the error" <|
+        \() ->
+          initialState html
+            |> target << childrenOf [ class "funny", class "awesome" ] << by [ class "fun-class" ]
+            |> expectSelectorError html "children of [ class 'funny', class 'awesome' ] by [ class 'fun-class' ]"
+      ]
+    , describe "when the selector groups are nested multiple times and the selector fails"
+      [ test "it prints the error" <|
+        \() ->
+          initialState html
+            |> target << childrenOf [ tag "ol" ] << childrenOf [ tag "li" ] << by [ class "fun-class" ]
+            |> expectSelectorError html "children of [ tag 'ol' ] children of [ tag 'li' ] by [ class 'fun-class' ]"
+      ]
+    ]
+
+expectSelectorError : Html msg -> String -> TestState model msg -> Expectation
+expectSelectorError html message testState =
+  testState
+    |> expect (element <| Matchers.hasClass "super")
+    |> expectError (
+      Errors.elementNotFound message <| printHtml html
+    )
