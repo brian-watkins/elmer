@@ -41,6 +41,7 @@ import Html exposing (Html)
 `Browser.sandbox` or `Browser.element`.
 
 The arguments are:
+
 1. View function
 2. Update function
 
@@ -59,6 +60,7 @@ givenElement view update =
 created with `Browser.application`. 
 
 The arguments are:
+
 1. Function that maps a new `Browser.UrlRequest` to a `msg`
 2. Function that maps a `Url` to a `msg` when the url changes
 3. View function that results in a `Browser.Document`
@@ -87,6 +89,7 @@ storeNavigationTaggersCommand onUrlRequest onUrlChange =
 created with `Browser.document`.
 
 The arguments are:
+
 1. View function that results in a `Browser.Document`
 2. Update function.
 
@@ -125,7 +128,8 @@ will be executed.
 
     Elmer.Program.givenDocument MyDocument.view MyDocument.update
       |> init (\() -> MyDocument.init)
-      |> Elmer.Html.target "#title"
+      |> Elmer.Html.target
+          << by [ id "title" ]
       |> Elmer.Html.expectElementExists
 
 Note: If your test requires any spies, call `Spy.use` before your call to `init` so the spies will

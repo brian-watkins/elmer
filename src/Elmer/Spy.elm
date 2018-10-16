@@ -57,9 +57,12 @@ through to the original function.
 
     let
       mySpy =
-        create "my-spy" (\_ -> MyComponent.someFunction)
+        create "my-spy" (\_ -> 
+          MyModule.someFunction
+        )
     in
-      use [ mySpy ] testState
+      testState
+        |> use [ mySpy ]
         |> expect "my-spy" (wasCalled 0)
 
 -}
@@ -96,9 +99,11 @@ to provide a version of the function that will record its calls.
     in
       Elmer.given testModel MyModule.view updateForTest
         |> Elmer.Spy.use [ spy ]
-        |> Elmer.Html.target "input"
+        |> Elmer.Html.target
+            << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
-        |> Elmer.Html.target "button"
+        |> Elmer.Html.target
+            << by [ tag "button" ]
         |> Elmer.Html.Event.click
         |> Elmer.Spy.expect "my-spy" (
           Elmer.Spy.Matchers.wasCalledWith
@@ -124,8 +129,7 @@ test like so:
 
     timeNowSpy : Spy
     timeNowSpy =
-      Success 1000
-        |> Elmer.Task.fake
+      Task.succeed (Time.millisToPosix 1000)
         |> Spy.replaceValue (\_ -> Time.now)
 
 Note: It's not possible to make expectations about spies constructed
@@ -158,7 +162,9 @@ callable =
 Once you've created a `Spy`, you can provide a fake implementation like so:
 
     mySpy =
-      create "my-spy" (\_ -> MyComponent.someFunction)
+      create "my-spy" (\_ ->
+        MyModule.someFunction
+      )
         |> andCallFake testImplementation
 
 where `testImplementation` is some function with the very same signature as
@@ -170,7 +176,9 @@ should return `Cmd.none` or one of the fake commands described in `Elmer.Command
 For example, you could override `Random.generate` so that it returns a set value during a test
 like so:
 
-    Elmer.Spy.create "fake-random" (\_ -> Random.generate)
+    Elmer.Spy.create "fake-random" (\_ -> 
+      Random.generate
+    )
       |> andCallFake (\tagger generator ->
         Random.initialeSeed 10001
           |> Random.step generator
@@ -179,7 +187,7 @@ like so:
       )
 
 If you are spying on a function that returns a `Sub`, then your fake should
-return a fake subscription; see `Subscription.fake`.
+return a fake subscription; see `Elmer.Subscription.fake`.
 
 Note: The fake implementation will not be active until you register this spy
 via `use`.
@@ -209,9 +217,12 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
 
     let
       mySpy =
-        create "my-spy" (\_ -> MyComponent.someFunction)
+        create "my-spy" (\_ -> 
+          MyModule.someFunction
+        )
     in
-      use [ mySpy ] testState
+      testState
+        |> use [ mySpy ]
         |> expect "my-spy" (wasCalled 0)
 
 -}
@@ -247,9 +258,11 @@ you could do something like the following:
     in
       testState
         |> use [ taskOverride ]
-        |> Elmer.Html.target "#get-random"
+        |> Elmer.Html.target 
+            << by [ id "get-random" ]
         |> Elmer.Html.Event.click
-        |> Elmer.Html.target "#current-random"
+        |> Elmer.Html.target
+            << by [ id "current-random" ]
         |> Elmer.Html.expect (
           Elmer.Html.Matchers.element <|
             Elmer.Html.Matchers.hasText "27"

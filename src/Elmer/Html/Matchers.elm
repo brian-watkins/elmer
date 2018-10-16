@@ -42,8 +42,12 @@ The matcher will fail if the selected element does not exist.
 If the selector matches more than one element,
 the given element matcher will only be applied to the first element selected.
 
-    Elmer.Html.target "div"
-      |> Elmer.Html.expect (element <| hasText "Fun Stuff")
+    testState
+      |> Elmer.Html.target 
+          << by [ tag "div" ]
+      |> Elmer.Html.expect (
+          element <| hasText "Fun Stuff"
+        )
 
 -}
 element : Matcher (Elmer.Html.HtmlElement msg) -> Matcher (Elmer.Html.HtmlTarget msg)
@@ -57,7 +61,9 @@ element elementMatcher =
 
 {-| Expect that the selected element exists.
 
-    Elmer.Html.target "#cool-element" testState
+    testState
+      |> Elmer.Html.target 
+          << by [ id "cool-element" ]
       |> Elmer.Html.expect elementExists
 -}
 elementExists : Matcher (Elmer.Html.HtmlTarget msg)
@@ -75,9 +81,12 @@ elementExists =
 If the selector fails to match any elements, an empty list will
 be passed to the given matcher.
 
-    Elmer.Html.target "li" testState
-      |> Elmer.Html.expect (elements <| Elmer.hasLength 4)
-
+    testState
+      |> Elmer.Html.target 
+          << by [ tag "li" ]
+      |> Elmer.Html.expect (
+          elements <| Elmer.hasLength 4
+        )
 -}
 elements : Matcher (List (Elmer.Html.HtmlElement msg)) -> Matcher (Elmer.Html.HtmlTarget msg)
 elements listMatcher =
@@ -123,7 +132,12 @@ hasClass className =
 
 {-| Expect that an element has the specified attribute or property with the specified value.
 
-    hasAttribute ( "src", "http://fun.com" ) element
+    testState
+      |> Elmer.Html.target
+          << by [ id "fun-element" ]
+      |> Elmer.Html.expect (element <|
+          hasAttribute ( "src", "http://fun.com" )
+        )
 
 On the difference between attributes and properties,
 see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
@@ -196,10 +210,14 @@ hasStyle (name, value) =
 
 {-| Expect that an element listens for an event of the given type.
 
-    listensForEvent "click" element
+    testState
+      |> Elmer.Html.target
+          << by [ id "fun-element" ]
+      |> Elmer.Html.expect (element <|
+          listensForEvent "click"
+        )
 
 Note: This will not consider event handlers on the element's ancestors.
-
 -}
 listensForEvent : String -> Matcher (Elmer.Html.HtmlElement msg)
 listensForEvent event =

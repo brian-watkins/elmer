@@ -62,16 +62,23 @@ Suppose you have a component that requests information about a user when
 a button is clicked. You could register a stub for that request like so
 
     let
-      stubbedResponse = Elmer.Http.Stub.for (Elmer.Http.Route.post "http://fun.com/user")
-        |> Elmer.Http.Stub.withBody
-          "{\"name\":\"Super User\",\"type\":\"admin\"}"
+      stubbedResponse = 
+        Elmer.Http.Stub.for (
+          Elmer.Http.Route.post "http://fun.com/user"
+        ) 
+          |> Elmer.Http.Stub.withBody
+            "{\"name\":\"Super User\"}"
     in
       testState
         |> Spy.use [ serve [ stubbedResponse ] ]
-        |> Markup.target "#request-data-button"
+        |> Markup.target
+            << by [ id "submit-button" ]
         |> Elmer.Html.Event.click
-        |> Markup.target "#data-result"
-        |> Markup.expect (Matchers.element <| Matchers.hasText "Hello, Super User!")
+        |> Markup.target
+            << by [ id "result" ]
+        |> Markup.expect (Matchers.element <| 
+            Matchers.hasText "Hello, Super User!"
+          )
 
 -}
 serve : List HttpResponseStub -> Spy
@@ -92,14 +99,15 @@ describing the behavior that results when its response is received.
 
     testState
       |> Spy.use [ spy ]
-      |> Markup.target "#request-data-button"
+      |> Markup.target "#submit-button"
       |> Elmer.Http.Event.click
-      |> Elmer.Http.expect (Elmer.Http.Route.get "http://fun.com/user")
+      |> Elmer.Http.expectRequest (
+          Elmer.Http.Route.get "http://fun.com/user"
+        )
 
 Note: When using `spy` in conjunction with `Http.toTask`, the task chain will
 stop at the first http request, since Elmer can't decide how to go on without
-knowing the response from the request.  
-
+knowing the response from the request.
 -}
 spy : Spy
 spy =
@@ -133,8 +141,6 @@ clearRequestHistory =
 
 {-| Expect one or more requests to the specified route.
 
-    expectRequest (Elmer.Http.Route.get "http://fun.com/fun.html")
-
 If no requests have been made to the specified route, the test will fail.
 
 Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.spy`.
@@ -167,7 +173,9 @@ expectRequest route =
 {-| Make some expectation about requests to the specified route.
 
     expect (Elmer.Http.Route.get "http://fun.com/fun") (
-      Elmer.each <| Elmer.Http.Matchers.hasHeader ("X-Auth-Token", "MY-TOKEN")
+      Elmer.each <| 
+        Elmer.Http.Matchers.hasHeader 
+          ("X-Auth-Token", "MY-TOKEN")
     )
 
 If no requests have been made to the specified route, an empty list

@@ -54,9 +54,10 @@ location to `/home` when clicked:
 
     testState
       |> Spy.use [ Navigation.spy ]
-      |> Elmer.Html.target "#home-button"
+      |> Elmer.Html.target 
+          << by [ id "home-button" ]
       |> Elmer.Html.Event.click
-      |> Navigation.expectLocation "/home"
+      |> Elmer.Navigation.expectLocation "/home"
 
 -}
 spy : Spy
@@ -101,15 +102,18 @@ this behavior as follows:
 
     Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
       |> Elmer.Spy.use [ Elmer.Navigation.spy ]
-      |> Elmer.Program.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
-      |> Elmer.Html.target "#some-element"
+      |> Elmer.Program.init (\_ -> 
+          App.init testFlags testUrl Elmer.Navigation.fakeKey
+        )
+      |> Elmer.Html.target
+          << by [ id "some-element" ]
       |> Elmer.Html.Event.click
-      |> Elmer.Navigation.expectLocation "http://mydomain.com/funStuff.html"
+      |> Elmer.Navigation.expectLocation
+          "http://mydomain.com/funStuff.html"
 
 Note that `expectLocation` will only match on urls provided via `Browser.Navigation.pushUrl` or
 `Browser.Navigation.replaceUrl`. In particular, `expectLocation` will not match the url provided
 as part of the call to `Elmer.init` that provides the initial model and command values. 
-
 -}
 expectLocation : String -> Matcher (Elmer.TestState model msg)
 expectLocation expectedURL =

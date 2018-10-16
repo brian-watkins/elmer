@@ -52,19 +52,25 @@ You can create your own `HtmlSelector`. For example, here's
 an `HtmlSelector` that matches any element that has at least one
 of the given classes:
 
-    oneOfClasses : List String -> HtmlSelector msg
-    oneOfClasses expectedClasses element =
-      { description = "one of " ++ String.join "," expectedClasses
-      , predicate = \element ->
-          Element.classList element
-            |> List.filter (\c -> List.member c expectedClasses)
-            |> not << List.isEmpty
+    classOf : List String -> HtmlSelector msg
+    classOf expectedClasses element =
+      { description = 
+          "one of " ++ 
+            String.join "," expectedClasses
+      , predicate = 
+          \element ->
+            Element.classList element
+              |> List.filter (\c -> 
+                  List.member c expectedClasses
+                )
+              |> not << List.isEmpty
       }
 
 which you could use to target elements that have either the class `funny` or `awesome`
 like so:
 
-    target << by [ oneOfClasses [ "funny", "awesome" ] ]
+    Elmer.Html.target 
+      << by [ classOf [ "funny", "awesome" ] ]
 -}
 type alias HtmlSelector msg =
   { description : String
@@ -91,7 +97,7 @@ element with `root` as the value of its `id` attribute:
     target 
       << descendantsOf [ id "root" ]
       << childrenOf [ tag "li" ]
-      << by [ tag "div", class ".some-class" ]
+      << by [ tag "div", class "some-class" ]
 
 You can chain as many `Elmer.Html.Selector.descendantsOf` or `Elmer.Html.Selector.childrenOf` calls
 as you like; the chain must end with a call to `Elmer.Html.Selector.by`.

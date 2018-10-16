@@ -69,10 +69,13 @@ could do the following:
     in
       testState
         |> Spy.use [ fakeSub ]
-        |> with (\() -> Component.subscriptions)
+        |> with (\() -> MyModule.subscriptions)
         |> send "everySecond" 3000
-        |> target "#current-time"
-        |> Elmer.Html.expect (element <| hasText "3 seconds")
+        |> target
+            << by [ id "current-time" ]
+        |> Elmer.Html.expect (element <|
+            hasText "3 seconds"
+          )
 
 -}
 with : (() -> (model -> Sub msg)) -> Elmer.TestState model msg -> Elmer.TestState model msg
@@ -104,19 +107,22 @@ that generates a subscription so that it returns a fake instead. Then, once
 the faked subscription is registered using `with`,
 you can `send` data on behalf of it subscription during your test.
 
-Here's an example that creates a fake subscription for mouse ups, registers it
-and sends some data through it.
+Here's an example that creates a fake subscription for a port called `receiveMessage`, 
+registers it and sends some data through it.
 
     let
-      subSpy = Elmer.Spy.create "fake-ups" (\_ -> Mouse.ups)
+      subSpy =
+        Elmer.Spy.create "fake-ups" (\_ -> 
+          MyPortModule.receiveMessage
+        )
         |> Elmer.Spy.andCallFake (\tagger ->
-          Elmer.Subscription.fake "mouseUps" tagger
+          Elmer.Subscription.fake "receiveMessage" tagger
         )
     in
       Elmer.given defaultModel view update
         |> Elmer.Spy.use [ subSpy ]
         |> with (\() -> subscriptions)
-        |> send "mouseUps" { x = 10, y = 50 }
+        |> send "receiveMessage" "Hello!"
 
 -}
 fake : String -> (a -> msg) -> Sub msg

@@ -14,7 +14,7 @@ module Elmer
         , expectModel
         )
 
-{-| Basic types and functions for working with tests and matchers
+{-| Basic types and functions for working with tests and matchers.
 
 @docs TestState
 
@@ -48,7 +48,7 @@ type alias TestState model msg
 {-| Generic type for functions that pass or fail.
 
 A matcher returns an `Expect.Expectation` from the
-[elm-test](http://package.elm-lang.org/packages/elm-community/elm-test/latest)
+[elm-test](https://package.elm-lang.org/packages/elm-explorations/test/latest)
 package.
 -}
 type alias Matcher a =

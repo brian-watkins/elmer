@@ -42,14 +42,16 @@ Use this function in conjunction with `HtmlTarget` matchers like `element` or `e
 to make expectations about descendants of an element.
 
     Elmer.given someModel view update
-      |> Elmer.Html.target << by [ id "some-element" ]
+      |> Elmer.Html.target
+          << by [ id "some-element" ]
       |> Elmer.Html.expect (Elmer.Html.Matchers.element <|
-        \element ->
-          element
-            |> target << by [ tag "div" ]
-            |> Elmer.Html.Matchers.elements (
-              Elmer.hasLength 3
-            )
+          \element ->
+            element
+              |> target << by [ tag "div" ]
+              |> Elmer.Html.Matchers.elements (
+                Elmer.hasLength 3
+              )
+        )
 
 Note that `Elmer.Html.target << descendantsOf [ id "some-element" ] << by [ tag "div" ]` would allow you to write the
 same expectation. Use `Element.target` for complex expectations about nested elements.
@@ -145,7 +147,7 @@ toBool str =
 {-| Get this element's properties as a `Dict`.
 
 On the difference between attributes and properties,
-see [this](https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md).
+see [this](https://github.com/elm/html/blob/master/properties-vs-attributes.md).
 -}
 properties : Elmer.Html.HtmlElement msg -> Dict String String
 properties =
@@ -156,7 +158,7 @@ properties =
 for an Html element, you can find it with this function.
 
     Elmer.given someModel view update
-      |> target "#some-element"
+      |> target << by [ id "some-element" ]
       |> expect (element <| \element ->
         attributes element
           |> Dict.get "data-attribute"

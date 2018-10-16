@@ -149,8 +149,8 @@ childrenOf selectors (next, targetable) =
 This would select all `div` elements that have the class `some-class`:
 
     testState
-      |> Elmer.Html.target << by [ tag "div", class "some-class" ]
-
+      |> Elmer.Html.target
+          << by [ tag "div", class "some-class" ]
 -}
 by : List (Elmer.Html.HtmlSelector msg) -> targetable -> (Elmer.Html.HtmlSelectorGroup msg, targetable)
 by selectors targetable =

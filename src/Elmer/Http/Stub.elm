@@ -86,7 +86,8 @@ Suppose you want to describe the behavior that should result when a request
 returns a `500 Internal Server Error`. You could create a stubbed response like so:
 
     Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fake.com/fake")
-      |> withStatus Elmer.Http.Status.serverError
+      |> withStatus 
+          Elmer.Http.Status.serverError
 
 -}
 withStatus : HttpStatus -> HttpResponseStub -> HttpResponseStub
@@ -133,17 +134,22 @@ HttpRequest.
 
 You could create a stub that returns a body only given a certain query string like so:
 
-    Elmer.Http.Stub.for (Elmer.Http.Route.post "http://fake.com/fake")
+    Elmer.Http.Stub.for (
+        Elmer.Http.Route.post "http://fake.com/fake"
+    )
       |> withResult (\request ->
         let
-          queryString = Elmer.Http.Request.queryString request
+          hasBowling =
+            Elmer.Http.Request.queryString request
+              |> String.contains "sport=bowling"
         in
-          if String.contains "funSport=bowling" queryString then
-            Elmer.Http.Result.withBody "{\"sport\":\"bowling\"}"
+          if hasBowling then
+            Elmer.Http.Result.withBody
+              "{\"sport\":\"bowling\"}"
           else
-            Elmer.Http.Result.withStatus Elmer.Http.Status.notFound
+            Elmer.Http.Result.withStatus
+              Elmer.Http.Status.notFound
       )
-
 -}
 withResult : (HttpRequest -> HttpResult -> HttpResult) -> HttpResponseStub -> HttpResponseStub
 withResult builder (Types.HttpResponseStub stub) =

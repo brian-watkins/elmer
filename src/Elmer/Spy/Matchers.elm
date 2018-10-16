@@ -51,7 +51,9 @@ type alias Call =
 
 This is shorthand for:
 
-    Spy.expect "my-spy" (calls <| hasLength 2)
+    Spy.expect "my-spy" (calls <| 
+      Elmer.hasLength 2
+    )
 
 -}
 wasCalled : Int -> Matcher Calls
@@ -152,7 +154,7 @@ argThat matcher =
 Here's how you would expect that exactly 2 of the calls had a certain argument.
 
     Spy.expect "my-spy" (
-      calls <| exactly 2 <|
+      calls <| Elmer.exactly 2 <|
         hasArgs
         [ stringArg "some argument"
         ]
@@ -178,7 +180,7 @@ Use `hasArgs` in conjunction with `calls` to make an expectation about the args
 of a specific call.
 
     Spy.expect "my-spy" (
-      calls <| atIndex 2 <| hasArgs
+      calls <| Elmer.atIndex 2 <| hasArgs
         [ stringArg "Some String"
         , typedArg someTypedValue
         ]
@@ -203,7 +205,7 @@ hasArgs args =
 This is shorthand for:
 
     Spy.expect "my-spy" (
-      calls <| some <| hasArgs
+      calls <| Elmer.some <| hasArgs
         [ stringArg "Some String"
         , typedArg someTypedValue
         ]

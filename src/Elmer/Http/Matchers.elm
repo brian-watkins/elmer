@@ -7,7 +7,7 @@ module Elmer.Http.Matchers exposing
 
 {-| Make expectations about Http requests sent by the component under test.
 
-These matchers should be used with `Elmer.Http.expectGET` etc.
+These matchers should be used with `Elmer.Http.expect`.
 
 Note: Your test must use `Elmer.Http.serve` or `Elmer.Http.spy` at the
 appropriate time to allow Elmer to record the requests sent by the component
@@ -28,7 +28,7 @@ import Elmer.Printer exposing (..)
 
 {-| Expect that exactly some number of requests have been recorded.
 
-    Elmer.Http.expectThat (Elmer.Http.Route.get "http://fun.com/fun.html") (
+    Elmer.Http.expect (Elmer.Http.Route.get "http://fun.com/fun.html") (
       wasRequested 3
     )
 -}
@@ -57,8 +57,9 @@ pluralize word num =
 
 {-| Match a request with the specified body.
 
-    Elmer.Http.expectThat (Elmer.Http.Route.post "http://fake.com/fake") (
-      Elmer.some <| hasBody "{\"name\":\"Fun Person\"}"
+    Elmer.Http.expect (Elmer.Http.Route.post "http://fake.com/fake") (
+      Elmer.some <| 
+        hasBody "{\"name\":\"Fun Person\"}"
     )
 
 -}
@@ -79,8 +80,9 @@ hasBody expectedBody =
 
 Note: You don't need to worry about url encoding the name or value.
 
-    Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/fake") (
-      Elmer.some <| hasQueryParam ( "name", "Fun Person" )
+    Elmer.Http.expect (Elmer.Http.Route.get "http://fake.com/fake") (
+      Elmer.some <| 
+        hasQueryParam ( "name", "Fun Person" )
     )
 
 -}
@@ -108,8 +110,9 @@ queryString request =
 
 {-| Match a request with the specified header name and value.
 
-    Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/fake") (
-      Elmer.some <| hasHeader ( "x-auth-token", "xxxxx" )
+    Elmer.Http.expect (Elmer.Http.Route.get "http://fake.com/fake") (
+      Elmer.some <| 
+        hasHeader ( "x-auth-token", "xxxxx" )
     )
 
 -}
