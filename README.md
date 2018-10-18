@@ -37,7 +37,7 @@ First, you'll need to install
 - Elm (0.19)
 - The latest version of the [node test runner](https://www.npmjs.com/package/elm-test)
 for the elm test package that works with Elm 0.19 (`elm-test@elm0.19.0`)
-- This package
+- This package, which you'll install via npm
 
 I recommend installing these dependencies locally in your project directory so you can track versions carefully. Here's the command to install all these at once:
 
@@ -64,6 +64,8 @@ In your `elm.json` file, you'll need to manually add elmer to the `test-dependen
   "indirect": {}
 }
 ```
+
+Make sure the version number of elmer matches the version number of the `elmer-test` NPM package.
 
 Notice the `indirect` section under `test-dependencies`. Elmer itself has the following dependencies:
 
@@ -129,7 +131,7 @@ $ ELM_HOME=$(pwd)/node_modules/elmer-test/home elm make src/Main.elm
 Read the [latest documentation](https://elmer-test.cfapps.io/).
 
 If you're interested in Elmer for Elm 0.18, you should read the documentation for Elmer 3.3.1, which
-you can find [here](http://elmer-test.cfapps.io/versions).
+you can find [here](https://elmer-test.cfapps.io/versions).
 
 ## Describing Behavior
 
@@ -199,12 +201,13 @@ allTests =
       \() ->
         Elmer.Program.givenElement App.view App.update
           |> Elmer.Program.init (\_ -> App.init testFlags)
-          |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
-              [ Elmer.Html.Selector.tag "ol"
-              , Elmer.Html.Selector.class "score-list"
-              ]
-            << Elmer.Html.Selector.by
-              [ Elmer.Html.Selector.tag "li" ]
+          |> Elmer.Html.target
+              << Elmer.Html.Selector.childrenOf 
+                [ Elmer.Html.Selector.tag "ol"
+                , Elmer.Html.Selector.class "score-list"
+                ]
+              << Elmer.Html.Selector.by
+                [ Elmer.Html.Selector.tag "li" ]
     ...
 ```
 
@@ -244,12 +247,13 @@ allTests =
       \() ->
         Elmer.Program.givenElement App.view App.update
           |> Elmer.Program.init (\_ -> App.init testFlags)
-          |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
-              [ Elmer.Html.Selector.tag "ol"
-              , Elmer.Html.Selector.class "score-list"
-              ]
-            << Elmer.Html.Selector.by
-              [ Elmer.Html.Selector.tag "li" ]
+          |> Elmer.Html.target
+              << Elmer.Html.Selector.childrenOf 
+                [ Elmer.Html.Selector.tag "ol"
+                , Elmer.Html.Selector.class "score-list"
+                ]
+              << Elmer.Html.Selector.by
+                [ Elmer.Html.Selector.tag "li" ]
           |> Elmer.Html.expect (Elmer.Html.Matchers.elements <|
               Elmer.expectAll
               [ Elmer.hasLength 2
@@ -325,12 +329,13 @@ allTests =
           Elmer.Program.givenElement App.view App.update
             |> Elmer.spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
             |> Elmer.Program.init (\_ -> App.init testFlags)
-            |> Elmer.Html.target << Elmer.Html.Selector.childrenOf 
-                [ Elmer.Html.Selector.tag "ol"
-                , Elmer.Html.Selector.class "score-list"
-                ]
-              << Elmer.Html.Selector.by
-                [ Elmer.Html.Selector.tag "li" ]
+            |> Elmer.Html.target
+                << Elmer.Html.Selector.childrenOf 
+                  [ Elmer.Html.Selector.tag "ol"
+                  , Elmer.Html.Selector.class "score-list"
+                  ]
+                << Elmer.Html.Selector.by
+                  [ Elmer.Html.Selector.tag "li" ]
             |> Elmer.Html.expect (Elmer.Html.Matchers.elements <|
                 Elmer.expectAll
                 [ Elmer.hasLength 2
@@ -354,7 +359,7 @@ Elmer.given App.defaultModel App.view App.update
   |> Elmer.Html.Event.input "Fun Stuff"
   |> Elmer.Html.target << by [ id "search-button" ]
   |> Elmer.Html.Event.click
-  |> Elmer.Http.expectThat (Elmer.Http.Route.get "http://fake.com/search") (
+  |> Elmer.Http.expect (Elmer.Http.Route.get "http://fake.com/search") (
     Elmer.some <| Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
   )
 ```
@@ -386,7 +391,7 @@ that expects the location to change when an element is clicked.
 Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update
   |> Elmer.Spy.use [ Elmer.Navigation.spy ]
   |> Elmer.Program.init (\_ -> App.init testFlags testUrl Elmer.Navigation.fakeKey)
-  |> Elmer.Html.target "#some-element"
+  |> Elmer.Html.target << by [ id "some-element" ]
   |> Elmer.Html.Event.click
   |> Elmer.Navigation.expectLocation "http://mydomain.com/funStuff.html"
 ```
@@ -430,7 +435,7 @@ write a test that expects a certain Http request to result from the processing o
 ```
 Elmer.Command.given (\_ -> MyModule.sendRequest MyTagger someArgument)
   |> Elmer.Spy.use [ Elmer.Http.spy ]
-  |> Elmer.Http.expect (Elmer.Http.Route.get "http://fun.com/api/someArgument")
+  |> Elmer.Http.expectRequest (Elmer.Http.Route.get "http://fun.com/api/someArgument")
 ```
 
 ### Subscriptions
