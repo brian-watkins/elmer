@@ -70,7 +70,7 @@ could do the following:
       testState
         |> Spy.use [ fakeSub ]
         |> with (\() -> MyModule.subscriptions)
-        |> send "everySecond" 3000
+        |> send "everySecond" (Time.millisToPosix 3000)
         |> target
             << by [ id "current-time" ]
         |> Elmer.Html.expect (element <|
@@ -112,7 +112,7 @@ registers it and sends some data through it.
 
     let
       subSpy =
-        Elmer.Spy.create "fake-ups" (\_ -> 
+        Elmer.Spy.create "fake-port" (\_ ->
           MyPortModule.receiveMessage
         )
         |> Elmer.Spy.andCallFake (\tagger ->
