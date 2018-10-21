@@ -679,6 +679,32 @@ Finally, you can use `Spy.replaceValue` to replace the value returned by a no-ar
 (such as `Time.now`) during a test. You can't make expectations about spies created in this
 way; `Spy.replaceValue` is just a convenient way to inject fake values during a test.
 
+### Upgrading from Elmer 3.x
+
+If you've written tests with Elmer 3.x and plan to upgrade them to Elmer 4.0.0, here are some things
+you'll need to consider:
+
+- `Elmer.Platform.Command` has changed to `Elmer.Command`.
+
+- `Elmer.Platform.Subscription` has changed to `Elmer.Subscription`.
+
+- `Elmer.Headless.givenCommand` has been replaced with `Elmer.Command.given`.
+
+- `Elmer.Headless.expectMessages` has been replaced with `Elmer.Command.expectMessages`.
+
+- `Elmer.Headless.given` has been replaced with `Elmer.Program.givenWorker`.
+
+- `Elmer.Http.expectThat` has been replaced with `Elmer.Http.expect`.
+
+- `Elmer.Http.expect` has been replaced with `Elmer.Http.expectRequest`.
+
+- The `<&&>` operator has been replaced with `Elmer.expectAll`.
+
+- `Elmer.Html.Matchers.hasProperty` has been removed. Use `Elmer.Html.Matchers.hasAttribute` instead.
+
+- `Elmer.Html.target` now has a new api. Combine functions in the `Elmer.Html.Selector` module to build a an element selector.
+
+
 ### Development
 
 To run the tests:
