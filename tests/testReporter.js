@@ -24,16 +24,20 @@ var reporter = () => {
     }
 
     var testSuiteDidFinish = () => {
-        console.log("Total tests:", total)
-        console.log("Passed:", passed)
-        console.log("Failed:", failed)
+        console.log("Test suite finished.")
         console.log()
         failureMessages.forEach((failure) => {
+            console.log("-----------------------\n")
             console.log("Test failed:", failure.description)
             console.log()
             console.log(failure.message)
             console.log()
         })
+        console.log("-----------------------\n")
+        console.log("Total tests:", total)
+        console.log("Passed:", passed)
+        console.log("Failed:", failed)
+        console.log()
     }
 
     return {
