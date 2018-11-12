@@ -27,8 +27,10 @@ portCommandTests =
   [ test "it calls the spy associated with the port command" <|
     \() ->
       let
-        spy = Spy.create "port-spy" (\_ -> App.sendJsData)
-          |> andCallFake (\_ -> Cmd.none)
+        spy =
+          Spy.create "port-spy"
+            |> Spy.on (\_ -> App.sendJsData)
+            |> andCallFake (\_ -> Cmd.none)
       in
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ spy ]
@@ -43,8 +45,10 @@ portSubscriptionTests =
   [ test "it uses the subscription spy to send messages" <|
     \() ->
       let
-        spy = Spy.create "port-spy" (\_ -> App.receiveJsData)
-          |> andCallFake (\tagger -> Subscription.fake "fakeReceive" tagger)
+        spy =
+          Spy.create "port-spy"
+            |> Spy.on (\_ -> App.receiveJsData)
+            |> andCallFake (\tagger -> Subscription.fake "fakeReceive" tagger)
       in
         Elmer.given App.defaultModel App.view App.update
           |> Spy.use [ spy ]

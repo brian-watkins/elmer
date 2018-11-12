@@ -67,9 +67,10 @@ sendTests =
         \() ->
           let
             override =
-              Spy.create "Time.every" (\_ -> Time.every)
+              Spy.create "Time.every"
+                |> Spy.on (\_ -> Time.every)
                 |> Spy.andCallFake (\interval tagger ->
-                  Subscription.fake ("my-spy-" ++ (String.fromInt interval)) tagger
+                  Subscription.fake ("my-spy-" ++ (String.fromFloat interval)) tagger
                 )
           in
             Elmer.given App.defaultModel App.view App.update
@@ -89,9 +90,11 @@ sendTests =
       [ test "the data is tagged and processed" <|
         \() ->
           let
-            override = Spy.create "Time.every" (\_ -> Time.every)
-              |> Spy.andCallFake (\interval tagger ->
-                  Subscription.fake ("fakeTime-" ++ (String.fromInt interval)) tagger
+            override =
+              Spy.create "Time.every"
+                |> Spy.on (\_ -> Time.every)
+                |> Spy.andCallFake (\interval tagger ->
+                  Subscription.fake ("fakeTime-" ++ (String.fromFloat interval)) tagger
                 )
           in
             Elmer.given App.defaultModel App.view App.update
@@ -106,9 +109,11 @@ sendTests =
         \() ->
           let
             initialState = Elmer.given App.defaultModel App.view App.update
-            override = Spy.create "Time.every" (\_ -> Time.every)
-              |> Spy.andCallFake (\interval tagger ->
-                  Subscription.fake ("fakeTime-" ++ (String.fromInt interval)) tagger
+            override =
+              Spy.create "Time.every"
+                |> Spy.on (\_ -> Time.every)
+                |> Spy.andCallFake (\interval tagger ->
+                  Subscription.fake ("fakeTime-" ++ (String.fromFloat interval)) tagger
                 )
           in
             Spy.use [ override ] initialState
@@ -122,9 +127,11 @@ sendTests =
         \() ->
           let
             initialState = Elmer.given App.defaultModel App.view App.update
-            override = Spy.create "Time.every" (\_ -> Time.every)
-              |> Spy.andCallFake (\interval tagger ->
-                  Subscription.fake ("fakeTime-" ++ (String.fromInt interval)) tagger
+            override =
+              Spy.create "Time.every"
+                |> Spy.on (\_ -> Time.every)
+                |> Spy.andCallFake (\interval tagger ->
+                  Subscription.fake ("fakeTime-" ++ (String.fromFloat interval)) tagger
                 )
           in
             Spy.use [ override ] initialState

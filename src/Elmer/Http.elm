@@ -84,9 +84,11 @@ a button is clicked. You could register a stub for that request like so
 serve : List HttpResponseStub -> Spy
 serve responseStubs =
   Spy_.batch
-    [ Spy.create "Http.send" (\_ -> Http.send)
+    [ Spy.create "Http.send"
+        |> Spy.on (\_ -> Http.send)
         |> andCallFake (FakeSend.stubbedWith responseStubs)
-    , Spy.create "Http.toTask" (\_ -> Http.toTask)
+    , Spy.create "Http.toTask"
+        |> Spy.on (\_ -> Http.toTask)
         |> andCallFake (FakeToTask.stubbedWith responseStubs)
     ]
 
@@ -112,9 +114,11 @@ knowing the response from the request.
 spy : Spy
 spy =
   Spy_.batch
-    [ Spy.create "Http.send" (\_ -> Http.send)
+    [ Spy.create "Http.send"
+        |> Spy.on (\_ -> Http.send)
         |> andCallFake FakeSend.spy
-    , Spy.create "Http.toTask" (\_ -> Http.toTask)
+    , Spy.create "Http.toTask"
+        |> Spy.on (\_ -> Http.toTask)
         |> andCallFake FakeToTask.spy
     ]
 

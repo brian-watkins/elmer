@@ -83,4 +83,4 @@ all =
     , InputEventTests.all
     , FocusEventTests.all
     , MouseEventTests.all
-    ]    
+    ]

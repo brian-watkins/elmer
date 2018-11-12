@@ -88,7 +88,8 @@ noInitTests =
       \() ->
         let
           funStub = 
-            Spy.create "fun-spy" (\_ -> App.funCommand)
+            Spy.create "fun-spy"
+              |> Spy.on (\_ -> App.funCommand)
               |> andCallFake (\tagger message -> Command.fake <| tagger <| "FAKE: " ++ message)
         in
           Elmer.Program.givenApplication App.OnUrlRequest App.OnUrlChange App.view App.update

@@ -42,12 +42,18 @@ funStuff funThing =
 
 wasCalledTests : Test
 wasCalledTests =
+  let
+    clearNameSpy =
+      Spy.create "clearName"
+        |> Spy.on (\_ -> SpyApp.clearName)
+        |> Spy.andCallThrough
+  in
   describe "wasCalled"
   [ describe "when the spy has not been called"
     [ test "it fails with the message" <|
       \() ->
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
+          |> Spy.use [ clearNameSpy ]
           |> Spy.expect "clearName" (Matchers.wasCalled 2)
           |> Expect.equal (Expect.fail <|
             format
@@ -58,7 +64,7 @@ wasCalledTests =
     , test "it fails with a properly depluralized message" <|
       \() ->
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
-          |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
+          |> Spy.use [ clearNameSpy ]
           |> Spy.expect "clearName" (Matchers.wasCalled 1)
           |> Expect.equal (Expect.fail <|
             format
@@ -72,7 +78,7 @@ wasCalledTests =
       [ test "it fails" <|
         \() ->
           Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
+            |> Spy.use [ clearNameSpy ]
             |> Markup.target << by [ id "button" ]
             |> Event.click
             |> Event.click
@@ -88,7 +94,7 @@ wasCalledTests =
       [ test "it passes" <|
         \() ->
           Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
-            |> Spy.use [ Spy.create "clearName" (\_ -> SpyApp.clearName) ]
+            |> Spy.use [ clearNameSpy ]
             |> Markup.target << by [ id "button" ]
             |> Event.click
             |> Event.click

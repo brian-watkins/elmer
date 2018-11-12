@@ -17,7 +17,6 @@ all : Test
 all =
   Test.concat
   [ createWithTests
-  , callableTests
   ]
 
 
@@ -28,17 +27,18 @@ createWithTests =
     [ test "it records the call" <|
       \() ->
         let
-          spy =
-            Spy.createWith "my-fake" (\tagger word ->
-              Command.fake <| tagger word
-            )
+          fake =
+            Spy.create "my-fake"
+              |> Spy.with (\tagger word ->
+                Command.fake <| tagger word
+              )
           dependencies =
-            { fetchName = Spy.callable "my-fake"
+            { fetchName = Spy.callable fake
             , getNumber = (\_ -> 33)
             }
         in
           Elmer.given App.initialModel App.view (App.update dependencies)
-            |> Spy.use [ spy ]
+            |> Spy.use [ Spy.for fake ]
             |> Markup.target << by [ id "fetch-name-button" ]
             |> Event.click
             |> Spy.expect "my-fake" (
@@ -47,21 +47,21 @@ createWithTests =
     ]
   , describe "when more than one fake function is used" <|
       let
-          funSpy =
-            Spy.createWith "fun-fake" (\tagger word ->
-              Command.fake <| tagger word
-            )
-          awesomeSpy =
-            Spy.createWith "awesome-fake" (\thing ->
-              27
-            )
+          funFake =
+            Spy.create "fun-fake"
+              |> Spy.with (\tagger word ->
+                Command.fake <| tagger word
+              )
+          awesomeFake =
+            Spy.create "awesome-fake"
+              |> Spy.with (\thing -> 17)
           dependencies =
-            { fetchName = Spy.callable "fun-fake"
-            , getNumber = Spy.callable "awesome-fake"
+            { fetchName = Spy.callable funFake
+            , getNumber = Spy.callable awesomeFake
             }
           state =
             Elmer.given App.initialModel App.view (App.update dependencies)
-              |> Spy.use [ funSpy, awesomeSpy ]
+              |> Spy.use [ Spy.for funFake, Spy.for awesomeFake ]
               |> Markup.target << by [ id "fetch-name-button" ]
               |> Event.click
               |> Event.click
@@ -91,28 +91,4 @@ createWithTests =
                 wasCalled 2
               )
         ]
-  ]
-
-callableTests : Test
-callableTests =
-  describe "callable"
-  [ describe "when callable is used with a spy for a real function" <|
-    let
-      spy = Spy.create "task-spy" (\_ -> Task.perform)
-        |> Spy.andCallFake (\_ _ -> Cmd.none)
-      dependencies =
-        { fetchName = Spy.callable "task-spy"
-        , getNumber = (\_ -> 33)
-        }
-    in
-      [ test "it allows you to call it" <|
-        \() ->
-          Elmer.given App.initialModel App.view (App.update dependencies)
-            |> Spy.use [ spy ]
-            |> Markup.target << by [ id "fetch-name-button" ]
-            |> Event.click
-            |> Spy.expect "task-spy" (
-              wasCalledWith [ functionArg, stringArg "Cool Dude" ]
-            )
-      ]
   ]
