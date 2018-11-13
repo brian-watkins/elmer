@@ -5,8 +5,8 @@ module Elmer.Spy exposing
   , SpyReference
   , Calls
   , create
-  , with
-  , for
+  , withFake
+  , fromFake
   , on
   , replaceValue
   , callable
@@ -24,7 +24,7 @@ module Elmer.Spy exposing
 @docs Spyable, on, andCallThrough, andCallFake, replaceValue
 
 # Spy on a Provided Function
-@docs Fake, with, callable, for
+@docs Fake, withFake, callable, fromFake
 
 # Use a Spy
 @docs use
@@ -106,16 +106,16 @@ You'll need to call this function with any `Fake` values when you register them 
 
     let
       fake =
-        create "my-spy"
-          |> with (tagger ->
+        Elmer.Spy.create "my-spy"
+          |> Elmer.Spy.withFake (tagger ->
             Command.fake <| tagger "Success!"
           )
       updateForTest =
         MyModule.updateUsing <|
-          Spy.callable fake
+          Elmer.Spy.callable fake
     in
       Elmer.given testModel MyModule.view updateForTest
-        |> Elmer.Spy.use [ Spy.for fake ]
+        |> Elmer.Spy.use [ Elmer.Spy.fromFake fake ]
         |> Elmer.Html.target
             << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
@@ -128,8 +128,8 @@ You'll need to call this function with any `Fake` values when you register them 
             ]
         )
 -}
-for : Fake a b -> Spy
-for (Fake _ spy) =
+fromFake : Fake a b -> Spy
+fromFake (Fake _ spy) =
   spy
 
 
@@ -142,16 +142,16 @@ to provide a version of the function that will record its calls.
 
     let
       fake =
-        create "my-spy"
-          |> with (tagger ->
+        Elmer.Spy.create "my-spy"
+          |> Elmer.Spy.withFake (tagger ->
             Command.fake <| tagger "Success!"
           )
       updateForTest =
         MyModule.updateUsing <|
-          Spy.callable fake
+          Elmer.Spy.callable fake
     in
       Elmer.given testModel MyModule.view updateForTest
-        |> Elmer.Spy.use [ Spy.for fake ]
+        |> Elmer.Spy.use [ Elmer.Spy.fromFake fake ]
         |> Elmer.Html.target
             << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
@@ -164,8 +164,8 @@ to provide a version of the function that will record its calls.
             ]
         )
 -}
-with : (a -> b) -> SpyReference -> Fake a b
-with fakeFunction (SpyReference name) =
+withFake : (a -> b) -> SpyReference -> Fake a b
+withFake fakeFunction (SpyReference name) =
   Fake name <| Spy_.Uninstalled <|
     \() ->
       Spy_.createWith name fakeFunction
@@ -196,25 +196,25 @@ replaceValue namingFunc value =
       Spy_.replaceValue namingFunc value
 
 
-{-| Convert a `Fake` into a callable function. 
+{-| Returns the function represented by the `Fake`.
 
-When you register the `Fake` value, via `Elmer.Spy.for` in your `Elmer.Spy.use` function, Elmer will
-record calls to the function and call through to the implementation you've provided. 
+Once you register the `Fake` as a `Spy` via `Elmer.Spy.use`
+then calls to the fake will be recorded as expected.
 
 For example:
 
     let
       fake =
-        create "my-spy"
-          |> with (tagger ->
+        Elmer.Spy.create "my-spy"
+          |> Elmer.Spy.withFake (tagger ->
             Command.fake <| tagger "Success!"
           )
       updateForTest =
         MyModule.updateUsing <|
-          Spy.callable fake
+          Elmer.Spy.callable fake
     in
       Elmer.given testModel MyModule.view updateForTest
-        |> Elmer.Spy.use [ Spy.for fake ]
+        |> Elmer.Spy.use [ Elmer.Spy.fromFake fake ]
         |> Elmer.Html.target
             << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
@@ -318,6 +318,7 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
           |> on (\_ -> 
             MyModule.someFunction
           )
+          |> andCallThrough
     in
       testState
         |> use [ mySpy ]

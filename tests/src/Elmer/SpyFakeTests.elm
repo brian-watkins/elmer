@@ -29,7 +29,7 @@ createWithTests =
         let
           fake =
             Spy.create "my-fake"
-              |> Spy.with (\tagger word ->
+              |> Spy.withFake (\tagger word ->
                 Command.fake <| tagger word
               )
           dependencies =
@@ -38,7 +38,7 @@ createWithTests =
             }
         in
           Elmer.given App.initialModel App.view (App.update dependencies)
-            |> Spy.use [ Spy.for fake ]
+            |> Spy.use [ Spy.fromFake fake ]
             |> Markup.target << by [ id "fetch-name-button" ]
             |> Event.click
             |> Spy.expect "my-fake" (
@@ -49,19 +49,19 @@ createWithTests =
       let
           funFake =
             Spy.create "fun-fake"
-              |> Spy.with (\tagger word ->
+              |> Spy.withFake (\tagger word ->
                 Command.fake <| tagger word
               )
           awesomeFake =
             Spy.create "awesome-fake"
-              |> Spy.with (\thing -> 17)
+              |> Spy.withFake (\thing -> 17)
           dependencies =
             { fetchName = Spy.callable funFake
             , getNumber = Spy.callable awesomeFake
             }
           state =
             Elmer.given App.initialModel App.view (App.update dependencies)
-              |> Spy.use [ Spy.for funFake, Spy.for awesomeFake ]
+              |> Spy.use [ Spy.fromFake funFake, Spy.fromFake awesomeFake ]
               |> Markup.target << by [ id "fetch-name-button" ]
               |> Event.click
               |> Event.click
