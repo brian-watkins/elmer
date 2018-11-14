@@ -74,8 +74,7 @@ runTest runner =
     { descriptions = runner.labels
     , messages = 
         runner.run () 
-            |> List.map errorMessage
-            |> compact
+            |> List.filterMap errorMessage
     }
 
 
@@ -86,17 +85,6 @@ errorMessage expectation =
             Just <| formatFailure failure
         Nothing ->
             Nothing
-
-
-compact : List (Maybe a) -> List a
-compact =
-    List.foldl (\maybeVal values ->
-        case maybeVal of
-            Just val ->
-                values ++ [ val ]
-            Nothing ->
-                values
-    ) []
 
 
 subscriptions : Model -> Sub Msg
