@@ -47,8 +47,7 @@ spyTests =
 
 testPortSpy : Spy
 testPortSpy =
-  Spy.create "test-port-spy"
-    |> Spy.on (\_ -> App.testPortCommand)
+  Spy.on "test-port-spy" (\_ -> App.testPortCommand)
     |> andCallFake (\_ -> Cmd.none)
 
 

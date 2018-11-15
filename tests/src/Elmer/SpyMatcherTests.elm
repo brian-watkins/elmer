@@ -44,8 +44,7 @@ wasCalledTests : Test
 wasCalledTests =
   let
     clearNameSpy =
-      Spy.create "clearName"
-        |> Spy.on (\_ -> SpyApp.clearName)
+      Spy.on "clearName" (\_ -> SpyApp.clearName)
         |> Spy.andCallThrough
   in
   describe "wasCalled"

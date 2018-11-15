@@ -1,30 +1,28 @@
 module Elmer.Spy exposing
   ( Spy
-  , Spyable
-  , Fake
   , SpyReference
+  , Fake
   , Calls
-  , create
-  , withFake
-  , fromFake
   , on
-  , replaceValue
-  , callable
   , andCallFake
   , andCallThrough
+  , replaceValue
+  , onFake
+  , this
+  , callable
   , expect
   , use
   )
 
 {-| Functions for spying during tests.
 
-@docs Spy, SpyReference, Calls, create
+@docs Spy, Calls
 
 # Spy on a Real Function
-@docs Spyable, on, andCallThrough, andCallFake, replaceValue
+@docs SpyReference, on, andCallThrough, andCallFake, replaceValue
 
 # Spy on a Provided Function
-@docs Fake, withFake, callable, fromFake
+@docs Fake, onFake, callable, this
 
 # Use a Spy
 @docs use
@@ -45,15 +43,10 @@ import Elmer.Printer exposing (..)
 type alias Spy =
   Spy_.Spy
 
-{-| Represents a reference to a Spy.
--}
-type SpyReference =
-  SpyReference String
-
 {-| Represents a real function to spy on.
 -}
-type Spyable a b =
-  Spyable String Spy
+type SpyReference a b =
+  SpyReference String Spy
 
 {-| Represents a fake function to spy on.
 -}
@@ -65,27 +58,16 @@ type Fake a b =
 type alias Calls =
   Spy_.Calls
 
-{-| Create a `SpyReference`.
-
-To spy on a function, first call `create` with a name by which you can refer to the `Spy` when you
-make expectations about it with `Elmer.Spy.expect`.
--}
-create : String -> SpyReference
-create =
-  SpyReference
-
 
 {-| Spy on an existing function.
 
-First, create a `SpyReference` with `Elmer.Spy.create`. Then
-call `Spy.on` to identify the function you want spy on. 
-Finally, call `andCallThrough` or `andCallFake` to specify what should be done
+Use `Spy.on` to identify the function you want spy on. 
+Then, call `andCallThrough` or `andCallFake` to specify what should be done
 when the spied upon function is called.
 
     let
       mySpy =
-        create "my-spy"
-          |> on (\_ -> MyModule.someFunction)
+        on "my-spy" (\_ -> MyModule.someFunction)
           |> andCallThrough
     in
       testState
@@ -93,9 +75,9 @@ when the spied upon function is called.
         |> expect "my-spy" (wasCalled 0)
 
 -}
-on : (() -> (a -> b)) -> SpyReference -> Spyable a b
-on identifier (SpyReference name) =
-  Spyable name <| Spy_.Uninstalled <|
+on : String -> (() -> (a -> b)) -> SpyReference a b
+on name identifier =
+  SpyReference name <| Spy_.Uninstalled <|
     \() ->
       Spy_.create name identifier
 
@@ -106,8 +88,7 @@ You'll need to call this function with any `Fake` values when you register them 
 
     let
       fake =
-        Elmer.Spy.create "my-spy"
-          |> Elmer.Spy.withFake (tagger ->
+        Elmer.Spy.onFake "my-spy" (tagger ->
             Command.fake <| tagger "Success!"
           )
       updateForTest =
@@ -115,7 +96,7 @@ You'll need to call this function with any `Fake` values when you register them 
           Elmer.Spy.callable fake
     in
       Elmer.given testModel MyModule.view updateForTest
-        |> Elmer.Spy.use [ Elmer.Spy.fromFake fake ]
+        |> Elmer.Spy.use [ Elmer.Spy.this fake ]
         |> Elmer.Html.target
             << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
@@ -128,30 +109,30 @@ You'll need to call this function with any `Fake` values when you register them 
             ]
         )
 -}
-fromFake : Fake a b -> Spy
-fromFake (Fake _ spy) =
+this : Fake a b -> Spy
+this (Fake _ spy) =
   spy
 
 
 {-| Provide a function to be spied upon during a test.
 
 For example, let's say you want to inject some dependencies into your update
-function to decouple application logic from view logic. You would create a `Fake`
-with a function you provide for your test. Then, use `Elmer.Spy.callable` when you want
-to provide a version of the function that will record its calls.
+function to decouple application logic from view logic. In your tests, maybe you
+need a fake version of the injected function. You would call `onFake` with the 'fake'
+function. Then, use `Elmer.Spy.callable` when you want
+to provide a version of the 'fake' function that will record its calls.
 
     let
       fake =
-        Elmer.Spy.create "my-spy"
-          |> Elmer.Spy.withFake (tagger ->
-            Command.fake <| tagger "Success!"
-          )
+        Elmer.Spy.onFake "my-spy" (tagger ->
+          Command.fake <| tagger "Success!"
+        )
       updateForTest =
         MyModule.updateUsing <|
           Elmer.Spy.callable fake
     in
       Elmer.given testModel MyModule.view updateForTest
-        |> Elmer.Spy.use [ Elmer.Spy.fromFake fake ]
+        |> Elmer.Spy.use [ Elmer.Spy.this fake ]
         |> Elmer.Html.target
             << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
@@ -164,8 +145,8 @@ to provide a version of the function that will record its calls.
             ]
         )
 -}
-withFake : (a -> b) -> SpyReference -> Fake a b
-withFake fakeFunction (SpyReference name) =
+onFake : String -> (a -> b) -> Fake a b
+onFake name fakeFunction =
   Fake name <| Spy_.Uninstalled <|
     \() ->
       Spy_.createWith name fakeFunction
@@ -205,16 +186,15 @@ For example:
 
     let
       fake =
-        Elmer.Spy.create "my-spy"
-          |> Elmer.Spy.withFake (tagger ->
-            Command.fake <| tagger "Success!"
-          )
+        Elmer.Spy.onFake "my-spy" (tagger ->
+          Command.fake <| tagger "Success!"
+        )
       updateForTest =
         MyModule.updateUsing <|
           Elmer.Spy.callable fake
     in
       Elmer.given testModel MyModule.view updateForTest
-        |> Elmer.Spy.use [ Elmer.Spy.fromFake fake ]
+        |> Elmer.Spy.use [ Elmer.Spy.this fake ]
         |> Elmer.Html.target
             << by [ tag "input" ]
         |> Elmer.Html.Event.input "some text"
@@ -237,11 +217,10 @@ callable (Fake name _) =
 Once you've created a `Spyable`, you can provide a fake implementation like so:
 
     mySpy =
-      create "my-spy" 
-        |> on (\_ ->
-          MyModule.someFunction
-        )
-        |> andCallFake testImplementation
+      Elmer.Spy.on "my-spy" (\_ ->
+        MyModule.someFunction
+      )
+      |> andCallFake testImplementation
 
 where `testImplementation` is some function with the very same signature as
 the one being spied upon.
@@ -252,16 +231,15 @@ should return `Cmd.none` or one of the fake commands described in `Elmer.Command
 For example, you could override `Random.generate` so that it returns a set value during a test
 like so:
 
-    Elmer.Spy.create "fake-random" 
-      |> Elmer.Spy.on (\_ ->
-        Random.generate
-      )
-      |> Elmer.Spy.andCallFake (\tagger generator ->
-        Random.initialeSeed 10001
-          |> Random.step generator
-          |> tagger
-          |> Elmer.Command.fake
-      )
+    Elmer.Spy.on "fake-random" (\_ ->
+      Random.generate
+    )
+    |> Elmer.Spy.andCallFake (\tagger generator ->
+      Random.initialeSeed 10001
+        |> Random.step generator
+        |> tagger
+        |> Elmer.Command.fake
+    )
 
 If you are spying on a function that returns a `Sub`, then your fake should
 return a fake subscription; see `Elmer.Subscription.fake`.
@@ -269,8 +247,8 @@ return a fake subscription; see `Elmer.Subscription.fake`.
 Note: The fake implementation will not be active until you register this spy
 via `Elmer.Spy.use`.
 -}
-andCallFake : (a -> b) -> Spyable a b -> Spy
-andCallFake fakeFunction (Spyable _ spy) =
+andCallFake : (a -> b) -> SpyReference a b -> Spy
+andCallFake fakeFunction (SpyReference _ spy) =
   case spy of
     Uninstalled installer ->
       Spy_.Uninstalled <|
@@ -292,19 +270,18 @@ Once you've created a `Spyable`, you can just call `andCallThrough` to have Elme
 implementation whenever the function is called. 
 
     mySpy =
-      create "my-spy" 
-        |> on (\_ ->
-          MyModule.someFunction
-        )
-        |> andCallThrough
+      Elmer.Spy.on "my-spy" (\_ ->
+        MyModule.someFunction
+      )
+      |> andCallThrough
 
 Use `andCallThrough` when you want to examine the arguments passed to a function and don't need to 
 change what that function does for your tests.
 
 Note: The Spy will not be active until you register it via `Elmer.Spy.use`.
 -}
-andCallThrough : Spyable a b -> Spy
-andCallThrough (Spyable _ spy) =
+andCallThrough : SpyReference a b -> Spy
+andCallThrough (SpyReference _ spy) =
   spy
 
 
@@ -314,11 +291,10 @@ See `Elmer.Spy.Matchers` for matchers to use with this function.
 
     let
       mySpy =
-        create "my-spy"
-          |> on (\_ -> 
-            MyModule.someFunction
-          )
-          |> andCallThrough
+        Elmer.Spy.on "my-spy" (\_ -> 
+          MyModule.someFunction
+        )
+        |> andCallThrough
     in
       testState
         |> use [ mySpy ]
@@ -349,15 +325,14 @@ you could do something like the following:
 
     let
       randomSpy =
-        create "fake-random" 
-          |> on (\_ -> Random.generate)
-          |> andCallFake (\tagger _ ->
-            tagger 27
-              |> Elmer.Command.fake
-          )
+        Elmer.Spy.on "fake-random" (\_ -> Random.generate)
+        |> andCallFake (\tagger _ ->
+          tagger 27
+            |> Elmer.Command.fake
+        )
     in
       testState
-        |> use [ taskOverride ]
+        |> use [ randomSpy ]
         |> Elmer.Html.target 
             << by [ id "get-random" ]
         |> Elmer.Html.Event.click

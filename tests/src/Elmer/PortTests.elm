@@ -28,8 +28,7 @@ portCommandTests =
     \() ->
       let
         spy =
-          Spy.create "port-spy"
-            |> Spy.on (\_ -> App.sendJsData)
+          Spy.on "port-spy" (\_ -> App.sendJsData)
             |> andCallFake (\_ -> Cmd.none)
       in
         Elmer.given App.defaultModel App.view App.update
@@ -46,8 +45,7 @@ portSubscriptionTests =
     \() ->
       let
         spy =
-          Spy.create "port-spy"
-            |> Spy.on (\_ -> App.receiveJsData)
+          Spy.on "port-spy" (\_ -> App.receiveJsData)
             |> andCallFake (\tagger -> Subscription.fake "fakeReceive" tagger)
       in
         Elmer.given App.defaultModel App.view App.update

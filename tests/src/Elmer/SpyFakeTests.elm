@@ -3,7 +3,7 @@ module Elmer.SpyFakeTests exposing (..)
 import Test exposing (..)
 import Expect
 import Elmer
-import Elmer.Spy as Spy
+import Elmer.Spy as Spy exposing (this)
 import Elmer.Spy.Matchers exposing (..)
 import Elmer.Command as Command
 import Elmer.Html as Markup
@@ -28,17 +28,16 @@ createWithTests =
       \() ->
         let
           fake =
-            Spy.create "my-fake"
-              |> Spy.withFake (\tagger word ->
-                Command.fake <| tagger word
-              )
+            Spy.onFake "my-fake" (\tagger word ->
+              Command.fake <| tagger word
+            )
           dependencies =
             { fetchName = Spy.callable fake
             , getNumber = (\_ -> 33)
             }
         in
           Elmer.given App.initialModel App.view (App.update dependencies)
-            |> Spy.use [ Spy.fromFake fake ]
+            |> Spy.use [ this fake ]
             |> Markup.target << by [ id "fetch-name-button" ]
             |> Event.click
             |> Spy.expect "my-fake" (
@@ -47,24 +46,22 @@ createWithTests =
     ]
   , describe "when more than one fake function is used" <|
       let
-          funFake =
-            Spy.create "fun-fake"
-              |> Spy.withFake (\tagger word ->
-                Command.fake <| tagger word
-              )
-          awesomeFake =
-            Spy.create "awesome-fake"
-              |> Spy.withFake (\thing -> 17)
-          dependencies =
-            { fetchName = Spy.callable funFake
-            , getNumber = Spy.callable awesomeFake
-            }
-          state =
-            Elmer.given App.initialModel App.view (App.update dependencies)
-              |> Spy.use [ Spy.fromFake funFake, Spy.fromFake awesomeFake ]
-              |> Markup.target << by [ id "fetch-name-button" ]
-              |> Event.click
-              |> Event.click
+        funFake =
+          Spy.onFake "fun-fake" (\tagger word ->
+            Command.fake <| tagger word
+          )
+        awesomeFake =
+          Spy.onFake "awesome-fake" (\thing -> 17)
+        dependencies =
+          { fetchName = Spy.callable funFake
+          , getNumber = Spy.callable awesomeFake
+          }
+        state =
+          Elmer.given App.initialModel App.view (App.update dependencies)
+            |> Spy.use [ this funFake, this awesomeFake ]
+            |> Markup.target << by [ id "fetch-name-button" ]
+            |> Event.click
+            |> Event.click
       in
         [ test "it records the call for the first" <|
           \() ->

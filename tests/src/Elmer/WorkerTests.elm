@@ -18,8 +18,7 @@ all =
 
 fakeSub : Spy
 fakeSub =
-  Spy.create "fake-sub"
-    |> Spy.on (\_ -> App.incomingData)
+  Spy.on "fake-sub" (\_ -> App.incomingData)
     |> andCallFake (\tagger ->
       Subscription.fake "fake-sub" tagger
     )

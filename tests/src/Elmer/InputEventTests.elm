@@ -218,8 +218,7 @@ submitWithSpyTests =
       \() ->
         let
           viewSpy =
-            Spy.create "outside-form-spy"
-              |> Spy.on (\_ -> App.submitBadFormDescendentView)
+            Spy.on "outside-form-spy" (\_ -> App.submitBadFormDescendentView)
               |> andCallFake (\model -> App.submitOutsideFormView model)
         in
           Elmer.given App.defaultModel App.spyTestView App.update

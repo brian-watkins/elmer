@@ -67,8 +67,7 @@ sendTests =
         \() ->
           let
             override =
-              Spy.create "Time.every"
-                |> Spy.on (\_ -> Time.every)
+              Spy.on "Time.every" (\_ -> Time.every)
                 |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("my-spy-" ++ (String.fromFloat interval)) tagger
                 )
@@ -91,8 +90,7 @@ sendTests =
         \() ->
           let
             override =
-              Spy.create "Time.every"
-                |> Spy.on (\_ -> Time.every)
+              Spy.on "Time.every" (\_ -> Time.every)
                 |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (String.fromFloat interval)) tagger
                 )
@@ -110,8 +108,7 @@ sendTests =
           let
             initialState = Elmer.given App.defaultModel App.view App.update
             override =
-              Spy.create "Time.every"
-                |> Spy.on (\_ -> Time.every)
+              Spy.on "Time.every" (\_ -> Time.every)
                 |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (String.fromFloat interval)) tagger
                 )
@@ -128,8 +125,7 @@ sendTests =
           let
             initialState = Elmer.given App.defaultModel App.view App.update
             override =
-              Spy.create "Time.every"
-                |> Spy.on (\_ -> Time.every)
+              Spy.on "Time.every" (\_ -> Time.every)
                 |> Spy.andCallFake (\interval tagger ->
                   Subscription.fake ("fakeTime-" ++ (String.fromFloat interval)) tagger
                 )

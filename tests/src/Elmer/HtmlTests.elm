@@ -108,8 +108,7 @@ renderTests =
       \() ->
         let
           spy =
-            Spy.create "view-spy"
-              |> Spy.on (\_ -> SimpleApp.view)
+            Spy.on "view-spy" (\_ -> SimpleApp.view)
               |> Spy.andCallThrough
         in
           Elmer.given SimpleApp.defaultModel (\model -> SimpleApp.view model) SimpleApp.update
