@@ -1,8 +1,8 @@
 module Elmer.Spy.Function exposing
   ( Function
   , globalIdentifier
+  , functionIdentifier
   , from
-  , create
   , replace
   , withFake
   , callable
@@ -17,8 +17,8 @@ import Elmer.Value as Value
 
 type alias Function =
   { alias: String
-  , identifier: Maybe String
-  , original: Maybe Value
+  , identifier: String
+  , original: Value
   , fake: Value
   }
 
@@ -29,17 +29,34 @@ globalIdentifier namingThunk =
     |> Result.withDefault Nothing
 
 
-from : String -> (() -> a) -> Maybe Function
-from functionAlias namingThunk =
+readableIdentifier : String -> String
+readableIdentifier globalId =
+  String.split "$" globalId
+    |> List.drop 2
+    |> String.join "."
+
+
+functionIdentifier : (() -> a) -> Maybe String
+functionIdentifier identifier =
+  globalIdentifier identifier
+    |> Maybe.map readableIdentifier
+
+
+from : (() -> a) -> Maybe Function
+from namingThunk =
   globalIdentifier namingThunk
     |> Maybe.map (\globalId ->
-        { alias = functionAlias
-        , identifier = Just globalId
-        , original = Just <| Value.global globalId
-        , fake =
-            Value.global globalId
-              |> recordable functionAlias
-        }
+        let
+          functionAlias =
+            readableIdentifier globalId
+        in
+          { alias = functionAlias
+          , identifier = globalId
+          , original = Value.global globalId
+          , fake =
+              Value.global globalId
+                |> recordable functionAlias
+          }
     )
 
 
@@ -50,8 +67,8 @@ replace namingThunk value =
         if isValue globalId then
           Just
             { alias = globalId
-            , identifier = Just globalId
-            , original = Just <| Value.global globalId
+            , identifier = globalId
+            , original = Value.global globalId
             , fake = Value.cast value
             }
         else
@@ -76,17 +93,6 @@ identifierDecoder =
   Json.nullable Json.string
 
 
-create : String -> (a -> b) -> Function
-create name impl =
-  { alias = name
-  , identifier = Nothing
-  , original = Nothing
-  , fake =
-      Value.cast impl
-        |> recordable name
-  }
-
-
 withFake : (a -> b) -> Function -> Function
 withFake fake function =
   { function
@@ -98,28 +104,16 @@ withFake fake function =
 
 activateSpy : Function -> Function
 activateSpy function =
-  case function.identifier of
-    Just identifier ->
-      Value.assign identifier function.fake
-        |> Elm.Kernel.Function.activate function.alias
-        |> always function
-    Nothing ->
-      Elm.Kernel.Function.activate function.alias function.fake
-        |> always function
+  Value.assign function.identifier function.fake
+    |> Elm.Kernel.Function.activate function.alias
+    |> always function
 
 
 deactivateSpy : Function -> Json.Value
 deactivateSpy function =
-  case Maybe.map2 toTuple function.identifier function.original of
-    Just (identifier, original) ->
-      Value.assign identifier original
-        |> always (Elm.Kernel.Function.deactivate function.alias)
-    Nothing ->
-      Elm.Kernel.Function.deactivate function.alias
+  Value.assign function.identifier function.original
+    |> always (Elm.Kernel.Function.deactivate function.alias)
 
-toTuple : a -> b -> (a, b)
-toTuple aArg bArg =
-  ( aArg, bArg )
 
 callable : String -> (a -> b)
 callable name =

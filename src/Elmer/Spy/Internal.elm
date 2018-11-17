@@ -2,7 +2,6 @@ module Elmer.Spy.Internal exposing
   ( Spy(..)
   , Calls
   , create
-  , createWith
   , replaceValue
   , callable
   , activate
@@ -34,78 +33,64 @@ type Spy
   = Uninstalled (() -> Spy)
   | Active SpyValue
   | Inactive SpyValue
-  | Error SpyValue
+  | Error SpyError
   | Batch (List Spy)
 
 
 type alias SpyValue =
   { name: String
-  , function: Maybe Function
+  , function: Function
   , calls: List (List Arg)
   }
 
+type alias SpyError =
+  { reason: String
+  }
 
-create : String -> (() -> a) -> Spy
-create name namingFunc =
-  case Function.from name namingFunc of
+create : (() -> a) -> Spy
+create namingFunc =
+  case Function.from namingFunc of
     Just function ->
       recordCalls
-        { name = name
-        , function = Just function
+        { name = function.alias
+        , function = function
         , calls = []
         }
     Nothing ->
       Error
-        { name = name
-        , function = Nothing
-        , calls = []
+        { reason = "Unable to identify a function to spy on"
         }
-
-
-createWith : String -> (a -> b) -> Spy
-createWith name fakeFunction =
-  recordCalls
-    { name = name
-    , function = Just <| Function.create name fakeFunction
-    , calls = []
-    }
 
 
 replaceValue : (() -> a) -> b -> Spy
 replaceValue namingFunc value =
-  let
-    globalId =
-      Function.globalIdentifier namingFunc
-        |> Maybe.withDefault "Unable to find function to replace"
-    functionName =
-      String.split "$" globalId
-        |> List.reverse
-        |> List.head
-        |> Maybe.withDefault "Unable to find function to replace"
-  in
-    case Function.replace namingFunc value of
-      Just function ->
-        recordCalls
-          { name = globalId
-          , function = Just function
-          , calls = []
-          }
-      Nothing ->
-        Error
-          { name = functionName
-          , function = Nothing
-          , calls = []
-          }
+  case Function.replace namingFunc value of
+    Just function ->
+      recordCalls
+        { name = function.alias
+        , function = function
+        , calls = []
+        }
+    Nothing ->
+      let
+        valueName =
+          Function.functionIdentifier namingFunc
+      in
+        case valueName of
+          Just name ->
+            Error
+              { reason = name ++ " is a function, but your test is treating it as a value to be replaced"
+              }
+          Nothing ->
+            Error
+              { reason = "Unable to identify a value to replace"
+              }
 
 
 recordCalls : SpyValue -> Spy
 recordCalls spy =
-  case spy.function of
-    Just function ->
-      Active
-        { spy | function = Just <| Function.activateSpy function }
-    Nothing ->
-      Error spy
+  Active
+    { spy | function = Function.activateSpy spy.function }
 
 
 callable : String -> (a -> b)
@@ -144,13 +129,9 @@ callRecord spyValue =
 
 registerFake : (a -> b) -> SpyValue -> Spy
 registerFake fake spy =
-  case spy.function of
-    Just function ->
-      Active
-        { spy | function = Just <| Function.withFake fake function
-        }
-    Nothing ->
-      Active spy
+  Active
+    { spy | function = Function.withFake fake spy.function
+    }
 
 
 {-| Note: Calling a fake method on a batch spy is not supported
@@ -182,13 +163,9 @@ deactivateOne spy =
     Active spyValue ->
       let
         recordedCalls =
-          case spyValue.function of
-            Just function ->
-              Function.deactivateSpy function
-                |> Value.decode (Json.list <| Json.list Arg.decoder)
-                |> Result.withDefault []
-            Nothing ->
-              []
+          Function.deactivateSpy spyValue.function
+            |> Value.decode (Json.list <| Json.list Arg.decoder)
+            |> Result.withDefault []
       in
         Inactive
           { spyValue | calls = List.append spyValue.calls recordedCalls }

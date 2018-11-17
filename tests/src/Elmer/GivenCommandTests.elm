@@ -39,15 +39,15 @@ spyTests =
     \() ->
       Command.given (\() -> App.spyCommand "hello")
         |> Spy.use [ testPortSpy ]
-        |> Spy.expect "test-port-spy" (\calls ->
-            wasCalledWith [ stringArg "hello" ] calls
+        |> Spy.expect (\_ -> App.testPortCommand) (
+            wasCalledWith [ stringArg "hello" ]
         )
   ]
 
 
 testPortSpy : Spy
 testPortSpy =
-  Spy.on "test-port-spy" (\_ -> App.testPortCommand)
+  Spy.observe (\_ -> App.testPortCommand)
     |> andCallFake (\_ -> Cmd.none)
 
 

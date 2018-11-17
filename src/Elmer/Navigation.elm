@@ -63,9 +63,9 @@ location to `/home` when clicked:
 spy : Spy
 spy =
   Spy_.batch
-    [ Spy.on "Navigation.pushUrl" (\_ -> Browser.Navigation.pushUrl)
+    [ Spy.observe (\_ -> Browser.Navigation.pushUrl)
         |> andCallFake (fakeNavigateCommand "Browser.Navigation.pushUrl")
-    , Spy.on "Navigation.replaceUrl" (\_ -> Browser.Navigation.replaceUrl)
+    , Spy.observe (\_ -> Browser.Navigation.replaceUrl)
         |> andCallFake (fakeNavigateCommand "Browser.Navigation.replaceUrl")
     ]
 

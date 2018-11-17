@@ -108,12 +108,14 @@ renderTests =
       \() ->
         let
           spy =
-            Spy.on "view-spy" (\_ -> SimpleApp.view)
+            Spy.observe (\_ -> SimpleApp.view)
               |> Spy.andCallThrough
         in
           Elmer.given SimpleApp.defaultModel (\model -> SimpleApp.view model) SimpleApp.update
             |> Spy.use [ spy ]
             |> Markup.render
-            |> Spy.expect "view-spy" (wasCalledWith [ typedArg SimpleApp.defaultModel ])
+            |> Spy.expect (\_ -> SimpleApp.view) (
+              wasCalledWith [ typedArg SimpleApp.defaultModel ]
+            )
     ]
   ]

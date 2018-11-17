@@ -17,6 +17,10 @@ module Elmer.Errors exposing
   , noRequest
   , wrongRequest
   , requestMatcherFailed
+  , failedToActivateSpies
+  , unknownSpy
+  , wrongNumberOfSpyCalls
+  , badSpyIdentifier
   )
 
 {-| Exposed for testing
@@ -24,7 +28,8 @@ module Elmer.Errors exposing
 @docs CustomError, print, failWith
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
 @docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongAttribute, wrongAttributeName, noAttribute
-@docs noRequest, wrongRequest, requestMatcherFailed
+@docs noRequest, wrongRequest, requestMatcherFailed, failedToActivateSpies, unknownSpy, wrongNumberOfSpyCalls
+@docs badSpyIdentifier
 
 -}
 
@@ -173,6 +178,47 @@ requestMatcherFailed expectedRoute failure =
   , description "failed to meet the expectations:"
   , description failure
   ]
+
+{-|
+-}
+failedToActivateSpies : String -> CustomError
+failedToActivateSpies errors =
+  [ message "Failed to activate one or more spies" errors
+  ]
+
+{-|
+-}
+unknownSpy : String -> CustomError
+unknownSpy spyName =
+   [ message "Attempted to make expectations about calls to" spyName
+   , description "but that function has no spy registered for it."
+   , description "Check Elmer.Spy.use to make sure you've registered the spies you need."
+   ]
+
+{-|
+-}
+wrongNumberOfSpyCalls : String -> Int -> Int -> CustomError
+wrongNumberOfSpyCalls name expectedCallCount actualCallCount =
+  [ message ("Expected spy " ++ name ++ " to have been called") <| timesString expectedCallCount
+  , message "but it was called" <| timesString actualCallCount
+  ]
+
+
+timesString : Int -> String
+timesString times =
+  if times == 1 then
+    (String.fromInt times) ++ " time"
+  else
+    (String.fromInt times) ++ " times"
+
+
+{-|
+-}
+badSpyIdentifier : CustomError
+badSpyIdentifier =
+  [ description "The function referenced by Elmer.Spy.expect could not be identified."
+  ]
+
 
 {-|
 -}

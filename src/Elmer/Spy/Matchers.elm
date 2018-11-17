@@ -36,6 +36,8 @@ import Elmer.Spy.Arg as Arg
 import Elmer.Spy.Call as Call
 import Elmer.Printer exposing (..)
 import Elmer.Value as Value
+import Elmer.Errors as Errors exposing (failWith)
+
 
 {-| Represents an expected function argument.
 -}
@@ -65,18 +67,7 @@ wasCalled expectedCallCount =
       if callCount == expectedCallCount then
         Expect.pass
       else
-        Expect.fail <|
-          format
-            [ message ("Expected spy " ++ spy.name ++ " to have been called") <| timesString expectedCallCount
-            , message "but it was called" <| timesString callCount
-            ]
-
-timesString : Int -> String
-timesString times =
-  if times == 1 then
-    (String.fromInt times) ++ " time"
-  else
-    (String.fromInt times) ++ " times"
+        failWith <| Errors.wrongNumberOfSpyCalls spy.name expectedCallCount callCount
 
 
 {-| Matches an argument with the given string.

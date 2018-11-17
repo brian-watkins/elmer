@@ -29,7 +29,7 @@ randomCommand tagger =
 
 randomGenerateSpy : Spy
 randomGenerateSpy =
-  Spy.on "random-generate" (\_ -> Random.generate)
+  Spy.observe (\_ -> Random.generate)
     |> andCallFake (\tagger generator ->
       Random.initialSeed 27852
         |> Random.step generator

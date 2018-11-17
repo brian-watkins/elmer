@@ -13,6 +13,7 @@ import Elmer.Html.Matchers exposing (hasText)
 import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Printer exposing (..)
 import Elmer
+import Elmer.Errors as Errors
 
 
 all : Test
@@ -44,7 +45,7 @@ wasCalledTests : Test
 wasCalledTests =
   let
     clearNameSpy =
-      Spy.on "clearName" (\_ -> SpyApp.clearName)
+      Spy.observe (\_ -> SpyApp.clearName)
         |> Spy.andCallThrough
   in
   describe "wasCalled"
@@ -53,24 +54,18 @@ wasCalledTests =
       \() ->
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.use [ clearNameSpy ]
-          |> Spy.expect "clearName" (Matchers.wasCalled 2)
-          |> Expect.equal (Expect.fail <|
-            format
-              [ message "Expected spy clearName to have been called" "2 times"
-              , message "but it was called" "0 times"
-              ]
-            )
+          |> Spy.expect  (\_ -> SpyApp.clearName) (Matchers.wasCalled 2)
+          |> Expect.equal (Errors.failWith <| 
+            Errors.wrongNumberOfSpyCalls "Elmer.TestApps.SpyTestApp.clearName" 2 0
+          )
     , test "it fails with a properly depluralized message" <|
       \() ->
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Spy.use [ clearNameSpy ]
-          |> Spy.expect "clearName" (Matchers.wasCalled 1)
-          |> Expect.equal (Expect.fail <|
-            format
-              [ message "Expected spy clearName to have been called" "1 time"
-              , message "but it was called" "0 times"
-              ]
-            )
+          |> Spy.expect (\_ -> SpyApp.clearName) (Matchers.wasCalled 1)
+          |> Expect.equal (Errors.failWith <|
+            Errors.wrongNumberOfSpyCalls "Elmer.TestApps.SpyTestApp.clearName" 1 0
+          )
     ]
   , describe "when the spy has been called"
     [ describe "when the expected count does not match the number of calls"
@@ -81,13 +76,10 @@ wasCalledTests =
             |> Markup.target << by [ id "button" ]
             |> Event.click
             |> Event.click
-            |> Spy.expect "clearName" (Matchers.wasCalled 3)
-            |> Expect.equal (Expect.fail <|
-              format
-                [ message "Expected spy clearName to have been called" "3 times"
-                , message "but it was called" "2 times"
-                ]
-              )
+            |> Spy.expect (\_ -> SpyApp.clearName) (Matchers.wasCalled 3)
+            |> Expect.equal (Errors.failWith <|
+              Errors.wrongNumberOfSpyCalls "Elmer.TestApps.SpyTestApp.clearName" 3 2
+            )
       ]
     , describe "when the expected count matches the number of calls"
       [ test "it passes" <|
@@ -97,7 +89,7 @@ wasCalledTests =
             |> Markup.target << by [ id "button" ]
             |> Event.click
             |> Event.click
-            |> Spy.expect "clearName" (Matchers.wasCalled 2)
+            |> Spy.expect (\_ -> SpyApp.clearName) (Matchers.wasCalled 2)
             |> Expect.equal (Expect.pass)
       ]
     ]
