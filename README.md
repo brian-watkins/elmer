@@ -59,13 +59,14 @@ In your `elm.json` file, you'll need to manually add elmer to the `test-dependen
 "test-dependencies": {
   "direct": {
     "elm-explorations/test": "1.1.0",
-    "elm-explorations/elmer": "4.0.0"
+    "elm-explorations/elmer": "5.0.0"
   },
   "indirect": {}
 }
 ```
 
-Make sure the version number of elmer matches the version number of the `elmer-test` NPM package.
+The latest version of Elmer is 5.0.0. Make sure the version number of elmer 
+matches the version number of the `elmer-test` NPM package.
 
 Notice the `indirect` section under `test-dependencies`. Elmer itself has the following dependencies:
 
@@ -92,7 +93,7 @@ For example, here's what the `test-dependencies` would look like for an app that
 "test-dependencies": {
   "direct": {
     "elm-explorations/test": "1.1.0",
-    "elm-explorations/elmer": "4.0.0"
+    "elm-explorations/elmer": "5.0.0"
   },
   "indirect": {
     "elm/http": "1.0.0"
@@ -125,6 +126,21 @@ The `elm` command searches for test dependencies any time you invoke it (so, eve
 ```
 $ ELM_HOME=$(pwd)/node_modules/elmer-test/home elm make src/Main.elm
 ```
+
+## Releases
+
+#### 5.0.0
+- Revised `Elmer.Spy` api to make it simpler and to allow the compiler to do type checking when injecting a spy or providing a fake implementation. This should provide better feedback when working with spies
+- See the section at the end of this document on migrating tests from 4.0.0 to 5.0.0
+
+#### 4.0.0
+- Updated Elmer to work with Elm 0.19
+- Revised api for targeting Html elements to allow the compiler to provide better feedback
+- See the section at the end of this document on migrating tests from 3.3.1 to 4.0.0
+
+#### 3.3.1
+- Last version for Elm 0.18
+
 
 ## Documentation
 
@@ -327,7 +343,7 @@ allTests =
                 "[{\"score\":700,\"player\":\"Brian\"},{\"score\":900,\"player\":\"Holly\"}]"
         in
           Elmer.Program.givenElement App.view App.update
-            |> Elmer.spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
+            |> Elmer.Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
             |> Elmer.Program.init (\_ -> App.init testFlags)
             |> Elmer.Html.target
                 << Elmer.Html.Selector.childrenOf 
@@ -458,10 +474,11 @@ timeSubscriptionTest =
   [ test "it prints the number of seconds" <|
     \() ->
       let
-        timeSpy = Elmer.Spy.create "fake-time" (\_ -> Time.every)
-          |> Elmer.Spy.andCallFake (\_ tagger ->
-            Elmer.Subscription.fake "timeEffect" tagger
-          )
+        timeSpy =
+          Elmer.Spy.observe (\_ -> Time.every)
+            |> Elmer.Spy.andCallFake (\_ tagger ->
+              Elmer.Subscription.fake "timeEffect" tagger
+            )
       in
         Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ timeSpy ]
@@ -494,7 +511,7 @@ You can create a spy for this function just like you would for any command-gener
 function:
 
 ```
-Elmer.Spy.create "port-spy" (\_ -> MyModule.sendData)
+Elmer.Spy.observe (\_ -> MyModule.sendData)
   |> Elmer.Spy.andCallFake (\_ -> Cmd.none)
 ```
 
@@ -520,7 +537,7 @@ during our test.
 ```
 let
   spy =
-    Elmer.Spy.create "port-spy" (\_ -> MyModule.receiveData)
+    Elmer.Spy.observe (\_ -> MyModule.receiveData)
       |> Elmer.Spy.andCallFake (\tagger ->
            Elmer.Subscription.fake "fake-receive" tagger
          )
@@ -564,7 +581,7 @@ that resolves to the time you want.
           |> Spy.replaceValue (\_ -> Time.now)
     in
       testState
-        |> Spy.use [ timeSpy ]
+        |> Elmer.Spy.use [ timeSpy ]
         |> Elmer.Html.target << by [ id "get-current-time" ]
         |> Elmer.Html.Event.click
         |> Elmer.Html.target << by [ id "current-time" ]
@@ -580,7 +597,7 @@ with care. Each spy that you add to your test couples that test to implementatio
 
 Suppose you need to write a test that expects a certain function to be called, but
 you don't need to describe the resulting behavior. You can spy on a function with
-`Elmer.Spy.create` and make expectations about it with `Elmer.Spy.expect`.
+`Elmer.Spy.observe` and make expectations about it with `Elmer.Spy.expect`.
 
 For example, suppose you want to ensure that a component is calling a specific
 function in another module for parsing some string. You have tests for the
@@ -593,13 +610,17 @@ parseTest =
   [ test "it passes it to the parsing module" <|
     \() ->
       let
-        spy = Elmer.Spy.create "parser-spy" (\_ -> MyParserModule.parse)
+        spy = 
+          Elmer.Spy.observe (\_ -> MyParserModule.parse)
+            |> Elmer.Spy.andCallThrough
       in
         Elmer.given App.defaultModel App.view App.update
           |> Elmer.Spy.use [ spy ]
           |> Elmer.Html.target << by [ tag "input", attribute ("type", "text") ]
           |> Elmer.Html.Event.input "A string to be parsed"
-          |> Elmer.Spy.expect "parser-spy" (wasCalled 1)
+          |> Elmer.Spy.expect (\_ -> MyParserModule.parse) (
+            wasCalled 1
+          )
   ]
 ```
 
@@ -614,7 +635,7 @@ parseTest =
     \() ->
       let
         spy =
-          Elmer.Spy.create "parser-spy" (\_ -> MyParserModule.parse)
+          Elmer.Spy.observe (\_ -> MyParserModule.parse)
             |> Elmer.Spy.andCallFake (\_ ->
               "Some Parsed String"
             )
@@ -633,13 +654,13 @@ parseTest =
 For any spy, you can make an expectation about how many times it was called like so:
 
 ```
-Elmer.Spy.expect "my-spy" (wasCalled 3)
+Elmer.Spy.expect (\_ -> MyModule.someFunction) (wasCalled 3)
 ```
 
 You can also expect that the spy was called with some list of arguments at least once:
 
 ```
-Elmer.Spy.expect "my-spy" (
+Elmer.Spy.expect (\_ -> MyModule.someFunction) (
   Elmer.Spy.Matchers.wasCalledWith
     [ Elmer.Spy.Matchers.stringArg "someString"
     , Elmer.Spy.Matchers.anyArg
@@ -650,34 +671,60 @@ Elmer.Spy.expect "my-spy" (
 
 See `Elmer.Spy.Matchers` for a full list of argument matchers.
 
-`Elmer.Spy.Create` is good for spying on named functions. Sometimes, though, it would be
-nice to spy on an anonymous function. Suppose that you are testing a module that takes a function
+`Elmer.Spy.observe` is good for spying on named functions in your production code.
+Sometimes, though, it would be nice to provide the code you are testing with a 'fake' function
+for testing purposes only. Suppose that you are testing a module that takes a function
 as an argument, and you want to expect that the function is called with a certain argument.
-You can use `Elmer.Spy.createWith` to produce a function that is nothing more than a spy, with a
-'fake' implementation. Create a reference to this function using `Spy.callable`. For example:
+You can create a 'fake' function in your test module, observe it with a spy, and provide it to
+the code you're testing using `Elmer.Spy.inject`. For example:
 
 ```
-let
-  spy = createWith "my-spy" (\tagger ->
-    Command.fake <| tagger "Success!"
-  )
-in
-  Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.callable "my-spy")
-    |> Elmer.Spy.use [ spy ]
-    |> Elmer.Html.target << by [ tag "input" ]
-    |> Elmer.Html.Event.input "some text"
-    |> Elmer.Html.target << by [ tag "button" ]
-    |> Elmer.Html.Event.click
-    |> Elmer.Spy.expect "my-spy" (
-      Elmer.Spy.Matchers.wasCalledWith
-        [ Elmer.Spy.Matchers.stringArg "some text"
-        ]
-    )
+someFake tagger data =
+  Command.fake <| tagger data
+
+myTest =
+  let
+    spy =
+      Spy.observe (\_ -> someFake)
+        |> Spy.andCallThrough
+  in
+    Elmer.given testModel MyModule.view (MyModule.updateUsing <| Spy.inject (\_ -> someFake))
+      |> Elmer.Spy.use [ spy ]
+      |> Elmer.Html.target << by [ tag "input" ]
+      |> Elmer.Html.Event.input "some text"
+      |> Elmer.Html.target << by [ tag "button" ]
+      |> Elmer.Html.Event.click
+      |> Elmer.Spy.expect (\_ -> someFake) (
+        Elmer.Spy.Matchers.wasCalledWith
+          [ Elmer.Spy.Matchers.anyArg
+          , Elmer.Spy.Matchers.stringArg "some text"
+          ]
+      )
 ```
+
+Use `Elmer.Spy.inject` to provide the function you want to observe so that Elmer has time to install the associated spy during the test.
 
 Finally, you can use `Spy.replaceValue` to replace the value returned by a no-argument function
 (such as `Time.now`) during a test. You can't make expectations about spies created in this
 way; `Spy.replaceValue` is just a convenient way to inject fake values during a test.
+
+
+### Upgrading from Elmer 4.x
+
+If you've written tests with Elmer 4.x, the `Elmer.Spy` api has changed:
+
+- `Elmer.Spy.create` is now `Elmer.Spy.observe` and no longer needs a string identifier.
+
+- When using `Elmer.Spy.observe` you must call either `Elmer.Spy.andCallThrough` or `Elmer.Spy.andCallFake` so
+that Elmer knows what to do when the observed function is called.
+
+- `Elmer.Spy.expect` now uses a reference to the observed function (rather than a string) to identify the function
+you'd like to assert about. 
+
+- `Elmer.Spy.createWith` has been removed. Create a 'fake' function in your test module and observe it with `Elmer.Spy.observe` instead.
+
+- `Elmer.Spy.callable` has been removed. Instead, use `Elmer.Spy.inject` to provide a 'fake' function to the code under test. 
+
 
 ### Upgrading from Elmer 3.x
 
