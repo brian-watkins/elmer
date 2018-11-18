@@ -9,9 +9,11 @@ import Elmer.Spy as Spy
 import Elmer.Spy.Arg exposing (Arg(..))
 import Elmer.Spy.Matchers as Matchers
 import Elmer.Html as Markup
+import Elmer.Html.Types exposing (HtmlSelectorGroup(..))
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
+import Elmer.Html.Selector.Printer as Selector
 import Elmer.Printer exposing (..)
 import Elmer
 import Elmer.Program
@@ -407,7 +409,11 @@ restoreTests =
             |> Spy.use [ stub ]
             |> Markup.target << by [ Sel.id "title" ]
             |> Event.click
-            |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: click, mousedown, mouseup, submit")
+            |> Expect.equal (TestState.failure <|
+              Errors.print <|
+              Errors.eventHandlerNotFound "click, mousedown, mouseup, submit"
+                (Selector.printGroup <| ElementWith [ Sel.id "title" ])
+            )
     , test "the spy is not active for the next test" <|
       \() ->
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update

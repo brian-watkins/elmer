@@ -60,7 +60,10 @@ standardEventBehavior eventTypes eventFunction =
         Elmer.given SimpleApp.defaultModel SimpleApp.view SimpleApp.update
           |> Markup.target << Sel.by [ Sel.class "no-events" ]
           |> eventFunction
-          |> Expect.equal (TestState.failure ("No event handlers found for any of the triggered events: " ++ eventTypes))
+          |> Expect.equal (TestState.failure <|
+            Errors.print <|
+              Errors.eventHandlerNotFound eventTypes "by [ class 'no-events' ]"
+          )
     ]
   ]
 

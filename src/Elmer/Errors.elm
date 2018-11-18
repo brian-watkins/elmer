@@ -21,6 +21,8 @@ module Elmer.Errors exposing
   , unknownSpy
   , wrongNumberOfSpyCalls
   , badSpyIdentifier
+  , eventHandlerNotFound
+  , noElementTargetedForEvent
   )
 
 {-| Exposed for testing
@@ -29,7 +31,7 @@ module Elmer.Errors exposing
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
 @docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongAttribute, wrongAttributeName, noAttribute
 @docs noRequest, wrongRequest, requestMatcherFailed, failedToActivateSpies, unknownSpy, wrongNumberOfSpyCalls
-@docs badSpyIdentifier
+@docs badSpyIdentifier, eventHandlerNotFound, noElementTargetedForEvent
 
 -}
 
@@ -219,6 +221,22 @@ badSpyIdentifier =
   [ description "The function referenced by Elmer.Spy.expect could not be identified."
   ]
 
+
+{-|
+-}
+eventHandlerNotFound : String -> String -> CustomError
+eventHandlerNotFound actualEvents selector =
+  [ message "These events were triggered" actualEvents
+  , message "But there were no relevant event handlers on the targeted element" selector
+  ]
+
+
+{-|
+-}
+noElementTargetedForEvent : CustomError
+noElementTargetedForEvent =
+  [ description "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
+  ]
 
 {-|
 -}

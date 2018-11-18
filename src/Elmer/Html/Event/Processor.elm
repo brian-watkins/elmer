@@ -5,6 +5,7 @@ module Elmer.Html.Event.Processor exposing
 
 import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Types exposing (..)
+import Elmer.Html.Selector.Printer as Selector
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime as Runtime
@@ -38,10 +39,17 @@ hasHandlersFor eventDescriptions context element =
       |> List.concat
   in
     if List.isEmpty handlers then
-      Err <| "No event handlers found for any of the triggered events: " ++ (
-        List.map .eventType eventDescriptions
-          |> String.join ", "
-      )
+      let
+        eventTypes =
+          List.map .eventType eventDescriptions
+            |> String.join ", "
+        selector =
+          targetedSelector context
+            |> Maybe.map Selector.printGroup
+            |> Maybe.withDefault "<No element has been targeted>"
+      in
+        Err <| 
+          Errors.print <| Errors.eventHandlerNotFound eventTypes selector
     else
       Ok element
 
@@ -56,9 +64,14 @@ apply eventDescriptionList context element =
   ) (Ok context) eventDescriptionList
 
 
+targetedSelector : Context model msg -> Maybe (HtmlSelectorGroup msg)
+targetedSelector =
+  Context.state TargetSelector
+
+
 targetedElement : Context model msg -> Result String (HtmlElement msg)
 targetedElement context =
-  case Context.state TargetSelector context of
+  case targetedSelector context of
     Just selector ->
       case Context.render context of
         Just view ->
@@ -66,7 +79,7 @@ targetedElement context =
         Nothing ->
           Err <| Errors.print Errors.noModel
     Nothing ->
-      Err "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
+      Err <| Errors.print <| Errors.noElementTargetedForEvent
 
 
 prepareHandler : HtmlEventHandler msg -> EventHandler msg

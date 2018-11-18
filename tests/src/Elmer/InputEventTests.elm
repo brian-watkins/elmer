@@ -9,9 +9,13 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
 import Elmer.Html as Markup exposing (HtmlSelector)
 import Elmer.Html.Selector exposing (..)
+import Elmer.Html.Types exposing (HtmlSelectorGroup(..))
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalled)
 import Elmer.Printer exposing (..)
+import Elmer.Errors as Errors
+import Elmer.Html.Selector.Printer as Selector
+
 
 all : Test
 all =
@@ -102,7 +106,10 @@ triggersSubmit selector =
             |> Markup.target << by selector
             |> Event.click
         in
-          Expect.equal state <| TestState.failure "No event handlers found for any of the triggered events: click, mousedown, mouseup, submit"
+          Expect.equal state <| TestState.failure (
+            Errors.print <| 
+            Errors.eventHandlerNotFound "click, mousedown, mouseup, submit" (Selector.printGroup <| ElementWith selector)
+          )
     ]
   , let
       initialModel = App.defaultModel
@@ -151,7 +158,10 @@ triggersSubmit selector =
             Expect.equal initialModel.isSubmitted False
         , test "it does nothing" <|
           \() ->
-            Expect.equal state <| TestState.failure "No event handlers found for any of the triggered events: click, mousedown, mouseup, submit"
+            Expect.equal state <| TestState.failure (
+              Errors.print <| 
+              Errors.eventHandlerNotFound "click, mousedown, mouseup, submit" (Selector.printGroup <| ElementWith selector)
+            )
         ]
       , let
           initialModel = App.defaultModel
@@ -165,7 +175,10 @@ triggersSubmit selector =
               Expect.equal initialModel.isSubmitted False
           , test "it does nothing" <|
             \() ->
-              Expect.equal state <| TestState.failure "No event handlers found for any of the triggered events: click, mousedown, mouseup, submit"
+              Expect.equal state <| TestState.failure (
+                Errors.print <| 
+                Errors.eventHandlerNotFound "click, mousedown, mouseup, submit" (Selector.printGroup <| ElementWith selector) 
+              )
           ]
       ]
   ]
@@ -271,7 +284,10 @@ selectTests =
               |> Markup.target << by [ tag "select" ]
               |> Event.select "some-value"
           in
-            Expect.equal state (TestState.failure "No event handlers found for any of the triggered events: input")
+            Expect.equal state <| TestState.failure (
+              Errors.print <| 
+              Errors.eventHandlerNotFound "input" (Selector.printGroup <| ElementWith [ tag "select" ])
+            )
       ]
     , describe "when the select has no options"
       [ test "it fails" <|

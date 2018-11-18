@@ -7,9 +7,12 @@ import Expect
 import Elmer
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html.Event as Event
+import Elmer.Html.Types exposing (HtmlSelectorGroup(..))
 import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Html.Selector exposing (..)
+import Elmer.Html.Selector.Printer as Selector
+import Elmer.Errors as Errors
 
 
 all : Test
@@ -241,7 +244,11 @@ mouseEnterTests =
             initialState
               |> Markup.target << by [ tag "li", attribute ("data-option", "2") ]
               |> Event.moveMouseIn
-              |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: mouseenter, mouseover")
+              |> Expect.equal (TestState.failure <|
+                Errors.print <| 
+                Errors.eventHandlerNotFound "mouseenter, mouseover" 
+                  (Selector.printGroup <| ElementWith [ tag "li", attribute ("data-option", "2") ])
+              )
         ]
       , describe "when the element has a mouse enter event handler"
         [ test "at first no mouse enter is recorded" <|
@@ -291,7 +298,11 @@ mouseLeaveTests =
             initialState
               |> Markup.target << by [ tag "li", attribute ("data-option", "2") ]
               |> Event.moveMouseOut
-              |> Expect.equal (TestState.failure "No event handlers found for any of the triggered events: mouseleave, mouseout")
+              |> Expect.equal (TestState.failure <|
+                Errors.print <|
+                Errors.eventHandlerNotFound "mouseleave, mouseout" 
+                  (Selector.printGroup <| ElementWith [ tag "li", attribute ("data-option", "2") ])
+              )
         ]
       , describe "when the element has the mouse leave event handler"
         [ test "at first no mouse leave is recorded" <|

@@ -3,8 +3,16 @@ module Elmer.Html.Selector.Printer exposing
   , print
   )
 
+{-| Exposed for testing
+
+@docs printGroup, print
+
+-}
+
 import Elmer.Html.Types exposing (HtmlSelectorGroup(..), HtmlSelector)
 
+{-|
+-}
 printGroup : HtmlSelectorGroup msg -> String
 printGroup selectorGroup =
   case selectorGroup of
@@ -25,7 +33,8 @@ printSelectors selectors =
   in
     "[ " ++ selectorText ++ " ]"
 
-
+{-|
+-}
 print : HtmlSelector msg -> String
 print selector =
   selector.description
