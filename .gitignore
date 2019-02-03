@@ -3,3 +3,4 @@ documentation.json
 node_modules
 tests/elm_home
 tests/elm.js
+tests/versions.dat

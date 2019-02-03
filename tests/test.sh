@@ -16,9 +16,7 @@ mkdir -p ${ELMER_HOME}
 cp -R ../src ${ELMER_HOME}/
 node ./prepareElmJson.js ./testableModules.json ../elm.json ${ELMER_HOME}/elm.json
 
-# If Version has changed ... 
-# runhaskell WriteVersions.hs ${ELMER_VERSION}
-# cp ./versions.dat ${ELM_PACKAGES_HOME}/versions.dat
+node ./packageRegistryWriter.js ${ELM_PACKAGES_HOME}/versions.dat
 
 elm make src/Main.elm --output elm.js
 
