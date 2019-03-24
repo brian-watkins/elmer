@@ -13,10 +13,10 @@ function _Function_globalIdentifier(fun) {
 
 var elmer_fakeFunctions = {}
 
-var _Function_activate = F2(function(name, func) {
+var _Function_activate = F3(function(name, calls, func) {
   elmer_fakeFunctions[name] = {
     impl: func,
-    calls: []
+    calls: calls
   }
 
   return func

@@ -40,7 +40,7 @@ import Elmer.ComponentTests as ComponentTests
 import Elmer.DemoAppTests as DemoAppTests
 import Elmer.BrowserTests as BrowserTests
 import Elmer.HtmlCustomTests as HtmlCustomTests
-
+import Elmer.SpySpanTests as SpySpanTests
 
 all : Test
 all =
@@ -71,6 +71,7 @@ all =
     , SpyFakeTests.all
     , SpyMatcherTests.all
     , SpyTests.all
+    , SpySpanTests.all
     , ElementTests.all
     , ElmerTests.all
     , HtmlKeyedTests.all

@@ -1,5 +1,6 @@
 module Elmer.Spy.Function exposing
   ( Function
+  , Argument
   , globalIdentifier
   , functionIdentifier
   , from
@@ -11,6 +12,7 @@ module Elmer.Spy.Function exposing
   )
 
 import Json.Decode as Json exposing (Value)
+import Json.Encode as Encode
 import Elm.Kernel.Function
 import Elmer.Value as Value
 
@@ -21,6 +23,9 @@ type alias Function =
   , original: Value
   , fake: Value
   }
+
+type alias Argument =
+  Encode.Value
 
 globalIdentifier : (() -> a) -> Maybe String
 globalIdentifier namingThunk =
@@ -102,17 +107,29 @@ withFake fake function =
   }
 
 
-activateSpy : Function -> Function
-activateSpy function =
+activateSpy : List (List Argument) -> Function -> Function
+activateSpy calls function =
+  let
+    callValues =
+      Encode.list (Encode.list identity) calls
+        |> Elm.Kernel.Value.unwrap
+  in
   Value.assign function.identifier function.fake
-    |> Elm.Kernel.Function.activate function.alias
+    |> Elm.Kernel.Function.activate function.alias callValues
     |> always function
 
 
-deactivateSpy : Function -> Json.Value
+deactivateSpy : Function -> List (List Argument)
 deactivateSpy function =
   Value.assign function.identifier function.original
     |> always (Elm.Kernel.Function.deactivate function.alias)
+    |> Value.decode (Json.list <| Json.list argumentDecoder)
+    |> Result.withDefault []
+
+
+argumentDecoder : Json.Decoder Argument
+argumentDecoder =
+  Json.value
 
 
 callable : String -> (a -> b)

@@ -40,7 +40,7 @@ type Spy
 type alias SpyValue =
   { name: String
   , function: Function
-  , calls: List (List Arg)
+  , calls: List (List Function.Argument)
   }
 
 type alias SpyError =
@@ -90,7 +90,7 @@ replaceValue namingFunc value =
 recordCalls : SpyValue -> Spy
 recordCalls spy =
   Active
-    { spy | function = Function.activateSpy spy.function }
+    { spy | function = Function.activateSpy spy.calls spy.function }
 
 
 callable : String -> (a -> b)
@@ -123,8 +123,16 @@ callsIfName name spyValue =
 callRecord : SpyValue -> Calls
 callRecord spyValue =
   { name = spyValue.name
-  , calls = spyValue.calls
+  , calls = decodeArguments spyValue.calls
   }
+
+
+decodeArguments : List (List Function.Argument) -> List (List Arg)
+decodeArguments =
+  List.map <| List.map <|
+    \arg ->
+      Json.decodeValue Arg.decoder arg
+        |> Result.withDefault Arg.AnyArg
 
 
 registerFake : (a -> b) -> SpyValue -> Spy
@@ -161,14 +169,8 @@ deactivateOne : Spy -> Spy
 deactivateOne spy =
   case spy of
     Active spyValue ->
-      let
-        recordedCalls =
-          Function.deactivateSpy spyValue.function
-            |> Value.decode (Json.list <| Json.list Arg.decoder)
-            |> Result.withDefault []
-      in
-        Inactive
-          { spyValue | calls = List.append spyValue.calls recordedCalls }
+      Inactive
+        { spyValue | calls = Function.deactivateSpy spyValue.function }
     _ ->
       spy
 
