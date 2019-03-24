@@ -21,9 +21,6 @@ import Elmer.Http.Types exposing (..)
 -}
 asHttpRequestHandler : Http.Request a -> HttpRequestHandler a
 asHttpRequestHandler httpRequest =
-  -- let
-  --   d = Elm.Kernel.Value.print "http request" httpRequest
-  -- in
   { request = makeHttpRequest httpRequest
   , responseHandler =
       case Value.mapArg (Value.decode expectDecoder) httpRequest of

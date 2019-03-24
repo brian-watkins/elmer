@@ -59,9 +59,6 @@ toIntention =
 
 asIntention : v -> Intention v msg subMsg
 asIntention value =
-  -- let
-      -- d = Elm.Kernel.Value.print "intention value" value
-  -- in
   case Value.field "$" value of
     1 ->
       Leaf ({ intention = value, home = Value.field "k" value })
