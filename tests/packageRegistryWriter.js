@@ -62,7 +62,7 @@ const entry = (author, project, versions) => {
 }
 
 const registry = [
-  entry("elm-explorations", "elmer", [ version(5, 0, 0) ])
+  entry("elm-explorations", "elmer", [ version(5, 0, 1) ])
 ]
 
 if (process.argv.length != 3) {

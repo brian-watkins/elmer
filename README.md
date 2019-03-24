@@ -59,13 +59,13 @@ In your `elm.json` file, you'll need to manually add elmer to the `test-dependen
 "test-dependencies": {
   "direct": {
     "elm-explorations/test": "1.1.0",
-    "elm-explorations/elmer": "5.0.0"
+    "elm-explorations/elmer": "5.0.1"
   },
   "indirect": {}
 }
 ```
 
-The latest version of Elmer is 5.0.0. Make sure the version number of elmer 
+The latest version of Elmer is 5.0.1. Make sure the version number of elmer 
 matches the version number of the `elmer-test` NPM package.
 
 Notice the `indirect` section under `test-dependencies`. Elmer itself has the following dependencies:
@@ -93,7 +93,7 @@ For example, here's what the `test-dependencies` would look like for an app that
 "test-dependencies": {
   "direct": {
     "elm-explorations/test": "1.1.0",
-    "elm-explorations/elmer": "5.0.0"
+    "elm-explorations/elmer": "5.0.1"
   },
   "indirect": {
     "elm/http": "1.0.0"
@@ -129,9 +129,12 @@ $ ELM_HOME=$(pwd)/node_modules/elmer-test/home elm make src/Main.elm
 
 ## Releases
 
+#### 5.0.1
+- Support for calling a spy across multiple test states
+
 #### 5.0.0
 - Revised `Elmer.Spy` api to make it simpler and to allow the compiler to do type checking when injecting a spy or providing a fake implementation. This should provide better feedback when working with spies
-- See the section at the end of this document on migrating tests from 4.0.0 to 5.0.0
+- See the section at the end of this document on migrating tests from 4.0.0 to 5.0.x
 
 #### 4.0.0
 - Updated Elmer to work with Elm 0.19
