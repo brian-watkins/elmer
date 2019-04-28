@@ -100,7 +100,7 @@ decodeElmerPromise =
 
 decodeConstructorAndThen : (Int -> Json.Decoder a) -> Json.Decoder a
 decodeConstructorAndThen generateDecoder =
-  Json.field "$" Json.int
+  Native.constructor
     |> Json.andThen generateDecoder
 
 

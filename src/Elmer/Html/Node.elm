@@ -53,7 +53,7 @@ asElement node =
 
 htmlNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
 htmlNode inheritedEvents tagger =
-  Json.field "$" Json.int
+  Native.constructor
    |> Json.andThen (\ctor ->
         case ctor of
           0 ->

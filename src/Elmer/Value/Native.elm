@@ -8,10 +8,16 @@ module Elmer.Value.Native exposing
   , decode
   , decoder
   , field
+  , constructor
   )
 
 import Json.Decode as Json
 import Elm.Kernel.Value
+
+
+constructor : Json.Decoder Int
+constructor =
+  Json.field "$" Json.int
 
 
 field : String -> Json.Decoder a

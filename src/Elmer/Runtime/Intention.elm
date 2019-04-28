@@ -76,7 +76,7 @@ toIntention =
 
 intentionDecoder : v -> Json.Decoder (Intention v msg subMsg)
 intentionDecoder value =
-  Native.field "$"
+  Native.constructor
     |> Json.andThen (\ctor ->
       case ctor of
         1 ->
@@ -101,7 +101,7 @@ intentionDecoder value =
 
 intentionValueDecoder : Json.Decoder (a -> b)
 intentionValueDecoder =
-  Native.field "$"
+  Native.constructor
     |> Json.andThen (\ctor ->
         case ctor of
           1 ->
