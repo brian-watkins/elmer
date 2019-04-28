@@ -8,7 +8,9 @@ module Elmer.Runtime.Intention exposing
   , subData
   )
 
+import Json.Decode as Json
 import Elmer.Value as Value
+import Elmer.Value.Native as Native
 
 type Intention a msg subMsg
     = Leaf (LeafData a)
@@ -28,24 +30,39 @@ type alias LeafData a =
 
 
 cmdData : Cmd msg -> Intention (Cmd msg) msg subMsg
-cmdData =
-  asIntention
+cmdData cmd =
+  decode (intentionDecoder cmd) cmd
+
 
 cmdValue : Cmd a -> b
 cmdValue =
-  intentionValue
+  decode intentionValueDecoder
+
+
+subData : Sub msg -> Intention (Sub msg) msg subMsg
+subData sub =
+  decode (intentionDecoder sub) sub
+
+
+subValue : Sub a -> b
+subValue =
+  decode intentionValueDecoder
+
+
+decode : Json.Decoder a -> v -> b
+decode decoder value =
+  case Value.decode decoder value of
+    Ok v ->
+      v
+    Err msg ->
+      "Could not decode intention value: " ++ Json.errorToString msg
+        |> Debug.todo
+
 
 toCmd : String -> a -> Cmd msg
 toCmd =
   toIntention
 
-subData : Sub msg -> Intention (Sub msg) msg subMsg
-subData =
-  asIntention
-
-subValue : Sub a -> b
-subValue =
-  intentionValue
 
 toSub : String -> a -> Sub msg
 toSub =
@@ -54,32 +71,44 @@ toSub =
 
 toIntention : String -> a -> b
 toIntention =
-  Value.global "_Platform_leaf"
+  Native.global "_Platform_leaf"
 
 
-asIntention : v -> Intention v msg subMsg
-asIntention value =
-  case Value.field "$" value of
-    1 ->
-      Leaf ({ intention = value, home = Value.field "k" value })
-    2 ->
-      Batch (Value.field "m" value)
-    3 ->
-      Tree ({ tree = Value.field "o" value, tagger = Value.field "n" value })
-    unknownType ->
-      "Unknown intention type: " ++ String.fromInt unknownType
-        |> Debug.todo
+intentionDecoder : v -> Json.Decoder (Intention v msg subMsg)
+intentionDecoder value =
+  Native.field "$"
+    |> Json.andThen (\ctor ->
+      case ctor of
+        1 ->
+          Native.field "k"
+            |> Json.map (\home -> 
+              Leaf { intention = value, home = home }
+            )
+        2 ->
+          Native.field "m"
+            |> Json.map Batch
+        3 ->
+          Json.map2 (\tree tagger ->
+            Tree ({ tree = tree, tagger = tagger })
+          )
+            (Native.field "o")
+            (Native.field "n")
+        unknownType ->
+          "Unknown intention type: " ++ String.fromInt unknownType
+            |> Debug.todo      
+    )
+  
 
-
--- REVISIT: Do we need to handle the case of 'batch' commands?
-intentionValue : a -> b
-intentionValue intention =
-  case Value.field "$" intention of
-    1 ->
-      Value.field "l" intention
-    3 ->
-      Value.field "o" intention
-        |> intentionValue
-    unknownType ->
-      "Unknown intention type: " ++ String.fromInt unknownType
-        |> Debug.todo
+intentionValueDecoder : Json.Decoder (a -> b)
+intentionValueDecoder =
+  Native.field "$"
+    |> Json.andThen (\ctor ->
+        case ctor of
+          1 ->
+            Native.field "l"
+          3 ->
+            Json.field "o" intentionValueDecoder
+          unknownType ->
+            "Unknown intention type: " ++ String.fromInt unknownType
+              |> Debug.todo  
+    )

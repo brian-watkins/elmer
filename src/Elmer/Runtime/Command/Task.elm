@@ -9,9 +9,11 @@ import Elmer.Runtime.Command.Fail as Fail
 import Elmer.Runtime.Command.Defer as Defer
 import Elmer.Runtime.Command.Stub as Stub
 import Elmer.Value as Value
+import Elmer.Value.Native as Native
 import Elmer.Runtime.Promise as Promise
 import Elmer.Runtime.Promise.Runner as PromiseRunner
 import Elmer.Runtime.Promise.Types exposing (..)
+import Json.Decode as Json
 
 
 name : String
@@ -24,7 +26,7 @@ commandRunner command tagger =
   let
     taskResult =
       Intention.cmdValue command
-        |> Value.mapArg (Value.decode Promise.decoder)
+        |> Value.decode (Value.firstArg Promise.decoder)
   in
     case taskResult of
       Ok promise ->
@@ -36,7 +38,7 @@ commandRunner command tagger =
             )
       Err msg ->
         CommandError <|
-          "Error decoding Task: " ++ msg
+          "Error decoding Task: " ++ Json.errorToString msg
 
 
 promiseCommand : (subMsg -> msg) -> Promised msg -> Cmd msg
@@ -58,7 +60,7 @@ toCommand : (subMsg -> msg) -> Resolution msg -> Cmd msg
 toCommand tagger resolution =
   case resolution of
     Resolved promiseValue ->
-      Value.cast promiseValue
+      Native.cast promiseValue
         |> tagger
         |> Stub.with
     Rejected _ ->

@@ -23,7 +23,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
 import Elmer.Errors as Errors exposing (failWith)
 import Elmer exposing (Matcher)
-import Elmer.Value as Value
+import Elmer.Value.Encode as Value
 import Elmer.Navigation.Internal exposing (..)
 import Expect
 import Elmer.Printer exposing (..)

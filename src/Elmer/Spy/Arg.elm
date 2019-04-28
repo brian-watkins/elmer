@@ -14,7 +14,7 @@ module Elmer.Spy.Arg exposing
 
 import Expect
 import Json.Decode as Json exposing (Decoder)
-import Elmer.Value as Value
+import Elmer.Value.Native as Native
 import Elmer.Internal as Internal
 
 
@@ -43,21 +43,21 @@ value : Arg -> Maybe ArgValue
 value arg =
   case arg of
     StringArg str ->
-      Just <| Value.cast str
+      Just <| Native.cast str
     IntArg num ->
-      Just <| Value.cast num
+      Just <| Native.cast num
     FloatArg num ->
-      Just <| Value.cast num
+      Just <| Native.cast num
     BoolArg bool ->
-      Just <| Value.cast bool
+      Just <| Native.cast bool
     TypedArg typed ->
-      Just <| Value.cast typed
+      Just <| Native.cast typed
     FunctionArg ->
       Nothing
     AnyArg ->
-      Just <| Value.cast never
+      Just <| Native.cast never
     ArgThat _ ->
-      Just <| Value.cast never
+      Just <| Native.cast never
 
 
 {-|
@@ -87,20 +87,20 @@ asString arg =
 -}
 decoder : Decoder Arg
 decoder =
-  Value.decoder
-    |> Json.map (\arg -> (Value.nativeType arg, arg)) 
+  Native.decoder
+    |> Json.map (\arg -> (Native.nativeType arg, arg)) 
     |> Json.map (\(argType, val) ->
         case argType of
           "string" ->
-            StringArg <| Value.cast val
+            StringArg <| Native.cast val
           "int" ->
-            IntArg <| Value.cast val
+            IntArg <| Native.cast val
           "float" ->
-            FloatArg <| Value.cast val
+            FloatArg <| Native.cast val
           "object" ->
-            TypedArg <| Value.cast val
+            TypedArg <| Native.cast val
           "boolean" ->
-            BoolArg <| Value.cast val
+            BoolArg <| Native.cast val
           "function" ->
             FunctionArg
           _ ->

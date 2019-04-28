@@ -14,7 +14,7 @@ module Elmer.Spy.Function exposing
 import Json.Decode as Json exposing (Value)
 import Json.Encode as Encode
 import Elm.Kernel.Function
-import Elmer.Value as Value
+import Elmer.Value.Native as Native
 
 
 type alias Function =
@@ -30,7 +30,7 @@ type alias Argument =
 globalIdentifier : (() -> a) -> Maybe String
 globalIdentifier namingThunk =
   Elm.Kernel.Function.globalIdentifier namingThunk
-    |> Value.decode identifierDecoder
+    |> Native.decode identifierDecoder
     |> Result.withDefault Nothing
 
 
@@ -57,9 +57,9 @@ from namingThunk =
         in
           { alias = functionAlias
           , identifier = globalId
-          , original = Value.global globalId
+          , original = Native.global globalId
           , fake =
-              Value.global globalId
+              Native.global globalId
                 |> recordable functionAlias
           }
     )
@@ -73,8 +73,8 @@ replace namingThunk value =
           Just
             { alias = globalId
             , identifier = globalId
-            , original = Value.global globalId
-            , fake = Value.cast value
+            , original = Native.global globalId
+            , fake = Native.cast value
             }
         else
           Nothing
@@ -83,8 +83,8 @@ replace namingThunk value =
 
 isValue : String -> Bool
 isValue globalId =
-  Value.global globalId
-    |> Value.nativeType
+  Native.global globalId
+    |> Native.nativeType
     |> (/=) "function"
 
 
@@ -102,7 +102,7 @@ withFake : (a -> b) -> Function -> Function
 withFake fake function =
   { function
   | fake =
-      Value.cast fake
+      Native.cast fake
         |> recordable function.alias
   }
 
@@ -112,18 +112,18 @@ activateSpy calls function =
   let
     callValues =
       Encode.list (Encode.list identity) calls
-        |> Elm.Kernel.Value.unwrap
+        |> Native.unwrap
   in
-  Value.assign function.identifier function.fake
+  Native.assign function.identifier function.fake
     |> Elm.Kernel.Function.activate function.alias callValues
     |> always function
 
 
 deactivateSpy : Function -> List (List Argument)
 deactivateSpy function =
-  Value.assign function.identifier function.original
+  Native.assign function.identifier function.original
     |> always (Elm.Kernel.Function.deactivate function.alias)
-    |> Value.decode (Json.list <| Json.list argumentDecoder)
+    |> Native.decode (Json.list <| Json.list argumentDecoder)
     |> Result.withDefault []
 
 
@@ -138,7 +138,7 @@ callable name =
     let
       spyFunc =
         Elm.Kernel.Function.active name
-          |> Value.decode (Json.nullable Value.decoder)
+          |> Native.decode (Json.nullable Native.decoder)
           |> Result.withDefault Nothing
     in
       case spyFunc of

@@ -35,7 +35,7 @@ import Elmer.Spy exposing (Calls)
 import Elmer.Spy.Arg as Arg
 import Elmer.Spy.Call as Call
 import Elmer.Printer exposing (..)
-import Elmer.Value as Value
+import Elmer.Value.Native as Native
 import Elmer.Errors as Errors exposing (failWith)
 
 
@@ -100,7 +100,7 @@ Note: You may not match what you want if your typed value contains a function re
 -}
 typedArg : a -> Arg
 typedArg item =
-  Value.cast item
+  Native.cast item
     |> Arg.TypedArg
 
 {-| Matches an argument that is a function.
@@ -136,7 +136,7 @@ that is different from that of the argument you are trying to match.
 -}
 argThat : Matcher a -> Arg
 argThat matcher =
-  Value.cast matcher
+  Native.cast matcher
     |> Arg.ArgThat
 
 

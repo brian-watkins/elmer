@@ -13,6 +13,7 @@ module Elmer.Html.Node exposing
 import Html exposing (Html)
 import Elmer.Html.Types exposing (..)
 import Elmer.Value as Value
+import Elmer.Value.Native as Native
 import Json.Decode as Json
 import Dict exposing (Dict)
 
@@ -28,175 +29,195 @@ type NodeType
 -}
 from : Html msg -> HtmlNode msg
 from =
-  fromHtml [] Nothing
+  decodeHtml [] Nothing
+
+
+decodeHtml : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
+decodeHtml inheritedEvents tagger html =
+  case Native.decode (htmlNode inheritedEvents tagger) html of
+    Ok h ->
+      h
+    Err msg ->
+      Debug.todo <| "Unable to parse html: " ++ (Json.errorToString msg)
 
 {-|
 -}
 asElement : HtmlNode msg -> Maybe (HtmlElement msg)
 asElement node =
   case node of
-    Element element ->
-      Just element
+    Element el ->
+      Just el
     Text _ ->
       Nothing
 
 
-fromHtml : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromHtml inheritedEvents tagger html =
-  case Value.field "$" html of
-    0 ->
-      fromText html
-    1 ->
-      fromNode inheritedEvents tagger html
-    2 ->
-      fromKeyedNode inheritedEvents tagger html
-    3 ->
-      fromCustomNode inheritedEvents tagger html
-    4 ->
-      fromTaggedNode inheritedEvents tagger html
-    5 -> 
-      fromLazyNode inheritedEvents tagger html
-    unknownType ->
-      Debug.todo <| "Unknown html type: " ++ (String.fromInt unknownType)
+htmlNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
+htmlNode inheritedEvents tagger =
+  Json.field "$" Json.int
+   |> Json.andThen (\ctor ->
+        case ctor of
+          0 ->
+            textNode
+          1 ->
+            element inheritedEvents tagger
+          2 ->
+            element inheritedEvents tagger
+          3 ->
+            customElement inheritedEvents tagger
+          4 ->
+            taggedElement inheritedEvents tagger
+          5 ->
+            lazyElement inheritedEvents tagger
+          unknownType ->
+            Debug.todo <| "Unknown html type: " ++ (String.fromInt unknownType)
+      )
+    
+
+textNode : Json.Decoder (HtmlNode msg)
+textNode =
+  Native.field "a"
+    |> Json.map Text
 
 
-fromText : Html msg -> HtmlNode msg
-fromText html =
-  Value.field "a" html
-    |> Text
+taggedElement : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
+taggedElement inheritedEvents maybePreviousTagger =
+  Native.field "j"
+    |> Json.andThen (\thisTagger ->
+        let
+          mappedTagger =
+            maybePreviousTagger
+              |> Maybe.map (\previous -> previous << thisTagger)
+              |> Maybe.withDefault (Native.cast thisTagger)
+        in
+          Json.field "k" <|
+            htmlNode inheritedEvents (Just mappedTagger)
+      )
 
 
-fromTaggedNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromTaggedNode inheritedEvents maybePreviousTagger html =
-  let
-    thisTagger = Value.field "j" html
-    fullTagger =
-      maybePreviousTagger
-        |> Maybe.map (\previous -> previous << thisTagger)
-        |> Maybe.withDefault thisTagger
-  in
-    Value.field "k" html
-      |> fromHtml inheritedEvents (Just fullTagger)
+lazyElement : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
+lazyElement inheritedEvents tagger =
+  Json.field "m" Native.decoder
+    |> Json.andThen (\lazyThunk ->
+      lazyThunk ()
+        |> Json.succeed << decodeHtml inheritedEvents tagger
+    )  
 
 
-fromLazyNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromLazyNode inheritedEvents tagger html =
-  ()
-    |> Value.field "m" html
-    |> fromHtml inheritedEvents tagger
+element : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
+element inheritedEvents tagger =
+  Json.map Element <|
+    Json.map7 HtmlElement
+      tagDecoder
+      propertiesDecoder
+      attributesDecoder
+      stylesDecoder
+      (childrenDecoder inheritedEvents tagger)
+      (Json.succeed inheritedEvents)
+      (eventHandlers tagger)
 
 
-fromNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromNode =
-  fromNodeWithChildren identity
+customElement : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
+customElement inheritedEvents tagger =
+  Json.map Element <|
+    Json.map7 HtmlElement
+      (Json.succeed "div")
+      propertiesDecoder
+      attributesDecoder
+      stylesDecoder
+      (Json.succeed [ Text "<Custom Element -- Content not rendered>" ])
+      (Json.succeed inheritedEvents)
+      (eventHandlers tagger)
 
 
-fromKeyedNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromKeyedNode =
-  fromNodeWithChildren Tuple.second
-  
-
-fromNodeWithChildren : (a -> Html msg) -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromNodeWithChildren childMapper inheritedEvents tagger node =
-  basicElement (Value.field "c" node) inheritedEvents tagger node
-    |> withChildren (
-        handleChildNodes 
-          childMapper
-          ( List.append inheritedEvents <| eventHandlers tagger node )
-          tagger
-          node
+childrenDecoder : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (List (HtmlNode msg))
+childrenDecoder inheritedEvents tagger =
+  eventHandlers tagger
+    |> Json.andThen (\events -> 
+      childNodesDecoder (List.append inheritedEvents events) tagger
     )
-    |> Element
 
 
-fromCustomNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlNode msg
-fromCustomNode inheritedEvents tagger html =
-  basicElement "div" inheritedEvents tagger html
-    |> withChildren [ Text "<Custom Element -- Content not rendered>" ]
-    |> Element
-
-
-basicElement : String -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> HtmlElement msg
-basicElement tag inheritedEvents tagger html =
-  { tag = tag
-  , properties = decodeDict propertiesDecoder html
-  , attributes = decodeDict attributesDecoder html
-  , styles = decodeDict stylesDecoder html
-  , children = []
-  , inheritedEventHandlers = inheritedEvents
-  , eventHandlers = eventHandlers tagger html
-  }
-
-
-withChildren : List (HtmlNode msg) -> HtmlElement msg -> HtmlElement msg
-withChildren children element =
-  { element | children = children }
-
-
-handleChildNodes : (a -> Html msg) -> List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Html msg -> List (HtmlNode msg)
-handleChildNodes mapper inheritedEvents tagger node =
-  Value.decode childrenDecoder node
-    |> Result.withDefault []
-    |> List.map mapper
-    |> List.map (fromHtml inheritedEvents tagger)
-
-
-childrenDecoder : Json.Decoder (List Json.Value)
-childrenDecoder =
-  Json.field "e" <| Json.list Value.decoder
-
-
-childDecoder : Json.Decoder Json.Value
-childDecoder =
-  Json.oneOf
-    [ Json.field "_1" Json.value
-    , Json.value
+childNodesDecoder : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (List (HtmlNode msg))
+childNodesDecoder inheritedEvents tagger =
+  Json.field "e" <| Json.list (
+    Json.oneOf
+    [ keyedNode inheritedEvents tagger
+    , htmlNode inheritedEvents tagger 
     ]
-
-eventHandlers : Maybe (Tagger subMsg msg) -> Html msg -> List (HtmlEventHandler msg)
-eventHandlers tagger html =
-  Value.decode eventDecoder html
-    |> Result.withDefault Dict.empty
-    |> Dict.toList
-    |> List.map (toEventHandler tagger)
+  )
 
 
-eventDecoder : Json.Decoder (Dict String Json.Value)
-eventDecoder =
-  Json.dict Value.decoder
-    |> Json.at [ "d", "a0" ]
+keyedNode : List (HtmlEventHandler msg) -> Maybe (Tagger subMsg msg) -> Json.Decoder (HtmlNode msg)
+keyedNode inheritedEvents tagger =
+  Json.map Tuple.second <| Value.tuple (Json.succeed ()) (htmlNode inheritedEvents tagger)
 
 
-toEventHandler : Maybe (Tagger subMsg msg) -> (String, Json.Value) -> HtmlEventHandler msg
-toEventHandler tagger (name, event) =
-  { eventType = name
-  , decoder =
-      case tagger of
-        Just t ->
-          Json.map (\m -> { message = t m, stopPropagation = False, preventDefault = False }) <|
-                Value.field "a" event
-        Nothing ->
-          case Value.constructor event of
-            "Custom" ->
-              Value.field "a" event
-            "MayStopPropagation" ->
-              Json.map (\t -> { message = Tuple.first t, stopPropagation = Tuple.second t, preventDefault = False }) <|
-                Value.field "a" event
-            "MayPreventDefault" ->
-              Json.map (\t -> { message = Tuple.first t, stopPropagation = False, preventDefault = Tuple.second t }) <|
-                Value.field "a" event
-            "Normal" ->
-              Json.map (\m -> { message = m, stopPropagation = False, preventDefault = False }) <|
-                Value.field "a" event
-            constructor ->
-              Json.fail <| "Unknown constructor for event: " ++ constructor
-  }
+eventHandlers : Maybe (Tagger subMsg msg) -> Json.Decoder (List (HtmlEventHandler msg))
+eventHandlers tagger =
+  Json.oneOf
+  [ Json.at [ "d", "a0" ]
+      <| Json.map (List.map (mapTuple HtmlEventHandler))
+      <| Json.keyValuePairs (eventValueDecoder tagger)
+  , Json.succeed []
+  ]
 
 
-decodeDict : Json.Decoder (Dict String a) -> Html msg -> Dict String a
-decodeDict decoder node =
-  Value.decode decoder node
-    |> Result.withDefault Dict.empty
+mapTuple : (a -> b -> c) -> (a, b) -> c
+mapTuple mapper tuple =
+  mapper (Tuple.first tuple) (Tuple.second tuple)
+
+
+eventValueDecoder : Maybe (Tagger subMsg msg) -> Json.Decoder (Json.Decoder (HtmlEventValue msg))
+eventValueDecoder tagger =
+  case tagger of
+    Just t ->
+      decodeEventValue (\msg ->
+        { message = t msg
+        , stopPropagation = False
+        , preventDefault = False
+        }
+      )
+    Nothing ->
+      Value.constructor
+        |> Json.andThen (\ctor ->
+            case ctor of
+              "Custom" ->
+                Native.field "a"
+              "MayStopPropagation" ->
+                decodeEventValue (\tup ->
+                  { message = Tuple.first tup
+                  , stopPropagation = Tuple.second tup
+                  , preventDefault = False
+                  }
+                )
+              "MayPreventDefault" ->
+                decodeEventValue (\tup ->
+                  { message = Tuple.first tup
+                  , stopPropagation = False
+                  , preventDefault = Tuple.second tup
+                  }
+                )
+              "Normal" ->
+                decodeEventValue (\msg ->
+                  { message = msg
+                  , stopPropagation = False
+                  , preventDefault = False
+                  }
+                )
+              unknown ->
+                Json.fail <| "Unknown constructor for event: " ++ unknown
+        )
+
+
+decodeEventValue : (a -> HtmlEventValue msg) -> Json.Decoder (Json.Decoder (HtmlEventValue msg))
+decodeEventValue mapper =
+  Native.field "a"
+    |> Json.map (Json.map mapper)
+
+
+tagDecoder : Json.Decoder String
+tagDecoder =
+  Json.field "c" Json.string
 
 
 propertiesDecoder : Json.Decoder (Dict String HtmlFact)
@@ -222,11 +243,15 @@ propertiesDecoder =
 -- REVISIT -- Could attributes have boolean value or number values? Do we care?
 attributesDecoder : Json.Decoder (Dict String String)
 attributesDecoder =
-    Json.dict Json.string
-      |> Json.at [ "d", "a3" ]
+  Json.oneOf
+  [ Json.at [ "d", "a3" ] <| Json.dict Json.string
+  , Json.succeed Dict.empty
+  ]
 
 
 stylesDecoder : Json.Decoder (Dict String String)
 stylesDecoder =
-    Json.dict Json.string
-      |> Json.at [ "d", "a1" ]
+  Json.oneOf
+  [ Json.at [ "d", "a1" ] <| Json.dict Json.string
+  , Json.succeed Dict.empty
+  ]

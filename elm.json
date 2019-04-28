@@ -20,6 +20,7 @@
         "Elmer.Http.Route",
         "Elmer.Navigation",
         "Elmer.Command",
+        "Elmer.Value",
         "Elmer.Program",
         "Elmer.Program.Matchers",
         "Elmer.Spy",

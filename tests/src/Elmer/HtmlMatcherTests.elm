@@ -379,7 +379,7 @@ listensForEventTests =
           |> Expect.equal (Expect.fail <|
             format
               [ message "Expected element to listen for event" "click"
-              , message "but it listens for" "mousedown\nmouseup"
+              , message "but it listens for" "mouseup\nmousedown"
               ]
             )
     ]

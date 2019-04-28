@@ -6,6 +6,7 @@ import Elmer.Runtime.Promise.Types exposing (..)
 import Elmer.Runtime.Promise as Promise
 import Json.Decode as Json exposing (Value)
 import Elmer.Value as Value
+import Elmer.Value.Native as Native
 
 
 emptyState : Promised msg
@@ -61,12 +62,12 @@ resolveFor : Promised msg -> Promise msg -> Promised msg
 resolveFor promised promise =
   resolve promise promised
 
-unwrapOrFail : Result String a -> Promise msg
+unwrapOrFail : Result Json.Error (Promise msg) -> Promise msg
 unwrapOrFail result =
   case result of
     Ok value ->
-      Value.cast value
+      value
     Err msg ->
-      "Error decoding promise: " ++ msg
+      "Error decoding promise: " ++ Json.errorToString msg
         |> Promise.failWith
         |> Complete

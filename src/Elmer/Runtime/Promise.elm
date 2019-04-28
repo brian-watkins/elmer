@@ -4,7 +4,7 @@ module Elmer.Runtime.Promise exposing
   )
 
 import Json.Decode as Json exposing (Value)
-import Elmer.Value as Value
+import Elmer.Value.Native as Native
 import Elmer.Runtime.Command.Fail as Fail
 import Elmer.Runtime.Promise.Types exposing (..)
 
@@ -55,7 +55,7 @@ nextPromiseDecoder =
 
 callbackDecoder : Json.Decoder (Value -> Value)
 callbackDecoder =
-  Json.field "b" Value.decoder
+  Json.field "b" Native.decoder
 
 
 decodeResolution : Json.Decoder (Resolution msg)
@@ -76,7 +76,7 @@ decodeResolution =
 
 valueDecoder : Json.Decoder Value
 valueDecoder =
-  Json.field "a" Value.decoder
+  Json.field "a" Native.decoder
 
 
 decodeElmerPromise : Json.Decoder (Promise msg)
@@ -86,10 +86,10 @@ decodeElmerPromise =
       case ctor of
         1001 ->
           Json.map2 AndDo
-            (Json.field "command" Value.decoder)
+            (Json.field "command" Native.decoder)
             (Json.field "task" (Json.lazy (\_ -> decoder)))
         1002 ->
-          Json.map (Complete << Aborted) <| Json.field "command" Value.decoder
+          Json.map (Complete << Aborted) <| Json.field "command" Native.decoder
         1003 ->
           Json.map Defer
             (Json.field "task" (Json.lazy (\_ -> decoder)))

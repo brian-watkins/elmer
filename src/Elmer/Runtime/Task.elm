@@ -6,7 +6,7 @@ module Elmer.Runtime.Task exposing
   )
 
 import Json.Encode as Encode exposing (Value)
-import Elmer.Value as Value
+import Elmer.Value.Encode as Value
 import Task exposing (Task)
 import Elmer.Runtime.Command.MapState
 

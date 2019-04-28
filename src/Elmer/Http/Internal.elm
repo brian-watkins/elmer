@@ -23,47 +23,69 @@ asHttpRequestHandler : Http.Request a -> HttpRequestHandler a
 asHttpRequestHandler httpRequest =
   { request = makeHttpRequest httpRequest
   , responseHandler =
-      case Value.mapArg (Value.decode expectDecoder) httpRequest of
+      case Value.decode expectDecoder httpRequest of
         Ok handler ->
           handler
         Err err ->
-          Debug.todo <| "Error fetching" ++ err
+          "Error fetching" ++ Json.errorToString err
+            |> Debug.todo
   }
 
-expectDecoder : Json.Decoder Json.Value
+
+expectDecoder : Json.Decoder a
 expectDecoder =
-  Json.at ["expect", "a"] Value.decoder
+  Value.firstArg <|
+    Json.at ["expect", "a"] Value.decoder
 
 
 {-|
 -}
 makeHttpRequest : Http.Request a -> HttpRequest
-makeHttpRequest =
-  Value.mapArg <|
-    \r ->
-      { method = Value.field "method" r
-      , url = Value.field "url" r
-      , headers = List.map makeHttpHeader <| Value.field "headers" r
-      , body = makeBody r
-      }
+makeHttpRequest request =
+  case Value.decode httpRequestDecoder request of
+    Ok r -> 
+      r
+    Err msg ->
+      "Unable to decode Http.Request: " ++ Json.errorToString msg
+        |> Debug.todo
 
 
-makeBody : a -> Maybe String
-makeBody request =
-  let
-    body = Value.field "body" request
-  in
-    if Value.constructor body == "StringBody" then
-      Value.mapArg2 HttpStringBody body
-        |> .body
-        |> Just
-    else
-      Nothing
+httpRequestDecoder : Json.Decoder HttpRequest
+httpRequestDecoder =
+  Value.firstArg <|
+    Json.map4 HttpRequest
+      (Json.field "method" Json.string)
+      (Json.field "url" Json.string)
+      (Json.field "headers" (Value.list headerDecoder))
+      (Json.field "body" bodyDecoder)
 
 
-makeHttpHeader : Http.Header -> HttpHeader
-makeHttpHeader header =
-  Value.mapArg2 HttpHeader header
+headerDecoder : Json.Decoder HttpHeader
+headerDecoder =
+  Json.map2 HttpHeader
+    (Value.firstArg Json.string)
+    (Value.secondArg Json.string)
+
+
+bodyDecoder : Json.Decoder (Maybe String)
+bodyDecoder =
+  Value.constructor
+    |> Json.andThen (\ctor ->
+      if ctor == "StringBody" then
+        stringBodyDecoder
+          |> Json.map .body
+          |> Json.map Just
+      else
+        Json.succeed Nothing
+    )
+
+
+stringBodyDecoder : Json.Decoder HttpStringBody
+stringBodyDecoder =
+  Json.map2 HttpStringBody
+    (Value.firstArg Json.string)
+    (Value.secondArg Json.string)
+
 
 {-|
 -}
@@ -72,6 +94,7 @@ route url =
   String.split "?" url
     |> List.head
     |> Maybe.withDefault ""
+
 
 {-|
 -}
