@@ -33,11 +33,8 @@ decoder =
 decode : Json.Decoder a -> v -> Result Json.Error b
 decode valueDecoder value =
   wrap value
-    |> cast
     |> Json.decodeValue valueDecoder
-    |> Result.mapError cast
-    |> Result.map cast
-    |> Result.map (\v -> unwrap v |> cast)
+    |> Result.map unwrap
 
 
 cast : a -> b
