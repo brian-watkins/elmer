@@ -1,0 +1,25 @@
+{
+  "name": "elmer",
+  "version": "1.0.0",
+  "description": "A test framework for Elm",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brian-watkins/elmer.git"
+  },
+  "author": "Brian Watkins",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brian-watkins/elmer/issues"
+  },
+  "homepage": "https://github.com/brian-watkins/elmer#readme",
+  "devDependencies": {
+    "elm": "^0.19.0-bugfix6"
+  }
+}

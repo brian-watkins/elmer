@@ -2,6 +2,7 @@
 
 set -ex
 
+export ELM="../node_modules/.bin/elm"
 export ELMER_VERSION="5.0.1"
 export ELM_HOME="$(pwd)"/elm_home
 export ELM_PACKAGES_HOME="${ELM_HOME}/0.19.0/package"
@@ -18,6 +19,6 @@ node ./prepareElmJson.js ./testableModules.json ../elm.json ${ELMER_HOME}/elm.js
 
 node ./packageRegistryWriter.js ${ELM_PACKAGES_HOME}/versions.dat
 
-elm make src/Main.elm --output elm.js
+${ELM} make src/Main.elm --output elm.js
 
 node runTests.js
