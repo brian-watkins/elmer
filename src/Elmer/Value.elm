@@ -44,9 +44,20 @@ Suppose there's a custom type like so:
 
 Then, if `superTypeValue` is a `FunType "Bowling"`, you can decode its constructor like so.
 
-    Value.decode Value.constructor superTypeValue
+    Elmer.Value.decode constructor superTypeValue
 
 This will result in: `Ok "FunType"`
+
+It can be useful to combine this function with `Json.andThen` to decide which decoder to 
+provide for a value:
+
+    constructor
+      |> Json.andThen (\ctor ->
+        case ctor of
+          "FunType" -> funTypeDecoder
+          "AwesomeType" -> awesomeTypeDecoder
+          _ -> Json.fail "Not a SuperType"
+      )
 
 -}
 constructor : Json.Decoder String
@@ -77,23 +88,9 @@ Suppose there's a custom type like so:
 
 Then, if `superTypeValue` is a `FunType "Bowling"`, you can decode its first argument like so.
 
-    Value.decode (Value.firstArg Json.string) superTypeValue
+    Elmer.Value.decode (firstArg Json.string) superTypeValue
 
 This will result in: `Ok "Bowling"`.
-
-You might want to use this in conjunction with `Value.constructor` to decide which
-argument decoder to use. Here's a decoder to get the first argument for any `SuperType` value:
-
-    Value.constructor
-      |> Json.andThen (\ctor ->
-        case ctor of
-          "FunType" ->
-            Value.firstArg Json.string
-          "AwesomeType" ->
-            Value.firstArg Json.int
-          _ ->
-            Json.fail "Not a SuperType value"
-      )
 
 -}
 firstArg : Json.Decoder a -> Json.Decoder v
@@ -110,7 +107,7 @@ Suppose there's a custom type like so:
 
 Then, if `superTypeValue` is a `CoolType "Bowling" 28 myRecord`, you can decode its second argument like so.
 
-    Value.decode (Value.secondArg Json.int) superTypeValue
+    Elmer.Value.decode (secondArg Json.int) superTypeValue
 
 This will result in: `Ok 28`.
 
@@ -129,7 +126,7 @@ Suppose there's a custom type like so:
 
 Then, if `superTypeValue` is a `CoolType "Bowling" 28 myRecord`, you can decode its third argument like so.
 
-    Value.decode (Value.thirdArg someRecordDecoder) superTypeValue
+    Elmer.Value.decode (thirdArg someRecordDecoder) superTypeValue
 
 -}
 thirdArg : Json.Decoder a -> Json.Decoder v
@@ -146,8 +143,8 @@ Maybe there's an opaque type that hides a tuple:
 
 Here's a decoder that allows you to inspect the tuple in a `HiddenTuple` value:
 
-    Value.firstArg <| 
-      Value.tuple Json.string Json.int
+    Elmer.Value.firstArg <| 
+      tuple Json.string Json.int
 
 -}
 tuple : Json.Decoder a -> Json.Decoder b -> Json.Decoder (a, b)
@@ -212,7 +209,7 @@ Suppose there's an opaque type that hides a function:
 
 You could decode the function like so:
 
-    Value.firstArg Value.decoder
+    Elmer.Value.firstArg decoder
 
 By using this decoder on a `HiddenFunction` value, you can gain access
 to and use the function just like you'd expect.
