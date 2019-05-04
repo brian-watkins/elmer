@@ -3,7 +3,7 @@
 set -ex
 
 export ELM="../node_modules/.bin/elm"
-export ELMER_VERSION="5.0.1"
+export ELMER_VERSION="6.0.0"
 export ELM_HOME="$(pwd)"/elm_home
 export ELM_PACKAGES_HOME="${ELM_HOME}/0.19.0/package"
 export ELMER_HOME="${ELM_PACKAGES_HOME}/elm-explorations/elmer/${ELMER_VERSION}"
