@@ -23,6 +23,7 @@
         "Elmer.Value",
         "Elmer.Program",
         "Elmer.Program.Matchers",
+        "Elmer.Effects",
         "Elmer.Spy",
         "Elmer.Spy.Matchers",
         "Elmer.Subscription"

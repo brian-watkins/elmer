@@ -22,6 +22,7 @@ import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
 import Elmer.Errors as Errors exposing (failWith)
+import Elmer.Effects as Effects
 import Elmer exposing (Matcher)
 import Elmer.Value.Encode as Value
 import Elmer.Navigation.Internal exposing (..)
@@ -87,7 +88,7 @@ fakeNavigateCommand : String -> Key -> String -> Cmd msg
 fakeNavigateCommand functionName _ url =
   let
     parseCommand = RuntimeCommand.generate <| generateUrlChangeCommand functionName url
-    stateCommand = RuntimeCommand.mapState Location (\_ -> url)
+    stateCommand = Effects.push Location (\_ -> url)
   in
     Cmd.batch [ stateCommand, parseCommand ]
 
@@ -117,11 +118,10 @@ as part of the call to `Elmer.init` that provides the initial model and command 
 -}
 expectLocation : String -> Matcher (Elmer.TestState model msg)
 expectLocation expectedURL =
-  TestState.mapToExpectation <|
-      \context ->
-        case Context.state Location context of
-          Just location ->
-            Expect.equal location expectedURL
-                |> Expect.onFail (Errors.print <| Errors.wrongLocation expectedURL location)
-          Nothing ->
-            failWith <| Errors.noLocation expectedURL
+  Effects.expect Location <| \maybeLocation ->
+    case maybeLocation of
+      Just location ->
+        Expect.equal location expectedURL
+            |> Expect.onFail (Errors.print <| Errors.wrongLocation expectedURL location)
+      Nothing ->
+        failWith <| Errors.noLocation expectedURL

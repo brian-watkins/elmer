@@ -6,7 +6,8 @@ module Elmer.Http.Send exposing
 import Elmer.Http.Internal as HttpInternal
 import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
-import Elmer.Runtime.Command as RuntimeCommand
+import Elmer.Effects as Effects
+import Elmer.Command as Command
 import Elmer.Printer exposing (..)
 import Http
 
@@ -22,7 +23,7 @@ stubbedWith responseStubs tagger request =
         Err error ->
           failCommand response.request tagger error
     Err error ->
-      RuntimeCommand.fail error
+      Command.fail error
 
 
 spy : HttpRequestFunction a msg
@@ -37,23 +38,23 @@ failCommand : HttpRequest -> (Result Http.Error a -> msg) -> Http.Error -> Cmd m
 failCommand httpRequest tagger error =
   case error of
     Http.BadPayload msg response ->
-      RuntimeCommand.fail <| format
+      Command.fail <| format
         [ message "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
         , description <| "\tWith body: " ++ (printBody response.body)
         , message "failed with error" msg
         , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
         ]
     _ ->
-      RuntimeCommand.stub (tagger (Err error))
+      Command.fake (tagger (Err error))
 
 
 generateCommand : HttpStub -> (Result Http.Error a -> msg) -> a -> Cmd msg
 generateCommand stub tagger data =
   let
-    command = RuntimeCommand.stub (tagger (Ok data))
+    command = Command.fake (tagger (Ok data))
   in
     if stub.deferResponse then
-      RuntimeCommand.defer command
+      Command.defer command
     else
       command
 
@@ -61,7 +62,7 @@ generateCommand stub tagger data =
 toHttpCommand : HttpRequest -> Cmd msg -> Cmd msg
 toHttpCommand request command =
   let
-    httpCommand = RuntimeCommand.mapState Requests <| updateTestState request
+    httpCommand = Effects.push Requests <| updateTestState request
   in
     Cmd.batch [ httpCommand, command ]
 

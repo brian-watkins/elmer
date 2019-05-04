@@ -35,11 +35,10 @@ import Elmer.Http.Send as FakeSend
 import Elmer.Http.ToTask as FakeToTask
 import Elmer.Http.Route as Route exposing (HttpRoute)
 import Elmer.Http.Request exposing (HttpRequest)
-import Elmer.Context as Context
-import Elmer.Runtime.Command as RuntimeCommand
-import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
+import Elmer.Effects as Effects
+import Elmer.Command as Command
 import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors
 import Expect exposing (Expectation)
@@ -124,19 +123,9 @@ in the history of this TestState.
 -}
 clearRequestHistory : Elmer.TestState model msg -> Elmer.TestState model msg
 clearRequestHistory =
-  TestState.map <|
-    \context ->
-      let
-        requests =
-          Context.state Types.Requests context
-            |> Maybe.withDefault []
-      in
-        if List.isEmpty requests then
-          TestState.failure "No HTTP requests to clear"
-        else
-          RuntimeCommand.mapState Types.Requests (\_ -> [])
-            |> Context.updateStateFor context
-            |> TestState.with
+  Effects.use Types.Requests <|
+    \_ ->
+      Command.send (\_ -> Effects.push Types.Requests (\_ -> []))
 
 
 {-| Expect one or more requests to the specified route.
@@ -147,12 +136,11 @@ Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.sp
 -}
 expectRequest : HttpRoute -> Matcher (Elmer.TestState model msg)
 expectRequest route =
-  TestState.mapToExpectation <|
-    \context ->
+  Effects.expect Types.Requests <|
+    \maybeRequests ->
       let
         requests =
-          Context.state Types.Requests context
-            |> Maybe.withDefault []
+          Maybe.withDefault [] maybeRequests
       in
         if List.isEmpty requests then
           Errors.failWith <| Errors.noRequest (routeToString route)
@@ -185,12 +173,11 @@ Note: This must be used in conjunction with `Elmer.Http.serve` or `Elmer.Http.sp
 -}
 expect : HttpRoute -> Matcher (List HttpRequest) -> Matcher (Elmer.TestState model msg)
 expect route matcher =
-  TestState.mapToExpectation <|
-    \context ->
+  Effects.expect Types.Requests <|
+    \maybeRequests ->
       let
         requests =
-          Context.state Types.Requests context
-            |> Maybe.withDefault []
+          Maybe.withDefault [] maybeRequests
 
         result =
           List.filter (matchesRequest route.method route.url) requests

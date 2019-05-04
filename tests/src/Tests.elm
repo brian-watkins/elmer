@@ -42,6 +42,7 @@ import Elmer.BrowserTests as BrowserTests
 import Elmer.HtmlCustomTests as HtmlCustomTests
 import Elmer.SpySpanTests as SpySpanTests
 import Elmer.ValueTests as ValueTests
+import Elmer.EffectsTests as EffectsTests
 
 all : Test
 all =
@@ -86,4 +87,5 @@ all =
     , FocusEventTests.all
     , MouseEventTests.all
     , ValueTests.all
+    , EffectsTests.all
     ]

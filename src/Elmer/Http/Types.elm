@@ -1,5 +1,5 @@
 module Elmer.Http.Types exposing
-    ( HttpState(..)
+    ( HttpEffects(..)
     , HttpHeader
     , HttpRequestFunction
     , HttpRequestHandler
@@ -15,7 +15,7 @@ module Elmer.Http.Types exposing
 import Http
 
 
-type HttpState
+type HttpEffects
   = Requests
 
 type alias HttpRoute =

@@ -29,7 +29,7 @@ import Elmer exposing (TestState)
 import Elmer.Context as Context exposing (View(..))
 import Elmer.TestState as TestState
 import Elmer.Navigation.Internal exposing (NavigationState(..))
-import Elmer.Runtime.Command exposing (mapState)
+import Elmer.Effects as Effects
 import Elmer.Runtime as Runtime
 import Browser exposing (UrlRequest, Document)
 import Url exposing (Url)
@@ -78,7 +78,7 @@ givenApplication onUrlRequest onUrlChange view update =
 
 storeNavigationTaggersCommand : (UrlRequest -> msg) -> (Url -> msg) -> Cmd msg
 storeNavigationTaggersCommand onUrlRequest onUrlChange =
-  mapState NavigationTaggers <|
+  Effects.push NavigationTaggers <|
     \_ ->
       { onUrlRequest = onUrlRequest
       , onUrlChange = onUrlChange

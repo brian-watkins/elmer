@@ -523,15 +523,6 @@ clearRequestsTests =
         in
           Expect.equal (TestState.failure "You Failed!") result
     ]
-  , describe "when there are no requests to clear"
-    [ test "it fails" <|
-      \() ->
-        let
-          initialState = testStateWithRequests []
-        in
-          ElmerHttp.clearRequestHistory initialState
-            |> Expect.equal (TestState.failure "No HTTP requests to clear")
-    ]
   , describe "when there are requests to clear"
     [ test "it clears the requests" <|
       \() ->
