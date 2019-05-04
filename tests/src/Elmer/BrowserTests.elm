@@ -5,9 +5,8 @@ import Expect
 import Elmer
 import Elmer.Program
 import Elmer.Spy as Spy
-import Elmer.Http
-import Elmer.Http.Route as Route
 import Elmer.TestState as TestState exposing (TestState)
+import Elmer.Command as Command
 import Elmer.Html
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
@@ -36,22 +35,28 @@ initTests =
           Elmer.Program.init (\() -> (InitApp.defaultModel "", Cmd.none)) initialState
             |> Expect.equal (TestState.failure "You failed!")
     ]
-  , let
+  , describe "when there is no failure" <|
+    let
+      taskSpy =
+        Spy.observe (\_ -> InitApp.requestTokenTask)
+          |> Spy.andCallFake (\_ -> Task.succeed "Spy Token!")
+
       state = Elmer.Program.givenElement InitApp.view InitApp.update
-        |> Spy.use [ Elmer.Http.spy ]
+        |> Spy.use [ taskSpy ]
         |> Elmer.Program.init (\() -> InitApp.init { baseUrl = "http://fun.com/api" })
     in
-      describe "when there is no failure"
-      [ test "it sets the model" <|
-        \() ->
-          state
-            |> Elmer.Html.target << by [ Sel.id "base-url" ]
-            |> Elmer.Html.expect (element <| hasText "http://fun.com/api")
-      , test "it sends the command" <|
-        \() ->
-          state
-            |> Elmer.Http.expectRequest (Route.get "http://fun.com/api/token")
-      ]
+    [ test "it sets the model" <|
+      \() ->
+        state
+          |> Elmer.Html.target << by [ Sel.id "base-url" ]
+          |> Elmer.Html.expect (element <| hasText "http://fun.com/api")
+    , test "it sends the command" <|
+      \() ->
+        state
+          |> Elmer.expectModel (\model ->
+            Expect.equal "Spy Token!" model.token
+          )
+    ]
   , describe "when the command fails"
     [ test "it fails" <|
       \() ->
@@ -60,13 +65,13 @@ initTests =
             Elmer.Program.givenElement InitApp.view InitApp.update
               |> Elmer.Program.init ( \() -> 
                 ( InitApp.defaultModel ""
-                , Task.perform InitApp.Tag ( Time.now |> Task.map ( \p -> Time.posixToMillis p |> String.fromInt ) )
+                , Command.fail "Failed!"
                 )
               )
         in
           Expect.equal state (TestState.failure <|
             format
-              [ note "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
+              [ note "Failed!"
               ]
           )
     ]

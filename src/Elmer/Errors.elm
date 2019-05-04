@@ -14,9 +14,6 @@ module Elmer.Errors exposing
   , wrongAttribute
   , wrongAttributeName
   , noAttribute
-  , noRequest
-  , wrongRequest
-  , requestMatcherFailed
   , failedToActivateSpies
   , unknownSpy
   , wrongNumberOfSpyCalls
@@ -30,7 +27,7 @@ module Elmer.Errors exposing
 @docs CustomError, print, failWith
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
 @docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongAttribute, wrongAttributeName, noAttribute
-@docs noRequest, wrongRequest, requestMatcherFailed, failedToActivateSpies, unknownSpy, wrongNumberOfSpyCalls
+@docs failedToActivateSpies, unknownSpy, wrongNumberOfSpyCalls
 @docs badSpyIdentifier, eventHandlerNotFound, noElementTargetedForEvent
 
 -}
@@ -153,33 +150,6 @@ wrongAttributeName property expectedValue attrs =
   in
   [ fact "Expected element to have attribute" <| property ++ " = " ++ expectedValue
   , fact "but it has these attributes" messages ]
-
-
-{-|
--}
-noRequest : String -> CustomError
-noRequest expectedRoute =
-  [ fact "Expected request for" expectedRoute
-  , note "but no requests have been made"
-  ]
-
-
-{-|
--}
-wrongRequest : String -> String -> CustomError
-wrongRequest expectedRoute actualRequests =
-  [ fact "Expected request for" expectedRoute
-  , fact "but only found these requests" actualRequests
-  ]
-
-{-|
--}
-requestMatcherFailed : String -> String -> CustomError
-requestMatcherFailed expectedRoute failure =
-  [ fact "Requests matching" expectedRoute
-  , note "failed to meet the expectations:"
-  , note failure
-  ]
 
 {-|
 -}

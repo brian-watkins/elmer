@@ -2,21 +2,24 @@ module Elmer.TestApps.InitTestApp exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Http
+import Task exposing (Task)
+
 
 type alias Model =
   { name : String
   , baseUrl : String
+  , token : String
   }
 
 type Msg
-  = TokenRequest (Result Http.Error String)
+  = TokenRequest (Result String String)
   | Tag String
 
 defaultModel : String -> Model
 defaultModel baseUrl =
   { name = "Cool Person"
   , baseUrl = baseUrl
+  , token = ""
   }
 
 type alias Flags =
@@ -25,7 +28,11 @@ type alias Flags =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-  ( defaultModel flags.baseUrl, Http.send TokenRequest <| Http.getString (flags.baseUrl ++ "/token") )
+  ( defaultModel flags.baseUrl, requestTokenTask "/fun/token" |> Task.attempt TokenRequest )
+
+requestTokenTask : String -> Task String String
+requestTokenTask path =
+  Task.succeed "Succeed"
 
 view : Model -> Html Msg
 view model =
@@ -34,4 +41,12 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  ( model, Cmd.none )
+  case msg of
+    TokenRequest result ->
+      case result of
+        Ok token ->
+          ( { model | token = token }, Cmd.none )
+        _ ->
+          ( model, Cmd.none )
+    _ ->
+      ( model, Cmd.none )

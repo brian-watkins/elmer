@@ -19,12 +19,6 @@ import Elmer.SpyFakeTests as SpyFakeTests
 import Elmer.CommandTests as CommandTests
 import Elmer.TaskTests as TaskTests
 import Elmer.RuntimeTests as RuntimeTests
-import Elmer.HttpTests as HttpTests
-import Elmer.HttpMatcherTests as HttpMatcherTests
-import Elmer.HttpRouteTests as HttpRouteTests
-import Elmer.HttpRequestTests as HttpRequestTests
-import Elmer.HttpResultTests as HttpResultTests
-import Elmer.HttpTaskTests as HttpTaskTests
 import Elmer.GivenCommandTests as GivenCommandTests
 import Elmer.FailureTests as FailureTests
 import Elmer.SubscriptionTests as SubscriptionTests
@@ -37,7 +31,6 @@ import Elmer.ApplicationTests as ApplicationTests
 import Elmer.DocumentTests as DocumentTests
 import Elmer.NavigationTests as NavigationTests
 import Elmer.ComponentTests as ComponentTests
-import Elmer.DemoAppTests as DemoAppTests
 import Elmer.BrowserTests as BrowserTests
 import Elmer.HtmlCustomTests as HtmlCustomTests
 import Elmer.SpySpanTests as SpySpanTests
@@ -49,7 +42,6 @@ all : Test
 all =
     Test.concat 
     [ BrowserTests.all
-    , DemoAppTests.all
     , ComponentTests.all
     , NavigationTests.all
     , DocumentTests.all
@@ -61,13 +53,7 @@ all =
     , TestsStateTests.all
     , SubscriptionTests.all
     , FailureTests.all
-    , HttpTaskTests.all
-    , HttpResultTests.all
     , GivenCommandTests.all
-    , HttpRequestTests.all
-    , HttpRouteTests.all
-    , HttpMatcherTests.all
-    , HttpTests.all
     , RuntimeTests.all
     , TaskTests.all
     , CommandTests.all

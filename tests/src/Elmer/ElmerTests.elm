@@ -11,9 +11,6 @@ import Elmer.Html
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Spy as Spy
 import Elmer.Command as Command
-import Elmer.Http
-import Elmer.Http.Route as Route
-import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Message exposing (..)
 import Task
 import Time

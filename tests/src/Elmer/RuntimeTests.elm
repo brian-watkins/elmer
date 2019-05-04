@@ -10,8 +10,6 @@ import Elmer.TestApps.MessageTestApp as App
 import Elmer.Runtime as Runtime
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (..)
-import Elmer.Http as ElmerHttp
-import Elmer.Http.Stub as HttpStub
 import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Message exposing (..)

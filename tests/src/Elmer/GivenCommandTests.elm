@@ -3,32 +3,18 @@ module Elmer.GivenCommandTests exposing (..)
 import Test exposing (..)
 import Expect
 import Elmer exposing (exactly)
-import Elmer.Http exposing (HttpResponseStub)
-import Elmer.Http.Route exposing (..)
-import Elmer.Http.Stub as Stub exposing (withBody)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalledWith, stringArg)
 import Elmer.Command as Command
-import Elmer.TestApps.HeadlessTestApp as App
 import Elmer.Message exposing (..)
+import Task
 
 
 all : Test
 all =
   Test.concat
-  [ httpTests
-  , spyTests
+  [ spyTests
   , expectMessageTests
-  ]
-
-httpTests : Test
-httpTests =
-  describe "when a given command triggers an http request"
-  [ test "the expectation is satisfied" <|
-    \() ->
-      Command.given (\() -> App.httpCommand "http://fake.com/my-fake-stuff")
-        |> Spy.use [ Elmer.Http.spy ]
-        |> Elmer.Http.expectRequest (get "http://fake.com/my-fake-stuff")
   ]
 
 
@@ -37,9 +23,9 @@ spyTests =
   describe "when the test for a given command uses a spy"
   [ test "it satisfies expectations about the spy" <|
     \() ->
-      Command.given (\() -> App.spyCommand "hello")
+      Command.given (\() -> spyCommand "hello")
         |> Spy.use [ testPortSpy ]
-        |> Spy.expect (\_ -> App.testPortCommand) (
+        |> Spy.expect (\_ -> testPortCommand) (
             wasCalledWith [ stringArg "hello" ]
         )
   ]
@@ -47,8 +33,21 @@ spyTests =
 
 testPortSpy : Spy
 testPortSpy =
-  Spy.observe (\_ -> App.testPortCommand)
+  Spy.observe (\_ -> testPortCommand)
     |> andCallFake (\_ -> Cmd.none)
+
+
+testPortCommand : String -> Cmd msg
+testPortCommand _ =
+  Cmd.none
+
+spyCommand : String -> Cmd Msg
+spyCommand message =
+  testPortCommand message
+
+
+type Msg
+  = TestResult (Result String Int)
 
 
 expectMessageTests : Test
@@ -57,38 +56,18 @@ expectMessageTests =
   [ describe "when the processing the command is successful"
     [ test "it records the messages" <|
       \() ->
-        Command.given (\() -> App.httpCommand "http://fake.com/my-fake-stuff")
-          |> Spy.use [ Elmer.Http.serve [ httpResponse "http://fake.com/my-fake-stuff" ] ]
+        Command.given (\() -> Task.succeed 17 |> Task.attempt TestResult)
           |> Command.expectMessages (
-            exactly 1 <| Expect.equal (App.HttpRequest <| Ok [ 22, 34 ])
+            exactly 1 <| Expect.equal (TestResult <| Ok 17)
           )
     ]
   , describe "when processing the command results in a test failure"
     [ test "it records the messages" <|
       \() ->
-        Command.given (\() -> App.httpCommand "http://fake.com/my-fake-stuff")
-          |> Spy.use [ Elmer.Http.serve [ httpBadResponse "http://fake.com/my-fake-stuff" ] ]
+        Command.given (\_ -> Command.fail "Failed!")
           |> Command.expectMessages (
-            exactly 1 <| Expect.equal (App.HttpRequest <| Ok [ 22, 34 ])
+            exactly 1 <| Expect.equal (TestResult <| Ok 17)
           )
-          |> Expect.equal (Expect.fail (format
-            [ fact "Parsing a stubbed response" "GET http://fake.com/my-fake-stuff"
-            , note ("\tWith body: \"Hey!\"")
-            , fact "failed with error" "Problem with the given value:\n\n\"Hey!\"\n\nThis is not valid JSON! Unexpected token H in JSON at position 0"
-            , note "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
-            ]
-          ))
+          |> Expect.equal (Expect.fail "Failed!")
     ]
   ]
-
-
-httpResponse : String -> HttpResponseStub
-httpResponse url =
-  Stub.for (get url)
-    |> withBody "[22,34]"
-
-
-httpBadResponse : String -> HttpResponseStub
-httpBadResponse url =
-  Stub.for (get url)
-    |> withBody "Hey!"

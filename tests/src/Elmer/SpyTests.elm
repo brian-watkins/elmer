@@ -3,7 +3,6 @@ module Elmer.SpyTests exposing (..)
 import Test exposing (..)
 import Expect
 import Elmer.TestApps.SpyTestApp as SpyApp
-import Elmer.TestApps.HttpTestApp as HttpApp
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Spy as Spy
 import Elmer.Spy.Arg exposing (Arg(..))
@@ -16,8 +15,6 @@ import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Html.Selector.Printer as Selector
 import Elmer
 import Elmer.Program
-import Elmer.Http
-import Elmer.Http.Matchers as HttpMatchers
 import Elmer.Command as Command
 import Elmer.Errors as Errors
 

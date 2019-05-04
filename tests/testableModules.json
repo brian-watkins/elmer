@@ -7,7 +7,6 @@
         "Elmer.TestState",
         "Elmer.Spy.Arg",
         "Elmer.Runtime",
-        "Elmer.Http.Internal",
         "Elmer.Errors"
     ]
 }
