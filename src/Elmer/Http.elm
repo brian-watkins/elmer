@@ -36,7 +36,6 @@ import Elmer.Http.ToTask as FakeToTask
 import Elmer.Http.Route as Route exposing (HttpRoute)
 import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
-import Elmer.Spy.Internal as Spy_
 import Elmer.Effects as Effects
 import Elmer.Command as Command
 import Elmer.Message.Failure as Failure
@@ -82,7 +81,7 @@ a button is clicked. You could register a stub for that request like so
 -}
 serve : List HttpResponseStub -> Spy
 serve responseStubs =
-  Spy_.batch
+  Spy.batch
     [ Spy.observe (\_ -> Http.send)
         |> andCallFake (FakeSend.stubbedWith responseStubs)
     , Spy.observe (\_ -> Http.toTask)
@@ -110,7 +109,7 @@ knowing the response from the request.
 -}
 spy : Spy
 spy =
-  Spy_.batch
+  Spy.batch
     [ Spy.observe (\_ -> Http.send)
         |> andCallFake FakeSend.spy
     , Spy.observe (\_ -> Http.toTask)

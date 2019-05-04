@@ -3,6 +3,7 @@ module Elmer.Spy exposing
   , SpyReference
   , Calls
   , observe
+  , batch
   , andCallFake
   , andCallThrough
   , replaceValue
@@ -13,7 +14,7 @@ module Elmer.Spy exposing
 
 {-| Functions for spying during tests.
 
-@docs Spy, Calls
+@docs Spy, Calls, batch
 
 # Spy on a Function
 @docs SpyReference, observe, andCallThrough, andCallFake, replaceValue
@@ -73,6 +74,13 @@ observe identifier =
   SpyReference <| Spy_.Uninstalled <|
     \() ->
       Spy_.create identifier
+
+
+{-| Combine multiple `Spy` values into one.
+-}
+batch : List Spy -> Spy
+batch spies =
+  Batch spies
 
 
 {-| Stub a function that simply returns a value.

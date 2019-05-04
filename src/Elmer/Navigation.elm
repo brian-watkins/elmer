@@ -16,7 +16,6 @@ module Elmer.Navigation
 -}
 
 import Elmer.Spy as Spy exposing (Spy, andCallFake)
-import Elmer.Spy.Internal as Spy_
 import Elmer.Command as Command
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.TestState as TestState exposing (TestState)
@@ -62,7 +61,7 @@ location to `/home` when clicked:
 -}
 spy : Spy
 spy =
-  Spy_.batch
+  Spy.batch
     [ Spy.observe (\_ -> Browser.Navigation.pushUrl)
         |> andCallFake (fakeNavigateCommand "Browser.Navigation.pushUrl")
     , Spy.observe (\_ -> Browser.Navigation.replaceUrl)

@@ -7,7 +7,6 @@ module Elmer.Spy.Internal exposing
   , activate
   , deactivate
   , calls
-  , batch
   , spiesFrom
   , withSpies
   , withSpiesFor
@@ -140,13 +139,6 @@ registerFake fake spy =
   Active
     { spy | function = Function.withFake fake spy.function
     }
-
-
-{-| Note: Calling a fake method on a batch spy is not supported
--}
-batch : List Spy -> Spy
-batch spies =
-  Batch spies
 
 
 activate : List Spy -> List Spy

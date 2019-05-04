@@ -32,6 +32,7 @@ all =
   , restoreTests
   , andCallFakeTests
   , replaceValueTests
+  , batchTests
   ]
 
 
@@ -418,6 +419,43 @@ restoreTests =
         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
           |> Markup.target << by [ Sel.id "title" ]
           |> Markup.expect (element <| hasText "A Title: Some Title")
+    ]
+  ]
+
+batchTests : Test
+batchTests =
+  describe "batch"
+  [ describe "when no spies are batched"
+    [ test "it does nothing" <|
+      \() ->
+         Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
+          |> Spy.use [ Spy.batch [] ]
+          |> Markup.target << by [ Sel.id "title" ]
+          |> Markup.expect (element <| hasText "A Title: Some Title")
+    ]
+  , describe "when multiple spies are batched" <|
+    let
+      titleSpy =
+        Spy.observe (\_ -> SpyApp.titleText)
+          |> Spy.andCallFake (\_ -> "Test Title")
+
+      footerSpy =
+        Spy.replaceValue (\_ -> SpyApp.footerText) "Test Footer"
+
+      testState =
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
+          |> Spy.use [ Spy.batch [ titleSpy, footerSpy ] ]
+    in
+    [ test "it uses the title spy" <|
+      \() ->
+        testState
+          |> Markup.target << by [ Sel.id "title" ]
+          |> Markup.expect (element <| hasText "Test Title")
+    , test "it uses the footer spy" <|
+      \() ->
+        testState
+          |> Markup.target << by [ Sel.id "footer" ]
+          |> Markup.expect (element <| hasText "Test Footer")
     ]
   ]
 
