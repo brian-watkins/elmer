@@ -1,5 +1,6 @@
 module Elmer.Effects exposing
   ( push
+  , pushWithTask
   , expect
   , use
   )
@@ -14,7 +15,11 @@ make expectations about them later.
 Note that these functions are mainly useful when writing extensions to Elmer
 or custom matchers.
 
-@docs push, expect, use
+# Record Effects
+@docs push, pushWithTask
+
+# Working with Effects
+@docs expect, use
 
 -}
 
@@ -22,7 +27,9 @@ import Expect
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context
 import Elmer.Runtime.Command as RuntimeCommand
+import Elmer.Runtime.Task as RuntimeTask
 import Elmer.Errors as Errors
+import Task exposing (Task)
 
 
 {-| Create a command that records an effect. 
@@ -47,6 +54,13 @@ You could record effects like so:
 push : effectId -> (Maybe a -> a) -> Cmd msg
 push =
   RuntimeCommand.mapState
+
+
+{-| Create a task that records an effect when the given task is processed.
+-}
+pushWithTask : effectId -> (Maybe a -> a) -> Task x b -> Task x b
+pushWithTask =
+  RuntimeTask.mapState
 
 
 {-| Use a recorded effect during a test.

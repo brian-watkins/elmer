@@ -2,17 +2,20 @@ module Elmer.EffectsTests exposing (..)
 
 import Test exposing (..)
 import Expect
+import Elmer exposing (exactly)
 import Elmer.Effects as Effects
 import Elmer.TestApps.SimpleTestApp as SimpleApp
 import Elmer.TestState as TestState
 import Elmer.Command as Command
 import Elmer
+import Task
 
 
 all : Test
 all =
   Test.concat
   [ expectEffectsTests
+  , pushWithTaskTests
   , useTests
   ]
 
@@ -121,6 +124,37 @@ useTests =
   ]
 
 
+pushWithTaskTests : Test
+pushWithTaskTests =
+  describe "pushWithTask" <|
+  let
+      testState =
+        Command.given (\_ ->
+          Task.succeed "Hello"
+            |> Effects.pushWithTask FullState (\_ -> "Hello")
+            |> Effects.pushWithTask FullState (\maybeWord ->
+              Maybe.map (\word -> word ++ " effect!") maybeWord
+                |> Maybe.withDefault ""
+            )
+            |> Task.attempt TaskResult
+        )
+  in
+  [ test "it runs the task as expected" <|
+    \() ->
+      testState
+        |> Command.expectMessages (
+          exactly 1 <|
+            Expect.equal (TaskResult <| Ok "Hello")
+        )
+  , test "it stores the effects" <|
+    \() ->
+      testState
+        |> Effects.expect FullState (Expect.equal <| Just "Hello effect!")
+  ]
+
 type State
   = FullState
   | EmptyState
+
+type TestMsg
+  = TaskResult (Result String String)

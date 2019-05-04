@@ -8,6 +8,7 @@ import Elmer.Http.Internal as HttpInternal
 import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Runtime.Task as RuntimeTask
+import Elmer.Effects as Effects
 import Elmer.Command as Command
 import Task exposing (Task)
 import Http
@@ -45,7 +46,7 @@ httpTask request result =
 andRecordRequestTask : HttpRequest -> Task x a -> Task x a
 andRecordRequestTask request =
   updateTestState request
-    |> RuntimeTask.mapState Requests
+    |> Effects.pushWithTask Requests
 
 
 andRecordAbandonRequest : HttpRequest -> Task x a
