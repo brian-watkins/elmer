@@ -7,12 +7,14 @@ import Elmer.Command as Command
 import Elmer.Task
 import Task
 import Time exposing (Posix)
+import Html exposing (Html)
 
 
 all : Test
 all =
   Test.concat
   [ failTestTaskTests
+  , deferTaskTests
   , realTaskTests
   , andThenTests
   , sequenceTests
@@ -73,6 +75,57 @@ failTestTaskTests =
       |> Expect.equal (Expect.fail "It failed!")
   ]
 
+type alias TestModel =
+  { results : List (Result String String)
+  }
+
+defaultModel : TestModel
+defaultModel =
+  { results = []
+  }
+
+emptyView : TestModel -> Html TestTagger
+emptyView _ =
+  Html.text ""
+
+emptyUpdate : TestTagger -> TestModel -> (TestModel, Cmd TestTagger)
+emptyUpdate msg model =
+  case msg of
+    TagResultString result ->
+      ( { model | results = result :: model.results }, Cmd.none )
+    _ ->
+      ( model, Cmd.none )
+
+deferTaskTests : Test
+deferTaskTests =
+  describe "defer"
+  [ describe "when there are deferred tasks" <|
+    let
+      testState =
+        Elmer.given defaultModel emptyView emptyUpdate
+          |> Command.send (\_ ->
+            Task.succeed "It worked!"
+              |> Elmer.Task.defer
+              |> Task.attempt TagResultString
+          )
+    in
+    [ test "it doesn't process deferred tasks immediately" <|
+      \() ->
+        testState
+          |> Elmer.expectModel (\model ->
+            Expect.equal model.results []
+          )
+    , describe "when resolveDeferred is called"
+      [ test "it resolves the deferred tasks" <|
+        \() ->
+          testState
+            |> Elmer.resolveDeferred
+            |> Elmer.expectModel (\model ->
+              Expect.equal model.results [ Ok "It worked!" ]
+            )
+      ]
+    ]
+  ]
 
 realTaskTests : Test
 realTaskTests =

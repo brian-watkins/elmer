@@ -143,8 +143,5 @@ init initThunk =
         (initModel, initCommand) = initThunk ()
         updatedContext = Context.withModel initModel context
       in
-        case Runtime.performCommand initCommand updatedContext of
-          Ok initializeContext ->
-            TestState.with initializeContext
-          Err message ->
-            TestState.failure message
+        Runtime.performCommand initCommand updatedContext
+          |> TestState.fromRuntimeResult

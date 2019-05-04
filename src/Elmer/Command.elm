@@ -2,7 +2,6 @@ module Elmer.Command exposing
   ( fail
   , fake
   , defer
-  , resolveDeferred
   , dummy
   , expectDummy
   , send
@@ -34,7 +33,7 @@ and [elm/browser](https://package.elm-lang.org/packages/elm/browser/latest/Brows
 @docs fake, dummy, expectDummy, fail
 
 # Defer a Command
-@docs defer, resolveDeferred
+@docs defer
 
 # Send a Fake Command
 @docs send
@@ -120,36 +119,11 @@ is sent but before its effect is processed -- for example, the component could
 indicate that network activity is occurring while waiting for a request to complete.
 
 When a deferred command is processed, any effect associated with that command will *not* be sent
-to the component's `update` function until `resolveDeferred` is called.
+to the component's `update` function until `Elmer.resolveDeferred` is called.
 -}
 defer : Cmd msg -> Cmd msg
 defer =
   Defer.with
-
-
-{-| Resolve any deferred commands.
-
-Once this function is called, all messages associated with deferred commands will be
-sent to the component's `update` function.
--}
-resolveDeferred : Elmer.TestState model msg -> Elmer.TestState model msg
-resolveDeferred =
-  TestState.map <|
-    \context ->
-      let
-        deferredCommands = Defer.fromContext context
-      in
-        if List.isEmpty deferredCommands then
-          TestState.failure "No deferred commands found"
-        else
-          let
-            commandBatch = Cmd.batch deferredCommands
-            updatedContext =
-              Defer.clear
-                |> Context.updateStateFor context
-          in
-            Runtime.performCommand commandBatch updatedContext
-              |> asTestState
 
 
 {-| Send a command.
@@ -176,17 +150,8 @@ send : (() -> Cmd msg) -> Elmer.TestState model msg -> Elmer.TestState model msg
 send commandThunk =
   TestState.map (\state ->
     Runtime.performCommand (commandThunk ()) state
-      |> asTestState
+      |> TestState.fromRuntimeResult
   )
-
-
-asTestState : Result String (Context model msg) -> TestState model msg
-asTestState commandResult =
-  case commandResult of
-    Ok context ->
-      TestState.with context
-    Err message ->
-      TestState.failure message
 
 
 {-| Initialize a `TestState` with a command.

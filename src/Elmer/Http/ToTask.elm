@@ -63,6 +63,6 @@ updateTestState request maybeRequests =
 deferIfNecessary : HttpStub -> Task Http.Error a -> Task Http.Error a
 deferIfNecessary stub task =
   if stub.deferResponse then
-    RuntimeTask.defer task
+    Elmer.Task.defer task
   else
     task

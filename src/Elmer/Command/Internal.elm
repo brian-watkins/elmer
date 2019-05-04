@@ -49,8 +49,5 @@ withCommandGenerator generator context =
 
 beforeExpectationExtension : (() -> Cmd msg) -> Context model msg -> TestState model msg
 beforeExpectationExtension commandGenerator context =
-  case Runtime.performCommand (commandGenerator ()) context of
-    Ok resolvedContext ->
-      TestState.with resolvedContext
-    Err errorMessage ->
-      TestState.failure errorMessage
+  Runtime.performCommand (commandGenerator ()) context
+    |> TestState.fromRuntimeResult

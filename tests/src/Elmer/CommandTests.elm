@@ -59,7 +59,7 @@ resolveDeferredCommandsTest =
       \() ->
         let
           initialState = TestState.failure "You failed!"
-          state = Command.resolveDeferred initialState
+          state = Elmer.resolveDeferred initialState
         in
           Expect.equal (TestState.failure "You failed!") state
     ]
@@ -69,7 +69,7 @@ resolveDeferredCommandsTest =
         let
           initialState = Elmer.given App.defaultModel App.view App.update
         in
-          Command.resolveDeferred initialState
+          Elmer.resolveDeferred initialState
             |> Expect.equal (TestState.failure "No deferred commands found")
     ]
   , let
@@ -88,7 +88,7 @@ resolveDeferredCommandsTest =
               |> Markup.target << by [ Sel.id "click-counter" ]
               |> Markup.expect (element <| hasText "0 clicks!")
         , let
-            resolvedCommandsState = Command.resolveDeferred state
+            resolvedCommandsState = Elmer.resolveDeferred state
           in
             describe "when the deferred commands are resolved"
             [ test "it processes the deferred commands" <|
@@ -98,7 +98,7 @@ resolveDeferredCommandsTest =
                   |> Markup.expect (element <| hasText "3 clicks!")
             , test "it clears the deferred commands" <|
               \() ->
-                Command.resolveDeferred resolvedCommandsState
+                Elmer.resolveDeferred resolvedCommandsState
                   |> Expect.equal (TestState.failure "No deferred commands found")
             ]
         ]

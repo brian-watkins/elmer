@@ -506,7 +506,7 @@ resolveTests =
       [ test "it resolves the response" <|
         \() ->
           requestedState
-            |> Command.resolveDeferred
+            |> Elmer.resolveDeferred
             |> Markup.target << by [ id "data-result" ]
             |> Markup.expect (element <| hasText "Cool Dude")
       ]

@@ -129,13 +129,13 @@ deferredResponseServerTests =
     [ test "it processes the stubbed response" <|
       \() ->
         state
-          |> Command.resolveDeferred
+          |> Elmer.resolveDeferred
           |> Markup.target << by [ id "data-result" ]
           |> Markup.expect (element <| hasText "Data from Http Task: Super Awesome Person is fun")
     , test "it records the request" <|
       \() ->
         state
-          |> Command.resolveDeferred
+          |> Elmer.resolveDeferred
           |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
     ]
   ]

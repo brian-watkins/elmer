@@ -6,16 +6,18 @@ module Elmer.TestState exposing
   , mapToExpectation
   , with
   , failure
+  , fromRuntimeResult
   )
 
 {-| Exposed for testing
 
-@docs TestState, TestStateExtension, map, mapWithoutSpies, mapToExpectation, with, failure
+@docs TestState, TestStateExtension, map, mapWithoutSpies, mapToExpectation, with, failure, fromRuntimeResult
 
 -}
 
 import Elmer.Context as Context exposing (..)
 import Elmer.Spy.Internal as Spy_ exposing (Spy)
+import Elmer.Runtime.Types exposing (RuntimeResult)
 import Expect
 
 {-|
@@ -42,6 +44,17 @@ with context =
 failure : String -> TestState model msg
 failure message =
   Failed message
+
+
+{-|
+-}
+fromRuntimeResult : RuntimeResult model msg -> TestState model msg
+fromRuntimeResult result =
+  case result of
+    Ok context ->
+      with context
+    Err message ->
+      failure message
 
 
 abstractMap : (String -> a) -> (Context model msg -> a) -> TestState model msg -> a

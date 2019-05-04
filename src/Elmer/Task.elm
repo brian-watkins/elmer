@@ -1,5 +1,6 @@
 module Elmer.Task exposing
   ( failTest
+  , defer
   )
 
 {-| Functions to produce Tasks to use during a test.
@@ -29,7 +30,7 @@ Elmer knows how to process Tasks in general (eg, functions like `Task.map`, `Tas
 so you only need to stub functions that produce Tasks from modules other than the elm/core `Task` module.
 
 # Special Tasks
-@docs failTest
+@docs failTest, defer
 
 -}
 
@@ -44,3 +45,17 @@ failTest : String -> Task x a
 failTest failureMessage =
   Command.fail failureMessage
     |> RuntimeTask.abortWith
+
+
+{-| Defer a task for later processing.
+
+You might want to describe the behavior that occurs after a task
+is sent but before its effect is processed -- for example, you could
+indicate that network activity is occurring while waiting for a request to complete.
+
+When a deferred task is processed, any effect associated with that task will *not* be sent
+to the `update` function until `Elmer.resolveDeferred` is called.
+-}
+defer : Task x a -> Task x a
+defer =
+  RuntimeTask.defer

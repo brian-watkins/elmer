@@ -12,6 +12,7 @@ module Elmer
         , last
         , hasLength
         , expectModel
+        , resolveDeferred
         )
 
 {-| Basic types and functions for working with tests and matchers.
@@ -27,6 +28,9 @@ module Elmer
 # Make low-level expectations
 @docs given, expectModel
 
+# Resolve Deferred Commands and Tasks
+@docs resolveDeferred
+
 -}
 
 import Html exposing (Html)
@@ -39,6 +43,7 @@ import Elmer.Runtime as Runtime
 import Elmer.Message exposing (..)
 import Elmer.Message.Failure as Failure exposing (Failure)
 import Elmer.Errors as Errors exposing (failWith)
+import Elmer.Runtime.Command.Defer as Defer
 import Array
 
 {-| Represents the current state of the test.
@@ -258,3 +263,32 @@ hasLength expectedCount =
           [ fact "Expected list to have size" (String.fromInt expectedCount)
           , fact "but it has size" (String.fromInt (List.length list))
           ]
+
+
+{-| Resolve any deferred commands or tasks.
+
+Once this function is called, all messages associated with deferred commands or tasks will be
+sent to the `update` function.
+
+You can defer processing of a `Cmd` or `Task` using `Elmer.Command.defer` or `Elmer.Task.defer`, respectively.
+
+-}
+resolveDeferred : TestState model msg -> TestState model msg
+resolveDeferred =
+  TestState.map <|
+    \context ->
+      let
+        deferredCommands = Defer.fromContext context
+      in
+        if List.isEmpty deferredCommands then
+          TestState.failure "No deferred commands found"
+        else
+          let
+            commandBatch =
+              Cmd.batch deferredCommands
+            updatedContext =
+              Defer.clear
+                |> Context.updateStateFor context
+          in
+            Runtime.performCommand commandBatch updatedContext
+              |> TestState.fromRuntimeResult

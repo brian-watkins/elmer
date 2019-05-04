@@ -148,11 +148,8 @@ send subName data =
             let
               command = subDesc.tagger data |> Command.fake
             in
-              case Runtime.performCommand command context of
-                Ok updatedState ->
-                  TestState.with updatedState
-                Err message ->
-                  TestState.failure message
+              Runtime.performCommand command context
+                |> TestState.fromRuntimeResult
 
           Nothing ->
             let

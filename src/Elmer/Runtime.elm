@@ -1,8 +1,7 @@
-module Elmer.Runtime
-    exposing
-        ( performUpdate
-        , performCommand
-        )
+module Elmer.Runtime exposing
+  ( performUpdate
+  , performCommand
+  )
 
 {-| Exposed for Testing
 
@@ -17,9 +16,10 @@ import Elmer.Runtime.Intention as Intention exposing (Intention(..))
 import Elmer.Errors as Errors
 
 
+
 {-|
 -}
-performUpdate : msg -> Context model msg -> Result String (Context model msg)
+performUpdate : msg -> Context model msg -> RuntimeResult model msg
 performUpdate message context =
     case Context.update message context of
       Just ( updatedContext, command ) ->
@@ -30,7 +30,7 @@ performUpdate message context =
 
 {-|
 -}
-performCommand : Cmd msg -> Context model msg -> Result String (Context model msg)
+performCommand : Cmd msg -> Context model msg -> RuntimeResult model msg
 performCommand command context =
     let
         commandResults =
@@ -39,7 +39,7 @@ performCommand command context =
       List.foldl reduceCommandResults (Ok context) commandResults
 
 
-reduceCommandResults : CommandResult model msg -> Result String (Context model msg) -> Result String (Context model msg)
+reduceCommandResults : CommandResult model msg -> RuntimeResult model msg -> RuntimeResult model msg
 reduceCommandResults commandResult currentResult =
   case currentResult of
     Ok context ->
