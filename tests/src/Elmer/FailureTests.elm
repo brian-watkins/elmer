@@ -1,10 +1,10 @@
-module Elmer.PrinterTests exposing (..)
+module Elmer.FailureTests exposing (..)
 
 import Test exposing (..)
 import Test.Runner
 import Test.Runner.Failure as ElmTestFailure
 import Expect
-import Elmer.Printer as Printer
+import Elmer.Message.Failure as Failure
 import Dict
 import Set
 
@@ -12,53 +12,9 @@ import Set
 all : Test
 all =
   Test.concat
-  [ formatMessageTests
-  , formatMessageListTests
-  , formatFailureTests
+  [ formatFailureTests
   ]
 
-
-formatMessageTests : Test
-formatMessageTests =
-  describe "formatMessage"
-  [ describe "when there is no example"
-    [ test "it prints the description" <|
-      \() ->
-        let
-          message = Printer.formatMessage (Printer.description "Fun stuff")
-        in
-          Expect.equal message "Fun stuff"
-    ]
-  , describe "when there is an example"
-    [ test "it prints the description and the example" <|
-      \() ->
-        let
-          message = Printer.formatMessage (Printer.message "Fun Stuff" "Fun Example")
-        in
-          Expect.equal message "Fun Stuff\n\n\tFun Example"
-    ]
-  , describe "when the example has multiple lines"
-    [ test "it prints the formatted example" <|
-      \() ->
-        let
-          message = Printer.formatMessage (Printer.message "Fun Stuff" "Fun Example\nSuper Example\nRadical Example\n")
-        in
-          Expect.equal message "Fun Stuff\n\n\tFun Example\n\tSuper Example\n\tRadical Example"
-    ]
-  ]
-
-formatMessageListTests : Test
-formatMessageListTests =
-  describe "format"
-  [ test "it prints the messages" <|
-    \() ->
-      let
-        messages = [ Printer.message "Fun Stuff" "Fun Example"
-                   , Printer.message "Fun Stuff 2" "Fun Example2"
-                   ]
-      in
-        Expect.equal (Printer.format messages) "Fun Stuff\n\n\tFun Example\n\nFun Stuff 2\n\n\tFun Example2"
-  ]
 
 takeFailureMessage : Expect.Expectation -> String
 takeFailureMessage expectation =
@@ -68,7 +24,8 @@ takeFailureMessage expectation =
           , description = "default"
           , reason = ElmTestFailure.Custom
           }
-    |> Printer.formatFailure
+    |> List.singleton 
+    |> Failure.format
 
 formatFailureTests : Test
 formatFailureTests =
@@ -130,11 +87,12 @@ formatFailureTests =
           |> Expect.equal "Ok \"Blah\" is not an Err"
     , test "it prints the unknown comparison failure" <|
       \() ->
-        { given = Nothing
-        , description = "some weird comparison"
-        , reason = ElmTestFailure.Comparison "87" "bbb"
-        }
-        |> Printer.formatFailure
+        [ { given = Nothing
+          , description = "some weird comparison"
+          , reason = ElmTestFailure.Comparison "87" "bbb"
+          }
+        ]
+        |> Failure.format
         |> Expect.equal "some weird comparison failed between bbb and 87"
     ]
   , describe "list diff"
@@ -159,11 +117,12 @@ formatFailureTests =
   , describe "failures we don't care about"
     [ test "it prints the full failure reason" <|
       \() ->
-        { given = Nothing
-        , description = "Something"
-        , reason = ElmTestFailure.TODO
-        }
-        |> Printer.formatFailure
+        [ { given = Nothing
+          , description = "Something"
+          , reason = ElmTestFailure.TODO
+          } 
+        ]
+        |> Failure.format
         |> Expect.equal "Failure { description = \"Something\", given = Nothing, reason = TODO }"
     ]
   ]

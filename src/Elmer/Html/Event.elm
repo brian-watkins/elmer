@@ -57,7 +57,7 @@ import Elmer.Html.Event.Description as EventDescription
 import Elmer.Html.Event.Types exposing (..)
 import Elmer.Html.Event.Processor exposing (processEvents, processEventsWhen)
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer
 
 
@@ -220,15 +220,15 @@ hasOption value element =
         |> Query.findElements
   in
     if List.isEmpty options then
-      Err <| format [ message "No option found with value" value ]
+      Err <| format [ fact "No option found with value" value ]
     else
       case findOption value element of
         Just option ->
           Ok element
         Nothing ->
           Err <| format
-            [ message "No option found with value" value
-            , message "These are the options" ( HtmlPrinter.print element )
+            [ fact "No option found with value" value
+            , fact "These are the options" ( HtmlPrinter.print element )
             ]
 
 findOption : String -> HtmlElement msg -> Maybe (HtmlElement msg)

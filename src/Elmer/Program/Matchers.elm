@@ -14,7 +14,6 @@ import Elmer exposing (Matcher)
 import Elmer.TestState as TestState
 import Elmer.Context as Context exposing (Context, View(..))
 import Elmer.Errors as Errors exposing (failWith)
-import Elmer.Printer exposing (..)
 
 
 {-| Expect that a document has some title.

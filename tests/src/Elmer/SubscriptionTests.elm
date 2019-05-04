@@ -6,7 +6,7 @@ import Elmer
 import Elmer.TestState as TestState exposing (..)
 import Elmer.Spy as Spy
 import Elmer.Subscription as Subscription
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Html as Markup
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (..)
@@ -58,8 +58,8 @@ sendTests =
             Subscription.send "someOtherSub" 37 initialState
               |> Expect.equal (TestState.failure (
                 format
-                  [ message "No subscription spy found with name" "someOtherSub"
-                  , description "because there are no subscription spies"]
+                  [ fact "No subscription spy found with name" "someOtherSub"
+                  , note "because there are no subscription spies"]
                 ))
       ]
     , describe "when there are subscription spies"
@@ -78,8 +78,8 @@ sendTests =
               |> Subscription.send "someOtherSub" 37
               |> Expect.equal (TestState.failure (
                 format
-                  [ message "No subscription spy found with name" "someOtherSub"
-                  , message "These are the current subscription spies" "my-spy-3600000\nmy-spy-1"
+                  [ fact "No subscription spy found with name" "someOtherSub"
+                  , fact "These are the current subscription spies" "my-spy-3600000\nmy-spy-1"
                   ]
                 ))
       ]

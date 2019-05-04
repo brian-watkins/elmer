@@ -14,7 +14,7 @@ import Elmer.Command as Command
 import Elmer.Http
 import Elmer.Http.Route as Route
 import Elmer.Http.Matchers as HttpMatchers
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Task
 import Time
 
@@ -54,8 +54,8 @@ matchAllTests =
         in
           each (\n -> Expect.equal (modBy 2 n) 0) items
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected all to pass but some failed:"
-              , description "1 is not equal to 0\n\n1 is not equal to 0"
+              [ note "Expected all to pass but some failed:"
+              , note "1 is not equal to 0\n\n1 is not equal to 0"
               ]
             )
     ]
@@ -64,7 +64,7 @@ matchAllTests =
       \() ->
         each (Expect.equal 2) []
           |> Expect.equal (Expect.fail <| format
-            [ description "Expected all to pass but the list is empty"]
+            [ note "Expected all to pass but the list is empty"]
           )
     ]
   ]
@@ -80,8 +80,8 @@ matchOneTests =
           in
             some (\n -> Expect.equal (modBy 17 n) 0) items
               |> Expect.equal (Expect.fail <| format
-                [ description "Expected some to pass but found none. Here are the failures:"
-                , description "2 is not equal to 0\n\n4 is not equal to 0"
+                [ note "Expected some to pass but found none. Here are the failures:"
+                , note "2 is not equal to 0\n\n4 is not equal to 0"
                 ]
               )
       ]
@@ -99,7 +99,7 @@ matchOneTests =
         \() ->
           some (Expect.equal 3) []
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected some to pass but the list is empty" ]
+              [ note "Expected some to pass but the list is empty" ]
             )
       ]
     ]
@@ -124,8 +124,8 @@ matchExactlyTests =
         in
           exactly 2 (\n -> Expect.equal 4 n) items
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected exactly 2 to pass but found 3. Here are the failures:"
-              , description "4 is not equal to 2\n\n4 is not equal to 6"
+              [ note "Expected exactly 2 to pass but found 3. Here are the failures:"
+              , note "4 is not equal to 2\n\n4 is not equal to 6"
               ]
             )
     ]
@@ -137,7 +137,7 @@ matchExactlyTests =
         in
           exactly 2 (Expect.equal 17) items
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected exactly 2 to pass but the list is empty"]
+              [ note "Expected exactly 2 to pass but the list is empty"]
             )
     ]
   ]
@@ -162,8 +162,8 @@ lastTests =
         in
           last (Expect.equal 7) items
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected the last item to pass but it failed:"
-              , description "7 is not equal to 4"
+              [ note "Expected the last item to pass but it failed:"
+              , note "7 is not equal to 4"
               ]
             )
     ]
@@ -172,7 +172,7 @@ lastTests =
       \() ->
         last (Expect.equal 7) []
           |> Expect.equal (Expect.fail <| format
-            [ description "Expected the last item to pass but the list is empty" ]
+            [ note "Expected the last item to pass but the list is empty" ]
           )
     ]
   ]
@@ -197,8 +197,8 @@ atIndexTests =
         in
           atIndex 1 (Expect.equal 2) items
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected item at index 1 to pass but it failed:"
-              , description "2 is not equal to 3"
+              [ note "Expected item at index 1 to pass but it failed:"
+              , note "2 is not equal to 3"
               ]
             )
     ]
@@ -210,7 +210,7 @@ atIndexTests =
         in
           atIndex 17 (Expect.equal 2) items
             |> Expect.equal (Expect.fail <| format
-              [ description "Expected item at index 17 to pass but there is no item at that index"
+              [ note "Expected item at index 17 to pass but there is no item at that index"
               ]
             )
     ]
@@ -235,7 +235,7 @@ hasLengthTests =
           items = [ 2, 4, 6, 8, 10 ]
         in
           hasLength 3 items
-            |> Expect.equal (Expect.fail (format [ message "Expected list to have size" "3", message "but it has size" "5"]))
+            |> Expect.equal (Expect.fail (format [ fact "Expected list to have size" "3", fact "but it has size" "5"]))
     ]
   ]
 

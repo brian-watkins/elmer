@@ -27,7 +27,7 @@ import Elmer.Html
 import Elmer.Html.Element.Internal as Html_
 import Elmer.Html.Query as Query
 import Elmer.Errors as Errors exposing (failWith)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Expect
 import String
 import Json.Decode as Json
@@ -106,11 +106,11 @@ hasText text =
             flattenTexts node.children
     in
         if List.length texts == 0 then
-            Expect.fail (format [ message "Expected element to have text" text, description "but it has no text" ])
+            Expect.fail (format [ fact "Expected element to have text" text, note "but it has no text" ])
         else if List.member text texts then
             Expect.pass
         else
-            Expect.fail (format [ message "Expected element to have text" text, message "but it has" (printList texts) ])
+            Expect.fail (format [ fact "Expected element to have text" text, fact "but it has" (printList texts) ])
 
 {-| Expect that an element has the specified class. No need to prepend the class name with a dot.
 -}
@@ -125,9 +125,9 @@ hasClass className =
             if List.member className classList then
                 Expect.pass
             else
-                Expect.fail (format [message "Expected element to have class" className, message "but it has" (printList classList) ])
+                Expect.fail (format [fact "Expected element to have class" className, fact "but it has" (printList classList) ])
         else
-            Expect.fail (format [message "Expected element to have class" className, description "but it has no classes" ])
+            Expect.fail (format [fact "Expected element to have class" className, note "but it has no classes" ])
 
 
 {-| Expect that an element has the specified attribute or property with the specified value.
@@ -171,9 +171,9 @@ hasId expectedId =
         if nodeId == expectedId then
           Expect.pass
         else
-          Expect.fail (format [message "Expected element to have id" expectedId, message "but it has id" nodeId ])
+          Expect.fail (format [fact "Expected element to have id" expectedId, fact "but it has id" nodeId ])
       Nothing ->
-        Expect.fail (format [message "Expected element to have id" expectedId, description "but it has no id" ])
+        Expect.fail (format [fact "Expected element to have id" expectedId, note "but it has no id" ])
 
 {-| Expect that an element has the specified style.
 
@@ -188,8 +188,8 @@ hasStyle (name, value) =
     in
       if Dict.isEmpty styleDict then
         Expect.fail <| format
-            [ message "Expected element to have style" <| name ++ ": " ++ value
-            , description "but it has no style"
+            [ fact "Expected element to have style" <| name ++ ": " ++ value
+            , note "but it has no style"
             ]
       else
           case Dict.get name styleDict of
@@ -198,13 +198,13 @@ hasStyle (name, value) =
                 Expect.pass
               else
                 Expect.fail <| format
-                  [ message "Expected element to have style" <| name ++ ": " ++ value
-                  , message "but it has style" (printDict styleDict)
+                  [ fact "Expected element to have style" <| name ++ ": " ++ value
+                  , fact "but it has style" (printDict styleDict)
                   ]
             Nothing ->
               Expect.fail <| format
-                [ message "Expected element to have style" <| name ++ ": " ++ value
-                , message "but it has style" (printDict styleDict)
+                [ fact "Expected element to have style" <| name ++ ": " ++ value
+                , fact "but it has style" (printDict styleDict)
                 ]
       
 
@@ -224,16 +224,16 @@ listensForEvent event =
   \targeted ->
     if List.isEmpty targeted.eventHandlers then
       Expect.fail <| format
-        [ message "Expected element to listen for event" event
-        , description "but it has no event listeners"
+        [ fact "Expected element to listen for event" event
+        , note "but it has no event listeners"
         ]
     else
       if List.any (\eventHandler -> eventHandler.eventType == event) targeted.eventHandlers then
         Expect.pass
       else
         Expect.fail <| format
-          [ message "Expected element to listen for event" event
-          , message "but it listens for" <| (
+          [ fact "Expected element to listen for event" event
+          , fact "but it listens for" <| (
             List.map .eventType targeted.eventHandlers
               |> String.join "\n"
             )

@@ -20,6 +20,8 @@
         "Elmer.Http.Route",
         "Elmer.Navigation",
         "Elmer.Command",
+        "Elmer.Message",
+        "Elmer.Message.Failure",
         "Elmer.Value",
         "Elmer.Program",
         "Elmer.Program.Matchers",

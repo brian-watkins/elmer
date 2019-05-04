@@ -7,7 +7,7 @@ module Elmer.Spy.Call exposing
 import Test.Runner
 import Expect
 import Elmer.Spy.Arg as Arg exposing (Arg(..), ArgValue(..))
-import Elmer.Printer exposing (..)
+import Elmer.Message.Failure as Failure
 
 
 matches : List Arg -> List Arg -> Bool
@@ -58,7 +58,7 @@ argThatFailures expected actual =
                 Just val ->
                   case Test.Runner.getFailureReason <| matcher val of
                     Just failure ->
-                      formatFailure failure ::
+                      Failure.format [ failure ] ::
                         argThatFailures xs ys
                     Nothing ->
                       argThatFailures xs ys

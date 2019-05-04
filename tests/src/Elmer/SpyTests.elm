@@ -14,7 +14,6 @@ import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
 import Elmer.Html.Selector.Printer as Selector
-import Elmer.Printer exposing (..)
 import Elmer
 import Elmer.Program
 import Elmer.Http

@@ -11,7 +11,7 @@ import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Html
 import Elmer.Html.Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.TestApps.InitTestApp as InitApp
 import Task
 import Time
@@ -66,7 +66,7 @@ initTests =
         in
           Expect.equal state (TestState.failure <|
             format
-              [ description "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
+              [ note "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
               ]
           )
     ]

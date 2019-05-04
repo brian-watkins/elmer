@@ -39,7 +39,7 @@ import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Internal as Spy_
 import Elmer.Effects as Effects
 import Elmer.Command as Command
-import Elmer.Printer exposing (..)
+import Elmer.Message.Failure as Failure
 import Elmer.Errors as Errors
 import Expect exposing (Expectation)
 import Test.Runner
@@ -188,7 +188,7 @@ expect route matcher =
             Errors.failWith <| 
               Errors.requestMatcherFailed
                 (routeToString route)
-                (formatFailure failure)
+                (Failure.format [ failure ])
           Nothing ->
             Expect.pass
 

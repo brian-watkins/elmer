@@ -5,7 +5,6 @@
         "Elmer.Html.Element.Printer",
         "Elmer.Html.Selector.Printer",
         "Elmer.TestState",
-        "Elmer.Printer",
         "Elmer.Spy.Arg",
         "Elmer.Runtime",
         "Elmer.Http.Internal",

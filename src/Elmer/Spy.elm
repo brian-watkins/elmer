@@ -31,7 +31,6 @@ import Elmer exposing (Matcher)
 import Elmer.TestState as TestState
 import Elmer.Spy.Internal as Spy_ exposing (Spy(..))
 import Elmer.Spy.Function as Function
-import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors exposing (failWith)
 
 {-| Represents a function that has been spied on.

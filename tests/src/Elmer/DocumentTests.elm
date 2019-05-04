@@ -6,7 +6,6 @@ import Elmer.Program
 import Elmer.Program.Matchers exposing (expectTitle)
 import Elmer.TestState as TestState
 import Elmer
-import Elmer.Printer exposing (..)
 import Elmer.Navigation as Navigation
 import Elmer.Html as Markup
 import Elmer.Html.Matchers exposing (element, hasText)

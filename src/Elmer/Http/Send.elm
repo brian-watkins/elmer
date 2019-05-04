@@ -8,7 +8,7 @@ import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Effects as Effects
 import Elmer.Command as Command
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Http
 
 
@@ -39,10 +39,10 @@ failCommand httpRequest tagger error =
   case error of
     Http.BadPayload msg response ->
       Command.fail <| format
-        [ message "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
-        , description <| "\tWith body: " ++ (printBody response.body)
-        , message "failed with error" msg
-        , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+        [ fact "Parsing a stubbed response" (httpRequest.method ++ " " ++ httpRequest.url)
+        , note <| "\tWith body: " ++ (printBody response.body)
+        , fact "failed with error" msg
+        , note "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
         ]
     _ ->
       Command.fake (tagger (Err error))

@@ -10,7 +10,7 @@ import Elmer.TestApps.MessageTestApp as MessageApp
 import Elmer.TestApps.MouseTestApp as ClickApp
 import Elmer.Html.Matchers as Matchers exposing (element, hasText)
 import Elmer.Html.Selector as Sel exposing (by)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Html as Markup
 import Task
 
@@ -148,7 +148,7 @@ dummyCommandTests =
         in
           Command.send (\() -> dummyCommand) initialState
             |> Command.expectDummy "fakeCommand"
-            |> Expect.equal (Expect.fail (format [message "No dummy commands sent with identifier" "fakeCommand"]))
+            |> Expect.equal (Expect.fail (format [fact "No dummy commands sent with identifier" "fakeCommand"]))
     ]
   , describe "when dummy commands with the identifier are found"
     [ test "it passes" <|

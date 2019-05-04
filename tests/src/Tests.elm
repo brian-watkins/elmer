@@ -26,7 +26,7 @@ import Elmer.HttpRequestTests as HttpRequestTests
 import Elmer.HttpResultTests as HttpResultTests
 import Elmer.HttpTaskTests as HttpTaskTests
 import Elmer.GivenCommandTests as GivenCommandTests
-import Elmer.PrinterTests as PrinterTests
+import Elmer.FailureTests as FailureTests
 import Elmer.SubscriptionTests as SubscriptionTests
 import Elmer.TestStateTests as TestsStateTests
 import Elmer.PortTests as PortTests
@@ -43,6 +43,7 @@ import Elmer.HtmlCustomTests as HtmlCustomTests
 import Elmer.SpySpanTests as SpySpanTests
 import Elmer.ValueTests as ValueTests
 import Elmer.EffectsTests as EffectsTests
+import Elmer.MessageTests as MessageTests
 
 all : Test
 all =
@@ -59,7 +60,7 @@ all =
     , PortTests.all
     , TestsStateTests.all
     , SubscriptionTests.all
-    , PrinterTests.all
+    , FailureTests.all
     , HttpTaskTests.all
     , HttpResultTests.all
     , GivenCommandTests.all
@@ -88,4 +89,5 @@ all =
     , MouseEventTests.all
     , ValueTests.all
     , EffectsTests.all
+    , MessageTests.all
     ]

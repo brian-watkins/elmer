@@ -12,7 +12,7 @@ import Elmer.Html.Selector exposing (..)
 import Elmer.Html.Types exposing (HtmlSelectorGroup(..))
 import Elmer.Spy as Spy exposing (andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalled)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Errors as Errors
 import Elmer.Html.Selector.Printer as Selector
 
@@ -297,7 +297,7 @@ selectTests =
               |> Markup.target << by [ tag "select" ]
               |> Event.select "some-value"
           in
-            Expect.equal state (TestState.failure (format [ message "No option found with value" "some-value" ]))
+            Expect.equal state (TestState.failure (format [ fact "No option found with value" "some-value" ]))
       ]
     , describe "when the select has options"
       [ describe "when no option matches the specified value"
@@ -310,8 +310,8 @@ selectTests =
             in
               Expect.equal state (
                 TestState.failure <| format
-                  [ message "No option found with value" "bad-value"
-                  , message "These are the options" "- select  [ input ]\n  - option { value = 'cat' } \n    - Cat\n  - option { value = 'dog' } \n    - Dog\n  - option { value = 'mouse' } \n    - Mouse"
+                  [ fact "No option found with value" "bad-value"
+                  , fact "These are the options" "- select  [ input ]\n  - option { value = 'cat' } \n    - Cat\n  - option { value = 'dog' } \n    - Dog\n  - option { value = 'mouse' } \n    - Mouse"
                   ]
               )
         ]

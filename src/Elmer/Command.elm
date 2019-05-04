@@ -48,7 +48,7 @@ import Elmer exposing (Matcher)
 import Elmer.TestState as TestState exposing (TestState)
 import Elmer.Context as Context exposing (Context)
 import Elmer.Runtime as Runtime
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Runtime.Command as RuntimeCommand
 import Elmer.Runtime.Command.Defer as Defer
 import Elmer.Command.Internal exposing (CommandState(..), testStateWithCommand)
@@ -108,7 +108,7 @@ expectDummy expectedIdentifier =
             |> List.filter (\identifier -> identifier == expectedIdentifier)
       in
         if List.isEmpty matchingCommands then
-          Expect.fail (format [message "No dummy commands sent with identifier" expectedIdentifier])
+          Expect.fail (format [fact "No dummy commands sent with identifier" expectedIdentifier])
         else
           Expect.pass
 

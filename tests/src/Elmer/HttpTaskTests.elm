@@ -14,7 +14,7 @@ import Elmer.Http.Route as Route exposing (get)
 import Elmer.Http.Matchers exposing (hasQueryParam, wasRequested)
 import Elmer.Spy as Spy
 import Elmer.Command as Command
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Errors as Errors
 
 import Elmer.TestApps.HttpTestApp as App
@@ -68,8 +68,8 @@ httpServerTests =
             |> Event.click
             |> Elmer.Http.expectRequest (get "http://fun.com/fun.html")
             |> Expect.equal (Expect.fail (format
-              [ message "Received a request for" "GET http://fun.com/fun.html"
-              , message "but it does not match any of the stubbed requests" "GET http://awesome.com/awesome.html"
+              [ fact "Received a request for" "GET http://fun.com/fun.html"
+              , fact "but it does not match any of the stubbed requests" "GET http://awesome.com/awesome.html"
               ]
             ))
     ]

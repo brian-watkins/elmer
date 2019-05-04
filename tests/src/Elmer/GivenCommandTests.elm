@@ -10,7 +10,7 @@ import Elmer.Spy as Spy exposing (Spy, andCallFake)
 import Elmer.Spy.Matchers exposing (wasCalledWith, stringArg)
 import Elmer.Command as Command
 import Elmer.TestApps.HeadlessTestApp as App
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 
 
 all : Test
@@ -72,10 +72,10 @@ expectMessageTests =
             exactly 1 <| Expect.equal (App.HttpRequest <| Ok [ 22, 34 ])
           )
           |> Expect.equal (Expect.fail (format
-            [ message "Parsing a stubbed response" "GET http://fake.com/my-fake-stuff"
-            , description ("\tWith body: \"Hey!\"")
-            , message "failed with error" "Problem with the given value:\n\n\"Hey!\"\n\nThis is not valid JSON! Unexpected token H in JSON at position 0"
-            , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+            [ fact "Parsing a stubbed response" "GET http://fake.com/my-fake-stuff"
+            , note ("\tWith body: \"Hey!\"")
+            , fact "failed with error" "Problem with the given value:\n\n\"Hey!\"\n\nThis is not valid JSON! Unexpected token H in JSON at position 0"
+            , note "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
             ]
           ))
     ]

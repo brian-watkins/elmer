@@ -11,7 +11,7 @@ import Elmer.Html as Markup
 import Elmer.Html.Event as Event
 import Elmer.Html.Matchers exposing (hasText)
 import Elmer.Html.Selector as Sel exposing (..)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer
 import Elmer.Errors as Errors
 
@@ -110,8 +110,8 @@ wasCalledWithTests =
         Matchers.wasCalledWith [ stringArg "blah", stringArg "fun", stringArg "sun" ] (testCalls "test-spy" [])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected spy test-spy to have been called with" "[ \"blah\"\n, \"fun\"\n, \"sun\"\n]"
-              , description "but it was not called"
+              [ fact "Expected spy test-spy to have been called with" "[ \"blah\"\n, \"fun\"\n, \"sun\"\n]"
+              , note "but it was not called"
               ]
             )
     ]
@@ -121,8 +121,8 @@ wasCalledWithTests =
         Matchers.wasCalledWith [ stringArg "blah" ] (testCalls "test-spy" [ [ StringArg "not blah" ], [ StringArg "something" ] ])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected spy test-spy to have been called with" "[ \"blah\"\n]"
-              , message "but it was called with" "[ \"not blah\"\n]\n\n[ \"something\"\n]"
+              [ fact "Expected spy test-spy to have been called with" "[ \"blah\"\n]"
+              , fact "but it was called with" "[ \"not blah\"\n]\n\n[ \"something\"\n]"
               ]
             )
     ]
@@ -161,8 +161,8 @@ argumentTests name expected output actual =
         Matchers.wasCalledWith [ expected ] (testCalls "test-spy" [ [ StringArg "blah" ] ])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected spy test-spy to have been called with" <| "[ " ++ output ++ "\n]"
-              , message "but it was called with" "[ \"blah\"\n]"
+              [ fact "Expected spy test-spy to have been called with" <| "[ " ++ output ++ "\n]"
+              , fact "but it was called with" "[ \"blah\"\n]"
               ])
     ]
   , describe "when a call matches"
@@ -188,8 +188,8 @@ anyArgumentTests =
         Matchers.wasCalledWith [ stringArg "huh", Matchers.anyArg ] (testCalls "test-spy" [ [ StringArg "blah", StringArg "something" ] ])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected spy test-spy to have been called with" <| "[ \"huh\"\n, <ANY>\n]"
-              , message "but it was called with" "[ \"blah\"\n, \"something\"\n]"
+              [ fact "Expected spy test-spy to have been called with" <| "[ \"huh\"\n, <ANY>\n]"
+              , fact "but it was called with" "[ \"blah\"\n, \"something\"\n]"
               ])
     ]
   ]
@@ -217,9 +217,9 @@ callsTests =
             |> Matchers.calls (Elmer.hasLength 14)
             |> Expect.equal (Expect.fail <|
               format
-                [ description "Expectation for test-spy failed."
-                , message "Expected list to have size" "14"
-                , message "but it has size" "2"
+                [ note "Expectation for test-spy failed."
+                , fact "Expected list to have size" "14"
+                , fact "but it has size" "2"
                 ])
     ]
   ]
@@ -247,14 +247,14 @@ hasArgsTests =
             |> Matchers.calls (Elmer.exactly 1 <| Matchers.hasArgs [ StringArg "something else" ])
             |> Expect.equal (Expect.fail <|
               format
-                [ description "Expectation for test-spy failed."
-                , description <| format
-                  [ description "Expected exactly 1 to pass but found 0. Here are the failures:"
-                  , description <| format
-                    [ message "Expected spy to have been called with" "[ \"something else\"\n]"
-                    , message "but it was called with" "[ \"blah\"\n]"
-                    , message "Expected spy to have been called with" "[ \"something else\"\n]"
-                    , message "but it was called with" "[ \"what\"\n]"
+                [ note "Expectation for test-spy failed."
+                , note <| format
+                  [ note "Expected exactly 1 to pass but found 0. Here are the failures:"
+                  , note <| format
+                    [ fact "Expected spy to have been called with" "[ \"something else\"\n]"
+                    , fact "but it was called with" "[ \"blah\"\n]"
+                    , fact "Expected spy to have been called with" "[ \"something else\"\n]"
+                    , fact "but it was called with" "[ \"what\"\n]"
                     ]
                   ]
                 ])
@@ -308,11 +308,11 @@ argThatBehavior name matcher =
         testCalls "test-spy" [ [ FunctionArg ] ]
           |> matcher [ argThat <| Expect.equal "some string" ]
           |> expectFailureContains (format
-              [ message "to have been called with" <| "[ <ARG_THAT>\n]"
-              , message "but it was called with" "[ <FUNCTION>\n]"
-              , description "An argThat matcher failed:"
-              , description <| format
-                [ description "argThat cannot be used to match arguments that are functions"
+              [ fact "to have been called with" <| "[ <ARG_THAT>\n]"
+              , fact "but it was called with" "[ <FUNCTION>\n]"
+              , note "An argThat matcher failed:"
+              , note <| format
+                [ note "argThat cannot be used to match arguments that are functions"
                 ]
               ]
           )

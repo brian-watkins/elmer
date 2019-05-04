@@ -36,7 +36,7 @@ module Elmer.Errors exposing
 -}
 
 import Expect exposing (Expectation)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Dict exposing (Dict)
 
 {-|
@@ -48,7 +48,7 @@ type alias CustomError
 -}
 noModel : CustomError
 noModel =
-  [ description "No model! Call Elmer.init to provide a model."
+  [ note "No model! Call Elmer.init to provide a model."
   ]
 
 
@@ -56,8 +56,8 @@ noModel =
 -}
 wrongTitle : String -> String -> CustomError
 wrongTitle expected actual =
-  [ message "Expected document to have title" expected
-  , message "but it has" actual
+  [ fact "Expected document to have title" expected
+  , fact "but it has" actual
   ]
 
 
@@ -65,8 +65,8 @@ wrongTitle expected actual =
 -}
 noTitle : String -> CustomError
 noTitle expected =
-  [ message "Expected document to have title" expected
-  , description "but the supplied view function does not result in a Document value"
+  [ fact "Expected document to have title" expected
+  , note "but the supplied view function does not result in a Document value"
   ]
 
 
@@ -74,8 +74,8 @@ noTitle expected =
 -}
 noLocation : String -> CustomError
 noLocation expected =
-  [ message "Expected to be at location:" expected
-  , description "but no location has been set"
+  [ fact "Expected to be at location:" expected
+  , note "but no location has been set"
   ]
 
 
@@ -83,8 +83,8 @@ noLocation expected =
 -}
 wrongLocation : String -> String -> CustomError
 wrongLocation expected actual =
-  [ message "Expected to be at location:" expected
-  , message "but location is:" actual
+  [ fact "Expected to be at location:" expected
+  , fact "but location is:" actual
   ]
 
 
@@ -92,8 +92,8 @@ wrongLocation expected actual =
 -}
 sendUrlRequiresApplication : CustomError
 sendUrlRequiresApplication =
-  [ description "sendUrlRequest can only be used when testing an Elm Html application."
-  , description "Use Elmer.Application.given to initialize this test."
+  [ note "sendUrlRequest can only be used when testing an Elm Html application."
+  , note "Use Elmer.Application.given to initialize this test."
   ]
 
 
@@ -101,8 +101,8 @@ sendUrlRequiresApplication =
 -}
 badUrl : String -> String -> CustomError
 badUrl fun expected =
-  [ message ("Fake " ++ fun ++ " could not process url") expected
-  , description "because it does not appear to be a url"
+  [ fact ("Fake " ++ fun ++ " could not process url") expected
+  , note "because it does not appear to be a url"
   ]
 
 
@@ -110,8 +110,8 @@ badUrl fun expected =
 -}
 navigationSpyRequiresApplication : String -> String -> CustomError
 navigationSpyRequiresApplication fun expected =
-  [ message ("Fake " ++ fun ++ " could not process url") expected
-  , description "Use Elmer.Application.given to initialize this test."
+  [ fact ("Fake " ++ fun ++ " could not process url") expected
+  , note "Use Elmer.Application.given to initialize this test."
   ]
 
 
@@ -119,8 +119,8 @@ navigationSpyRequiresApplication fun expected =
 -}
 elementNotFound : String -> String -> CustomError
 elementNotFound selector dom =
-  [ message "The targeted html element was not found" selector
-  , message "The current view is" dom
+  [ fact "The targeted html element was not found" selector
+  , fact "The current view is" dom
   ]
 
 
@@ -128,8 +128,8 @@ elementNotFound selector dom =
 -}
 wrongAttribute : String -> String -> String -> CustomError
 wrongAttribute property expectedValue actualValue =
-  [ message "Expected element to have attribute" <| property ++ " = " ++ expectedValue
-  , message "but it has" <| property ++ " = " ++ actualValue
+  [ fact "Expected element to have attribute" <| property ++ " = " ++ expectedValue
+  , fact "but it has" <| property ++ " = " ++ actualValue
   ]
 
 
@@ -137,8 +137,8 @@ wrongAttribute property expectedValue actualValue =
 -}
 noAttribute : String -> String -> CustomError
 noAttribute property expectedValue =
-  [ message "Expected element to have attribute" <| property ++ " = " ++ expectedValue
-  , description "but it has no attribute with that name"
+  [ fact "Expected element to have attribute" <| property ++ " = " ++ expectedValue
+  , note "but it has no attribute with that name"
   ]
 
 {-|
@@ -151,16 +151,16 @@ wrongAttributeName property expectedValue attrs =
           |> List.map (\(key, val) -> key ++ " = " ++ val)
           |> String.join "\n"
   in
-  [ message "Expected element to have attribute" <| property ++ " = " ++ expectedValue
-  , message "but it has these attributes" messages ]
+  [ fact "Expected element to have attribute" <| property ++ " = " ++ expectedValue
+  , fact "but it has these attributes" messages ]
 
 
 {-|
 -}
 noRequest : String -> CustomError
 noRequest expectedRoute =
-  [ message "Expected request for" expectedRoute
-  , description "but no requests have been made"
+  [ fact "Expected request for" expectedRoute
+  , note "but no requests have been made"
   ]
 
 
@@ -168,41 +168,41 @@ noRequest expectedRoute =
 -}
 wrongRequest : String -> String -> CustomError
 wrongRequest expectedRoute actualRequests =
-  [ message "Expected request for" expectedRoute
-  , message "but only found these requests" actualRequests
+  [ fact "Expected request for" expectedRoute
+  , fact "but only found these requests" actualRequests
   ]
 
 {-|
 -}
 requestMatcherFailed : String -> String -> CustomError
 requestMatcherFailed expectedRoute failure =
-  [ message "Requests matching" expectedRoute
-  , description "failed to meet the expectations:"
-  , description failure
+  [ fact "Requests matching" expectedRoute
+  , note "failed to meet the expectations:"
+  , note failure
   ]
 
 {-|
 -}
 failedToActivateSpies : String -> CustomError
 failedToActivateSpies errors =
-  [ message "Failed to activate one or more spies" errors
+  [ fact "Failed to activate one or more spies" errors
   ]
 
 {-|
 -}
 unknownSpy : String -> CustomError
 unknownSpy spyName =
-   [ message "Attempted to make expectations about calls to" spyName
-   , description "but that function has no spy registered for it."
-   , description "Check Elmer.Spy.use to make sure you've registered the spies you need."
+   [ fact "Attempted to make expectations about calls to" spyName
+   , note "but that function has no spy registered for it."
+   , note "Check Elmer.Spy.use to make sure you've registered the spies you need."
    ]
 
 {-|
 -}
 wrongNumberOfSpyCalls : String -> Int -> Int -> CustomError
 wrongNumberOfSpyCalls name expectedCallCount actualCallCount =
-  [ message ("Expected spy " ++ name ++ " to have been called") <| timesString expectedCallCount
-  , message "but it was called" <| timesString actualCallCount
+  [ fact ("Expected spy " ++ name ++ " to have been called") <| timesString expectedCallCount
+  , fact "but it was called" <| timesString actualCallCount
   ]
 
 
@@ -218,7 +218,7 @@ timesString times =
 -}
 badSpyIdentifier : CustomError
 badSpyIdentifier =
-  [ description "The function referenced by Elmer.Spy.expect could not be identified."
+  [ note "The function referenced by Elmer.Spy.expect could not be identified."
   ]
 
 
@@ -226,8 +226,8 @@ badSpyIdentifier =
 -}
 eventHandlerNotFound : String -> String -> CustomError
 eventHandlerNotFound actualEvents selector =
-  [ message "These events were triggered" actualEvents
-  , message "But there were no relevant event handlers on the targeted element" selector
+  [ fact "These events were triggered" actualEvents
+  , fact "But there were no relevant event handlers on the targeted element" selector
   ]
 
 
@@ -235,7 +235,7 @@ eventHandlerNotFound actualEvents selector =
 -}
 noElementTargetedForEvent : CustomError
 noElementTargetedForEvent =
-  [ description "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
+  [ note "No element has been targeted. Use Elmer.Html.target to identify an element to receive the event."
   ]
 
 {-|

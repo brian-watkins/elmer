@@ -11,7 +11,7 @@ import Elmer.Html.Selector as Sel exposing (..)
 import Elmer.Html.Node as Node
 import Elmer.Html.Types exposing (..)
 import Elmer.Html.Element.Printer as HtmlPrinter
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Errors as Errors exposing (CustomError)
 import Elmer.TestHelpers exposing (printHtml, expectError)
 import Html exposing (Html, Attribute)
@@ -309,8 +309,8 @@ hasStyleTests =
         Matchers.hasStyle ("position", "relative") (emptyNode "div")
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected element to have style" "position: relative"
-              , description "but it has no style"
+              [ fact "Expected element to have style" "position: relative"
+              , note "but it has no style"
               ]
             )
     ]
@@ -320,8 +320,8 @@ hasStyleTests =
         Matchers.hasStyle ("position", "relative") (elementWithStyles [ ("left", "0px"), ("top", "20px") ])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected element to have style" "position: relative"
-              , message "but it has style" "left: 0px\ntop: 20px"
+              [ fact "Expected element to have style" "position: relative"
+              , fact "but it has style" "left: 0px\ntop: 20px"
               ]
             )
     ]
@@ -331,8 +331,8 @@ hasStyleTests =
         Matchers.hasStyle ("position", "relative") (elementWithStyles [("position", "absolute")])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected element to have style" "position: relative"
-              , message "but it has style" "position: absolute"
+              [ fact "Expected element to have style" "position: relative"
+              , fact "but it has style" "position: absolute"
               ]
             )
 
@@ -367,8 +367,8 @@ listensForEventTests =
         Matchers.listensForEvent "click" (emptyNode "div")
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected element to listen for event" "click"
-              , description "but it has no event listeners"
+              [ fact "Expected element to listen for event" "click"
+              , note "but it has no event listeners"
               ]
             )
     ]
@@ -378,8 +378,8 @@ listensForEventTests =
         Matchers.listensForEvent "click" (nodeWithEvents [ "mouseup", "mousedown" ])
           |> Expect.equal (Expect.fail <|
             format
-              [ message "Expected element to listen for event" "click"
-              , message "but it listens for" "mouseup\nmousedown"
+              [ fact "Expected element to listen for event" "click"
+              , fact "but it listens for" "mouseup\nmousedown"
               ]
             )
     ]

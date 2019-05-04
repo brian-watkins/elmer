@@ -27,7 +27,6 @@ import Elmer exposing (Matcher)
 import Elmer.Value.Encode as Value
 import Elmer.Navigation.Internal exposing (..)
 import Expect
-import Elmer.Printer exposing (..)
 import Browser.Navigation as Navigation
 import Html exposing (Html)
 import Browser exposing (UrlRequest)

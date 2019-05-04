@@ -14,7 +14,7 @@ import Elmer.Http as ElmerHttp
 import Elmer.Http.Stub as HttpStub
 import Elmer.Command as Command
 import Elmer.Html as Markup
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Task
 import Time
 
@@ -136,7 +136,7 @@ unknownCommandTest =
       in
         Command.send unknownCommandThunk initialState
           |> Expect.equal (TestState.failure ( format
-            [ description "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
+            [ note "Encountered a native task.\nStub any task-generating functions with Task.succeed or Task.fail as necessary."
             ]
           ))
   ]

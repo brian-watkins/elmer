@@ -34,7 +34,8 @@ import Elmer exposing (Matcher)
 import Elmer.Spy exposing (Calls)
 import Elmer.Spy.Arg as Arg
 import Elmer.Spy.Call as Call
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
+import Elmer.Message.Failure as Failure
 import Elmer.Value.Native as Native
 import Elmer.Errors as Errors exposing (failWith)
 
@@ -159,8 +160,8 @@ calls callMatcher =
       Just failure ->
         Expect.fail <|
           format
-            [ description <| "Expectation for " ++ spy.name ++ " failed."
-            , description <| formatFailure failure
+            [ note <| "Expectation for " ++ spy.name ++ " failed."
+            , note <| Failure.format [ failure ]
             ]
       Nothing ->
         Expect.pass
@@ -228,8 +229,8 @@ evaluateCalls maybeSpyName args =
           Expect.fail <|
             format <|
               List.append
-                [ message (calledWithMessage maybeSpyName) <| Call.asString args
-                , message "but it was called with" <| String.join "\n\n" (List.map Call.asString callsArgList)
+                [ fact (calledWithMessage maybeSpyName) <| Call.asString args
+                , fact "but it was called with" <| String.join "\n\n" (List.map Call.asString callsArgList)
                 ]
                 (argThatFailureMessages failingCalls args)
 
@@ -238,8 +239,8 @@ noCallsFailure : Maybe String -> List Arg -> Expect.Expectation
 noCallsFailure maybeSpyName args =
   Expect.fail <|
     format
-      [ message (calledWithMessage maybeSpyName) <| Call.asString args
-      , description "but it was not called"
+      [ fact (calledWithMessage maybeSpyName) <| Call.asString args
+      , note "but it was not called"
       ]
 
 
@@ -250,12 +251,12 @@ argThatFailureMessages callsArgList args =
       callsArgList
         |> List.map (Call.argThatFailures args)
         |> List.concat
-        |> List.map description
+        |> List.map note
   in
     if List.isEmpty failureMessages then
       []
     else
-      description "An argThat matcher failed:" ::
+      note "An argThat matcher failed:" ::
         failureMessages
 
 

@@ -7,7 +7,7 @@ module Elmer.Http.Server exposing
 import Http exposing (Error(..))
 import Elmer.Http.Internal as HttpInternal
 import Elmer.Http.Types exposing (..)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 
 
 type alias HttpServerResult a =
@@ -44,8 +44,8 @@ matchFirstRequest httpRequestHandler responseStubs =
       Ok matchingResponseStub
     Nothing ->
       Err <| format
-        [ message "Received a request for" (printRequest httpRequestHandler)
-        , message "but it does not match any of the stubbed requests" (printStubs responseStubs)
+        [ fact "Received a request for" (printRequest httpRequestHandler)
+        , fact "but it does not match any of the stubbed requests" (printStubs responseStubs)
         ]
 
 

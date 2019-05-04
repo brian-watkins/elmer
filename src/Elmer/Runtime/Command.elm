@@ -17,7 +17,7 @@ import Elmer.Runtime.Command.Fail as Fail
 import Elmer.Runtime.Command.Stub as Stub
 import Elmer.Runtime.Command.Defer as Defer
 import Elmer.Context as Context exposing (Context)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Dict exposing (Dict)
 
 
@@ -67,6 +67,6 @@ unknownCommandRunner : String -> CommandRunner model subMsg msg
 unknownCommandRunner commandName _ _ =
   CommandError <|
     format <|
-      [ message "Elmer encountered a command it does not know how to run" commandName
-      , description "Try sending a stubbed or dummy command instead"
+      [ fact "Elmer encountered a command it does not know how to run" commandName
+      , note "Try sending a stubbed or dummy command instead"
       ]

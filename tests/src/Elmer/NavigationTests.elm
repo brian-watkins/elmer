@@ -12,7 +12,6 @@ import Elmer.Navigation as ElmerNav
 import Elmer.Program
 import Elmer.Html.Matchers as Matchers exposing (..)
 import Elmer.Html.Selector as Sel exposing (by)
-import Elmer.Printer exposing (..)
 import Elmer.Errors as Errors
 import Elmer.Html as Markup
 import Elmer.UrlHelpers as UrlHelpers

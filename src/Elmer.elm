@@ -36,7 +36,8 @@ import Test.Runner
 import Elmer.TestState as TestState
 import Elmer.Context as Context exposing (View(..))
 import Elmer.Runtime as Runtime
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
+import Elmer.Message.Failure as Failure exposing (Failure)
 import Elmer.Errors as Errors exposing (failWith)
 import Array
 
@@ -138,14 +139,14 @@ each matcher =
     in
       if List.isEmpty list then
         Expect.fail <| format
-          [ description "Expected all to pass but the list is empty" ]
+          [ note "Expected all to pass but the list is empty" ]
       else
         if List.isEmpty failures then
           Expect.pass
         else
           Expect.fail <| format
-            [ description "Expected all to pass but some failed:"
-            , description <| formatFailures failures
+            [ note "Expected all to pass but some failed:"
+            , note <| Failure.format failures
             ]
 
 {-| Expect that at least one item in a list satisfies the given matcher.
@@ -158,14 +159,14 @@ some matcher =
     in
       if List.isEmpty list then
         Expect.fail <| format
-          [ description "Expected some to pass but the list is empty" ]
+          [ note "Expected some to pass but the list is empty" ]
       else
         if List.length failures < List.length list then
           Expect.pass
         else
           Expect.fail <| format
-            [ description "Expected some to pass but found none. Here are the failures:"
-            , description <| formatFailures failures
+            [ note "Expected some to pass but found none. Here are the failures:"
+            , note <| Failure.format failures
             ]
 
 {-| Expect that exactly some number of items in a list satisfy the given matcher.
@@ -182,14 +183,14 @@ exactly expectedCount matcher =
       else
         if List.isEmpty failures then
           Expect.fail <| format
-            [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
+            [ note <| "Expected exactly " ++ (String.fromInt expectedCount) ++
               " to pass but the list is empty"
             ]
         else
           Expect.fail <| format
-            [ description <| "Expected exactly " ++ (String.fromInt expectedCount) ++
+            [ note <| "Expected exactly " ++ (String.fromInt expectedCount) ++
               " to pass but found " ++ (String.fromInt matchCount) ++ ". Here are the failures:"
-            , description <| formatFailures failures
+            , note <| Failure.format failures
             ]
 
 {-| Expect that the item at the given index satisfies the given matcher.
@@ -202,17 +203,17 @@ atIndex index matcher =
         case Test.Runner.getFailureReason <| matcher item of
           Just failure ->
             Expect.fail <| format
-              [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but it failed:"
-              , description <| formatFailure failure
+              [ note <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but it failed:"
+              , note <| Failure.format [ failure ]
               ]
           Nothing ->
             Expect.pass
       Nothing ->
         Expect.fail <| format
-          [ description <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but there is no item at that index"
+          [ note <| "Expected item at index " ++ (String.fromInt index) ++ " to pass but there is no item at that index"
           ]
 
-takeFailures : Matcher a -> List a -> List FailureReason
+takeFailures : Matcher a -> List a -> List Failure
 takeFailures matcher =
   List.filterMap (\item ->
     Test.Runner.getFailureReason <| matcher item
@@ -233,14 +234,14 @@ last matcher =
           case Test.Runner.getFailureReason <| matcher item of
             Just failure ->
               Expect.fail <| format
-                [ description <| "Expected the last item to pass but it failed:"
-                , description <| formatFailure failure
+                [ note <| "Expected the last item to pass but it failed:"
+                , note <| Failure.format [ failure ]
                 ]
             Nothing ->
               Expect.pass
         Nothing ->
           Expect.fail <| format
-            [ description <| "Expected the last item to pass but the list is empty"
+            [ note <| "Expected the last item to pass but the list is empty"
             ]
 
 
@@ -254,6 +255,6 @@ hasLength expectedCount =
     else
       Expect.fail <|
         format
-          [ message "Expected list to have size" (String.fromInt expectedCount)
-          , message "but it has size" (String.fromInt (List.length list))
+          [ fact "Expected list to have size" (String.fromInt expectedCount)
+          , fact "but it has size" (String.fromInt (List.length list))
           ]

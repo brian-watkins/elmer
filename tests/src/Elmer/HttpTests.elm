@@ -19,7 +19,7 @@ import Elmer.Http.Matchers exposing (..)
 import Elmer.Http.Route as Route
 import Elmer.Http.Request exposing (HttpRequest)
 import Elmer.Spy as Spy
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Command as Command
 import Elmer.Html as Markup
 import Elmer.Errors as Errors
@@ -61,8 +61,8 @@ serveTests =
             |> Markup.target << by [ id "data-result" ]
             |> Markup.expect (element <| hasText "Name: Super Fun Person")
             |> Expect.equal (Expect.fail (format
-              [ message "Received a request for" "GET http://fun.com/fun.html"
-              , message "but it does not match any of the stubbed requests" "GET http://wrongUrl.com\nPOST http://whatUrl.com"
+              [ fact "Received a request for" "GET http://fun.com/fun.html"
+              , fact "but it does not match any of the stubbed requests" "GET http://wrongUrl.com\nPOST http://whatUrl.com"
               ]
             ))
     ]
@@ -81,8 +81,8 @@ serveTests =
               |> Markup.target << by [ id "data-result" ]
               |> Markup.expect (element <| hasText "Name: Super Fun Person")
               |> Expect.equal (Expect.fail (format
-                [ message "Received a request for" "GET http://fun.com/fun.html"
-                , message "but it does not match any of the stubbed requests" "POST http://fun.com/fun.html"
+                [ fact "Received a request for" "GET http://fun.com/fun.html"
+                , fact "but it does not match any of the stubbed requests" "POST http://fun.com/fun.html"
                 ]
               ))
       ]
@@ -116,10 +116,10 @@ serveTests =
                   |> Markup.target << by [ id "data-result" ]
                   |> Markup.expect (element <| hasText "Name: Super Fun Person")
                   |> Expect.equal (Expect.fail (format
-                    [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
-                    , description ("\tWith body: \"{}\"")
-                    , message "failed with error" "Problem with the given value:\n\n{}\n\nExpecting an OBJECT with a field named `name`"
-                    , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+                    [ fact "Parsing a stubbed response" "GET http://fun.com/fun.html"
+                    , note ("\tWith body: \"{}\"")
+                    , fact "failed with error" "Problem with the given value:\n\n{}\n\nExpecting an OBJECT with a field named `name`"
+                    , note "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
                     ]
                   ))
           , describe "when the stub does not specify a body at all"
@@ -135,10 +135,10 @@ serveTests =
                     |> Markup.target << by [ id "data-result" ]
                     |> Markup.expect (element <| hasText "Name: Super Fun Person")
                     |> Expect.equal (Expect.fail (format
-                      [ message "Parsing a stubbed response" "GET http://fun.com/fun.html"
-                      , description ("\tWith body: \"\"")
-                      , message "failed with error" "Problem with the given value:\n\n\"\"\n\nThis is not valid JSON! Unexpected end of JSON input"
-                      , description "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
+                      [ fact "Parsing a stubbed response" "GET http://fun.com/fun.html"
+                      , note ("\tWith body: \"\"")
+                      , fact "failed with error" "Problem with the given value:\n\n\"\"\n\nThis is not valid JSON! Unexpected end of JSON input"
+                      , note "If you really want to generate a BadPayload error, consider using\nElmer.Http.Stub.withError to build your stubbed response."
                       ]
                     ))
             ]

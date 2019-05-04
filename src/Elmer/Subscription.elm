@@ -36,7 +36,7 @@ component as expected.
 
 import Elmer
 import Elmer.TestState as TestState exposing (TestState)
-import Elmer.Printer exposing (..)
+import Elmer.Message exposing (..)
 import Elmer.Runtime as Runtime
 import Elmer.Command as Command
 import Elmer.Runtime.Intention as Intention exposing (Intention(..))
@@ -160,13 +160,13 @@ send subName data =
             in
               if List.isEmpty spies then
                 TestState.failure <| format
-                  [ message "No subscription spy found with name" subName
-                  , description "because there are no subscription spies"
+                  [ fact "No subscription spy found with name" subName
+                  , note "because there are no subscription spies"
                   ]
               else
                 TestState.failure <| format
-                  [ message "No subscription spy found with name" subName
-                  , message "These are the current subscription spies" (String.join "\n" spies)
+                  [ fact "No subscription spy found with name" subName
+                  , fact "These are the current subscription spies" (String.join "\n" spies)
                   ]
 
 
