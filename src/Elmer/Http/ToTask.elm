@@ -8,6 +8,7 @@ import Elmer.Http.Internal as HttpInternal
 import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Runtime.Task as RuntimeTask
+import Elmer.Task
 import Elmer.Effects as Effects
 import Elmer.Command as Command
 import Task exposing (Task)
@@ -21,8 +22,7 @@ stubbedWith responseStubs request =
       httpTask response.request response.result
         |> deferIfNecessary response.stub
     Err error ->
-      Command.fail error
-        |> RuntimeTask.abortWith
+      Elmer.Task.failTest error
 
 
 spy : Http.Request a -> Task Http.Error a

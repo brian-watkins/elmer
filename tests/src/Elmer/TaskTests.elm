@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Elmer exposing (exactly)
 import Elmer.Command as Command
+import Elmer.Task
 import Task
 import Time exposing (Posix)
 
@@ -11,7 +12,8 @@ import Time exposing (Posix)
 all : Test
 all =
   Test.concat
-  [ realTaskTests
+  [ failTestTaskTests
+  , realTaskTests
   , andThenTests
   , sequenceTests
   , mapTests
@@ -57,6 +59,20 @@ type alias TestData5 =
   , weather : String
   , fruit : String
   }
+
+failTestTaskTests : Test
+failTestTaskTests =
+  describe "failTest"
+  [ test "it fails the test with the given message" <|
+    \() ->
+      Command.given (\_ ->
+        Elmer.Task.failTest "It failed!"
+          |> Task.attempt TagResult
+      )
+      |> Command.expectMessages (Expect.equal [])
+      |> Expect.equal (Expect.fail "It failed!")
+  ]
+
 
 realTaskTests : Test
 realTaskTests =

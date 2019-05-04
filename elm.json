@@ -28,7 +28,8 @@
         "Elmer.Effects",
         "Elmer.Spy",
         "Elmer.Spy.Matchers",
-        "Elmer.Subscription"
+        "Elmer.Subscription",
+        "Elmer.Task"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
