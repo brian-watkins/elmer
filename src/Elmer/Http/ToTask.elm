@@ -8,7 +8,7 @@ import Elmer.Http.Internal as HttpInternal
 import Elmer.Http.Types exposing (..)
 import Elmer.Http.Server as Server
 import Elmer.Runtime.Task as RuntimeTask
-import Elmer.Runtime.Command as RuntimeCommand
+import Elmer.Command as Command
 import Task exposing (Task)
 import Http
 
@@ -20,7 +20,7 @@ stubbedWith responseStubs request =
       httpTask response.request response.result
         |> deferIfNecessary response.stub
     Err error ->
-      RuntimeCommand.fail error
+      Command.fail error
         |> RuntimeTask.abortWith
 
 
