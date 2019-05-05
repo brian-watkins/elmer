@@ -63,13 +63,13 @@ In your `elm.json` file, you'll need to manually add elmer to the `test-dependen
 "test-dependencies": {
   "direct": {
     "elm-explorations/test": "1.1.0",
-    "elm-explorations/elmer": "5.0.1"
+    "elm-explorations/elmer": "6.0.0"
   },
   "indirect": {}
 }
 ```
 
-The latest version of Elmer is 5.0.1. Make sure the version number of elmer 
+The latest version of Elmer is 6.0.0. Make sure the version number of elmer 
 matches the version number of the `elmer-test` NPM package.
 
 Notice the `indirect` section under `test-dependencies`. Elmer itself has the following dependencies:
@@ -122,8 +122,8 @@ $ ELM_HOME=$(pwd)/node_modules/elmer-test/home elm make src/Main.elm
 ## Releases
 
 #### 6.0.0
-- Removed `Elmer.Http`. It now lives in its own [package](https://github.com/brian-watkins/elmer-http)
-so it can be updated independently.
+- Removed `Elmer.Http` and the dependency on elm/http. `Elmer.Http` now lives 
+in its own [package](https://github.com/brian-watkins/elmer-http) so it can be updated independently.
 - Provided new APIs useful for creating extensions and custom matchers. See `Elmer.Value`, 
 `Elmer.Message`, `Elmer.Message.Failure`,`Elmer.Effects`, and `Elmer.Task`
 
