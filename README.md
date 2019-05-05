@@ -3,6 +3,7 @@
 Elmer makes it easy to describe the behavior of Elm HTML applications. If you love TDD and
 you love Elm, then you'll probably appreciate Elmer.
 
+
 ### Why?
 
 Behavior-driven development is a great practice to follow when writing
@@ -27,9 +28,11 @@ describe the behavior of your app under whatever conditions you need. Elmer
 allows you to write tests first, which gives you the freedom and confidence
 to change your code later on.
 
+
 ## Getting Started
 
 Because Elmer uses some native Javascript code to accomplish its magic, you cannot install Elmer through the elm package repository. Instead, you can install Elmer with the `elmer-test` package on NPM. Follow these steps to TDD bliss ...
+
 
 ### Install
 
@@ -50,6 +53,7 @@ Now install the elm test library:
 ```
 $ npx elm install elm-explorations/test
 ```
+
 
 ### Update the elm.json file
 
@@ -75,7 +79,6 @@ Notice the `indirect` section under `test-dependencies`. Elmer itself has the fo
   "elm/browser": "1.0.0 <= v < 2.0.0",
   "elm/core": "1.0.0 <= v < 2.0.0",
   "elm/html": "1.0.0 <= v < 2.0.0",
-  "elm/http": "1.0.0 <= v < 2.0.0",
   "elm/json": "1.0.0 <= v < 2.0.0",
   "elm/random": "1.0.0 <= v < 2.0.0",
   "elm/url": "1.0.0 <= v < 2.0.0",
@@ -87,19 +90,6 @@ If any of these dependencies are not already listed as direct or indirect depend
 
 If you just try to run elm-test (see below) and you're missing any dependencies, the compiler will give you an error message. Take the missing dependencies it mentions and list them as indirect test dependencies.
 
-For example, here's what the `test-dependencies` would look like for an app that doesn't use `elm/http`:
-
-```
-"test-dependencies": {
-  "direct": {
-    "elm-explorations/test": "1.1.0",
-    "elm-explorations/elmer": "5.0.1"
-  },
-  "indirect": {
-    "elm/http": "1.0.0"
-  }
-}
-```
 
 ### Run
 
@@ -119,6 +109,7 @@ I recommend adding a test script to your `package.json` that sets the environmen
 
 Note that `ELM_HOME` must be an absolute path (thus the `$(pwd)` in the test command).
 
+
 ### Caveats
 
 The `elm` command searches for test dependencies any time you invoke it (so, even if you aren't running tests). This means that you will need to set the `ELM_HOME` environment variable as described above, any time you invoke the `elm` command. For example, to build your app, you'll need to do something like:
@@ -127,7 +118,14 @@ The `elm` command searches for test dependencies any time you invoke it (so, eve
 $ ELM_HOME=$(pwd)/node_modules/elmer-test/home elm make src/Main.elm
 ```
 
+
 ## Releases
+
+#### 6.0.0
+- Removed `Elmer.Http`. It now lives in its own [package](https://github.com/brian-watkins/elmer-http)
+so it can be updated independently.
+- Provided new APIs useful for creating extensions and custom matchers. See `Elmer.Value`, 
+`Elmer.Message`, `Elmer.Message.Failure`,`Elmer.Effects`, and `Elmer.Task`
 
 #### 5.0.1
 - Support for calling a spy across multiple test states
@@ -151,6 +149,7 @@ Read the [latest documentation](https://elmer-test.cfapps.io/).
 
 If you're interested in Elmer for Elm 0.18, you should read the documentation for Elmer 3.3.1, which
 you can find [here](https://elmer-test.cfapps.io/versions).
+
 
 ## Describing Behavior
 
@@ -187,6 +186,7 @@ tests that do not know the shape of your model or the particular messages that f
 Don't unit test functions. Begin each test only with references to the functions that must exist -- `view`, `update`,
 `init` -- and use Elmer to describe the pre- and post-conditions associated with some behavior. 
 
+
 ### Create a TestState
 
 To begin a test with Elmer, you need to generate a `TestState` value. There are a variety of ways to do this:
@@ -197,6 +197,7 @@ use `Elmer.Program.init` to provide an initial model and command.
 - Use `Elmer.given` to test an arbitrary model, view method, and update method.
 - Use `Elmer.Command.given` to test a command-generating function in isolation.
 
+
 ### Working with HTML
 
 Since Elm is primarily designed for writing HTML applications, much of the work that goes into describing
@@ -204,6 +205,7 @@ the pre- and post-conditions that characterize some behavior will involve workin
 
 Elmer allows you to simulate events on elements and examine the state of elements. In order to do either, 
 you'll need to first target an element.
+
 
 #### Targeting an Element
 
@@ -232,6 +234,7 @@ allTests =
 
 See `Elmer.Html.Selector` for more examples of selectors. It's also possible to write your own.
 
+
 #### Taking action on an element
 
 Once you target an element, that element is the subject of subsequent actions, until
@@ -242,6 +245,7 @@ you target another element. The following functions define actions on elements:
 + Custom events: `Elmer.Html.Event.trigger <eventName> <eventJson> <testState>`
 + There are also events for mouse movements, and checking and selecting input elements. See
 the [docs](https://elmer-test.cfapps.io/) for more information.
+
 
 #### Element Matchers
 
@@ -284,6 +288,7 @@ allTests =
   ]
 ```
 
+
 ### Commands
 
 Commands describe actions to be performed by the Elm runtime; the result of a command depends on the state of the
@@ -291,6 +296,7 @@ world outside the Elm application. Elmer simulates the Elm runtime in order to
 facilitate testing, but it is not intended to replicate the Elm runtime's ability to carry out commands.
 Instead, Elmer allows you to specify what effect should result from running a command. This is one important
 way that Elmer allows you to describe the pre-conditions that characterize an application behavior.
+
 
 #### Faking Effects
 
@@ -306,89 +312,8 @@ Note that while Elmer is not capable of processing any commands, it does support
 the general operations on commands in the core `Platform.Cmd` module, namely, `batch` and `map`. So, you
 can use these functions as expected in your application and Elmer should do the right thing.
 
-Elmer provides additional support for HTTP request commands and navigation commands.
+Elmer provides additional support for navigation commands.
 
-#### Elmer.Http
-
-Modern web apps often need to make HTTP requests to some backend server. Elmer makes it easy to stub HTTP
-responses and write expectations about the requests made. The `Elmer.Http.Stub` module contains methods
-for constructing an `HttpResponseStub` that describes how to respond to some request. For example,
-we might stub a request to the server for our game to return high scores like so:
-
-```
-let
-  stubbedResponse = Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fakeGameServer.com/scores")
-    |> Elmer.Http.Stub.withBody "[{\"score\":700,\"player\":\"Brian\"},{\"score\":900,\"player\":\"Holly\"}]"
-in
-```
-
-In this case, a GET request to the given route will result in a response with the given body.
-See `Elmer.Http.Stub` for the full list of builder functions.
-
-Once an `HttpResponseStub` has been created, you can use the `Elmer.Http.serve` function
-along with `Elmer.Spy.use` to override `Http.send` and `Http.toTask` from [elm/http](https://package.elm-lang.org/packages/elm/http/latest/) during your test.
-When your application code calls `Http.send` or `Http.toTask`, the request will be checked against the
-provided stubs and if a match occurs, the given response will be returned.
-
-Here's how we can extend our test to describe more of its pre-conditions:
-
-```
-allTests : Test
-allTests =
-  describe "My Fun Game"
-  [ describe "High Score Screen"
-    [ test "it shows the high scores" <|
-      \() ->
-        let
-          stubbedResponse =
-            Elmer.Http.Stub.for (Elmer.Http.Route.get "http://fakeGameServer.com/scores")
-              |> Elmer.Http.Stub.withBody 
-                "[{\"score\":700,\"player\":\"Brian\"},{\"score\":900,\"player\":\"Holly\"}]"
-        in
-          Elmer.Program.givenElement App.view App.update
-            |> Elmer.Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
-            |> Elmer.Program.init (\_ -> App.init testFlags)
-            |> Elmer.Html.target
-                << Elmer.Html.Selector.childrenOf 
-                  [ Elmer.Html.Selector.tag "ol"
-                  , Elmer.Html.Selector.class "score-list"
-                  ]
-                << Elmer.Html.Selector.by
-                  [ Elmer.Html.Selector.tag "li" ]
-            |> Elmer.Html.expect (Elmer.Html.Matchers.elements <|
-                Elmer.expectAll
-                [ Elmer.hasLength 2
-                , Elmer.atIndex 0 <| Elmer.Html.Matchers.hasText "700 Points"
-                , Elmer.atIndex 1 <| Elmer.Html.Matchers.hasText "900 Points"
-                ]
-              )
-    ]
-  ]
-```
-
-Elmer also allows you to write tests that expect some HTTP request to have been made, in a
-manner similar to how you can write expectations about some element in an HTML document. For
-example, this test inputs search terms into a field, clicks a search button, and then expects
-that a request is made to a specific route with the search terms in the query string:
-
-```
-Elmer.given App.defaultModel App.view App.update
-  |> Elmer.Spy.use [ Elmer.Http.serve [ stubbedResponse ] ]
-  |> Elmer.Html.target << by [ tag "input", attribute ("name", "query") ]
-  |> Elmer.Html.Event.input "Fun Stuff"
-  |> Elmer.Html.target << by [ id "search-button" ]
-  |> Elmer.Html.Event.click
-  |> Elmer.Http.expect (Elmer.Http.Route.get "http://fake.com/search") (
-    Elmer.some <| Elmer.Http.Matchers.hasQueryParam ("q", "Fun Stuff")
-  )
-```
-
-If you don't care to describe the behavior of your app after the response from a request is
-received -- that is, if you don't care to create a stubbed response for some request -- you
-can provide `Elmer.Http.spy` to `Elmer.Spy.use` and it will override the `Http.send` and `Http.toTask`
-functions so that they merely record any requests received.
-
-See `Elmer.Http` and `Elmer.Http.Matchers` for more.
 
 #### Elmer.Navigation
 
@@ -420,17 +345,15 @@ You can write an expectation about the current location with `Elmer.Navigation.e
 See `tests/src/Elmer/TestApps/NavigationTestApp.elm` and `tests/src/Elmer/NavigationTests.elm` for
 examples.
 
+
 #### Deferred Command Processing
 
 It's often necessary to describe the behavior of an application while some command is running. For example,
 one might want to show a progress indicator while an HTTP request is in process. Elmer provides
 general support for deferred commands. Use `Elmer.Command.defer` to create a command that
-will not be processed until `Elmer.Command.resolveDeferred` is called. Note that all currently
+will not be processed until `Elmer.resolveDeferred` is called. Note that all currently
 deferred commands will be resolved when this function is called.
 
-`Elmer.Http` allows you to specify when the processing of a stubbed response should be deferred.
-When you create your `HttpResponseStub` just use the `Elmer.Http.Stub.deferResponse` builder function
-to indicate that this response should be deferred until `Elmer.Command.resolveDeferred` is called.
 
 #### Testing Commands in Isolation
 
@@ -448,14 +371,17 @@ Elmer.Command.given (\_ -> MyModule.myCommand MyTagger withSomeArgument)
   )
 ```
 
-You can use `Elmer.Command.given` with other functions as it makes sense. So, you might
-write a test that expects a certain Http request to result from the processing of a command:
+You can use `Elmer.Command.given` with spies as it makes sense. So, you might
+write a test that exercises a module with some function that needs to be stubbed (like a port command):
 
 ```
 Elmer.Command.given (\_ -> MyModule.sendRequest MyTagger someArgument)
-  |> Elmer.Spy.use [ Elmer.Http.spy ]
-  |> Elmer.Http.expectRequest (Elmer.Http.Route.get "http://fun.com/api/someArgument")
+  |> Elmer.Spy.use [ someSpy ]
+  |> Elmer.Command.expectMessages (\messages ->
+    Expect.equal [ MyTagger "Fun Result" ]
+  )
 ```
+
 
 ### Subscriptions
 
@@ -496,6 +422,7 @@ timeSubscriptionTest =
 ```
 
 For a more complete example, check out this [article](https://medium.com/@brian.watkins/test-driving-elm-with-elmer-649e2e7e02a8).
+
 
 ### Ports
 
@@ -591,6 +518,7 @@ that resolves to the time you want.
         |> Elmer.Html.expect (
           element <| hasText "1/6/2018 23:23:37"
         )
+
 
 ### Spies and Fakes
 
@@ -710,6 +638,23 @@ Use `Elmer.Spy.inject` to provide the function you want to observe so that Elmer
 Finally, you can use `Spy.replaceValue` to replace the value returned by a no-argument function
 (such as `Time.now`) during a test. You can't make expectations about spies created in this
 way; `Spy.replaceValue` is just a convenient way to inject fake values during a test.
+
+
+### Extensions
+
+It's easy to build extensions on top of Elmer to provide custom matchers or test functions that
+help describe the behavior of an Elm application. 
+
+For a good example, see the [elmer-http](https://github.com/brian-watkins/elmer-http) package, 
+which adds support for describing the behavior of apps that use HTTP. 
+
+
+### Upgrading from Elmer 5.x
+
+The `Elmer.Http` api has been removed and moved to its own [package](https://github.com/brian-watkins/elmer-http).
+
+`Elmer.Command.resolveDeferred` has moved to `Elmer.resolveDeferred` to accomodate the fact that Tasks can
+also be deferred. 
 
 
 ### Upgrading from Elmer 4.x
