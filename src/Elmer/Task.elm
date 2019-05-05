@@ -19,9 +19,13 @@ For example, you could write a test that exercises code using `Browser.Dom.focus
           Task.succeed ()
         )
 
-    Elmer.given testModel testView testUpdate
-      |> Spy.use [ focusStub ]
-      |> etc ...
+    myTest : Test
+    myTest =
+      test "it does something awesome" <|
+        \() ->
+          Elmer.given testModel testView testUpdate
+            |> Spy.use [ focusStub ]
+            |> etc ...
 
 In this case, the focusStub would allow you to simulate the success of the task produced by
 `Browser.Dom.focus`.

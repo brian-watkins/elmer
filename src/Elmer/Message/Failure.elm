@@ -3,7 +3,9 @@ module Elmer.Message.Failure exposing
   , format
   )
 
-{-| Format a test failure reason from the elm-explorations/Test package.
+{-| Format a test failure reason from
+the [elm-explorations/test](https://package.elm-lang.org/packages/elm-explorations/test/latest/)
+package.
 
 Note that these functions are mainly useful when writing extensions to Elmer
 or custom matchers.
@@ -14,7 +16,8 @@ or custom matchers.
 
 import Test.Runner.Failure
 
-{-| Represents a failure reason from the elm-explorations/Test package.
+{-| Represents a failure reason from the
+[elm-explorations/test](https://package.elm-lang.org/packages/elm-explorations/test/latest/) package.
 
 You can obtain a failure reason with `Test.Runner.getFailureReason`.
 
@@ -29,7 +32,7 @@ type alias Failure =
   }
 
 
-{-| Format a `Failure` message.
+{-| Format a list of `Failure` values as a string.
 -}
 format : List Failure -> String
 format failures =

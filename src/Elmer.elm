@@ -28,7 +28,7 @@ module Elmer
 # Make low-level expectations
 @docs given, expectModel
 
-# Resolve Deferred Commands and Tasks
+# Resolve Deferred Effects
 @docs resolveDeferred
 
 -}

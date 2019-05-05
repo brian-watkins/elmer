@@ -15,14 +15,14 @@ module Elmer.Value exposing
 
 These functions are most helpful for inspecting the value of an opaque type during a test.
 
-# Inspect the Value of a Custom Type
-@docs constructor, firstArg, secondArg, thirdArg
-
-# Inspect a Data Structure
-@docs tuple, list, dict
-
 # Decode Elm values
 @docs decode, decoder
+
+# Custom Type Value Decoders
+@docs constructor, firstArg, secondArg, thirdArg
+
+# Data Structure Decoders
+@docs tuple, list, dict
 
 # Debugging
 @docs log
@@ -71,7 +71,7 @@ Since Elm values are JS objects under the hood, you can use any JSON decoder her
 However, you'll probably want to take advantage of the special decoders provided in this module, as
 they encapsulate some of the details about how Elm values are represented in JS. 
 
-Use `Value.log` to help you discern what you might want to decode.
+Use `Elmer.Value.log` to help you discern what you might want to decode.
 -}
 decode : Json.Decoder a -> v -> Result Json.Error b
 decode =

@@ -38,7 +38,8 @@ Provide a custom type as an 'effectId' and then a function that produces the
 new value for the stored effects based on what has (or has not) been stored already.
 
 This function produces a command that should be sent to the Elmer runtime, either in
-the normal course of code that's been exercised or via `Elmer.Command.send`. 
+the normal course of code that's exercised during the test or directly
+via `Elmer.Command.send`. 
 
 For example, suppose you have an effect id like:
 
@@ -48,7 +49,9 @@ For example, suppose you have an effect id like:
 You could record effects like so:
 
     testState
-      |> Command.send (\_ -> push Effects (\_ -> "Hello!"))
+      |> Command.send (\_ -> 
+        push Effects (\_ -> "Hello!")
+      )
 
 -}
 push : effectId -> (Maybe a -> a) -> Cmd msg
@@ -72,7 +75,9 @@ then you could clear that list like so:
     testState
       |> use Effects (\_ state ->
         state
-          |> Command.send (\_ -> Effects.push Effects (\_ -> []))
+          |> Command.send (\_ -> 
+            Effects.push Effects (\_ -> [])
+          )
       )
 
 -}
@@ -88,7 +93,9 @@ use effectId mapper testState =
 {-| Make an expectation about stored effects.
 
     testState
-      |> Command.send (\_ -> push Effects (\_ -> "Hello!"))
+      |> Command.send (\_ -> 
+        push Effects (\_ -> "Hello!")
+      )
       |> expect Effects (\maybeEffect ->
         Maybe.withDefault "" maybeEffect
           |> Expect.equal "Hello!"
