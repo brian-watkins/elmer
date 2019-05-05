@@ -145,10 +145,10 @@ in its own [package](https://github.com/brian-watkins/elmer-http) so it can be u
 
 ## Documentation
 
-Read the [latest documentation](https://elmer-test.cfapps.io/).
+Read the [latest documentation](https://elmer-test.cfapps.io/elmer).
 
 If you're interested in Elmer for Elm 0.18, you should read the documentation for Elmer 3.3.1, which
-you can find [here](https://elmer-test.cfapps.io/versions).
+you can find [here](https://elmer-test.cfapps.io/elmer/versions).
 
 
 ## Describing Behavior
@@ -244,7 +244,7 @@ you target another element. The following functions define actions on elements:
 + Input events: `Elmer.Html.Event.input <text> <testState>`
 + Custom events: `Elmer.Html.Event.trigger <eventName> <eventJson> <testState>`
 + There are also events for mouse movements, and checking and selecting input elements. See
-the [docs](https://elmer-test.cfapps.io/) for more information.
+the [docs](https://elmer-test.cfapps.io/elmer) for more information.
 
 
 #### Element Matchers
