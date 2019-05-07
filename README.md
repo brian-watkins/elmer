@@ -295,7 +295,7 @@ Commands describe actions to be performed by the Elm runtime; the result of a co
 world outside the Elm application. Elmer simulates the Elm runtime in order to
 facilitate testing, but it is not intended to replicate the Elm runtime's ability to carry out commands.
 Instead, Elmer allows you to specify what effect should result from running a command. This is one important
-way that Elmer allows you to describe the pre-conditions that characterize an application behavior.
+way that Elmer allows you to describe the conditions that characterize an application behavior.
 
 
 #### Faking Effects
@@ -312,7 +312,8 @@ Note that while Elmer is not capable of processing any commands, it does support
 the general operations on commands in the core `Platform.Cmd` module, namely, `batch` and `map`. So, you
 can use these functions as expected in your application and Elmer should do the right thing.
 
-Elmer provides additional support for navigation commands.
+Elmer provides built-in support for navigation commands. If you want to work with Http during your tests, check
+out the [Elmer.Http](https://github.com/brian-watkins/elmer-http) extension. 
 
 
 #### Elmer.Navigation
@@ -519,6 +520,9 @@ that resolves to the time you want.
           element <| hasText "1/6/2018 23:23:37"
         )
 
+See the `Elmer.Task` module for more tasks that are useful when writing tests or
+building extensions to Elmer.
+
 
 ### Spies and Fakes
 
@@ -642,11 +646,13 @@ way; `Spy.replaceValue` is just a convenient way to inject fake values during a 
 
 ### Extensions
 
-It's easy to build extensions on top of Elmer to provide custom matchers or test functions that
-help describe the behavior of an Elm application. 
+It's easy to build extensions on top of Elmer to provide custom matchers or extra functions that
+help describe the behavior of an Elm application. In particular, `Elmer.Value`, `Elmer.Message`, 
+and `Elmer.Effects` provide functions that are useful when writing custom matchers or extension
+modules.
 
-For a good example, see the [elmer-http](https://github.com/brian-watkins/elmer-http) package, 
-which adds support for describing the behavior of apps that use HTTP. 
+For a good example of an extension, see the [Elmer.Http](https://github.com/brian-watkins/elmer-http)
+package, which adds support for describing the behavior of apps that use HTTP. 
 
 
 ### Upgrading from Elmer 5.x
