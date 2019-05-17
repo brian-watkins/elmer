@@ -3,7 +3,6 @@ module Elmer.Spy.Internal exposing
   , Calls
   , create
   , replaceValue
-  , callable
   , activate
   , deactivate
   , calls
@@ -90,11 +89,6 @@ recordCalls : SpyValue -> Spy
 recordCalls spy =
   Active
     { spy | function = Function.activateSpy spy.calls spy.function }
-
-
-callable : String -> (a -> b)
-callable name =
-  Function.callable name
 
 
 calls : String -> List Spy -> Maybe Calls

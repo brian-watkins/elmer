@@ -6,7 +6,6 @@ module Elmer.Spy.Function exposing
   , from
   , replace
   , withFake
-  , callable
   , activateSpy
   , deactivateSpy
   )
@@ -130,20 +129,3 @@ deactivateSpy function =
 argumentDecoder : Json.Decoder Argument
 argumentDecoder =
   Json.value
-
-
-callable : String -> (a -> b)
-callable name =
-  \args ->
-    let
-      spyFunc =
-        Elm.Kernel.Function.active name
-          |> Native.decode (Json.nullable Native.decoder)
-          |> Result.withDefault Nothing
-    in
-      case spyFunc of
-        Just spy ->
-          spy args
-        Nothing ->
-          "Attempted to use Spy.callable with an unknown spy: " ++ name
-            |> Debug.todo
