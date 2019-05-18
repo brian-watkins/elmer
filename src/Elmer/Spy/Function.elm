@@ -14,6 +14,7 @@ import Json.Decode as Json exposing (Value)
 import Json.Encode as Encode
 import Elm.Kernel.Function
 import Elmer.Value.Native as Native
+import Elmer.Errors as Errors
 
 
 type alias Function =
@@ -46,21 +47,28 @@ functionIdentifier identifier =
     |> Maybe.map readableIdentifier
 
 
-from : (() -> a) -> Maybe Function
+from : (() -> a) -> Result String Function
 from namingThunk =
   globalIdentifier namingThunk
-    |> Maybe.map (\globalId ->
-        let
-          functionAlias =
-            readableIdentifier globalId
-        in
-          { alias = functionAlias
-          , identifier = globalId
-          , original = Native.global globalId
-          , fake =
-              Native.global globalId
-                |> recordable functionAlias
-          }
+    |> Result.fromMaybe (Errors.print <| Errors.unableToIdentifySpy)
+    |> Result.andThen (\globalId ->
+      let
+        functionAlias =
+          readableIdentifier globalId
+      in
+        if Elm.Kernel.Function.isActive functionAlias then
+          Errors.spyAlreadyObserved functionAlias
+            |> Errors.print
+            |> Err
+        else
+          Ok 
+            { alias = functionAlias
+            , identifier = globalId
+            , original = Native.global globalId
+            , fake =
+                Native.global globalId
+                  |> recordable functionAlias
+            }
     )
 
 

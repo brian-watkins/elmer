@@ -15,6 +15,8 @@ module Elmer.Errors exposing
   , wrongAttributeName
   , noAttribute
   , failedToActivateSpies
+  , spyAlreadyObserved
+  , unableToIdentifySpy
   , unknownSpy
   , wrongNumberOfSpyCalls
   , badSpyIdentifier
@@ -27,7 +29,7 @@ module Elmer.Errors exposing
 @docs CustomError, print, failWith
 @docs noModel, noTitle, wrongTitle, noLocation, wrongLocation, sendUrlRequiresApplication
 @docs badUrl, navigationSpyRequiresApplication, elementNotFound, wrongAttribute, wrongAttributeName, noAttribute
-@docs failedToActivateSpies, unknownSpy, wrongNumberOfSpyCalls
+@docs failedToActivateSpies, unableToIdentifySpy, spyAlreadyObserved, unknownSpy, wrongNumberOfSpyCalls
 @docs badSpyIdentifier, eventHandlerNotFound, noElementTargetedForEvent
 
 -}
@@ -156,6 +158,20 @@ wrongAttributeName property expectedValue attrs =
 failedToActivateSpies : String -> CustomError
 failedToActivateSpies errors =
   [ fact "Failed to activate one or more spies" errors
+  ]
+
+{-|
+-}
+spyAlreadyObserved : String -> CustomError
+spyAlreadyObserved name =
+  [ note <| name ++ " is already observed by another Spy"
+  ]
+
+{-|
+-}
+unableToIdentifySpy : CustomError
+unableToIdentifySpy =
+  [ note "Unable to identify a function to spy on"
   ]
 
 {-|

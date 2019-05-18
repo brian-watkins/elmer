@@ -48,15 +48,15 @@ type alias SpyError =
 create : (() -> a) -> Spy
 create namingFunc =
   case Function.from namingFunc of
-    Just function ->
+    Ok function ->
       recordCalls
         { name = function.alias
         , function = function
         , calls = []
         }
-    Nothing ->
+    Err message ->
       Error
-        { reason = "Unable to identify a function to spy on"
+        { reason = message
         }
 
 

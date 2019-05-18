@@ -30,6 +30,10 @@ function _Function_deactivate(name) {
   return calls
 }
 
+function _Function_isActive(name) {
+  return elmer_fakeFunctions[name] ? true : false
+}
+
 var elmer_storeArg = function(name, arg, currentCall) {
   var callList = elmer_fakeFunctions[name].calls
   var callId = currentCall

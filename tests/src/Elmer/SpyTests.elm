@@ -24,6 +24,7 @@ all =
   Test.concat
   [ useTests
   , spyTests
+  , spyTwiceTests
   , expectSpyTests
   , spyArgumentTests
   , restoreTests
@@ -86,6 +87,31 @@ spyTests =
       ]
     ]
   ]
+
+
+spyTwiceTests : Test
+spyTwiceTests =
+  describe "when the same function is observed multiple times"
+  [ test "it fails with an error" <|
+    \() ->
+      let
+        firstSpy =
+          Spy.observe (\_ -> SpyApp.clearName)
+            |> Spy.andCallThrough
+        secondSpy =
+          Spy.observe (\_ -> SpyApp.clearName)
+            |> Spy.andCallFake (\def model ->
+              model
+            )
+      in
+        Elmer.given SpyApp.defaultModel SpyApp.view SpyApp.update
+          |> Spy.use [ firstSpy, secondSpy ]
+          |> Expect.equal (TestState.failure <|
+            Errors.print <|
+            Errors.failedToActivateSpies "Elmer.TestApps.SpyTestApp.clearName is already observed by another Spy"
+          )
+  ]
+
 
 testFake : String -> String
 testFake word =
