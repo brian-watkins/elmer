@@ -1,3 +1,16 @@
+# ELMER IS DEPRECATED
+
+There will be no more updates to Elmer. It was fun while it lasted, but I'm pretty sure
+Elmer won't work with Elm 0.19.1 or later versions, and I'm not planning to make any more updates.
+
+## Instead, you should use [elm-spec](https://package.elm-lang.org/packages/brian-watkins/elm-spec/latest/).
+
+Elm-spec is a test framework for Elm that lets you describe the behavior of Elm programs, much like Elmer did.
+Unlike Elmer, elm-spec doesn't use kernel/native code so it has been published to the Elm package repository
+and should be more resilient to future changes in Elm.
+
+---------
+
 # Elmer
 
 Elmer makes it easy to describe the behavior of Elm HTML applications. If you love TDD and
